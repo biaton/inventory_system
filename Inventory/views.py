@@ -21,7 +21,7 @@ from django.http import HttpResponse
 from django.urls import reverse
 from django.http import HttpResponseRedirect
 from .decorators import allowed_roles
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMultiAlternatives
 from django.conf import settings as django_settings
 from django.contrib.auth.signals import user_login_failed
 from django.dispatch import receiver
@@ -31,6 +31,8 @@ from datetime import timedelta
 from decimal import Decimal
 import pandas as pd
 import datetime
+import secrets
+import string
 import random
 import uuid
 import json
@@ -59,29 +61,33 @@ from .models import (
 
 # 1. ANG CUSTOM LOGIN VIEW
 def custom_login_view(request):
-    # Kung nakapag-login na, bawal na bumalik sa login form. Diretso dashboard.
     if request.user.is_authenticated:
-        return redirect('dashboard') # Siguraduhing may 'dashboard' ka sa urls.py mo
+        return redirect('dashboard')
 
     if request.method == 'POST':
-        u = request.POST.get('username').strip()
+        # 🚀 BAGO: Email na ang kinukuha natin
+        email = request.POST.get('email').strip()
         p = request.POST.get('password')
         
-        user = authenticate(request, username=u, password=p)
+        # Hanapin ang user gamit ang email
+        user_obj = User.objects.filter(email=email).first()
         
-        if user is not None:
-            if user.is_active:
-                login(request, user)
-
-                log_system_action(user, 'LOGIN', 'Authentication', f"User {user.username} logged into the system.", request)
-
-                return redirect('dashboard')
+        if user_obj:
+            # Gamitin ang username ni user_obj para ma-authenticate sa Django
+            user = authenticate(request, username=user_obj.username, password=p)
+            
+            if user is not None:
+                if user.is_active:
+                    login(request, user)
+                    # log_system_action(user, 'LOGIN', 'Authentication', f"User {user.username} logged in via Email.", request)
+                    return redirect('dashboard')
+                else:
+                    messages.error(request, "Your account has been suspended. Contact Admin.")
             else:
-                messages.error(request, "Your account has been suspended.")
+                messages.error(request, "Invalid email or password.")
         else:
-            messages.error(request, "Invalid username or password.")
+            messages.error(request, "Email is not registered in the system.")
 
-    # Gumamit ng blankong layout para sa login page
     return render(request, 'Inventory/login.html')
 
 # 2. ANG CUSTOM LOGOUT VIEW
@@ -270,20 +276,126 @@ def customer_master_view(request):
     return render(request, 'Inventory/master/customer_master.html', context)
 
 # 1. ANG VIEW PARA SA TABLE (Master List)
+@login_required(login_url='login')
 def user_master_view(request):
+    # Auto-create profile kung wala pa
     for old_user in User.objects.filter(profile__isnull=True):
-        UserProfile.objects.create(
-            user=old_user, 
-            role='ADMIN' if old_user.is_superuser else 'STAFF'
-        )
+        Profile.objects.create(user=old_user, role='ADMIN' if old_user.is_superuser else 'WH_STAFF')
+
+    # ==========================================
+    # 1. POST: ADD / EDIT / TOGGLE USER
+    # ==========================================
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'add':
+            username = request.POST.get('username').strip()
+            password = request.POST.get('password')
+            email = request.POST.get('email').strip()
+            is_active = request.POST.get('is_active') == 'True'
+            role = request.POST.get('role')
+            company_name = request.POST.get('company_name').strip()
+            contact_number = request.POST.get('contact_number').strip()
+
+            if User.objects.filter(username=username).exists():
+                messages.error(request, "Error: Username is already taken!")
+            elif User.objects.filter(email=email).exists():
+                messages.error(request, "Error: Email is already registered to another user!")
+            else:
+                try:
+                    with transaction.atomic():
+
+                        alphabet = string.ascii_letters + string.digits
+                        temp_password = ''.join(secrets.choice(alphabet) for i in range(10))
+
+                        new_user = User.objects.create(username=username, email=email, is_active=is_active)
+                        new_user.set_password(password)
+                        new_user.save()
+
+                        profile, created = Profile.objects.get_or_create(user=new_user)
+                        profile.role = role
+                        profile.company_name = company_name
+                        profile.contact_number = contact_number
+                        profile.save()
+
+                        # 🚀 BAGO: SEND HTML EMAIL TO THE NEW USER
+                        html_content = render_to_string('Inventory/emails/user_welcome_email.html', {
+                            'username': username,
+                            'email': email,
+                            'password': temp_password,
+                            'role': profile.get_role_display()
+                        })
+                        text_content = strip_tags(html_content) # Fallback kung hindi HTML-capable ang email ng user
+
+                        msg = EmailMultiAlternatives(
+                            subject="Welcome to ASIA Integrated Machine Inc. WMS",
+                            body=text_content,
+                            from_email=settings.DEFAULT_FROM_EMAIL,
+                            to=[email]
+                        )
+                        msg.attach_alternative(html_content, "text/html")
+                        msg.send(fail_silently=False)
+
+                    messages.success(request, f"Success! Account for {username} has been created.")
+                except Exception as e:
+                    messages.error(request, f"System Error: {str(e)}")
+
+        elif action == 'edit':
+            user_id = request.POST.get('user_id')
+            email = request.POST.get('email').strip()
+            password = request.POST.get('password') # Pwedeng blanko
+            
+            try:
+                target_user = User.objects.get(id=user_id)
+                
+                # Check kung yung email ay ginagamit na ng iba
+                if User.objects.filter(email=email).exclude(id=user_id).exists():
+                    messages.error(request, "Error: Email is already used by another account!")
+                else:
+                    with transaction.atomic():
+                        target_user.email = email
+                        target_user.is_active = request.POST.get('is_active') == 'True'
+                        if password: # Kung nag-type ng bagong password
+                            target_user.set_password(password)
+                        target_user.save()
+
+                        profile = target_user.profile
+                        profile.role = request.POST.get('role')
+                        profile.company_name = request.POST.get('company_name').strip()
+                        profile.contact_number = request.POST.get('contact_number').strip()
+                        profile.save()
+
+                    messages.success(request, f"User profile for {target_user.username} updated successfully!")
+            except Exception as e:
+                messages.error(request, f"Error updating user: {str(e)}")
+
+        elif action == 'toggle':
+            user_id = request.POST.get('user_id')
+            try:
+                target_user = User.objects.get(id=user_id)
+                # Bawal i-deactivate yung sarili mong account
+                if target_user == request.user:
+                    messages.error(request, "You cannot deactivate your own account.")
+                else:
+                    target_user.is_active = not target_user.is_active
+                    target_user.save()
+                    status = "activated" if target_user.is_active else "deactivated"
+                    messages.success(request, f"Account for {target_user.username} has been {status}.")
+            except Exception as e:
+                messages.error(request, f"Error toggling status: {str(e)}")
+
+        return redirect('user_master')
+
+    # ==========================================
+    # 2. GET: DISPLAY & SEARCH
+    # ==========================================
     search_query = request.GET.get('q', '').strip()
-    
-    # Kukunin lahat ng profiles kasama ang user data para mabilis mag-load
     profiles = Profile.objects.select_related('user').all().order_by('-id')
 
     if search_query:
         profiles = profiles.filter(
             Q(user__username__icontains=search_query) | 
+            Q(user__email__icontains=search_query) | 
             Q(company_name__icontains=search_query) | 
             Q(role__icontains=search_query)
         )

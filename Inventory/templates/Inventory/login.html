@@ -123,14 +123,10 @@
                     {% csrf_token %}
 
                     <div class="space-y-1">
-                        <label class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Employee ID /
-                            Username</label>
+                        <label class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Registered Email Address</label>
                         <div class="relative">
-                            <i data-lucide="user"
-                                class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
-                            <input type="text" name="username" required autofocus autocomplete="off"
-                                placeholder="Enter ID..."
-                                class="w-full p-2.5 pl-9 bg-slate-50 border border-slate-400 text-xs font-black text-slate-800 focus:ring-1 focus:ring-teal-700 outline-none shadow-inner uppercase">
+                            <i data-lucide="mail" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                            <input type="email" name="email" required autofocus autocomplete="off" placeholder="user@company.com" class="w-full p-2.5 pl-9 bg-slate-50 border border-slate-400 text-xs font-black text-slate-800 focus:ring-1 focus:ring-teal-700 outline-none shadow-inner lowercase">
                         </div>
                     </div>
 
