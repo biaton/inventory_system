@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Security Alert</title></head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f8fafc; color: #334155;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="padding: 20px;">
+        <tr><td align="center">
+            <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 2px solid #000000;">
+                <tr>
+                    <td style="background-color: #000000; padding: 20px; text-align: center;">
+                        <h2 style="margin: 0; color: #ef4444; font-size: 20px; letter-spacing: 2px; text-transform: uppercase;">🛑 Security Breach Warning</h2>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 30px;">
+                        <p style="margin: 0 0 15px 0; font-size: 16px;">System Administrators,</p>
+                        <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 1.6;">The WMS firewall has detected multiple failed login attempts on a single account. Possible brute-force attack or forgotten password.</p>
+                        
+                        <table width="100%" cellpadding="15" cellspacing="0" style="background-color: #f1f5f9; border-left: 4px solid #000000; border-radius: 4px;">
+                            <tr><td>
+                                <p style="margin: 0 0 8px 0; font-size: 12px; color: #64748b; text-transform: uppercase;">Threat Details</p>
+                                <p style="margin: 0 0 5px 0; font-size: 14px;"><strong>Target Account:</strong> <span style="color: #b91c1c;">{{ username }}</span></p>
+                                <p style="margin: 0 0 5px 0; font-size: 14px;"><strong>Source IP Address:</strong> <span style="font-family: monospace; background: #e2e8f0; padding: 2px 5px;">{{ ip }}</span></p>
+                                <p style="margin: 0 0 0 0; font-size: 14px;"><strong>Failed Attempts:</strong> {{ count }}x in 5 minutes</p>
+                            </td></tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </td></tr>
+    </table>
+</body>
+</html>

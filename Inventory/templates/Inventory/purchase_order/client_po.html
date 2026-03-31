@@ -1,0 +1,580 @@
+<!--{% extends "Inventory/purchase_order/po_base.html" %}
+
+{% block po_content %}
+<div class="max-w-[100%] mx-auto pb-20 mt-4 text-slate-800">
+
+    <div class="flex gap-2 mb-4">
+        <a href="{% url 'make_po' %}" class="bg-white text-slate-500 hover:text-teal-700 hover:bg-teal-50 border border-slate-300 px-6 py-2.5 text-xs font-black uppercase tracking-widest rounded-sm shadow-sm flex items-center gap-2 transition-colors">
+            <i data-lucide="store" class="w-4 h-4"></i> Supplier P.O.
+        </a>
+        <a href="{% url 'client_po' %}" class="bg-indigo-700 text-white px-6 py-2.5 text-xs font-black uppercase tracking-widest rounded-sm shadow-sm flex items-center gap-2 border border-indigo-900">
+            <i data-lucide="users" class="w-4 h-4"></i> Client P.O.
+        </a>
+    </div>
+
+    <form method="POST" action="{% url 'client_po' %}" enctype="multipart/form-data" id="poForm" class="bg-white border border-slate-300 shadow-sm p-4 border-t-4 border-t-indigo-700">
+        {% csrf_token %}
+
+        <div class="border-b-2 border-indigo-800 pb-2 mb-4 flex justify-between items-end">
+            <h2 class="text-xl font-black text-indigo-900 uppercase tracking-tight flex items-center gap-2">
+                <i data-lucide="briefcase" class="w-5 h-5 text-indigo-700"></i> Client P.O. Batch Entry
+            </h2>
+            <span class="text-xs font-bold text-slate-500">Sales Order Module</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-2 mb-4">
+            <div class="space-y-2">
+                <div class="flex items-center">
+                    <label class="w-32 text-xs font-bold text-slate-600">Client PO No.</label>
+                    <div class="flex flex-1 gap-1">
+                        <input type="text" id="po_no" name="po_no" placeholder="Enter Client PO No." required class="w-full p-1 border border-slate-400 bg-slate-100 text-xs font-black text-indigo-900 focus:bg-white uppercase outline-none">
+                        <button type="button" onclick="setOrderNo()" class="bg-indigo-700 text-white px-3 py-1 text-[10px] font-bold hover:bg-indigo-800 border border-indigo-800 uppercase tracking-widest shadow-sm">Generate</button>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <label class="w-32 text-xs font-bold text-slate-600">Customer Name</label>
+                    <input list="customer_choices" id="customer_input" name="customer" placeholder="Select customer..." required class="flex-1 p-1 border border-slate-400 text-xs focus:bg-indigo-50 outline-none font-bold uppercase">
+                    <datalist id="customer_choices">
+                        {% for c in customers %}<option value="{{ c.name }}"></option>{% endfor %}
+                    </datalist>
+                </div>
+                <div class="flex items-center">
+                    <label class="w-32 text-xs font-bold text-slate-600">Order Date</label>
+                    <input type="date" name="order_date" id="order_date" required class="flex-1 p-1 border border-slate-400 text-xs focus:bg-indigo-50 outline-none">
+                </div>
+                <div class="flex items-center">
+                    <label class="w-32 text-xs font-bold text-slate-600">Order Type</label>
+                    <select name="order_type" class="flex-1 p-1 border border-slate-400 text-xs focus:bg-indigo-50 outline-none">
+                        <option value="Standard" selected>Standard</option>
+                        <option value="Express">Express</option>
+                        <option value="Schedule">Schedule</option>
+                        <option value="Pick up">Pick up</option>
+                    </select>
+                </div>
+            </div>
+            <div class="space-y-2">
+                <div class="flex items-center">
+                    <label class="w-32 text-xs font-bold text-slate-600">Transport</label>
+                    <select name="transport" class="flex-1 p-1 border border-slate-400 text-xs focus:bg-indigo-50 outline-none">
+                        <option value="Truck" selected>Truck</option>
+                        <option value="Van">Van</option>
+                        <option value="Motorcycle">Motorcycle</option>
+                        <option value="Cargo Ship">Cargo Ship</option>
+                    </select>
+                </div>
+                <div class="flex items-center">
+                    <label class="w-32 text-xs font-bold text-slate-600">Contact Person</label>
+                    <input type="text" name="contact_person" placeholder="Receiver's Name..." class="flex-1 p-1 border border-slate-400 text-xs focus:bg-indigo-50 outline-none">
+                </div>
+                <div class="flex flex-col mt-1">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase mb-1">Delivery Address</label>
+                    <textarea name="delivery_address" rows="2" class="border border-slate-400 p-1.5 text-xs outline-none focus:bg-indigo-50" placeholder="Full address destination..."></textarea>
+                </div>
+            </div>
+            <div class="space-y-2">
+                <div class="flex items-center">
+                    <label class="w-32 text-xs font-bold text-slate-600">Order Status</label>
+                    <select name="order_status" class="flex-1 p-1 border border-indigo-400 bg-indigo-50 text-indigo-800 text-xs font-black uppercase outline-none">
+                        <option value="Valid" selected>Valid</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Processing">Processing</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+                </div>
+                <div class="flex flex-col mt-1 pt-1 border-t border-slate-200">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase mb-1">General Remarks</label>
+                    <textarea name="remarks" rows="2" class="border border-slate-400 p-1.5 text-xs outline-none focus:bg-indigo-50 italic placeholder:text-slate-400" placeholder="Special handling or notes..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-slate-100 border-y border-slate-300 py-2 px-2 mb-4 flex flex-wrap justify-between items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+                <button type="button" onclick="confirmCancel()" class="bg-rose-100 text-rose-800 border border-rose-300 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-rose-200 transition-colors flex items-center gap-1 rounded-sm">
+                    <i data-lucide="ban" class="w-3 h-3"></i> Clear
+                </button>
+                <div class="h-6 w-[1px] bg-slate-300 mx-1"></div> 
+                <div class="flex items-stretch shadow-sm">
+                    <div class="relative flex items-center">
+                        <i data-lucide="filter" class="absolute left-2 w-3 h-3 text-slate-400"></i>
+                        <input type="text" id="localTableSearch_main" onkeypress="if(event.key === 'Enter') filterTable('poTableBody', 'localTableSearch_main')" placeholder="Filter items..." 
+                               class="pl-7 pr-2 py-1.5 border border-slate-300 text-[10px] font-bold w-48 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none uppercase placeholder:text-slate-400 shadow-inner rounded-l-sm border-r-0">
+                    </div>
+                    <button type="button" onclick="filterTable('poTableBody', 'localTableSearch_main')" class="bg-slate-200 text-slate-700 border border-slate-300 px-3 py-1.5 text-[10px] font-black uppercase hover:bg-slate-300 transition-colors rounded-r-sm">
+                        Search
+                    </button>
+                </div>
+                <div class="h-6 w-[1px] bg-slate-300 mx-1"></div> 
+                <button type="button" onclick="addMainRow()" class="bg-indigo-100 text-indigo-900 border border-indigo-500 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-indigo-200 transition-colors flex items-center gap-1 rounded-sm">
+                    <i data-lucide="plus" class="w-3 h-3"></i> Add Row
+                </button>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+            </div>
+        </div>
+
+        <div class="overflow-x-auto border border-slate-400 mb-4 min-h-[200px]">
+            <table class="w-full text-left min-w-[1400px] border-collapse" id="poTable" style="font-size: 11px;">
+                <thead class="bg-slate-200 text-slate-800 border-b border-slate-400">
+                    <tr>
+                        <th class="py-1.5 px-2 border-r border-slate-400 text-center w-8">No.</th>
+                        <th class="py-1.5 px-2 border-r border-slate-400 w-32">Item Code</th>
+                        <th class="py-1.5 px-2 border-r border-slate-400 w-48">Description</th>
+                        <th class="py-1.5 px-2 border-r border-slate-400 w-16 text-center">Packing</th>
+                        <th class="py-1.5 px-2 border-r border-slate-400 w-16 text-center">Unit</th>
+                        <th class="py-1.5 px-2 border-r border-slate-400 w-16 text-center bg-slate-300/50">MOQ</th>
+                        <th class="py-1.5 px-2 border-r border-slate-400 w-24 text-center text-indigo-900">N-QTY</th>
+                        <th class="py-1.5 px-2 border-r border-slate-400 w-16 text-center">C.Unit</th>
+                        <th class="py-1.5 px-2 border-r border-slate-400 w-28 text-right">Unit Price</th>
+                        <th class="py-1.5 px-2 border-r border-slate-400 w-32 text-right text-indigo-900">Amount</th>
+                        <th class="py-1.5 px-2 border-r border-slate-400 w-16 text-center">Amort.</th>
+                        <th class="py-1.5 px-2 border-r border-slate-400 w-20 text-center">Status</th>
+                        <th class="py-1.5 px-2 text-center w-8 text-rose-600">X</th>
+                    </tr>
+                </thead>
+                <tbody id="poTableBody" class="divide-y divide-slate-300 block-table-body"></tbody>
+            </table>
+        </div>
+
+        <div id="dynamic-blocks-container" class="space-y-6 mt-6"></div>
+
+        <div class="mt-6 border-t border-dashed border-slate-300 pt-6 flex justify-center">
+            <button type="button" onclick="addClientBlock()" class="bg-indigo-50 text-indigo-800 border-2 border-dashed border-indigo-400 px-10 py-3 text-xs font-black uppercase tracking-widest hover:bg-indigo-100 transition-colors flex items-center gap-2 rounded-sm">
+                <i data-lucide="plus-circle" class="w-4 h-4"></i> Add Another Client
+            </button>
+        </div>
+
+        <div class="mt-8 bg-slate-100 border border-slate-400 p-4 flex justify-between items-center shadow-md">
+            <button type="submit" class="bg-indigo-700 text-white border border-indigo-900 px-10 py-3 text-sm font-black uppercase tracking-widest hover:bg-indigo-800 transition-colors shadow-sm flex items-center gap-2 rounded-sm">
+                <i data-lucide="save" class="w-4 h-4"></i> Save All Orders
+            </button>
+            <div class="flex items-center gap-4 pl-6 border-l border-slate-300">
+                <span class="text-xs font-black uppercase tracking-widest text-indigo-900">Total Order Amount:</span>
+                <span class="text-2xl font-black text-indigo-800 w-48 text-right border-b-4 border-indigo-800">₱ <span id="total_amount_display">0.00</span></span>
+            </div>
+        </div>
+
+    </form>
+</div>
+
+<template id="client-block-template">
+    <div class="dynamic-po-block border-2 border-indigo-200 bg-white p-4 shadow-sm relative rounded-sm mt-4">
+        <button type="button" onclick="this.closest('.dynamic-po-block').remove(); calculateGrandTotals();" class="absolute top-2 right-2 text-rose-500 hover:bg-rose-100 p-1 rounded" title="Remove Block">
+            <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+
+        <h3 class="text-[10px] font-black text-indigo-700 uppercase tracking-widest border-b border-indigo-100 pb-2 mb-3 block-counter-label">Additional Client Order</h3>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+            <div class="space-y-1">
+                <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Client Name</label>
+                <input list="customer_choices" name="customer" placeholder="Select client..." required class="w-full p-1.5 border border-slate-300 text-xs focus:bg-indigo-50 outline-none font-bold uppercase">
+            </div>
+            <div class="space-y-1">
+                <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Client P.O. Number</label>
+                <div class="flex gap-1">
+                    <input type="text" name="po_no" placeholder="Enter PO No." required class="w-full p-1.5 border border-slate-300 bg-slate-50 text-xs font-black text-indigo-900 focus:bg-white uppercase outline-none po-no-input">
+                    <button type="button" onclick="generateSpecificPONo(this)" class="bg-indigo-700 text-white px-2 text-[9px] font-bold hover:bg-indigo-800 transition-colors shadow-sm">Gen</button>
+                </div>
+            </div>
+            <div class="space-y-1">
+                <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Order Type</label>
+                <select name="order_type" class="w-full p-1.5 border border-slate-300 text-xs focus:bg-indigo-50 outline-none font-bold">
+                    <option value="Standard">Standard</option><option value="Express">Express</option><option value="Pick up">Pick up</option>
+                </select>
+            </div>
+            <div class="space-y-1">
+                <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Transport</label>
+                <select name="transport" class="w-full p-1.5 border border-slate-300 text-xs focus:bg-indigo-50 outline-none font-bold">
+                    <option value="Truck">Truck</option><option value="Van">Van</option><option value="Motorcycle">Motorcycle</option><option value="Cargo Ship">Cargo Ship</option>
+                </select>
+            </div>
+            <div class="space-y-1">
+                <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Contact Person</label>
+                <input type="text" name="contact_person" placeholder="Receiver's Name..." class="w-full p-1.5 border border-slate-300 text-xs focus:bg-indigo-50 outline-none">
+            </div>
+            <div class="space-y-1">
+                <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Delivery Address</label>
+                <input type="text" name="delivery_address" placeholder="Full address..." class="w-full p-1.5 border border-slate-300 text-xs focus:bg-indigo-50 outline-none">
+            </div>
+            <div class="space-y-1">
+                <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Status</label>
+                <select name="order_status" class="w-full p-1.5 border border-indigo-300 bg-indigo-50 text-xs focus:bg-white outline-none font-black text-indigo-800 uppercase">
+                    <option value="Valid">Valid</option><option value="Pending">Pending</option><option value="Processing">Processing</option><option value="Completed">Completed</option><option value="Cancelled">Cancelled</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="bg-slate-100 border-y border-slate-300 py-2 px-2 mb-2 flex flex-wrap justify-between items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+                <button type="button" onclick="this.closest('.dynamic-po-block').querySelector('tbody').innerHTML=''; calculateGrandTotals();" class="bg-rose-50 text-rose-700 border border-rose-200 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-rose-100 rounded-sm flex items-center gap-1">
+                    <i data-lucide="eraser" class="w-3 h-3"></i> Clear Items
+                </button>
+                <div class="h-6 w-[1px] bg-slate-300 mx-1"></div> 
+                <div class="flex items-stretch shadow-sm">
+                    <div class="relative flex items-center">
+                        <i data-lucide="filter" class="absolute left-2 w-3 h-3 text-slate-400"></i>
+                        <input type="text" onkeyup="filterDynamicTable(this)" placeholder="Filter items..." class="pl-7 pr-2 py-1.5 border border-slate-300 text-[10px] font-bold w-40 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none uppercase placeholder:text-slate-400 shadow-inner rounded-l-sm border-r-0">
+                    </div>
+                    <button type="button" onclick="filterDynamicTable(this.previousElementSibling.querySelector('input'))" class="bg-slate-200 text-slate-700 border border-slate-300 px-3 py-1.5 text-[10px] font-black uppercase hover:bg-slate-300 transition-colors rounded-r-sm">
+                        Search
+                    </button>
+                </div>
+                <div class="h-6 w-[1px] bg-slate-300 mx-1"></div> 
+                <button type="button" onclick="addDynamicRow(this)" class="bg-indigo-100 text-indigo-900 border border-indigo-400 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-indigo-200 rounded-sm flex items-center gap-1">
+                    <i data-lucide="plus" class="w-3 h-3"></i> Add Row
+                </button>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto border border-slate-300">
+            <table class="w-full text-left border-collapse min-w-[1400px]" style="font-size: 11px;">
+                <thead class="bg-slate-200 text-slate-800 border-b border-slate-400">
+                    <tr>
+                        <th class="py-1.5 px-2 border-r border-slate-400 text-center w-8">No.</th>
+                        <th class="py-1.5 px-2 border-r border-slate-400 w-32">Item Code</th>
+                        <th class="py-1.5 px-2 border-r border-slate-400 w-48">Description</th>
+                        <th class="py-1.5 px-2 border-r border-slate-400 w-16 text-center">Packing</th>
+                        <th class="py-1.5 px-2 border-r border-slate-400 w-16 text-center">Unit</th>
+                        <th class="py-1.5 px-2 border-r border-slate-400 w-16 text-center bg-slate-300/50">MOQ</th>
+                        <th class="py-1.5 px-2 border-r border-slate-400 w-24 text-center text-indigo-900">N-QTY</th>
+                        <th class="py-1.5 px-2 border-r border-slate-400 w-16 text-center">C.Unit</th>
+                        <th class="py-1.5 px-2 border-r border-slate-400 w-28 text-right">Unit Price</th>
+                        <th class="py-1.5 px-2 border-r border-slate-400 w-32 text-right text-indigo-900">Amount</th>
+                        <th class="py-1.5 px-2 border-r border-slate-400 w-16 text-center">Amort.</th>
+                        <th class="py-1.5 px-2 border-r border-slate-400 w-20 text-center">Status</th>
+                        <th class="py-1.5 px-2 text-center w-8 text-rose-600">X</th>
+                    </tr>
+                </thead>
+                <tbody class="dynamic-table-body block-table-body divide-y divide-slate-300"></tbody>
+            </table>
+        </div>
+    </div>
+</template>
+
+<datalist id="item_master_list">
+    {% for item in items %}
+        <option value="{{ item.item_code }}">{{ item.description }}</option>
+    {% endfor %}
+</datalist>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+    let blockCounter = 0;
+    let activeTableBodyForModal = null;
+
+    document.addEventListener("DOMContentLoaded", function() {
+        lucide.createIcons();
+        document.getElementById('order_date').valueAsDate = new Date();
+    });
+
+    function setOrderNo() {
+        const date = new Date();
+        const year = date.getFullYear().toString().slice(-2);
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const random = Math.floor(1000 + Math.random() * 9000);
+        document.getElementById('po_no').value = `SO-${year}${month}-${random}`;
+    }
+
+    function generateSpecificPONo(btnElement) {
+        const input = btnElement.previousElementSibling;
+        const date = new Date();
+        const random = Math.floor(1000 + Math.random() * 9000);
+        input.value = `SO-${date.getFullYear().toString().slice(-2)}${String(date.getMonth() + 1).padStart(2, '0')}-${random}`;
+    }
+
+    function confirmCancel() {
+        if (confirm("Clear main form and all added clients?")) {
+            document.getElementById('poForm').reset();
+            document.getElementById('poTableBody').innerHTML = '';
+            document.getElementById('dynamic-blocks-container').innerHTML = ''; 
+            document.getElementById('order_date').valueAsDate = new Date();
+            blockCounter = 0;
+            calculateGrandTotals();
+        }
+    }
+
+    // ROW GENERATOR FOR MAIN TABLE
+    function addMainRow() {
+        const tbody = document.getElementById('poTableBody');
+        const rowCount = tbody.querySelectorAll('tr').length + 1;
+        const rowId = `main-row-${Math.random().toString(36).substr(2, 5)}`;
+        
+        const rowHtml = `
+            <tr id="${rowId}" class="item-row bg-white hover:bg-indigo-50 transition-colors border-b border-slate-200">
+                <td class="py-1 px-1 border-r border-slate-300 text-center font-bold text-slate-500 row-num text-xs">${rowCount}</td>
+                <td class="py-1 px-1 border-r border-slate-300"><input type="text" name="item_code[]" list="item_master_list" onchange="autoFillItemRow(this)" class="w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white text-xs font-bold uppercase" placeholder="CODE" autocomplete="off"></td>                <td class="py-1 px-1 border-r border-slate-300"><input type="text" name="description[]" class="w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white text-xs text-slate-600" placeholder="Description..."></td>
+                <td class="p-0 border-r border-slate-400"><input type="number" step="any" min="0" name="packing[]" class="w-full h-full px-2 py-1.5 text-xs text-center border-none focus:ring-0 bg-transparent outline-none" placeholder="0" value="1"></td>
+                <td class="py-1 px-1 border-r border-slate-300 text-center text-[9px] font-bold text-slate-400 uppercase tracking-widest">PCS</td>
+                <td class="p-0 border-r border-slate-400"><input type="number" step="any" name="moq[]" class="w-full h-full px-2 py-1.5 text-xs text-center border-none focus:ring-0 bg-transparent outline-none" placeholder="0" value=" "></td>
+                <td class="py-1 px-1 border-r border-slate-300 bg-indigo-50"><input type="number" name="qty[]" oninput="calcRow('${rowId}')" value="0" min="0" class="w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white text-xs font-black text-center text-indigo-900 row-qty"></td>
+                <td class="py-1 px-1 border-r border-slate-300 text-center text-[9px] font-bold text-slate-400 uppercase tracking-widest">PCS</td>
+                <td class="py-1 px-1 border-r border-slate-300"><input type="number" name="unit_price[]" oninput="calcRow('${rowId}')" step="0.01" value="0.00" min="0" class="w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white text-xs text-right font-black row-price"></td>
+                <td class="py-1 px-1 border-r border-slate-300 text-right bg-indigo-50"><span class="amount-display text-xs font-black text-indigo-900 pr-1 row-display">₱ 0.00</span><input type="hidden" name="row_amount[]" class="global-amount-input row-amount" value="0"></td>
+                <td class="py-1 px-1 border-r border-slate-300 text-center"><input type="checkbox" name="amortization[]" value="${rowCount}" class="w-3 h-3 text-indigo-600"></td>
+                <td class="py-1 px-1 border-r border-slate-300 text-center"><span class="text-[9px] font-black uppercase text-emerald-400">Valid</span></td>
+                <td class="py-1 px-1 text-center"><button type="button" onclick="removeRow('${rowId}')" class="text-rose-600 font-bold px-2 hover:bg-rose-100 rounded">X</button></td>
+            </tr>
+        `;
+        tbody.insertAdjacentHTML('beforeend', rowHtml);
+        updateRowNumbers(tbody);
+    }
+
+    // DYNAMIC BLOCK GENERATOR
+    function addClientBlock() {
+        blockCounter++;
+        const container = document.getElementById('dynamic-blocks-container');
+        const template = document.getElementById('client-block-template');
+        
+        const clone = template.content.cloneNode(true);
+        clone.querySelector('.block-counter-label').innerText = `Client P.O. #${blockCounter + 1}`;
+        clone.querySelector('button[onclick="addDynamicRow(this)"]').setAttribute('onclick', `addDynamicRow(this, ${blockCounter})`);
+        
+        container.appendChild(clone);
+        lucide.createIcons();
+    }
+
+    // ROW GENERATOR FOR ADDED CLIENTS
+    function addDynamicRow(btnElement, blockId) {
+        const tbody = btnElement.closest('.dynamic-po-block').querySelector('.dynamic-table-body');
+        const rowCount = tbody.querySelectorAll('tr').length + 1;
+        const rowId = `dyn-row-${Math.random().toString(36).substr(2, 5)}`;
+        
+        const rowHtml = `
+            <tr id="${rowId}" class="item-row bg-white hover:bg-indigo-50 transition-colors border-b border-slate-200">
+                <td class="py-1 px-1 border-r border-slate-300 text-center font-bold text-slate-500 row-num text-xs">${rowCount}</td>
+                <td class="py-1 px-1 border-r border-slate-300"><input type="text" name="item_code_${blockId}[]" list="item_master_list" onchange="autoFillItemRow(this)" class="w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white text-xs font-bold uppercase" placeholder="CODE" autocomplete="off"></td>
+                <td class="py-1 px-1 border-r border-slate-300"><input type="text" name="description_${blockId}[]" class="w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white text-xs text-slate-600" placeholder="Description..."></td>
+                <td class="p-0 border-r border-slate-400"><input type="number" step="any" min="0" name="packing_${blockId}[]" class="w-full h-full px-2 py-1.5 text-xs text-center border-none focus:ring-0 bg-transparent outline-none" placeholder="0" value="1"></td>
+                <td class="py-1 px-1 border-r border-slate-300 text-center text-[9px] font-bold text-slate-400 uppercase tracking-widest">PCS</td>
+                <td class="p-0 border-r border-slate-400"><input type="number" step="any" name="moq_${blockId}[]" class="w-full h-full px-2 py-1.5 text-xs text-center border-none focus:ring-0 bg-transparent outline-none" placeholder="0" value=" "></td>
+                <td class="py-1 px-1 border-r border-slate-300 bg-indigo-50"><input type="number" name="qty_${blockId}[]" oninput="calcRow('${rowId}')" value="0" min="0" class="w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white text-xs font-black text-center text-indigo-900 row-qty"></td>
+                <td class="py-1 px-1 border-r border-slate-300 text-center text-[9px] font-bold text-slate-400 uppercase tracking-widest">PCS</td>
+                <td class="py-1 px-1 border-r border-slate-300"><input type="number" name="unit_price_${blockId}[]" oninput="calcRow('${rowId}')" step="0.01" value="0.00" min="0" class="w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white text-xs text-right font-black row-price"></td>
+                <td class="py-1 px-1 border-r border-slate-300 text-right bg-indigo-50"><span class="amount-display text-xs font-black text-indigo-900 pr-1 row-display">₱ 0.00</span><input type="hidden" name="row_amount_${blockId}[]" class="global-amount-input row-amount" value="0"></td>
+                <td class="py-1 px-1 border-r border-slate-300 text-center"><input type="checkbox" name="amortization_${blockId}[]" value="${rowCount}" class="w-3 h-3 text-indigo-600"></td>
+                <td class="py-1 px-1 border-r border-slate-300 text-center"><span class="text-[9px] font-black uppercase text-emerald-400">Valid</span></td>
+                <td class="py-1 px-1 text-center"><button type="button" onclick="removeRow('${rowId}')" class="text-rose-600 font-bold px-2 hover:bg-rose-100 rounded">X</button></td>
+            </tr>
+        `;
+        tbody.insertAdjacentHTML('beforeend', rowHtml);
+        updateRowNumbers(tbody);
+    }
+
+    // SHARED LOGIC
+    function removeRow(id) {
+        const tr = document.getElementById(id);
+        const tbody = tr.closest('tbody');
+        tr.remove();
+        updateRowNumbers(tbody);
+        calculateGrandTotals();
+    }
+
+    function calcRow(rowId) {
+        const row = document.getElementById(rowId);
+        const qty = parseFloat(row.querySelector('.row-qty').value) || 0;
+        const price = parseFloat(row.querySelector('.row-price').value) || 0;
+        const amount = qty * price;
+
+        row.querySelector('.row-display').innerText = amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        row.querySelector('.row-amount').value = amount;
+        calculateGrandTotals();
+    }
+
+    function calculateGrandTotals() {
+        let grandTotal = 0;
+        document.querySelectorAll('.global-amount-input').forEach(input => {
+            grandTotal += parseFloat(input.value) || 0;
+        });
+        document.getElementById('total_amount_display').innerText = grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function updateRowNumbers(tbody) {
+        tbody.querySelectorAll('.row-num').forEach((cell, index) => { cell.innerText = index + 1; });
+    }
+
+    // SEARCH LOGIC
+    function filterTable(tbodyId, searchInputId) {
+        const input = document.getElementById(searchInputId).value.toUpperCase();
+        const rows = document.getElementById(tbodyId).querySelectorAll('tr.item-row');
+        rows.forEach(row => {
+            const code = row.querySelector('input[name^="item_code"]').value.toUpperCase();
+            const desc = row.querySelector('input[name^="description"]').value.toUpperCase();
+            row.style.display = (code.includes(input) || desc.includes(input)) ? '' : 'none';
+        });
+    }
+
+    function filterDynamicTable(inputElement) {
+        const query = inputElement.value.toUpperCase();
+        const tbody = inputElement.closest('.dynamic-po-block').querySelector('.dynamic-table-body');
+        const rows = tbody.querySelectorAll('tr.item-row');
+        rows.forEach(row => {
+            const codeInput = row.querySelector('input[name^="item_code"]');
+            const descInput = row.querySelector('input[name^="description"]');
+            const code = codeInput ? codeInput.value.toUpperCase() : "";
+            const desc = descInput ? descInput.value.toUpperCase() : "";
+            row.style.display = (code.includes(query) || desc.includes(query)) ? '' : 'none';
+        });
+    }
+
+    // MODAL SEARCH LOGIC
+    function openItemModal(btnElement) { 
+        activeTableBodyForModal = btnElement.closest('.bg-white').querySelector('.block-table-body') || document.getElementById('poTableBody');
+        document.getElementById('itemSearchModal').classList.remove('hidden'); 
+        document.getElementById('modalSearchInput').focus(); 
+        document.getElementById('modalItemTableBody').innerHTML = '<tr><td colspan="5" class="py-12 text-center text-slate-400"><p class="text-[10px] font-bold uppercase tracking-widest">Type to search items...</p></td></tr>';
+    }
+    
+    function closeItemModal() { 
+        document.getElementById('itemSearchModal').classList.add('hidden'); 
+        document.getElementById('modalSearchInput').value = ''; 
+        activeTableBodyForModal = null; 
+    }
+    
+    function executeModalSearch() {
+        const query = document.getElementById('modalSearchInput').value.trim();
+        const tbody = document.getElementById('modalItemTableBody');
+        if (!query) return alert("Please enter a search term.");
+
+        tbody.innerHTML = '<tr><td colspan="5" class="py-10 text-center"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto text-indigo-600"></i></td></tr>';
+        lucide.createIcons();
+
+        fetch(`/api/search-item-master/?q=${encodeURIComponent(query)}`)
+            .then(res => res.json())
+            .then(data => {
+                tbody.innerHTML = '';
+                if (data.success && data.results.length > 0) {
+                    data.results.forEach(item => {
+                        const safeDesc = item.description ? item.description.replace(/'/g, "\\'").replace(/"/g, '&quot;') : "No Description";
+                        const row = `
+                            <tr class="hover:bg-indigo-50 transition-colors bg-white border-b border-slate-200">
+                                <td class="py-2.5 px-4 font-black text-indigo-900">${item.item_code}</td>
+                                <td class="py-2.5 px-4 text-slate-600 font-bold">${item.description}</td>
+                                <td class="py-2.5 px-4 text-slate-500">${item.category || '-'}</td>
+                                <td class="py-2.5 px-4 text-center text-slate-500 font-bold">${item.uom || 'PCS'}</td>
+                                <td class="py-2.5 px-4 text-center">
+                                    <button type="button" onclick="selectItemFromModal('${item.item_code}', '${safeDesc}')" 
+                                            class="bg-indigo-600 text-white px-4 py-1.5 font-black uppercase text-[9px] tracking-widest hover:bg-indigo-700 shadow-sm flex items-center gap-1 mx-auto">
+                                        Select
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                        tbody.insertAdjacentHTML('beforeend', row);
+                    });
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="5" class="py-12 text-center text-slate-400"><p class="text-[10px] font-bold uppercase">No items found matching '${query}'.</p></td></tr>`;
+                }
+            })
+            .catch(err => {
+                tbody.innerHTML = '<tr><td colspan="5" class="py-12 text-center text-rose-500 font-bold uppercase">Error searching database.</td></tr>';
+            });
+    }
+
+    function selectItemFromModal(itemCode, itemDesc) {
+        if(!activeTableBodyForModal) return;
+
+        let addRowBtn;
+        if(activeTableBodyForModal.id === 'poTableBody') {
+            addMainRow();
+        } else {
+            addRowBtn = activeTableBodyForModal.closest('.dynamic-po-block').querySelector('button[onclick^="addDynamicRow"]');
+            addRowBtn.click();
+        }
+        
+        const lastRow = activeTableBodyForModal.lastElementChild;
+        if(lastRow) {
+            lastRow.querySelector('input[name^="item_code"]').value = itemCode;
+            lastRow.querySelector('input[name^="description"]').value = itemDesc;
+            const codeInput = lastRow.querySelector('input[name^="item_code"]');
+            codeInput.classList.add('bg-emerald-100');
+            setTimeout(() => codeInput.classList.remove('bg-emerald-100'), 1000);
+        }
+        closeItemModal();
+    }
+
+    // EXCEL IMPORT
+    function updateFileName() {
+        const fileInput = document.getElementById('excel_file');
+        const file = fileInput.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                document.getElementById('poTableBody').innerHTML = '';
+                jsonData.forEach(item => {
+                    addMainRow();
+                    const lastRow = document.getElementById('poTableBody').lastElementChild;
+                    lastRow.querySelector('input[name="item_code[]"]').value = item['Item Code'] || item['item_code'] || '';
+                    lastRow.querySelector('input[name="description[]"]').value = item['Description'] || item['description'] || '';
+                    lastRow.querySelector('input[name="packing[]"]').value = item['Packing'] || 1;
+                    lastRow.querySelector('input[name="qty[]"]').value = item['Qty'] || item['N-QTY'] || 0;
+                    lastRow.querySelector('input[name="unit_price[]"]').value = item['Unit Price'] || item['Price'] || 0;
+                    calcRow(lastRow.id);
+                });
+            };
+            reader.readAsArrayBuffer(file);
+        }
+    }
+    function autoFillItemRow(inputElement) {
+    const itemCode = inputElement.value.trim().toUpperCase();
+    if (!itemCode) return;
+
+    // Hanapin kung saang row eksakto nagta-type ang user
+    const row = inputElement.closest('tr');
+
+    // Tumawag sa database gamit ang API
+    fetch(`/api/get-item-details/?item_code=${encodeURIComponent(itemCode)}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // Hanapin ang mga boxes sa row na ito
+                const descInput = row.querySelector('input[name^="description"]');
+                const priceInput = row.querySelector('input[name^="unit_price"]');
+                const packingInput = row.querySelector('input[name^="packing"]');
+                const moqInput = row.querySelector('input[name^="moq"]');
+                const qtyInput = row.querySelector('input[name^="qty"]'); 
+                
+                // Hanapin ang C.Unit label (Pangalawang text na may 'PCS' default)
+                // Gumamit tayo ng nth-child para saktong makuha yung C.Unit column (Pang 8th na column siya sa table mo)
+                const cUnitLabel = row.querySelector('td:nth-child(8)');
+
+                // I-paste ang nakuha sa database
+                if (descInput) descInput.value = data.description;
+                if (priceInput) priceInput.value = data.unit_price;
+
+                // I-set ang defaults 
+                if (packingInput) packingInput.value = 1;
+                if (moqInput) moqInput.value = 0;
+                if (qtyInput) qtyInput.value = 1;
+
+                // ETO ANG BAGO: I-update ang C.Unit label
+                if (cUnitLabel && data.uom) {
+                    cUnitLabel.innerText = data.uom;
+                    // Lagyan natin ng green text effect para kita na nagbago
+                    cUnitLabel.classList.add('text-emerald-500');
+                    setTimeout(() => cUnitLabel.classList.remove('text-emerald-500'), 1000);
+                }
+
+                // Magpakita ng green highlight effect
+                if (descInput) {
+                    descInput.classList.add('bg-emerald-100');
+                    setTimeout(() => descInput.classList.remove('bg-emerald-100'), 1000);
+                }
+                if (priceInput) {
+                    priceInput.classList.add('bg-emerald-100');
+                    setTimeout(() => priceInput.classList.remove('bg-emerald-100'), 1000);
+                }
+
+                // Automatic na i-compute ang Total Amount
+                calcRow(row.id);
+            }
+        })
+        .catch(err => console.error("Error fetching item details:", err));
+}
+</script> 
+{% endblock %} -->

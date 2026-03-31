@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Picking List - {{ header.request_no }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+
+    <style>
+        body { font-family: Arial, sans-serif; color: black; }
+        
+        /* SCREEN DISPLAY ONLY */
+        .paper-container {
+            background-color: white;
+            padding: 2rem;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border: 1px solid #d1d5db;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        /* PRINT LOGIC */
+        @media print {
+            .no-print { display: none !important; }
+            
+            @page { 
+                margin: 0.5cm; 
+                size: portrait; 
+            }
+
+            body { 
+                background: white !important; 
+                padding: 0 !important; 
+                margin: 0 !important;
+            }
+
+            .paper-container {
+                box-shadow: none !important;
+                border: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                max-width: none !important;
+                width: 100% !important;
+            }
+
+            .slip-table {
+                width: 100% !important;
+            }
+        }
+        
+        .slip-table th, .slip-table td {
+            border: 1px solid black;
+            padding: 8px; /* Nilakihan natin ng konti para mas madaling sulatan */
+        }
+        
+        /* Para sa writing lines */
+        .write-line {
+            border-bottom: 1px dashed #6b7280;
+            width: 80%;
+            margin: 0 auto;
+            height: 1.5rem;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 p-8 flex justify-center text-sm">
+
+    <div class="fixed top-4 right-4 no-print z-50">
+        <button onclick="window.print()" class="bg-indigo-600 text-white px-6 py-3 rounded-lg font-black flex items-center gap-2 shadow-xl hover:bg-indigo-700 transition-colors">
+            <i data-lucide="printer" class="w-5 h-5"></i> PRINT PICKING LIST
+        </button>
+    </div>
+
+    <div class="bg-white p-8 shadow-2xl border border-gray-300 w-full max-w-[800px] min-h-[1050px] flex flex-col relative paper-container">
+        
+        <div class="mb-6 space-y-2">
+            <div class="flex justify-between items-end">
+                <p class="font-bold text-[11px] uppercase tracking-wider text-gray-500">Print Date: <span class="text-black ml-1 text-sm">{{ now|date:'Y/m/d H:i' }}</span></p>
+                <h1 class="text-3xl font-black uppercase tracking-tighter text-indigo-900 flex items-center gap-2">
+                    <i data-lucide="list-checks" class="w-8 h-8"></i> Picking List
+                </h1>
+            </div>
+
+            <div class="text-center w-full bg-slate-100 border-y-2 border-black py-2 mt-4">
+                <div class="text-lg font-black inline-block uppercase tracking-tight">
+                    <span class="text-slate-500 text-xs tracking-widest block mb-1">Pick From Warehouse</span>
+                    {{ header.delivery_place }}
+                </div>
+            </div>
+
+            <div class="flex justify-between items-end mt-2">
+                <div>
+                    <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">Deliver To:</p>
+                    <p class="font-black text-lg tracking-widest uppercase">{{ header.receiving_place }}</p>
+                </div>
+                <div class="text-[11px] font-bold text-right">
+                    <p>Request Date: <span class="ml-2 font-normal">{{ header.request_date|date:'Y/m/d' }}</span></p>
+                    <p class="text-rose-600">Target Date: <span class="ml-2 font-black">{{ header.delivery_date|date:'Y/m/d' }}</span></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-2 font-black text-sm uppercase tracking-widest flex items-center gap-2">
+            Slip Reference: <span class="text-indigo-700 text-lg">{{ header.request_no }}</span>
+        </div>
+
+        <div>
+            <table class="w-full text-center slip-table text-[10px]">
+                <thead>
+                    <tr class="bg-gray-200 font-black uppercase tracking-tighter text-[10px] border-2 border-black">
+                        <th class="w-8 py-3">No.</th>
+                        <th class="w-32">Item Code</th>
+                        <th class="w-48 text-left">Description</th>
+                        <th class="w-16">Stock<br><span class="text-[8px] font-normal italic">Available</span></th>
+                        <th class="w-16 text-indigo-800">Req Qty<br><span class="text-[8px] font-normal italic">Needed</span></th>
+                        <th class="w-20 bg-gray-50">Actual Pick<br><span class="text-[8px] font-normal italic">(Write Qty)</span></th>
+                        <th class="w-32 bg-gray-50">Lot Number / Remarks<br><span class="text-[8px] font-normal italic">(Scan/Write)</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td class="font-bold text-gray-500">{{ forloop.counter }}</td>
+                        <td class="py-4 font-black text-[12px] uppercase">{{ item.item_code }}</td>
+                        <td class="text-left px-2 leading-tight font-bold">{{ item.description }}</td>
+                        
+                        <td class="font-black text-gray-600">{{ item.current_stock|default:"0" }}</td>
+                        
+                        <td class="text-sm font-black text-indigo-900 bg-indigo-50/50">{{ item.request_qty }}</td>
+                        
+                        <td><div class="write-line"></div></td>
+                        <td><div class="write-line" style="width: 95%;"></div></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" class="py-8 italic text-gray-400">No items found for picking.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-auto pt-8">
+            <table class="w-full text-center slip-table text-[10px] bg-white border-2 border-black">
+                <tr class="uppercase font-black bg-gray-100">
+                    <th class="w-[40%] text-left p-2 border-r-2 border-black border-b-2">Request No. (Scan at PC)</th>
+                    <th class="w-[20%] py-1 border-r-2 border-black border-b-2">Picked By</th>
+                    <th class="w-[20%] py-1 border-r-2 border-black border-b-2">Checked By</th>
+                    <th class="w-[20%] py-1 border-b-2 border-black">Received By</th>
+                </tr>
+                <tr>
+                    <td class="h-24 align-middle text-center border-r-2 border-black py-2">
+                        <svg id="movement-barcode"></svg>
+                    </td>
+                    <td class="border-r-2 border-black align-bottom pb-2 italic text-gray-400">Sign & Date</td>
+                    <td class="border-r-2 border-black align-bottom pb-2 italic text-gray-400">Sign & Date</td>
+                    <td class="align-bottom pb-2 italic text-gray-400">Sign & Date</td>
+                </tr>
+            </table>
+        </div>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // GENERATE CODE 39 BARCODE
+        const reqNumber = "{{ header.request_no }}";
+        if(reqNumber) {
+            JsBarcode("#movement-barcode", reqNumber, {
+                format: "CODE39",
+                lineColor: "#000000",
+                width: 1.5,
+                height: 55,
+                displayValue: true,
+                fontSize: 14,
+                fontOptions: "bold",
+                margin: 0
+            });
+        }
+    </script>
+</body>
+</html>

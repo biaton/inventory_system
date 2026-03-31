@@ -1,0 +1,233 @@
+{% extends "Inventory/purchase_order/po_base.html" %}
+
+{% block po_content %}
+<div class="max-w-[100%] mx-auto pb-20 mt-4 text-slate-800">
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div class="bg-white border border-slate-300 p-4 shadow-sm relative overflow-hidden group">
+            <div class="absolute right-0 top-0 w-1 h-full bg-amber-500 transition-all group-hover:w-1.5"></div>
+            <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                <i data-lucide="clock" class="w-3 h-3 text-amber-600"></i> Pending Authorization
+            </p>
+            <h2 class="text-2xl font-black text-slate-800 leading-none">{{ pending_count|default:"0" }}</h2>
+        </div>
+        <div class="bg-white border border-slate-300 p-4 shadow-sm relative overflow-hidden group">
+            <div class="absolute right-0 top-0 w-1 h-full bg-teal-600 transition-all group-hover:w-1.5"></div>
+            <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                <i data-lucide="check-circle" class="w-3 h-3 text-teal-600"></i> Approved Today
+            </p>
+            <h2 class="text-2xl font-black text-slate-800 leading-none">{{ approved_today|default:"0" }}</h2>
+        </div>
+        <div class="bg-white border border-slate-300 p-4 shadow-sm relative overflow-hidden group">
+            <div class="absolute right-0 top-0 w-1 h-full bg-rose-600 transition-all group-hover:w-1.5"></div>
+            <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                <i data-lucide="x-circle" class="w-3 h-3 text-rose-600"></i> Rejected / Cancelled
+            </p>
+            <h2 class="text-2xl font-black text-slate-800 leading-none">{{ rejected_count|default:"0" }}</h2>
+        </div>
+    </div>
+
+    <div class="bg-white border border-slate-300 shadow-sm flex flex-col">
+        <div class="bg-slate-800 px-4 py-3 flex justify-between items-center text-white border-b border-slate-700">
+            <h2 class="font-black text-sm uppercase tracking-widest flex items-center gap-2">
+                <i data-lucide="inbox" class="w-4 h-4 text-teal-400"></i> Authorization Queue
+            </h2>
+        </div>
+
+        <div class="overflow-x-auto min-h-[400px]">
+            <table class="w-full text-left border-collapse" style="font-size: 11px;">
+                <thead class="bg-slate-100 text-slate-500 uppercase tracking-widest border-b border-slate-300 font-bold text-[10px]">
+                    <tr>
+                        <th class="px-4 py-2 border-r border-slate-300">P.O. Number</th>
+                        <th class="px-4 py-2 border-r border-slate-300">Order Date</th>
+                        <th class="px-4 py-2 border-r border-slate-300 text-center">Batch Count</th>
+                        <th class="px-4 py-2 border-r border-slate-300">Supplier Name</th>
+                        <th class="px-4 py-2 border-r border-slate-300 text-right">Grand Total</th>
+                        <th class="px-4 py-2 border-r border-slate-300 text-center">Status</th>
+                        <th class="px-4 py-2 text-center w-32">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200">
+                    {% for batch in grouped_batches %}
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-4 py-3 border-r border-slate-200">
+                            <span class="font-black text-teal-800">{{ batch.main_po.po_no }}</span>
+                            {% if batch.sub_pos %}
+                                <br><span class="text-[9px] font-bold text-indigo-600 uppercase tracking-widest">+ {{ batch.sub_pos|length }} Sub P.O.(s)</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 border-r border-slate-200 font-bold text-slate-700">{{ batch.main_po.order_date|date:"Y-m-d" }}</td>
+                        <td class="px-4 py-3 border-r border-slate-200 text-center font-bold text-slate-400">{{ batch.total_pos }} Order(s)</td>
+                        <td class="px-4 py-3 border-r border-slate-200 font-black text-slate-800 uppercase">{{ batch.main_po.supplier.name }} <span class="text-[9px] text-slate-400 block">Main Supplier</span></td>
+                        <td class="px-4 py-3 border-r border-slate-200 text-right font-black text-slate-900">₱{{ batch.batch_grand_total|floatformat:2 }}</td>
+                        <td class="px-4 py-3 border-r border-slate-200 text-center">
+                            <span class="px-2 py-0.5 bg-amber-100 text-amber-700 border border-amber-300 text-[9px] font-black uppercase tracking-tight">Pending Batch</span>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <div class="flex justify-center items-center gap-1">
+                                <form method="POST" action="{% url 'approve_po' %}" class="m-0">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="batch_id" value="{{ batch.batch_id }}">
+                                    <input type="hidden" name="action" value="approve">
+                                    <button type="submit" class="bg-teal-50 hover:bg-teal-600 text-teal-600 hover:text-white p-1.5 border border-teal-300 transition-colors rounded-sm shadow-sm" title="Approve Entire Batch">
+                                        <i data-lucide="check-circle" class="w-4 h-4"></i>
+                                    </button>
+                                </form>
+                                
+                                <form method="POST" action="{% url 'approve_po' %}" class="m-0">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="batch_id" value="{{ batch.batch_id }}">
+                                    <input type="hidden" name="action" value="reject">
+                                    <button type="submit" class="bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white p-1.5 border border-rose-300 transition-colors rounded-sm shadow-sm" title="Reject Entire Batch">
+                                        <i data-lucide="x-circle" class="w-4 h-4"></i>
+                                    </button>
+                                </form>
+                                
+                                <div class="w-[1px] h-6 bg-slate-300 mx-1"></div>
+
+                                <button type="button" onclick="openPOModal('{{ batch.batch_id }}')" class="bg-slate-100 hover:bg-slate-700 text-slate-600 hover:text-white px-3 py-1.5 text-[10px] font-black uppercase border border-slate-300 transition-colors shadow-sm flex items-center gap-1.5 rounded-sm" title="Review Batch Details">
+                                    <i data-lucide="eye" class="w-3 h-3"></i> Review
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% for batch in grouped_batches %}
+<div id="modal-{{ batch.batch_id }}" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex justify-center items-center p-4">
+    <div class="bg-white border-t-8 border-teal-800 shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+        
+        <div class="px-6 py-4 border-b flex justify-between items-center bg-slate-50">
+            <div>
+                <h2 class="text-xl font-black text-teal-900 uppercase tracking-tighter flex items-center gap-2">
+                    <i data-lucide="layers" class="w-6 h-6"></i> Batch Order Review
+                </h2>
+                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">Batch Ref: <span class="text-slate-800">{{ batch.batch_id }}</span> | Total Orders: {{ batch.total_pos }}</p>
+            </div>
+            <button type="button" onclick="closePOModal('{{ batch.batch_id }}')" class="text-rose-600 hover:bg-rose-100 p-2 rounded-full transition-colors"><i data-lucide="x" class="w-6 h-6"></i></button>
+        </div>
+
+        <div class="overflow-y-auto p-6 bg-slate-200 space-y-6">
+            
+            {% for po in batch.all_pos %}
+            <div class="bg-white border {% if forloop.first %}border-teal-400 shadow-md{% else %}border-indigo-200 shadow-sm opacity-90{% endif %}">
+                <div class="px-4 py-2 border-b flex justify-between items-center {% if forloop.first %}bg-teal-50{% else %}bg-indigo-50{% endif %}">
+                    <h3 class="text-xs font-black uppercase tracking-widest {% if forloop.first %}text-teal-800{% else %}text-indigo-800{% endif %}">
+                        {% if forloop.first %}⭐ MAIN P.O. - {{ po.po_no }}{% else %}🔹 SUB P.O. - {{ po.po_no }}{% endif %}
+                    </h3>
+                    <span class="text-[10px] font-bold text-slate-500 uppercase">{{ po.supplier.name }}</span>
+                </div>
+                
+                <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-slate-50/80 p-3 rounded-sm border border-slate-200">
+                        <h4 class="text-[9px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-200 pb-1 mb-2">Order Details</h4>
+                        
+                        <div class="grid grid-cols-2 gap-x-2 gap-y-3 text-[10px] font-bold text-slate-500 uppercase">
+                            <div>
+                                <span class="block text-[8px] text-slate-400 mb-0.5">Order Date</span>
+                                <span class="text-slate-800">{{ po.order_date|date:"Y-m-d" }}</span>
+                            </div>
+                            <div>
+                                <span class="block text-[8px] text-slate-400 mb-0.5">Delivery Date</span>
+                                <span class="text-rose-600">{{ po.delivery_date|date:"Y-m-d"|default:"TBD" }}</span>
+                            </div>
+                            <div>
+                                <span class="block text-[8px] text-slate-400 mb-0.5">Transport</span>
+                                <span class="text-slate-800">{{ po.transport }}</span>
+                            </div>
+                            <div>
+                                <span class="block text-[8px] text-slate-400 mb-0.5">Tax Term</span>
+                                <span class="text-slate-800">{{ po.tax_term }}</span>
+                            </div>
+                            <div>
+                                <span class="block text-[8px] text-slate-400 mb-0.5">Currency</span>
+                                <span class="text-slate-800">{{ po.currency }}</span>
+                            </div>
+                            <div>
+                                <span class="block text-[8px] text-slate-400 mb-0.5">Discount Rate</span>
+                                <span class="text-rose-600">{{ po.discount_rate }}%</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-3 pt-2 border-t border-slate-200">
+                            <span class="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Remarks / Notes</span>
+                            <p class="text-[10px] font-bold text-slate-700 italic bg-white p-2 border border-slate-200 rounded-sm">
+                                "{{ po.remarks|default:'No internal remarks provided.' }}"
+                            </p>
+                        </div>
+                    </div>
+                    <div>
+                        <table class="w-full text-left border-collapse text-[10px]">
+                            <thead class="bg-slate-100 border-b border-slate-300">
+                                <tr>
+                                    <th class="py-1 px-2">Item</th>
+                                    <th class="py-1 px-2 text-center">Qty</th>
+                                    <th class="py-1 px-2 text-right">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody class="font-bold text-slate-700">
+                                {% for item in po.items.all %}
+                                <tr class="border-b border-slate-100">
+                                    <td class="py-1 px-2 text-teal-700">{{ item.item_code }}</td>
+                                    <td class="py-1 px-2 text-center">{{ item.qty }}</td>
+                                    <td class="py-1 px-2 text-right text-slate-900">₱{{ item.amount|floatformat:2 }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <div class="text-right mt-2 font-black text-xs text-rose-700">
+                            Total: ₱{{ po.grand_total|floatformat:2 }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+        </div>
+        
+        <div class="p-6 bg-slate-50 border-t flex justify-between items-center">
+            <div class="text-xs font-black uppercase tracking-widest text-slate-500">
+                Batch Grand Total: <span class="text-xl text-teal-900">₱{{ batch.batch_grand_total|floatformat:2 }}</span>
+            </div>
+            <div class="flex gap-2">
+                <form method="POST" action="{% url 'approve_po' %}" class="m-0">
+                    {% csrf_token %}
+                    <input type="hidden" name="batch_id" value="{{ batch.batch_id }}">
+                    <input type="hidden" name="action" value="reject">
+                    <button type="submit" class="bg-rose-100 text-rose-700 px-6 py-2 text-xs font-black uppercase tracking-widest hover:bg-rose-200 transition-colors">Reject Entire Batch</button>
+                </form>
+                <form method="POST" action="{% url 'approve_po' %}" class="m-0">
+                    {% csrf_token %}
+                    <input type="hidden" name="batch_id" value="{{ batch.batch_id }}">
+                    <input type="hidden" name="action" value="approve">
+                    <button type="submit" class="bg-teal-700 text-white px-6 py-2 text-xs font-black uppercase tracking-widest hover:bg-teal-800 transition-colors shadow-sm">Approve Entire Batch</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<script>
+    function openPOModal(poNo) {
+        const modal = document.getElementById(`modal-${poNo}`);
+        if (modal) modal.classList.remove('hidden');
+    }
+    function closePOModal(poNo) {
+        const modal = document.getElementById(`modal-${poNo}`);
+        if (modal) modal.classList.add('hidden');
+    }
+    // Close modal if user clicks on the dark backdrop
+    window.onclick = function(event) {
+        if (event.target.id.startsWith('modal-')) {
+            event.target.classList.add('hidden');
+        }
+    }
+</script>
+{% endblock %}

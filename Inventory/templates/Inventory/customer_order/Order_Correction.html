@@ -1,0 +1,162 @@
+{% extends "Inventory/customer_order/order_base.html" %}
+
+{% block order_content%}
+<div class="max-w-[100%] mx-auto pb-20 mt-4 text-slate-800">
+
+    <div class="bg-white border border-slate-400 shadow-sm mb-4">
+        <div class="bg-amber-600 px-4 py-2 flex justify-between items-center text-white">
+            <h2 class="font-black text-sm uppercase tracking-widest flex items-center">
+                <i data-lucide="edit-3" class="w-4 h-4 mr-2 text-amber-200"></i> Order Correction Module
+            </h2>
+        </div>
+        <form method="GET" class="p-3 bg-slate-50 flex flex-wrap items-center gap-4">
+            <div class="flex items-center gap-3 flex-1 relative">
+                <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4"></i>
+                <input type="text" name="search_order" value="{{ search_query }}" 
+                       placeholder="Enter Order Number to Correct (e.g. SO-1001)..." required
+                       class="w-full pl-9 pr-4 py-1.5 bg-white border border-slate-400 text-xs font-bold uppercase tracking-widest focus:ring-1 focus:ring-amber-500 outline-none">
+            </div>
+            <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white px-8 py-1.5 rounded text-[10px] font-black uppercase tracking-widest transition-all shadow-sm flex items-center gap-2 border border-amber-800">
+                Find Order
+            </button>
+        </form>
+    </div>
+
+    {% if search_query and not grouped_orders %}
+    <div class="bg-rose-50 p-8 border border-rose-200 shadow-sm flex flex-col items-center justify-center">
+        <i data-lucide="alert-circle" class="w-10 h-10 text-rose-400 mb-2"></i>
+        <h3 class="text-rose-800 font-black uppercase tracking-widest">Order Not Found</h3>
+        <p class="text-rose-600 text-xs font-bold mt-1">Walang record para sa Order No: <span class="text-rose-900 bg-rose-200 px-2 py-0.5">{{ search_query }}</span></p>
+    </div>
+    {% endif %}
+
+    {% if searched and grouped_orders %}
+    <form method="POST" id="correctionOrderForm" class="bg-white border border-slate-300 shadow-sm p-4 border-t-4 border-t-amber-500">
+        {% csrf_token %}
+        <input type="hidden" name="batch_ref" value="{{ batch_ref }}">
+
+        <div class="border-b-2 border-amber-600 pb-2 mb-4 flex justify-between items-end">
+            <h3 class="text-xl font-black text-amber-900 uppercase tracking-tight flex items-center gap-2">
+                <i data-lucide="file-signature" class="w-5 h-5 text-amber-700"></i> Edit Batch Order Details
+            </h3>
+            <div class="text-right">
+                <span class="text-xs font-bold text-slate-500 mr-2">Editing Reference:</span>
+                <span class="text-lg font-black text-amber-800">{{ batch_ref }}</span>
+            </div>
+        </div>
+
+        <div class="mb-6 bg-rose-50 p-4 border border-rose-200">
+            <div class="flex flex-col">
+                <label class="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-1">Reason for Correction *</label>
+                <textarea name="correction_reason" required placeholder="State why this entire batch is being edited..." rows="2"
+                          class="w-full p-2 border border-rose-300 bg-white text-xs font-bold focus:ring-1 focus:ring-rose-500 outline-none placeholder:text-rose-300 shadow-inner"></textarea>
+            </div>
+        </div>
+
+        {% for order_data in grouped_orders %}
+        <div class="mb-6 border border-slate-300">
+            <div class="bg-slate-100 border-b border-slate-300 py-2 px-3 flex items-center justify-between">
+                <span class="text-xs font-black text-amber-800 uppercase tracking-widest">
+                    {% if forloop.first %}⭐ MAIN ORDER - {{ order_data.header.order_no }}{% else %}🔹 SUB ORDER - {{ order_data.header.order_no }}{% endif %}
+                </span>
+                <span class="text-[10px] font-bold text-slate-500 uppercase bg-white px-2 py-0.5 border border-slate-200">{{ order_data.header.customer }}</span>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse min-w-[1000px]" style="font-size: 11px;">
+                    <thead>
+                        <tr class="bg-slate-800 text-white border-b border-slate-600 uppercase tracking-widest text-[10px]">
+                            <th class="py-1.5 px-2 border-r border-slate-700 text-center w-8">No.</th>
+                            <th class="py-1.5 px-2 border-r border-slate-700 w-32">Item Code</th>
+                            <th class="py-1.5 px-2 border-r border-slate-700">Description</th>
+                            <th class="py-1.5 px-2 border-r border-slate-700 w-24 text-center text-amber-300">New Qty</th>
+                            <th class="py-1.5 px-2 border-r border-slate-700 w-32 text-right text-amber-300">New Price</th>
+                            <th class="py-1.5 px-2 text-right w-40">Total Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-300">
+                        {% for item in order_data.items %}
+                        <tr class="hover:bg-amber-50/50 transition-colors item-row">
+                            <input type="hidden" name="item_id[]" value="{{ item.id }}">
+                            
+                            <td class="py-1.5 px-2 border-r border-slate-300 text-center font-bold text-slate-400">{{ forloop.counter }}</td>
+                            <td class="py-1.5 px-2 border-r border-slate-300">
+                                <input type="text" value="{{ item.item_code }}" readonly class="w-full bg-transparent border-none text-xs font-black text-slate-700 uppercase focus:ring-0">
+                            </td>
+                            <td class="py-1.5 px-2 border-r border-slate-300">
+                                <input type="text" value="{{ item.description|default:'' }}" readonly class="w-full bg-transparent border-none text-xs text-slate-500 focus:ring-0">
+                            </td>
+                            <td class="py-1 px-1 border-r border-slate-300 bg-amber-50">
+                                <input type="number" name="qty_row[]" value="{{ item.quantity }}" min="1" oninput="calculateRow(this)"
+                                       class="qty-input w-full p-1 border border-amber-300 bg-white text-xs font-bold text-center focus:ring-1 focus:ring-amber-500 outline-none">
+                            </td>
+                            <td class="py-1 px-1 border-r border-slate-300 bg-amber-50">
+                                <input type="number" name="price_row[]" value="{{ item.unit_price|floatformat:2 }}" step="0.01" min="0" oninput="calculateRow(this)"
+                                       class="price-input w-full p-1 border border-amber-300 bg-white text-xs font-bold text-right focus:ring-1 focus:ring-amber-500 outline-none">
+                            </td>
+                            <td class="py-1.5 px-2 text-right font-black text-slate-800 bg-slate-50">
+                                <span class="row-total-display">{{ item.amount|floatformat:2 }}</span>
+                                <input type="hidden" name="amount_row[]" value="{{ item.amount|floatformat:2 }}" class="row-amount-input">
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endfor %}
+
+        <div class="flex flex-col md:flex-row justify-between items-center gap-6 mt-6 bg-slate-100 border border-slate-400 p-3">
+            <div class="text-[10px] text-slate-500 max-w-sm italic">
+                <strong>Warning:</strong> Updating this record will permanently overwrite the original data and log this action in the system history.
+            </div>
+
+            <div class="flex items-center gap-8">
+                <div class="flex items-center gap-2">
+                    <span class="text-sm font-black text-amber-900 uppercase tracking-widest">Batch Grand Total:</span>
+                    <span class="text-xl font-black text-amber-800 w-36 text-right border-b-2 border-amber-800">₱<span id="grand_total_display">0.00</span></span>
+                </div>
+
+                <button type="submit" onclick="return confirm('Sigurado ka na ba sa mga pagbabagong ito para sa buong batch?')" class="bg-amber-600 hover:bg-amber-700 text-white px-8 py-2 text-xs font-black uppercase tracking-widest transition-all border border-amber-800 shadow-sm flex items-center gap-2">
+                    <i data-lucide="save" class="w-4 h-4"></i> Save Corrections
+                </button>
+            </div>
+        </div>
+
+    </form>
+    {% endif %}
+
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        lucide.createIcons();
+        calculateGrandTotal();
+    });
+
+    function calculateRow(inputElement) {
+        const row = inputElement.closest('tr');
+        const qty = parseFloat(row.querySelector('.qty-input').value) || 0;
+        const price = parseFloat(row.querySelector('.price-input').value) || 0;
+        
+        const total = qty * price;
+        
+        row.querySelector('.row-total-display').innerText = total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        row.querySelector('.row-amount-input').value = total.toFixed(2);
+
+        calculateGrandTotal();
+    }
+
+    function calculateGrandTotal() {
+        let grandTotal = 0;
+        document.querySelectorAll('.row-amount-input').forEach(function(input) {
+            grandTotal += parseFloat(input.value) || 0;
+        });
+        
+        const display = document.getElementById('grand_total_display');
+        if(display) {
+            display.innerText = grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+    }
+</script>
+{% endblock %}

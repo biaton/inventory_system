@@ -1,0 +1,109 @@
+{% extends "Inventory/processing/processing_base.html" %}
+
+{% block processing_content %}
+<div class="max-w-5xl mx-auto pb-20 mt-8 text-slate-800">
+
+    <div class="bg-white border border-slate-300 shadow-sm mb-6">
+        <div class="bg-slate-800 px-5 py-3 flex justify-between items-center text-white border-b border-slate-700">
+            <h2 class="font-black text-sm uppercase tracking-widest flex items-center">
+                <i data-lucide="activity" class="w-4 h-4 mr-2 text-blue-400"></i> Stock I/O Movement Ledger
+            </h2>
+            <button onclick="window.close()" class="text-[9px] font-black uppercase tracking-widest hover:text-rose-400 transition-colors flex items-center gap-1">
+                <i data-lucide="x" class="w-3 h-3"></i> Close Window
+            </button>
+        </div>
+
+        <div class="p-6 grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-50 border-b border-slate-200">
+            <div>
+                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Item Code</p>
+                <p class="text-sm font-black text-teal-800 uppercase">{{ stock.item_code }}</p>
+            </div>
+            <div class="col-span-2">
+                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Description</p>
+                <p class="text-xs font-bold text-slate-800 uppercase">{{ stock.description|default:"No Description" }}</p>
+            </div>
+            <div>
+                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Current Balance</p>
+                <p class="text-lg font-black text-slate-900 leading-none">{{ stock.total_pcs }} <span class="text-[10px] text-slate-500">{{ stock.packing_type }}</span></p>
+            </div>
+            
+            <div>
+                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-2">Lot Number</p>
+                <p class="text-xs font-black text-slate-800">{{ stock.lot_no }}</p>
+            </div>
+            <div>
+                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-2">Location</p>
+                <p class="text-xs font-bold text-slate-800">{{ stock.location.location_code|default:"Unassigned" }}</p>
+            </div>
+            <div>
+                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-2">Arrival Date</p>
+                <p class="text-xs font-bold text-slate-800">{{ stock.arrival_date|date:"Y-m-d" }}</p>
+            </div>
+            <div>
+                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-2">PO Ref / Supplier</p>
+                <p class="text-xs font-bold text-slate-800">{{ stock.po_reference.po_no|default:"-" }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white border border-slate-300 shadow-sm overflow-hidden">
+        <table class="w-full text-left border-collapse whitespace-nowrap" style="font-size: 11px;">
+            <thead class="bg-slate-200 text-slate-800 uppercase tracking-widest border-b border-slate-400 font-bold text-[10px]">
+                <tr>
+                    <th class="py-2 px-4 border-r border-slate-300 w-40">Date & Time</th>
+                    <th class="py-2 px-4 border-r border-slate-300 text-center w-32">Action Type</th>
+                    <th class="py-2 px-4 border-r border-slate-300 text-right w-24">Previous</th>
+                    <th class="py-2 px-4 border-r border-slate-300 text-right w-24">Change</th>
+                    <th class="py-2 px-4 border-r border-slate-300 text-right w-24 bg-slate-100">New Bal.</th>
+                    <th class="py-2 px-4 border-r border-slate-300 text-center w-32">User</th>
+                    <th class="py-2 px-4">Remarks / Notes</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200">
+                {% for log in history_logs %}
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="py-2 px-4 border-r border-slate-200 font-bold text-slate-600">{{ log.timestamp|date:"Y-m-d h:i A" }}</td>
+                    
+                    <td class="py-2 px-4 border-r border-slate-200 text-center">
+                        {% if log.action_type == 'REG' %}
+                            <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 text-[9px] font-black uppercase rounded-sm border border-emerald-200">Registration</span>
+                        {% elif log.action_type == 'OUT' %}
+                            <span class="bg-rose-100 text-rose-800 px-2 py-0.5 text-[9px] font-black uppercase rounded-sm border border-rose-200">Stock Out</span>
+                        {% elif log.action_type == 'MOVE' %}
+                            <span class="bg-blue-100 text-blue-800 px-2 py-0.5 text-[9px] font-black uppercase rounded-sm border border-blue-200">Transfer</span>
+                        {% else %}
+                            <span class="bg-amber-100 text-amber-800 px-2 py-0.5 text-[9px] font-black uppercase rounded-sm border border-amber-200">Correction</span>
+                        {% endif %}
+                    </td>
+                    
+                    <td class="py-2 px-4 border-r border-slate-200 text-right font-bold text-slate-500">{{ log.old_qty }}</td>
+                    
+                    <td class="py-2 px-4 border-r border-slate-200 text-right font-black {% if log.change_qty > 0 %}text-emerald-600{% elif log.change_qty < 0 %}text-rose-600{% else %}text-slate-500{% endif %}">
+                        {% if log.change_qty > 0 %}+{% endif %}{{ log.change_qty }}
+                    </td>
+                    
+                    <td class="py-2 px-4 border-r border-slate-200 text-right font-black text-slate-800 bg-slate-50/50">{{ log.new_qty }}</td>
+                    
+                    <td class="py-2 px-4 border-r border-slate-200 text-center font-bold text-slate-600 uppercase">{{ log.user.username|default:"SYSTEM" }}</td>
+                    
+                    <td class="py-2 px-4 text-xs text-slate-600">{{ log.notes|default:"-" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="py-12 text-center text-slate-400">
+                        <i data-lucide="clipboard-x" class="w-8 h-8 mx-auto mb-2 opacity-30"></i>
+                        <p class="uppercase font-black text-[10px] tracking-widest">No movement history recorded yet.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    });
+</script>
+{% endblock %}

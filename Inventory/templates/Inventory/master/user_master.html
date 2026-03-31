@@ -1,0 +1,174 @@
+{% extends "Inventory/base.html" %}
+
+{% block content %}
+<div class="max-w-[100%] mx-auto pb-20 mt-4 text-slate-800">
+
+    <div class="border-b-2 border-slate-800 pb-2 mb-4 flex flex-col md:flex-row md:items-end md:justify-between">
+        <div>
+            <h1 class="text-2xl font-black text-slate-900 uppercase tracking-tighter flex items-center gap-2">
+                <i data-lucide="users" class="w-6 h-6 text-teal-700"></i> User & Customer Master
+            </h1>
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Manage System Access & Client Directory</p>
+        </div>
+        <div class="mt-4 md:mt-0 flex gap-2">
+            <a href="{% url 'export_users_csv' %}" class="bg-white border border-slate-300 text-slate-600 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center gap-1.5 shadow-sm">
+                <i data-lucide="download" class="w-3 h-3"></i> Export Masterlist
+            </a>
+            <a href="{% url 'register_user' %}" class="bg-teal-700 text-white border border-teal-900 px-6 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-teal-800 transition-all flex items-center gap-1.5 shadow-sm">
+                <i data-lucide="user-plus" class="w-3 h-3"></i> Register New
+            </a>
+        </div>
+    </div>
+
+    <div class="bg-slate-100 border border-slate-300 py-2 px-2 mb-4 flex flex-wrap justify-between items-center gap-2 shadow-sm">
+        <form method="GET" action="" class="flex-1 min-w-[300px] flex gap-2">
+            <div class="relative flex-1">
+                <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                <input type="text" name="q" value="{{ search_query|default:'' }}" placeholder="Search username, company, or role..." 
+                       class="w-full pl-9 pr-3 py-1.5 bg-white border border-slate-400 text-xs font-bold text-slate-800 uppercase tracking-widest focus:ring-1 focus:ring-teal-500 outline-none shadow-inner">
+            </div>
+            {% if search_query %}
+                <a href="." class="bg-slate-200 text-slate-600 border border-slate-400 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-slate-300 transition-colors flex items-center justify-center">
+                    Clear
+                </a>
+            {% endif %}
+            <button type="submit" class="bg-slate-800 text-white border border-slate-900 px-6 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all">
+                Search
+            </button>
+        </form>
+        <div class="hidden lg:flex items-center gap-3 pr-2">
+            <div class="flex flex-col text-right">
+                <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Database Status</span>
+                <span class="text-[10px] font-black text-emerald-600 uppercase">Synchronized</span>
+            </div>
+            <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+        </div>
+    </div>
+
+    <div class="bg-white border border-slate-300 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto min-h-[400px]">
+            <table class="w-full text-left border-collapse" style="font-size: 11px;">
+                <thead class="bg-slate-800 text-white uppercase tracking-widest border-b border-slate-900 font-black text-[10px]">
+                    <tr>
+                        <th class="py-2.5 px-4 border-r border-slate-700">Profile Identity</th>
+                        <th class="py-2.5 px-4 border-r border-slate-700">System Role</th>
+                        <th class="py-2.5 px-4 border-r border-slate-700">Company / Contact</th>
+                        <th class="py-2.5 px-4 border-r border-slate-700 text-center">Last Active</th>
+                        <th class="py-2.5 px-4 border-r border-slate-700 text-center">Status</th>
+                        <th class="py-2.5 px-4 text-center w-28">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200">
+                    
+                    {% for profile in profiles %}
+                    <tr class="hover:bg-slate-50 transition-colors group">
+                        
+                        <td class="py-2 px-4 border-r border-slate-200">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded bg-slate-200 border border-slate-300 flex items-center justify-center font-black text-xs text-slate-600 shadow-sm
+                                    {% if profile.role == 'ADMIN' %} border-purple-300 text-purple-700 bg-purple-50 
+                                    {% elif profile.role == 'CUSTOMER' %} border-emerald-300 text-emerald-700 bg-emerald-50 
+                                    {% endif %}">
+                                    {{ profile.user.username|slice:":1"|upper }}
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="text-xs font-black text-slate-800 tracking-tight">{{ profile.user.username }}</span>
+                                    <span class="text-[9px] font-bold text-slate-400 truncate max-w-[150px]">{{ profile.user.email|default:"no-email@system.com" }}</span>
+                                </div>
+                            </div>
+                        </td>
+
+                        <td class="py-2 px-4 border-r border-slate-200">
+                            {% if profile.role == 'ADMIN' %}
+                                <span class="px-2 py-0.5 bg-purple-100 text-purple-800 border border-purple-300 text-[8px] font-black uppercase tracking-widest inline-flex items-center gap-1">
+                                    <i data-lucide="shield" class="w-2.5 h-2.5"></i> Admin
+                                </span>
+                            {% elif profile.role == 'CUSTOMER' %}
+                                <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-300 text-[8px] font-black uppercase tracking-widest inline-flex items-center gap-1">
+                                    <i data-lucide="briefcase" class="w-2.5 h-2.5"></i> Customer
+                                </span>
+                            {% else %}
+                                <span class="px-2 py-0.5 bg-blue-100 text-blue-800 border border-blue-300 text-[8px] font-black uppercase tracking-widest inline-flex items-center gap-1">
+                                    <i data-lucide="user" class="w-2.5 h-2.5"></i> Staff
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <td class="py-2 px-4 border-r border-slate-200">
+                            {% if profile.role == 'CUSTOMER' %}
+                                <p class="text-[10px] font-black text-slate-700 uppercase tracking-tight">{{ profile.company_name|default:"--" }}</p>
+                                <p class="text-[9px] font-bold text-slate-400 mt-0.5 uppercase">
+                                    <i data-lucide="phone" class="w-2.5 h-2.5 inline mr-0.5"></i> {{ profile.contact_number|default:"--" }}
+                                </p>
+                            {% else %}
+                                <p class="text-[9px] font-bold text-slate-400 italic uppercase">Internal Personnel</p>
+                            {% endif %}
+                        </td>
+
+                        <td class="py-2 px-4 border-r border-slate-200 text-center font-mono text-[10px] text-slate-500">
+                            {% if profile.user.last_login %}
+                                {{ profile.user.last_login|date:"Y-m-d H:i" }}
+                            {% else %}
+                                <span class="text-slate-300">NEVER</span>
+                            {% endif %}
+                        </td>
+
+                        <td class="py-2 px-4 border-r border-slate-200 text-center">
+                            {% if profile.user.is_active %}
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-[8px] font-black uppercase">
+                                    <div class="w-1 h-1 rounded-full bg-emerald-500 animate-pulse"></div> Active
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-rose-50 border border-rose-200 text-rose-700 text-[8px] font-black uppercase opacity-60">
+                                    <div class="w-1 h-1 rounded-full bg-rose-500"></div> Suspended
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <td class="py-2 px-4 text-center">
+                            <div class="flex justify-center gap-1">
+                                <a href="{% url 'edit_user' profile.user.id %}" class="bg-slate-200 hover:bg-teal-600 text-slate-600 hover:text-white p-1.5 border border-slate-300 hover:border-teal-700 transition-colors" title="Edit Profile">
+                                    <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                                </a>
+                                
+                                <form method="POST" action="{% url 'toggle_user_status' profile.user.id %}" class="inline m-0">
+                                    {% csrf_token %}
+                                    <button type="submit" 
+                                            onclick="return confirm('Change account status for {{ profile.user.username }}?')" 
+                                            class="bg-slate-200 hover:bg-rose-600 text-slate-600 hover:text-white p-1.5 border border-slate-300 hover:border-rose-700 transition-colors" 
+                                            title="{% if profile.user.is_active %}Deactivate Account{% else %}Activate Account{% endif %}">
+                                        <i data-lucide="{% if profile.user.is_active %}user-x{% else %}user-check{% endif %}" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="py-20 text-center text-slate-400">
+                            <i data-lucide="users" class="w-10 h-10 mx-auto mb-2 opacity-30"></i>
+                            <p class="font-black text-xs uppercase tracking-widest">No Active Directory Records</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="bg-slate-100 border-t border-slate-300 py-2 px-4 flex justify-between">
+            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest italic">Confidential: For Administrative Use Only</p>
+            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest italic">Total Records: {{ profiles|length }}</p>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,219 @@
+{% extends "Inventory/inquiry/inquiry_base.html" %}
+
+{% block receiving_content %}
+<div class="max-w-[100%] mx-auto pb-20 mt-4 text-slate-800">
+
+    <div class="border-b-2 border-slate-800 pb-2 mb-4 flex justify-between items-end">
+        <div>
+            <h1 class="text-2xl font-black text-slate-900 uppercase tracking-tighter flex items-center gap-2">
+                <i data-lucide="truck" class="w-6 h-6 text-teal-700"></i> Shipment Schedule Inquiry
+            </h1>
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">
+                Logistics and Outbound Delivery Tracking
+            </p>
+        </div>
+    </div>
+
+    <div class="bg-white border border-slate-300 shadow-sm p-4 mb-4">
+        <form method="GET" action="{% url 'shipment_inquiry' %}">
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+
+                <div class="space-y-1">
+                    <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Search Content</label>
+                    <select name="search_content"
+                        class="w-full p-2 text-xs font-bold border border-slate-300 bg-slate-50 focus:ring-1 focus:ring-teal-600 outline-none rounded-sm">
+                        <option value="plan">Shipment Plan</option>
+                        <option value="details">Shipment Plan Details</option>
+                    </select>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Customer</label>
+                    <select name="customer"
+                        class="w-full p-2 text-xs font-bold border border-slate-300 bg-slate-50 focus:ring-1 focus:ring-teal-600 outline-none rounded-sm">
+                        <option value="">-- Select Customer --</option>
+                        {% for cust in customers_list %}
+                        <option value="{{ cust.id }}">
+                            {{ cust.name }}
+                        </option>
+                        {% endfor %}    
+                    </select>
+                </div>
+
+                <div class="space-y-1 lg:col-span-2">
+                    <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Shipment Date </label>
+                    <div class="flex items-center gap-2">
+                        <input type="date" name="date_in"
+                            class="w-full p-2 text-xs font-bold border border-slate-300 bg-slate-50 focus:ring-1 focus:ring-teal-600 outline-none rounded-sm">
+                        <span class="text-xs font-black text-slate-400">TO</span>
+                        <input type="date" name="date_out"
+                            class="w-full p-2 text-xs font-bold border border-slate-300 bg-slate-50 focus:ring-1 focus:ring-teal-600 outline-none rounded-sm">
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Transport</label>
+                    <select name="transport"
+                        class="w-full p-2 text-xs font-bold border border-slate-300 bg-slate-50 focus:ring-1 focus:ring-teal-600 outline-none rounded-sm">
+                        <option value="">-- Select Transport --</option>
+                        <option value="Sea Freight">Sea Freight</option>
+                        <option value="Air Freight">Air Freight</option>
+                        <option value="Land Trucking">Land Trucking</option>
+                    </select>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Item Code</label>
+                    <div class="flex">
+                        <input type="text" name="item_code" placeholder="Enter item..."
+                            class="w-full p-2 text-xs font-bold border border-slate-300 border-r-0 bg-slate-50 focus:ring-1 focus:ring-teal-600 outline-none rounded-l-sm uppercase">
+                        <button type="button"
+                            class="bg-slate-700 text-white px-3 text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 rounded-r-sm transition-colors shadow-sm">
+                            Set
+                        </button>
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Invoice No.</label>
+                    <input type="text" name="invoice_no" placeholder="e.g. INV-2026-001"
+                        class="w-full p-2 text-xs font-bold border border-slate-300 bg-slate-50 focus:ring-1 focus:ring-teal-600 outline-none rounded-sm uppercase">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Shipment
+                        Status</label>
+                    <select name="status"
+                        class="w-full p-2 text-xs font-bold border border-slate-300 bg-slate-50 focus:ring-1 focus:ring-teal-600 outline-none rounded-sm">
+                        <option value="">-- All Status --</option>
+                        <option value="Determined">Determined</option>
+                        <option value="Undetermined">Undetermined</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mt-4 pt-4 border-t border-slate-200 flex justify-end gap-2">
+                <a href="{% url 'shipment_inquiry' %}"
+                    class="bg-white text-slate-600 border border-slate-300 px-6 py-2 text-[10px] font-black uppercase hover:bg-slate-50 transition-all shadow-sm">
+                    Cancel
+                </a>
+                <button type="submit"
+                    class="bg-teal-700 text-white border border-teal-900 px-8 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-teal-800 transition-all shadow-sm flex items-center gap-2">
+                    <i data-lucide="search" class="w-3 h-3"></i> Set / Search
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="bg-white border border-slate-300 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto min-h-[400px]">
+            <table class="w-full text-left border-collapse" style="font-size: 11px;">
+                <thead
+                    class="bg-slate-200 text-slate-800 uppercase tracking-widest border-b border-slate-400 font-black text-[10px]">
+                    <tr>
+                        <th class="py-2 px-4 border-r border-slate-300 text-center w-32">Manage</th>
+                        <th class="py-2 px-4 border-r border-slate-300">Customer</th>
+                        <th class="py-2 px-4 border-r border-slate-300">Shipment Date</th>
+                        <th class="py-2 px-4 border-r border-slate-300">Invoice No.</th>
+                        <th class="py-2 px-4 border-r border-slate-300">Transport</th>
+                        <th class="py-2 px-4 border-r border-slate-300 text-center">Status</th>
+                        <th class="py-2 px-4 text-center w-48">Documents</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200">
+                    {% for ship in shipments %}
+                    <tr class="hover:bg-teal-50/30 transition-colors">
+                        <td class="py-2 px-4 border-r border-slate-200 text-center flex justify-center gap-1">
+                            <button
+                                class="bg-amber-600 text-white px-2 py-1 text-[9px] font-black uppercase rounded-sm hover:bg-amber-700 shadow-sm">Update</button>
+                            <button
+                                class="bg-blue-600 text-white px-2 py-1 text-[9px] font-black uppercase rounded-sm hover:bg-blue-700 shadow-sm">Inquiry</button>
+                        </td>
+
+                        <td class="py-2 px-4 border-r border-slate-200 text-xs font-black text-slate-800">
+                            {{ ship.customer.name|default:"N/A" }}
+                        </td>
+                        <td class="py-2 px-4 border-r border-slate-200 text-xs font-bold text-slate-600">
+                            {{ ship.schedule_date|date:"Y-m-d" }}
+                        </td>
+                        <td class="py-2 px-4 border-r border-slate-200 text-xs font-black text-slate-800">
+                            {{ ship.invoice_no|default:"-" }}
+                        </td>
+                        <td class="py-2 px-4 border-r border-slate-200 text-xs font-bold text-slate-600">
+                            {{ ship.transport|default:"-" }}
+                        </td>
+
+                        <td class="py-2 px-4 border-r border-slate-200 text-center">
+                            {% if ship.status == 'Determined' or ship.status == 'Shipped' or ship.status == 'Confirmed' %}
+                                <span class="bg-teal-100 text-teal-800 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded-sm border border-teal-200">{{ ship.status }}</span>
+                            {% else %}
+                                <span class="bg-slate-100 text-slate-600 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded-sm border border-slate-300">{{ ship.status|default:"Pending" }}</span>
+                            {% endif %}
+                        </td>
+
+                        <td class="py-2 px-4 text-center flex justify-center gap-1">
+                            <button
+                                class="bg-slate-700 text-white px-2 py-1 text-[9px] font-black uppercase rounded-sm hover:bg-slate-800 shadow-sm flex items-center gap-1">
+                                <i data-lucide="file-text" class="w-3 h-3"></i> Invoice
+                            </button>
+                            <button
+                                class="bg-slate-200 text-slate-800 border border-slate-300 px-2 py-1 text-[9px] font-black uppercase rounded-sm hover:bg-slate-300 shadow-sm flex items-center gap-1">
+                                <i data-lucide="printer" class="w-3 h-3"></i> Print
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="py-20 text-center text-slate-400">
+                            <i data-lucide="package-search" class="w-10 h-10 mx-auto mb-2 opacity-30"></i>
+                            <p class="font-black text-xs uppercase tracking-widest">No Shipments Found</p>
+                            <p class="text-[10px] font-bold mt-1 uppercase">Adjust your search filters or clear inputs.
+                            </p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="bg-slate-50 border-t border-slate-200 p-3 flex flex-col md:flex-row justify-between items-center gap-4">
+            
+            <span class="text-[9px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1">
+                <i data-lucide="layers" class="w-3 h-3"></i> 
+                Page {{ shipments.number }} of {{ shipments.paginator.num_pages }}
+                <span class="text-slate-400 mx-1">|</span> 
+                Total Shipments: {{ shipments.paginator.count }}
+            </span>
+
+            <div class="flex items-center gap-1 shadow-sm">
+                {% if shipments.has_previous %}
+                    <a href="?page=1" class="px-3 py-1.5 bg-white border border-slate-300 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-300 transition-colors rounded-l-sm">First</a>
+                    <a href="?page={{ shipments.previous_page_number }}" class="px-3 py-1.5 bg-white border-y border-r border-slate-300 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-300 transition-colors">Prev</a>
+                {% else %}
+                    <span class="px-3 py-1.5 bg-slate-100 border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 rounded-l-sm cursor-not-allowed">First</span>
+                    <span class="px-3 py-1.5 bg-slate-100 border-y border-r border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 cursor-not-allowed">Prev</span>
+                {% endif %}
+
+                <span class="px-4 py-1.5 bg-slate-800 text-white border-y border-slate-800 text-[10px] font-black uppercase tracking-widest">{{ shipments.number }}</span>
+
+                {% if shipments.has_next %}
+                    <a href="?page={{ shipments.next_page_number }}" class="px-3 py-1.5 bg-white border-y border-l border-slate-300 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-300 transition-colors">Next</a>
+                    <a href="?page={{ shipments.paginator.num_pages }}" class="px-3 py-1.5 bg-white border border-slate-300 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-300 transition-colors rounded-r-sm">Last</a>
+                {% else %}
+                    <span class="px-3 py-1.5 bg-slate-100 border-y border-l border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 cursor-not-allowed">Next</span>
+                    <span class="px-3 py-1.5 bg-slate-100 border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 rounded-r-sm cursor-not-allowed">Last</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,160 @@
+{% extends "Inventory/customer_order/order_base.html" %}
+
+{% block order_content %}
+<div class="max-w-[100%] mx-auto pb-20 ml-11 mt-4 text-slate-800">
+
+    <div class="bg-teal-50 border-l-4 border-teal-600 p-3 mb-4 shadow-sm flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <i data-lucide="shield-check" class="text-teal-700 w-5 h-5"></i>
+            <div>
+                <h3 class="text-sm font-black text-teal-900 uppercase tracking-tight">Final Batch Order Review</h3>
+                <p class="text-[10px] font-bold text-teal-700">Pakisuri ang mga detalye sa ibaba. Kapag kinumpirma, ito ay opisyal nang papasok sa records.</p>
+            </div>
+        </div>
+        <div class="flex gap-2">
+            <a href="javascript:history.back()" class="bg-white text-slate-600 border border-slate-300 px-4 py-1.5 text-xs font-black uppercase hover:bg-slate-50 transition-all shadow-sm">
+                Go Back / Edit
+            </a>
+            <form method="POST" action="{% url 'po_confirmation' %}" class="m-0">
+                {% csrf_token %}
+                <button type="submit" class="bg-teal-700 text-white border border-teal-900 px-6 py-1.5 text-xs font-bold uppercase tracking-widest hover:bg-teal-800 transition-colors shadow-md flex items-center gap-2">
+                    <i data-lucide="database" class="w-3 h-3"></i> Confirm & Save All
+                </button>
+            </form>
+        </div>
+    </div>
+
+    {% for order_data in batch_orders %}
+    <div class="bg-white border border-slate-300 shadow-sm p-5 relative mb-6">
+        <div class="absolute -top-3 -left-3 bg-teal-800 text-white w-8 h-8 flex items-center justify-center font-black rounded-full shadow-md">
+            {{ forloop.counter }}
+        </div>
+        
+        <div class="border-b-4 border-slate-800 pb-3 mb-6 flex justify-between items-end pl-6">
+            <h2 class="text-2xl font-black text-slate-900 uppercase tracking-tight flex items-center gap-3">
+                <i data-lucide="file-check" class="w-6 h-6 text-teal-700"></i> Customer Order Details
+            </h2>
+            <div class="text-right">
+                <span class="text-xs font-bold text-slate-500 mr-2 uppercase tracking-widest">Order No:</span>
+                <span class="text-2xl font-black text-teal-800">{{ order_data.header.order_no }}</span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6 mb-8 bg-slate-50 p-5 border border-slate-200 shadow-inner rounded-sm">
+            <div class="space-y-4">
+                <div>
+                    <span class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 border-b border-slate-200 pb-1">Customer / Client</span>
+                    <span class="text-sm font-black text-teal-900 uppercase">{{ order_data.header.customer }}</span>
+                </div>
+                <div>
+                    <span class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 border-b border-slate-200 pb-1">Contact Person</span>
+                    <span class="text-xs font-bold text-slate-700 uppercase">{{ order_data.header.contact_person|default:"NOT SPECIFIED" }}</span>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <div class="flex justify-between border-b border-slate-200 pb-1">
+                    <span class="text-[10px] font-bold text-slate-500 uppercase">Order Date</span>
+                    <span class="text-xs font-black text-slate-800">{{ order_data.header.date|default:"-" }}</span>
+                </div>
+                <div class="flex justify-between border-b border-slate-200 pb-1">
+                    <span class="text-[10px] font-bold text-slate-500 uppercase">Order Type</span>
+                    <span class="text-xs font-black text-slate-800 font-mono">{{ order_data.header.order_type|default:"STANDARD" }}</span>
+                </div>
+                <div class="flex justify-between border-b border-slate-200 pb-1">
+                    <span class="text-[10px] font-bold text-slate-500 uppercase">Transport Method</span>
+                    <span class="text-xs font-black text-slate-800 uppercase">{{ order_data.header.transport|default:"-" }}</span>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <div class="flex justify-between border-b border-slate-200 pb-1">
+                    <span class="text-[10px] font-bold text-slate-500 uppercase">Current Status</span>
+                    <span class="px-2 bg-emerald-100 text-emerald-800 text-[9px] font-black uppercase rounded border border-emerald-300 shadow-sm">{{ order_data.header.status|default:"PENDING" }}</span>
+                </div>
+                <div class="flex flex-col pt-1">
+                    <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 border-b border-slate-200 pb-1">Delivery Address</span>
+                    <span class="text-xs font-bold text-slate-700 leading-tight uppercase">{{ order_data.header.delivery_address|default:"NOT SPECIFIED" }}</span>
+                </div>
+            </div>
+        </div>
+
+        {% if order_data.header.remarks or order_data.header.order_contents %}
+        <div class="mb-6 bg-white border border-slate-300 p-4 border-l-4 border-l-amber-500">
+            <h4 class="text-[10px] font-black uppercase text-slate-500 mb-2 border-b border-slate-200 pb-1 tracking-widest">Remarks & Order Contents</h4>
+            <p class="text-xs font-bold text-slate-800 italic">"{{ order_data.header.remarks|default:order_data.header.order_contents }}"</p>
+        </div>
+        {% endif %}
+
+        <div class="overflow-x-auto border border-slate-400 mb-2 shadow-sm">
+            <table class="w-full text-left border-collapse" style="font-size: 11px;">
+                <thead>
+                    <tr class="bg-slate-800 text-white border-b-2 border-slate-900 uppercase tracking-widest">
+                        <th class="py-3 px-3 text-center w-12 bg-slate-900 text-slate-400">#</th>
+                        <th class="py-3 px-3 border-r border-slate-600 w-48">Item Code</th>
+                        <th class="py-3 px-3 border-r border-slate-600">Item Description</th>
+                        <th class="py-3 px-3 border-r border-slate-600 w-24 text-center text-teal-300">Qty</th>
+                        <th class="py-3 px-3 border-r border-slate-600 w-32 text-right">Unit Price</th>
+                        <th class="py-3 px-3 text-right w-40 text-emerald-400 font-black">Total Amount</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200">
+                    {% for item in order_data.items %}
+                    <tr class="hover:bg-teal-50 transition-colors">
+                        <td class="py-2 px-3 border-r border-slate-200 text-center font-bold text-slate-400 bg-slate-50">{{ forloop.counter }}</td>
+                        <td class="py-2 px-3 border-r border-slate-200 font-black text-slate-800 uppercase">{{ item.item_code }}</td>
+                        <td class="py-2 px-3 border-r border-slate-200 text-slate-600 text-[10px]">{{ item.description|default:"-" }}</td>
+                        <td class="py-2 px-3 border-r border-slate-200 text-center font-black text-teal-800 bg-teal-50/50">{{ item.qty|floatformat:2 }}</td>
+                        <td class="py-2 px-3 border-r border-slate-200 text-right font-bold text-slate-600">₱{{ item.price|floatformat:2 }}</td>
+                        <td class="py-2 px-3 text-right font-black text-slate-900 bg-emerald-50/30">₱{{ item.amount|floatformat:2 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="py-12 text-center text-rose-500 italic font-bold uppercase text-xs">
+                            <i data-lucide="alert-circle" class="w-6 h-6 mx-auto mb-2 text-rose-400"></i>
+                            Walang items na nakita para sa order na ito.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="flex justify-end pt-2 pr-2">
+             <div class="text-xs font-black uppercase tracking-widest text-slate-500">
+                 Order Total: <span class="text-lg text-teal-900 border-b-2 border-teal-800 ml-2">₱{{ order_data.header.grand_total|floatformat:2|default:"0.00" }}</span>
+             </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <div class="bg-white border border-slate-400 p-6 flex flex-col md:flex-row justify-between items-center gap-6 mt-6 pt-6 border-t-4 border-t-teal-800 shadow-xl">
+        <div class="text-[10px] text-slate-500 max-w-sm italic bg-slate-50 p-3 rounded border border-slate-200">
+            <p><strong><i data-lucide="info" class="w-3 h-3 inline-block"></i> System Note:</strong> By clicking the button, all {{ batch_orders|length }} orders will be permanently locked into the database for inventory deduction and financial reporting.</p>
+        </div>
+
+        <div class="w-full md:w-auto space-y-5">
+            <form action="{% url 'po_confirmation' %}" method="POST" onsubmit="return confirm('WARNING: Are you sure you want to post this batch? This action cannot be undone.')">
+                {% csrf_token %}
+                <div class="flex items-center gap-2 mb-4 justify-end">
+                    <input type="checkbox" id="send_email" name="send_email" checked class="w-4 h-4 text-teal-600 bg-white border-slate-300 rounded focus:ring-teal-500">
+                    <label for="send_email" class="text-[10px] font-black uppercase text-slate-600 tracking-widest cursor-pointer hover:text-teal-800 transition-colors">
+                        Send Email Receipt to Customer(s)
+                    </label>
+                </div>
+                <button type="submit" class="w-full bg-teal-700 hover:bg-teal-800 text-white py-4 px-12 rounded shadow-xl border border-teal-900 transition-all transform hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3">
+                    <i data-lucide="hard-drive-upload" class="w-6 h-6"></i>
+                    <span class="text-lg font-black uppercase tracking-widest">Confirm & Post Batch to Database</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        lucide.createIcons();
+    });
+</script>
+{% endblock %}  

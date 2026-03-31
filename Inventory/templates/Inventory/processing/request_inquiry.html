@@ -1,0 +1,159 @@
+{% extends "Inventory/processing/processing_base.html" %}
+
+{% block processing_content %}
+<div class="max-w-[100%] mx-auto pb-20 mt-4 text-slate-800">
+
+    <div class="bg-white border border-slate-300 shadow-sm mb-4">
+        <div class="bg-slate-800 px-4 py-2 flex justify-between items-center text-white border-b border-slate-700">
+            <h2 class="font-black text-sm uppercase tracking-widest flex items-center">
+                <i data-lucide="clipboard-list" class="w-4 h-4 mr-2 text-indigo-400"></i> Material Request Hub
+            </h2>
+            <span class="text-[9px] font-black uppercase tracking-[0.2em] text-indigo-400">Request Processing Active</span>
+        </div>
+
+        <div class="p-4 bg-slate-50">
+            <form method="GET" action="{% url 'request_inquiry' %}">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                    
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Date From</label>
+                        <input type="date" name="date_from" value="{{ request.GET.date_from }}" class="w-full p-2 text-xs font-bold border border-slate-300 bg-white focus:ring-1 focus:ring-indigo-500 outline-none rounded-sm text-slate-700">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Date To</label>
+                        <input type="date" name="date_to" value="{{ request.GET.date_to }}" class="w-full p-2 text-xs font-bold border border-slate-300 bg-white focus:ring-1 focus:ring-indigo-500 outline-none rounded-sm text-slate-700">
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Request Status</label>
+                        <select name="status" class="w-full p-2 text-xs font-bold border border-slate-300 bg-white focus:ring-1 focus:ring-indigo-500 outline-none rounded-sm">
+                            <option value="">-- All Status --</option>
+                            <option value="Pending" {% if request.GET.status == 'Pending' %}selected{% endif %}>Pending Approval</option>
+                            <option value="Approved" {% if request.GET.status == 'Approved' %}selected{% endif %}>Approved / Ready</option>
+                            <option value="Fulfilled" {% if request.GET.status == 'Fulfilled' %}selected{% endif %}>Fulfilled / Issued</option>
+                            <option value="Rejected" {% if request.GET.status == 'Rejected' %}selected{% endif %}>Rejected</option>
+                        </select>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Request No.</label>
+                        <input type="text" name="req_no" value="{{ request.GET.req_no }}" placeholder="e.g. REQ-001" class="w-full p-2 text-xs font-bold border border-slate-300 bg-white focus:ring-1 focus:ring-indigo-500 outline-none rounded-sm uppercase tracking-widest">
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Department</label>
+                        <input type="text" name="department" value="{{ request.GET.department }}" placeholder="e.g. Production" class="w-full p-2 text-xs font-bold border border-slate-300 bg-white focus:ring-1 focus:ring-indigo-500 outline-none rounded-sm uppercase tracking-widest">
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-4 border-t border-slate-200 flex justify-end gap-2">
+                    <a href="{% url 'request_inquiry' %}" class="bg-white text-slate-600 border border-slate-300 px-6 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm flex items-center gap-1.5">
+                        <i data-lucide="rotate-ccw" class="w-3 h-3"></i> Clear
+                    </a>
+                    <button type="submit" class="bg-indigo-600 text-white border border-indigo-800 px-10 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-sm flex items-center gap-2">
+                        <i data-lucide="search" class="w-3 h-3"></i> Search Requests
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="bg-white border border-slate-300 shadow-sm flex flex-col">
+        <div class="overflow-x-auto min-h-[400px]">
+            <table class="w-full text-left border-collapse whitespace-nowrap" style="font-size: 11px;">
+                <thead class="bg-slate-200 text-slate-800 uppercase tracking-widest border-b border-slate-400 font-bold text-[10px]">
+                    <tr>
+                        <th class="py-2 px-4 border-r border-slate-300 text-center w-24 sticky left-0 bg-slate-200 z-10 shadow-[1px_0_0_0_#cbd5e1]">Manage</th>
+                        <th class="py-2 px-4 border-r border-slate-300 w-32">Req No.</th>
+                        <th class="py-2 px-4 border-r border-slate-300">Date Requested</th>
+                        <th class="py-2 px-4 border-r border-slate-300">Department / Requestor</th>
+                        <th class="py-2 px-4 border-r border-slate-300">Item Code</th>
+                        <th class="py-2 px-4 border-r border-slate-300 text-right w-24">Requested Qty</th>
+                        <th class="py-2 px-4 border-r border-slate-300 text-center w-32">Status</th>
+                        <th class="py-2 px-4">Remarks</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200">
+                    {% for req in requests %}
+                    <tr class="hover:bg-indigo-50/30 transition-colors">
+                        
+                        <td class="py-2 px-4 border-r border-slate-200 text-center sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#e2e8f0]">
+                            <a href="{% url 'print_slip' req.request_no %}" target="_blank" class="bg-indigo-600 text-white px-2 py-1 text-[8px] font-black uppercase rounded-[2px] hover:bg-indigo-700 flex items-center justify-center gap-1 mx-auto shadow-sm w-full">
+                                <i data-lucide="printer" class="w-3 h-3"></i> Slip
+                            </a>
+                        </td>
+
+                        <td class="py-2 px-4 border-r border-slate-200 font-black text-slate-800">{{ req.request_no }}</td>
+                        <td class="py-2 px-4 border-r border-slate-200 text-slate-600">{{ req.request_date|date:"Y-m-d" }}</td>
+                        
+                        <td class="py-2 px-4 border-r border-slate-200 font-bold text-slate-700">{{ req.receiving_place }}</td>
+                        
+                        <td class="py-2 px-4 border-r border-slate-200 font-black text-teal-800">{{ req.item_count }} Unique Item/s</td>
+                        
+                        <td class="py-2 px-4 border-r border-slate-200 text-right font-black text-lg text-slate-800 bg-slate-50/50">{{ req.total_qty }}</td>
+                        
+                        <td class="py-2 px-4 border-r border-slate-200 text-center">
+                            {% if req.status == 'Processing' %}
+                                <span class="bg-blue-100 text-blue-800 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded-sm border border-blue-200 animate-pulse">Processing</span>
+                            {% elif req.status == 'Completed' %}
+                                <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded-sm border border-emerald-200">Completed</span>
+                            {% elif req.status == 'Rejected' %}
+                                <span class="bg-rose-100 text-rose-800 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded-sm border border-rose-200">Rejected</span>
+                            {% else %}
+                                <span class="bg-amber-100 text-amber-800 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded-sm border border-amber-200">Pending</span>
+                            {% endif %}
+                        </td>
+
+                        <td class="py-2 px-4 text-xs text-slate-600 truncate max-w-[200px]">{{ req.remarks|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="py-20 text-center text-slate-400">
+                            <i data-lucide="inbox" class="w-10 h-10 mx-auto mb-3 opacity-30"></i>
+                            <p class="font-black text-xs uppercase tracking-widest">No Material Requests Found</p>
+                            <p class="text-[10px] font-bold mt-1">Try adjusting your filters or search for a specific request number.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="bg-slate-50 border-t border-slate-200 p-3 flex flex-col md:flex-row justify-between items-center gap-4">
+            
+            <span class="text-[9px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1">
+                <i data-lucide="layers" class="w-3 h-3"></i> 
+                Page {{ requests.number }} of {{ requests.paginator.num_pages }}
+                <span class="text-slate-400 mx-1">|</span> 
+                Total Requests: {{ requests.paginator.count }}
+            </span>
+
+            <div class="flex items-center gap-1 shadow-sm">
+                {% if requests.has_previous %}
+                    <a href="?page=1" class="px-3 py-1.5 bg-white border border-slate-300 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-300 transition-colors rounded-l-sm">First</a>
+                    <a href="?page={{ requests.previous_page_number }}" class="px-3 py-1.5 bg-white border-y border-r border-slate-300 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-300 transition-colors">Prev</a>
+                {% else %}
+                    <span class="px-3 py-1.5 bg-slate-100 border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 rounded-l-sm cursor-not-allowed">First</span>
+                    <span class="px-3 py-1.5 bg-slate-100 border-y border-r border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 cursor-not-allowed">Prev</span>
+                {% endif %}
+
+                <span class="px-4 py-1.5 bg-slate-800 text-white border-y border-slate-800 text-[10px] font-black uppercase tracking-widest">{{ requests.number }}</span>
+
+                {% if requests.has_next %}
+                    <a href="?page={{ requests.next_page_number }}" class="px-3 py-1.5 bg-white border-y border-l border-slate-300 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-300 transition-colors">Next</a>
+                    <a href="?page={{ requests.paginator.num_pages }}" class="px-3 py-1.5 bg-white border border-slate-300 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-300 transition-colors rounded-r-sm">Last</a>
+                {% else %}
+                    <span class="px-3 py-1.5 bg-slate-100 border-y border-l border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 cursor-not-allowed">Next</span>
+                    <span class="px-3 py-1.5 bg-slate-100 border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 rounded-r-sm cursor-not-allowed">Last</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    });
+</script>
+{% endblock %}

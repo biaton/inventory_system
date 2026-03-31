@@ -1,0 +1,202 @@
+{% extends "Inventory/inventory_request/request_base.html" %}
+
+{% block request_content %}
+<div class="max-w-[98%] mx-auto pb-20 mt-4 text-slate-800">
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+
+        <div class="lg:col-span-4 bg-white border border-slate-300 shadow-sm flex flex-col h-[480px]">
+            
+            <div class="bg-amber-600 px-4 py-3 border-b border-amber-700 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="settings-2" class="w-4 h-4 text-amber-100"></i>
+                    <h2 class="text-xs font-black tracking-widest text-white uppercase">Master Correction</h2>
+                </div>
+            </div>
+            
+            <div class="flex-1 bg-slate-50 p-6 flex flex-col justify-center relative overflow-hidden">
+                <i data-lucide="alert-circle" class="absolute right-[-20px] bottom-10 w-48 h-48 text-amber-200 opacity-20 pointer-events-none transform -rotate-12"></i>
+
+                <div class="relative z-10 space-y-4">
+                    <div>
+                        <label class="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-1 block">Scan Target Lot Number</label>
+                        <p class="text-[9px] font-bold text-slate-500 uppercase mb-3 leading-tight">Must scan a valid sticker to load master data for override.</p>
+                    </div>
+                    
+                    <div class="relative">
+                        <i data-lucide="scan-line" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
+                        <input type="text" id="scan_lot_no" placeholder="SCAN STICKER..." autofocus
+                               class="w-full pl-12 pr-4 py-4 bg-white border-2 border-slate-300 shadow-inner text-lg font-black text-slate-800 uppercase tracking-widest focus:ring-0 focus:border-amber-500 transition-all placeholder:text-slate-300">
+                    </div>
+                    
+                    <div class="flex items-center gap-2 mt-4 bg-white border border-slate-200 p-2 shadow-sm">
+                        <span class="relative flex h-3 w-3 ml-1">
+                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" id="ping_indicator"></span>
+                          <span class="relative inline-flex rounded-full h-3 w-3 bg-amber-500" id="dot_indicator"></span>
+                        </span>
+                        <p class="text-[10px] text-slate-600 font-bold uppercase tracking-widest" id="scan_status">Awaiting scanner input...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-8 bg-white border border-slate-300 shadow-sm flex flex-col h-[480px]">
+            
+            <div id="waiting_state" class="flex-1 flex flex-col items-center justify-center p-12 text-center bg-slate-100">
+                <div class="bg-white w-20 h-20 rounded-full flex items-center justify-center mb-4 border border-slate-300 shadow-sm">
+                    <i data-lucide="pencil-ruler" class="text-slate-400 w-8 h-8"></i>
+                </div>
+                <h3 class="text-sm font-black text-slate-800 tracking-widest uppercase">System Override Standby</h3>
+                <p class="text-[10px] font-bold text-slate-500 mt-2 max-w-sm uppercase leading-relaxed">Scan an item to load its current master data and make direct system adjustments.</p>
+            </div>
+
+            <form method="POST" action="" id="action_form" class="hidden flex-1 flex flex-col">
+                {% csrf_token %}
+                <input type="hidden" name="tag_id" id="hidden_tag_id">
+
+                <div class="p-6 border-b border-amber-200 bg-amber-50/50 flex justify-between items-start">
+                    <div>
+                        <span class="px-2 py-0.5 bg-amber-200 text-amber-900 text-[9px] font-black uppercase tracking-widest mb-2 inline-block border border-amber-300">Target Selected</span>
+                        <h2 class="text-2xl font-black text-slate-900 tracking-tighter uppercase" id="display_item_code">ITEM-CODE</h2>
+                        <p class="text-xs font-bold text-slate-600 mt-0.5" id="display_description">Item Description Here</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Lot Number Reference</p>
+                        <p class="font-black text-lg text-amber-700 bg-white border border-amber-300 px-3 py-1 shadow-sm" id="display_lot_no">LOT-000</p>
+                    </div>
+                </div>
+
+                <div class="flex-1 p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-white">
+                    
+                    <div class="border-2 border-amber-400 bg-amber-50 p-4 flex flex-col shadow-inner">
+                        <label class="text-[10px] font-black text-amber-800 uppercase tracking-widest flex items-center gap-1 mb-2">
+                            <i data-lucide="layers" class="w-3 h-3"></i> Correct Quantity (PCS)
+                        </label>
+                        <input type="number" name="new_qty" id="new_qty_input" min="0" required
+                               class="w-full p-3 bg-white border border-amber-300 text-2xl font-black text-slate-900 focus:ring-2 focus:ring-amber-500 focus:outline-none shadow-sm transition-all text-center">
+                        <p class="text-[9px] text-slate-500 mt-2 font-bold uppercase tracking-widest text-center">System count was: <span id="display_old_qty" class="text-slate-800 font-black">0</span></p>
+                    </div>
+
+                    <div class="border-2 border-amber-400 bg-amber-50 p-4 flex flex-col shadow-inner">
+                        <label class="text-[10px] font-black text-amber-800 uppercase tracking-widest flex items-center gap-1 mb-2">
+                            <i data-lucide="map-pin" class="w-3 h-3"></i> Correct Location (Rack/Bin)
+                        </label>
+                        <input type="text" name="new_location" id="new_location_input" required
+                               class="w-full p-3 bg-white border border-amber-300 text-xl font-black text-slate-900 focus:ring-2 focus:ring-amber-500 focus:outline-none shadow-sm transition-all text-center uppercase placeholder:text-slate-300">
+                        <p class="text-[9px] text-slate-500 mt-2 font-bold uppercase tracking-widest text-center">System loc was: <span id="display_old_loc" class="text-slate-800 font-black">---</span></p>
+                    </div>
+
+                    <div class="md:col-span-2 border border-slate-200 bg-slate-50 p-4">
+                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Reason for System Override <span class="text-rose-500">*</span></label>
+                        <select name="reason" required class="w-full p-2.5 bg-white border border-slate-300 text-xs font-bold text-slate-700 focus:ring-1 focus:ring-amber-500 outline-none">
+                            <option value="">-- Select Justification --</option>
+                            <option value="Physical Count Discrepancy">Physical Count Discrepancy (Sobra/Kulang)</option>
+                            <option value="Damaged Item Removed">Damaged Item Removed (Nasira)</option>
+                            <option value="Wrong Location Data">Wrong Location Data (Mali ng Rack)</option>
+                            <option value="Data Entry Error">Data Entry Error (Mali ang nai-type kanina)</option>
+                        </select>
+                    </div>
+
+                </div>
+
+                <div class="p-4 bg-slate-100 border-t border-slate-300 flex justify-between items-center">
+                    <p class="text-[9px] text-amber-600 font-bold uppercase tracking-widest hidden md:flex items-center gap-1">
+                        <i data-lucide="alert-circle" class="w-3 h-3"></i> Warning: Overwrites database permanently.
+                    </p>
+                    <button type="submit" onclick="return confirm('WARNING: You are modifying master data. Continue?')" class="bg-amber-600 text-white px-10 py-3 text-[11px] font-black uppercase tracking-widest hover:bg-amber-700 transition-all shadow-md border border-amber-800 flex items-center gap-2 w-full md:w-auto justify-center">
+                        <i data-lucide="check-square" class="w-4 h-4"></i> Apply Correction
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        lucide.createIcons();
+
+        const scanInput = document.getElementById('scan_lot_no');
+        const formDiv = document.getElementById('action_form');
+        const waitingDiv = document.getElementById('waiting_state');
+        const statusText = document.getElementById('scan_status');
+        const pingIndicator = document.getElementById('ping_indicator');
+        const dotIndicator = document.getElementById('dot_indicator');
+
+        scanInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault(); 
+                let lotNo = scanInput.value.trim();
+                
+                if(lotNo !== "") {
+                    // Status Change to Loading
+                    statusText.innerText = "Accessing master data...";
+                    pingIndicator.classList.replace("bg-amber-400", "bg-slate-400");
+                    dotIndicator.classList.replace("bg-amber-500", "bg-slate-500");
+                    
+                    fetch(`/inventory-request/get-tag/?lot_no=${lotNo}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Populate Hidden & Display Headers
+                                document.getElementById('hidden_tag_id').value = data.tag_id;
+                                document.getElementById('display_item_code').innerText = data.item_code;
+                                document.getElementById('display_description').innerText = data.description;
+                                document.getElementById('display_lot_no').innerText = data.lot_no;
+                                
+                                // Populate Previous Data Text
+                                document.getElementById('display_old_qty').innerText = data.current_qty;
+                                document.getElementById('display_old_loc').innerText = data.current_location;
+
+                                // ✨ ANG MAGIC: I-AUTOFILL ANG INPUT BOXES PARA MADALI I-EDIT ✨
+                                document.getElementById('new_qty_input').value = data.current_qty;
+                                
+                                let cleanLoc = data.current_location.split(' | ')[0];
+                                document.getElementById('new_location_input').value = (cleanLoc === "Unassigned / No Location") ? "" : cleanLoc;
+
+                                // Switch Views
+                                waitingDiv.classList.add('hidden');
+                                formDiv.classList.remove('hidden');
+                                formDiv.classList.add('flex');
+
+                                // Status Change to Ready
+                                statusText.innerText = "Data loaded. Ready for override.";
+                                pingIndicator.classList.replace("bg-slate-400", "bg-emerald-400");
+                                dotIndicator.classList.replace("bg-slate-500", "bg-emerald-500");
+                                
+                                // Auto Select Content for fast editing
+                                document.getElementById('new_qty_input').focus();
+                                document.getElementById('new_qty_input').select(); 
+                            } else {
+                                alert(data.error);
+                                
+                                // Revert Views
+                                waitingDiv.classList.remove('hidden');
+                                formDiv.classList.add('hidden');
+                                formDiv.classList.remove('flex');
+                                
+                                scanInput.value = "";
+                                scanInput.focus();
+                                
+                                // Revert Status
+                                statusText.innerText = "Awaiting scanner input...";
+                                pingIndicator.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75";
+                                dotIndicator.className = "relative inline-flex rounded-full h-3 w-3 bg-amber-500";
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert("Error connecting to inventory database.");
+                            
+                            // Revert Status on Error
+                            statusText.innerText = "Awaiting scanner input...";
+                            pingIndicator.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75";
+                            dotIndicator.className = "relative inline-flex rounded-full h-3 w-3 bg-amber-500";
+                        });
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

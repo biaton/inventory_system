@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>P.O. Status Update</title></head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f8fafc; color: #334155;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="padding: 20px;">
+        <tr><td align="center">
+            <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                
+                <tr>
+                    <td style="background-color: {% if status == 'Approved' %}#059669{% else %}#dc2626{% endif %}; padding: 20px; text-align: center;">
+                        <h2 style="margin: 0; color: #ffffff; font-size: 20px; letter-spacing: 2px; text-transform: uppercase;">
+                            P.O. Status: {{ status }}
+                        </h2>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td style="padding: 30px;">
+                        <p style="margin: 0 0 15px 0; font-size: 16px;">Hello,</p>
+                        <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 1.6;">
+                            The management has finished reviewing your Purchase Order. Below is the final decision:
+                        </p>
+                        
+                        <table width="100%" cellpadding="15" cellspacing="0" style="background-color: #f8fafc; border-left: 4px solid {% if status == 'Approved' %}#059669{% else %}#dc2626{% endif %}; border-radius: 4px; margin-bottom: 25px;">
+                            <tr><td>
+                                <table width="100%" cellpadding="5" cellspacing="0" style="font-size: 14px;">
+                                    <tr>
+                                        <td width="40%" style="color: #64748b;"><strong>P.O. Number:</strong></td>
+                                        <td width="60%" style="color: #0f172a; font-weight: bold;">{{ po_no }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="color: #64748b;"><strong>Supplier:</strong></td>
+                                        <td style="color: #0f172a;">{{ supplier }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="color: #64748b;"><strong>Status:</strong></td>
+                                        <td style="color: {% if status == 'Approved' %}#059669{% else %}#dc2626{% endif %}; font-weight: bold; text-transform: uppercase;">
+                                            {{ status }}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="color: #64748b;"><strong>Reviewed By:</strong></td>
+                                        <td style="color: #0f172a;">{{ manager }}</td>
+                                    </tr>
+                                </table>
+                            </td></tr>
+                        </table>
+
+                        {% if status == 'Rejected' %}
+                        <p style="background-color: #fef2f2; padding: 10px; border-radius: 4px; color: #991b1b; font-size: 13px; text-align: center; border: 1px solid #fecaca;">
+                            <strong>Note:</strong> Please check the system remarks for the reason of rejection and resubmit if necessary.
+                        </p>
+                        {% else %}
+                        <p style="margin: 0; font-size: 13px; color: #64748b; text-align: center;">
+                            You may now proceed with sending the official PO document to the supplier.
+                        </p>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="background-color: #1e293b; padding: 15px; text-align: center;">
+                        <p style="margin: 0; color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">ASIA Integrated Corp. • Purchasing System</p>
+                    </td>
+                </tr>
+            </table>
+        </td></tr>
+    </table>
+</body>
+</html>

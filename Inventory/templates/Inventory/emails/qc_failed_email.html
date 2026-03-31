@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>QC Rejected Alert</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f8fafc; color: #334155;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 20px;">
+        <tr>
+            <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                    <tr>
+                        <td style="background-color: #9f1239; padding: 20px; text-align: center;">
+                            <h2 style="margin: 0; color: #ffffff; font-size: 20px; letter-spacing: 2px; text-transform: uppercase;">🚨 QC Inspection Failed</h2>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 30px;">
+                            <p style="margin: 0 0 15px 0; font-size: 16px;">Attention Quality & Production Team,</p>
+                            <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 1.6;">
+                                Please be advised that a material tag has <strong>FAILED</strong> the quality inspection. Do not use this material for production.
+                            </p>
+                            <table width="100%" cellpadding="15" cellspacing="0" style="background-color: #fff1f2; border-left: 4px solid #e11d48; border-radius: 4px; margin-bottom: 25px;">
+                                <tr>
+                                    <td>
+                                        <p style="margin: 0 0 8px 0; font-size: 12px; color: #9f1239; text-transform: uppercase; letter-spacing: 1px;">Rejected Material Details</p>
+                                        <h3 style="margin: 0 0 5px 0; font-size: 18px; color: #881337;">{{ item_code }}</h3>
+                                        <p style="margin: 0 0 15px 0; font-size: 14px; color: #be123c;">{{ description }}</p>
+                                        
+                                        <table width="100%" cellpadding="5" cellspacing="0" style="font-size: 14px;">
+                                            <tr>
+                                                <td width="40%" style="color: #9f1239;"><strong>Lot Number:</strong></td>
+                                                <td width="60%" style="color: #4c0519; font-weight: bold;">{{ lot_no }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="color: #9f1239;"><strong>Rejected Qty:</strong></td>
+                                                <td style="color: #4c0519;">{{ qty }} {{ uom }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="color: #9f1239;"><strong>Inspector Notes:</strong></td>
+                                                <td style="color: #4c0519; font-style: italic;">"{{ remarks }}"</td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                            <p style="margin: 0; font-size: 13px; color: #64748b; text-align: center; font-style: italic;">
+                                Please coordinate with Purchasing for immediate replacement or RTV (Return to Vendor).
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="background-color: #1e293b; padding: 15px; text-align: center;">
+                            <p style="margin: 0; color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">
+                                ASIA Integrated Corp. • Quality Assurance
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

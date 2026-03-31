@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Order Shipped</title></head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f8fafc; color: #334155;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="padding: 20px;">
+        <tr><td align="center">
+            <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                <tr>
+                    <td style="background-color: #0f766e; padding: 20px; text-align: center;">
+                        <h2 style="margin: 0; color: #ffffff; font-size: 20px; letter-spacing: 2px; text-transform: uppercase;">📦 Your Order is on the way!</h2>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 30px;">
+                        <p style="margin: 0 0 15px 0; font-size: 16px;">Hello Valued Customer,</p>
+                        <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 1.6;">Great news! Your order <strong>{{ order_no }}</strong> has been packed and handed over to our logistics partner.</p>
+                        
+                        <table width="100%" cellpadding="15" cellspacing="0" style="background-color: #f0fdf4; border-left: 4px solid #10b981; border-radius: 4px; margin-bottom: 25px;">
+                            <tr><td>
+                                <p style="margin: 0 0 8px 0; font-size: 12px; color: #047857; text-transform: uppercase;">Shipping Information</p>
+                                <p style="margin: 0 0 5px 0; font-size: 14px;"><strong>Courier:</strong> {{ courier_name }}</p>
+                                <p style="margin: 0 0 0 0; font-size: 14px;"><strong>Tracking Number:</strong> <span style="font-size: 16px; font-weight: bold; color: #0f766e;">{{ tracking_number }}</span></p>
+                            </td></tr>
+                        </table>
+                        <p style="margin: 0; font-size: 13px; color: #64748b; text-align: center;">Thank you for trusting ASIA Integrated Corp.</p>
+                    </td>
+                </tr>
+            </table>
+        </td></tr>
+    </table>
+</body>
+</html>

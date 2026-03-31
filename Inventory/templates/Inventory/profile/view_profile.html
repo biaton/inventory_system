@@ -1,0 +1,60 @@
+{% extends "Inventory/base.html" %}
+
+{% block title %}View Profile | AIM Inventory{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto mt-6 pb-12">
+    
+    <div class="border-b-2 border-slate-800 pb-2 mb-6 flex justify-between items-end">
+        <div>
+            <h1 class="text-xl font-black text-slate-900 uppercase tracking-tighter flex items-center gap-2">
+                <i data-lucide="user-circle" class="w-6 h-6 text-teal-700"></i> Account Overview
+            </h1>
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">System User Credentials</p>
+        </div>
+        <a href="{% url 'edit_profile' %}" class="bg-slate-800 text-white px-5 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-teal-700 transition-colors shadow-sm flex items-center gap-2">
+            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Edit Details
+        </a>
+    </div>
+
+    <div class="bg-white border border-slate-300 shadow-sm flex flex-col md:flex-row">
+        <div class="bg-slate-50 border-r border-slate-200 p-8 flex flex-col items-center justify-center min-w-[250px]">
+            <div class="w-24 h-24 bg-slate-800 rounded-full flex items-center justify-center shadow-inner mb-4">
+                <span class="text-4xl font-black text-white uppercase">{{ request.user.username|make_list|first }}</span>
+            </div>
+            <h2 class="text-lg font-black text-slate-800 uppercase">{{ request.user.username }}</h2>
+            <p class="text-[10px] font-bold text-emerald-600 uppercase tracking-widest flex items-center gap-1 mt-1">
+                <i data-lucide="shield-check" class="w-3 h-3"></i> 
+                {% if request.user.is_superuser %} System Admin {% else %} Standard User {% endif %}
+            </p>
+        </div>
+
+        <div class="p-8 flex-1">
+            <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-200 pb-2 mb-4">Personal Information</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-4">
+                <div>
+                    <label class="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">First Name</label>
+                    <p class="text-sm font-black text-slate-800 uppercase">{{ request.user.first_name|default:"---" }}</p>
+                </div>
+                <div>
+                    <label class="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Last Name</label>
+                    <p class="text-sm font-black text-slate-800 uppercase">{{ request.user.last_name|default:"---" }}</p>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Email Address</label>
+                    <p class="text-sm font-bold text-slate-800">{{ request.user.email|default:"No email registered" }}</p>
+                </div>
+                <div class="md:col-span-2 pt-4 border-t border-slate-100">
+                    <label class="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Account Created</label>
+                    <p class="text-xs font-bold text-slate-600 uppercase">{{ request.user.date_joined|date:"F j, Y, g:i a" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() { if (typeof lucide !== 'undefined') lucide.createIcons(); });
+</script>
+{% endblock %}

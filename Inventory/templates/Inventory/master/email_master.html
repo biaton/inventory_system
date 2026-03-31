@@ -1,0 +1,134 @@
+{% extends "Inventory/master/master_base.html" %}
+
+{% block master_content %}
+<div class="max-w-[100%] mx-auto pb-20 mt-4 text-slate-800">
+
+    <div class="mb-6 flex justify-between items-end border-b-2 border-teal-800 pb-2">
+        <div>
+            <h2 class="text-xl font-black text-teal-900 uppercase tracking-tighter flex items-center gap-2">
+                <i data-lucide="mail-warning" class="w-6 h-6 text-teal-700"></i> Notification Control Center
+            </h2>
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Routing alerts to the right departments</p>
+        </div>
+        <div class="bg-teal-50 px-3 py-1 border border-teal-200 rounded-sm">
+            <span class="text-[9px] font-black text-teal-700 uppercase tracking-widest">System Status: <span class="text-emerald-600">Active</span></span>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for route in routes %}
+        <div class="email-route-card group bg-white border border-slate-300 shadow-sm hover:shadow-md transition-all flex flex-col relative overflow-hidden">
+
+            <div class="h-1.5 w-full {% if route.is_active %}bg-teal-600{% else %}bg-slate-300{% endif %}"></div>
+
+            <form method="POST" action="{% url 'update_email_route' %}" class="flex flex-col flex-1">
+                {% csrf_token %}
+                <input type="hidden" name="route_id" value="{{ route.id }}">
+
+                <div class="p-4 bg-slate-50/50 border-b border-slate-200">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[9px] font-black uppercase tracking-widest {% if route.is_active %}text-teal-600{% else %}text-slate-400{% endif %}">
+                                {% if route.is_active %}Active{% else %}Disabled{% endif %}
+                            </span>
+                            <input type="checkbox" name="is_active" {% if route.is_active %}checked{% endif %} class="w-4 h-4 accent-teal-600 cursor-pointer">
+                        </div>
+                    </div>
+                    <h3 class="text-xs font-black text-slate-900 uppercase leading-tight h-8 flex items-center">
+                        {{ route.get_event_name_display }}
+                    </h3>
+                </div>
+
+                <div class="p-4 flex-1">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Target Recipients</label>
+
+                    <div class="tags-input-container w-full min-h-[100px] p-2 border border-slate-300 bg-slate-50 focus-within:bg-white focus-within:border-teal-500 focus-within:ring-1 focus-within:ring-teal-500 transition-all flex flex-wrap gap-2 items-start align-top content-start">
+                        <div class="tags-wrapper flex flex-wrap gap-2"></div>
+                        <input type="text" class="tag-input-field flex-1 min-w-[120px] bg-transparent text-xs font-bold outline-none p-1 placeholder:italic placeholder:text-slate-400" placeholder="Add email then Enter...">
+                    </div>
+
+                    <input type="hidden" name="target_emails" class="hidden-emails-input" value="{{ route.target_emails|default_if_none:'' }}">
+                </div>
+
+                <div class="p-3 bg-slate-50 border-t border-slate-200">
+                    <button type="submit" class="w-full bg-teal-700 text-white px-4 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-teal-800 transition-colors flex items-center justify-center gap-2 shadow-sm transform active:scale-95">
+                        <i data-lucide="save" class="w-3 h-3"></i> Save Configuration
+                    </button>
+                </div>
+            </form>
+        </div>
+        {% empty %}
+        <div class="col-span-full py-20 text-center bg-white border border-dashed border-slate-400">
+            <i data-lucide="mail-x" class="w-12 h-12 mx-auto mb-4 text-slate-300"></i>
+            <h3 class="text-sm font-black text-slate-500 uppercase tracking-widest">No notification routes found</h3>
+            <p class="text-xs text-slate-400 mt-2">Add routes via Django Admin to start managing alerts.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // 🚀 BAGO: '.email-route-card' na ang hinahanap natin imbes na '.group'
+        document.querySelectorAll('.email-route-card').forEach(card => {
+            const hiddenInput = card.querySelector('.hidden-emails-input');
+            const tagsWrapper = card.querySelector('.tags-wrapper');
+            const inputField = card.querySelector('.tag-input-field');
+
+            // Function para i-render ang tags mula sa hidden input
+            function renderTags() {
+                tagsWrapper.innerHTML = '';
+                // Nilagyan ng safety check in case blank
+                const emailString = hiddenInput.value || '';
+                const emails = emailString.split(',').map(e => e.trim()).filter(e => e !== "" && e !== "None");
+
+                emails.forEach((email, index) => {
+                    const tag = document.createElement('div');
+                    tag.className = "flex items-center gap-1.5 bg-teal-100 text-teal-800 border border-teal-200 px-2 py-1 rounded-sm text-[10px] font-black transition-all hover:bg-teal-200";
+                    tag.innerHTML = `
+                    <span>${email}</span>
+                    <button type="button" class="remove-tag text-teal-600 hover:text-rose-600 transition-colors" data-index="${index}">
+                        <i data-lucide="x" class="w-3 h-3"></i>
+                    </button>
+                `;
+                    tagsWrapper.appendChild(tag);
+                });
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            }
+
+            // Event: Pag-add ng Tag (Enter or Comma)
+            inputField.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' || e.key === ',') {
+                    e.preventDefault();
+                    const value = this.value.trim().replace(',', '');
+
+                    if (value && value.includes('@')) { // Simple email check
+                        const currentEmails = hiddenInput.value ? hiddenInput.value.split(',') : [];
+                        currentEmails.push(value);
+                        hiddenInput.value = currentEmails.join(',');
+                        this.value = '';
+                        renderTags();
+                    }
+                }
+            });
+
+            // Event: Pag-remove ng Tag
+            tagsWrapper.addEventListener('click', function (e) {
+                const removeBtn = e.target.closest('.remove-tag');
+                if (removeBtn) {
+                    const index = removeBtn.getAttribute('data-index');
+                    const emails = hiddenInput.value.split(',');
+                    emails.splice(index, 1);
+                    hiddenInput.value = emails.join(',');
+                    renderTags();
+                }
+            });
+
+            // Initial Render
+            renderTags();
+        });
+    });
+</script>
+{% endblock %}

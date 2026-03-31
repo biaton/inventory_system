@@ -1,0 +1,311 @@
+{% extends "Inventory/purchase_order/po_base.html" %}
+
+{% block po_content %}
+<div class="max-w-[100%] mx-auto pb-20 mt-4 text-slate-800">
+
+    <div class="mt-6 mb-8 grid grid-cols-1 md:grid-cols-4 gap-4">
+        
+        <div class="bg-white border border-slate-300 p-4 shadow-sm relative overflow-hidden group">
+            <div class="absolute left-0 top-0 w-1 h-full bg-indigo-600 transition-all group-hover:w-1.5"></div>
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Total P.O. Count</p>
+                    <h2 class="text-2xl font-black text-slate-800 leading-none">{{ total_orders_count|default:"0" }}</h2>
+                </div>
+                <div class="bg-indigo-50 p-2 rounded">
+                    <i data-lucide="shopping-cart" class="w-5 h-5 text-indigo-600"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white border border-slate-300 p-4 shadow-sm relative overflow-hidden group">
+            <div class="absolute left-0 top-0 w-1 h-full bg-amber-500 transition-all group-hover:w-1.5"></div>
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Pending Approval</p>
+                    <h2 class="text-2xl font-black text-slate-800 leading-none">{{ total_pending|default:"0" }}</h2>
+                </div>
+                <div class="bg-amber-50 p-2 rounded">
+                    <i data-lucide="clock" class="w-5 h-5 text-amber-600"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white border border-slate-300 p-4 shadow-sm relative overflow-hidden group">
+            <div class="absolute left-0 top-0 w-1 h-full bg-emerald-500 transition-all group-hover:w-1.5"></div>
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Approved P.O.</p>
+                    <h2 class="text-2xl font-black text-slate-800 leading-none">{{ total_approved|default:"0" }}</h2>
+                </div>
+                <div class="bg-emerald-50 p-2 rounded">
+                    <i data-lucide="check-circle" class="w-5 h-5 text-emerald-600"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-slate-800 border border-slate-900 p-4 shadow-md relative overflow-hidden group">
+            <div class="absolute right-0 top-0 w-1 h-full bg-teal-400 transition-all group-hover:w-1.5"></div>
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-[10px] font-black text-teal-400 uppercase tracking-widest mb-1">Total P.O. Amount</p>
+                    <h2 class="text-2xl font-black text-white leading-none tracking-tight">₱ {{ overall_grand_total|floatformat:2 }}</h2>
+                </div>
+                <div class="bg-slate-700 p-2 rounded border border-slate-600">
+                    <i data-lucide="banknote" class="w-5 h-5 text-teal-300"></i>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="bg-white border border-slate-300 shadow-sm mb-4">
+        
+        <div class="bg-slate-800 px-4 py-2 flex justify-between items-center text-white border-b border-slate-700">
+            <h2 class="font-black text-sm uppercase tracking-widest flex items-center">
+                <i data-lucide="filter" class="w-4 h-4 mr-2 text-teal-400"></i> Advanced Search
+            </h2>
+        </div>
+
+        <form method="GET" action="{% url 'po_inquiry' %}" class="p-4 bg-slate-50 flex flex-col md:flex-row items-end gap-4">
+            
+            <div class="flex-1 w-full space-y-1">
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Quick Search</label>
+                <div class="relative">
+                    <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4"></i>
+                    <input type="text" name="search" value="{{ search_query }}" placeholder="Search PO No or Supplier..." 
+                           class="w-full pl-9 pr-3 py-1.5 bg-white border border-slate-400 text-xs font-bold text-slate-800 uppercase tracking-widest focus:ring-1 focus:ring-teal-500 outline-none">
+                </div>
+            </div>
+
+            <div class="flex gap-4 w-full md:w-auto">
+                <div class="space-y-1 flex-1">
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">From Date</label>
+                    <input type="date" name="from_date" value="{{ from_date }}" class="w-full p-1.5 bg-white border border-slate-400 text-xs font-bold text-slate-600 focus:ring-1 focus:ring-teal-500 outline-none">
+                </div>
+                <div class="space-y-1 flex-1">
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">To Date</label>
+                    <input type="date" name="to_date" value="{{ to_date }}" class="w-full p-1.5 bg-white border border-slate-400 text-xs font-bold text-slate-600 focus:ring-1 focus:ring-teal-500 outline-none">
+                </div>
+            </div>
+
+            <div class="flex gap-2 w-full md:w-auto mt-4 md:mt-0">
+                {% if search_query or from_date or to_date %}
+                    <a href="{% url 'po_inquiry' %}" class="bg-slate-200 text-slate-600 border border-slate-400 px-6 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-slate-300 transition-colors flex items-center justify-center">
+                        Clear
+                    </a>
+                {% endif %}
+                <button type="submit" class="bg-teal-700 text-white border border-teal-900 px-8 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-teal-800 transition-colors shadow-sm flex items-center justify-center gap-2">
+                    <i data-lucide="sliders-horizontal" class="w-3 h-3"></i> Filter Data
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="bg-white border border-slate-300 shadow-sm flex flex-col">
+        
+        <div class="overflow-x-auto min-h-[400px]">
+            <table class="w-full text-left border-collapse" style="font-size: 11px;">
+                <thead class="bg-slate-200 text-slate-800 uppercase tracking-widest border-b border-slate-400 font-bold text-[10px]">
+                    <tr>
+                        <th class="px-4 py-2 border-r border-slate-400">Batch Reference</th>
+                        <th class="px-4 py-2 border-r border-slate-400 text-center">Batch Count</th>
+                        <th class="px-4 py-2 border-r border-slate-400">Main Supplier</th>
+                        <th class="px-4 py-2 border-r border-slate-400 text-right">Batch Total Due</th>
+                        <th class="px-4 py-2 border-r border-slate-400 text-center">Status</th>
+                        <th class="px-4 py-2 text-center w-24">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-300">
+                    
+                    {% for batch in page_obj %}
+                    <tr class="hover:bg-slate-50 transition-colors group">
+                        
+                        <td class="px-4 py-3 border-r border-slate-300">
+                            <div class="flex flex-col">
+                                <span class="font-black text-teal-800 text-xs">{{ batch.main_po.po_no }}</span>
+                                <span class="text-[9px] font-bold text-slate-500 uppercase mt-0.5">Date: {{ batch.main_po.order_date|date:"Y-m-d" }}</span>
+                            </div>
+                        </td>
+
+                        <td class="px-4 py-3 border-r border-slate-300 text-center font-bold text-slate-600">
+                            {{ batch.total_pos }} Order(s)
+                            {% if batch.sub_pos %}
+                                <span class="block text-[8px] text-indigo-600 mt-0.5 tracking-widest">+ {{ batch.sub_pos|length }} Sub</span>
+                            {% endif %}
+                        </td>
+                        
+                        <td class="px-4 py-3 border-r border-slate-300">
+                            <div class="flex flex-col">
+                                <span class="font-black text-slate-800 uppercase text-xs">{{ batch.main_po.supplier.name|default:batch.main_po.supplier }}</span>
+                                <div class="flex items-center gap-1 text-[9px] text-slate-500 font-bold uppercase mt-1">
+                                    <i data-lucide="truck" class="w-3 h-3 text-slate-400"></i> {{ batch.main_po.transport|default:"Standard" }}
+                                </div>
+                            </div>
+                        </td>
+                        
+                        <td class="px-4 py-3 border-r border-slate-300 text-right bg-slate-50/50">
+                            <span class="font-black text-slate-900 text-sm">
+                                {{ batch.main_po.currency|default:'PHP' }} {{ batch.batch_grand_total|floatformat:2|default:"0.00" }}
+                            </span>
+                        </td>
+                        
+                        <td class="px-4 py-3 border-r border-slate-300 text-center">
+                            {% if batch.main_po.ordering_status == 'Approved' %}
+                                <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-300 text-[9px] font-black uppercase tracking-widest">Approved</span>
+                            {% elif batch.main_po.ordering_status == 'Pending Approval' or batch.main_po.ordering_status == 'Pending' %}
+                                <span class="px-2 py-0.5 bg-amber-100 text-amber-800 border border-amber-300 text-[9px] font-black uppercase tracking-widest">Pending</span>
+                            {% elif batch.main_po.ordering_status == 'Cancelled' or batch.main_po.ordering_status == 'Rejected' %}
+                                <span class="px-2 py-0.5 bg-rose-100 text-rose-800 border border-rose-300 text-[9px] font-black uppercase tracking-widest">Cancelled</span>
+                            {% else %}
+                                <span class="px-2 py-0.5 bg-slate-200 text-slate-700 border border-slate-400 text-[9px] font-black uppercase tracking-widest">{{ batch.main_po.ordering_status|default:"Draft" }}</span>
+                            {% endif %}
+                        </td>
+                        
+                        <td class="px-4 py-3 text-center">
+                            <div class="flex justify-center gap-1">
+                                <button type="button" onclick="openPOModal('{{ batch.batch_id }}')" class="bg-slate-200 hover:bg-slate-700 text-slate-600 hover:text-white p-1.5 border border-slate-300 hover:border-slate-800 transition-colors shadow-sm inline-flex" title="View Details">
+                                    <i data-lucide="eye" class="w-4 h-4"></i>
+                                </button>
+                                
+                                <a href="{% url 'print_po' %}?po_no={{ batch.main_po.po_no }}" target="_blank" class="bg-slate-200 hover:bg-teal-700 text-slate-600 hover:text-white p-1.5 border border-slate-300 hover:border-teal-800 transition-colors shadow-sm inline-flex" title="Print Official PO">
+                                    <i data-lucide="printer" class="w-4 h-4"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-4 py-16 text-center text-slate-500">
+                            <div class="flex flex-col items-center justify-center">
+                                <i data-lucide="search-x" class="w-10 h-10 mb-3 opacity-40"></i>
+                                <p class="font-black text-xs uppercase tracking-widest">No Purchase Orders Found</p>
+                                <p class="text-[10px] font-bold mt-1">Try adjusting your search query or date filters.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    
+                </tbody>
+            </table>
+        </div>
+
+        <div class="bg-slate-50 border-t border-slate-200 p-3 flex flex-col md:flex-row justify-between items-center gap-4">
+            <span class="text-[9px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1">
+                <i data-lucide="layers" class="w-3 h-3"></i> 
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages|default:"1" }}
+                <span class="text-slate-400 mx-1">|</span> 
+                Total Batches: {{ page_obj.paginator.count }}
+            </span>
+
+            <div class="flex items-center gap-1 shadow-sm">
+                {% if page_obj.has_previous %}
+                    <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}" class="px-3 py-1.5 bg-white border border-slate-300 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-teal-50 hover:text-teal-700 transition-colors rounded-l-sm">First</a>
+                    <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}" class="px-3 py-1.5 bg-white border-y border-r border-slate-300 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-teal-50 hover:text-teal-700 transition-colors">Prev</a>
+                {% else %}
+                    <span class="px-3 py-1.5 bg-slate-100 border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 rounded-l-sm cursor-not-allowed">First</span>
+                    <span class="px-3 py-1.5 bg-slate-100 border-y border-r border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 cursor-not-allowed">Prev</span>
+                {% endif %}
+
+                <span class="px-4 py-1.5 bg-slate-800 text-white border-y border-slate-800 text-[10px] font-black uppercase tracking-widest">{{ page_obj.number }}</span>
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}" class="px-3 py-1.5 bg-white border-y border-l border-slate-300 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-teal-50 hover:text-teal-700 transition-colors">Next</a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}" class="px-3 py-1.5 bg-white border border-slate-300 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-teal-50 hover:text-teal-700 transition-colors rounded-r-sm">Last</a>
+                {% else %}
+                    <span class="px-3 py-1.5 bg-slate-100 border-y border-l border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 cursor-not-allowed">Next</span>
+                    <span class="px-3 py-1.5 bg-slate-100 border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 rounded-r-sm cursor-not-allowed">Last</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% for batch in page_obj %}
+<div id="modal-{{ batch.batch_id }}" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex justify-center items-center p-4">
+    <div class="bg-white border-t-8 border-slate-800 shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+        
+        <div class="px-6 py-4 border-b flex justify-between items-center bg-slate-50">
+            <div>
+                <h2 class="text-xl font-black text-slate-900 uppercase tracking-tighter flex items-center gap-2">
+                    <i data-lucide="layers" class="w-6 h-6"></i> Batch Order Inquiry Details
+                </h2>
+                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">Batch Ref: <span class="text-slate-800">{{ batch.batch_id }}</span> | Total Orders: {{ batch.total_pos }}</p>
+            </div>
+            <button type="button" onclick="closePOModal('{{ batch.batch_id }}')" class="text-rose-600 hover:bg-rose-100 p-2 rounded-full transition-colors"><i data-lucide="x" class="w-6 h-6"></i></button>
+        </div>
+
+        <div class="overflow-y-auto p-6 bg-slate-200 space-y-6">
+            {% for po in batch.all_pos %}
+            <div class="bg-white border {% if forloop.first %}border-teal-400 shadow-md{% else %}border-indigo-200 shadow-sm opacity-90{% endif %}">
+                <div class="px-4 py-2 border-b flex justify-between items-center {% if forloop.first %}bg-teal-50{% else %}bg-indigo-50{% endif %}">
+                    <h3 class="text-xs font-black uppercase tracking-widest {% if forloop.first %}text-teal-800{% else %}text-indigo-800{% endif %}">
+                        {% if forloop.first %}⭐ MAIN P.O. - {{ po.po_no }}{% else %}🔹 SUB P.O. - {{ po.po_no }}{% endif %}
+                    </h3>
+                    <span class="text-[10px] font-bold text-slate-500 uppercase">{{ po.supplier.name }}</span>
+                </div>
+                
+                <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="text-[10px] font-bold text-slate-500 uppercase space-y-1">
+                        <p>Date: <span class="text-slate-800">{{ po.order_date|date:"Y-m-d" }}</span></p>
+                        <p>Transport: <span class="text-slate-800">{{ po.transport }}</span></p>
+                        <p>Tax Term: <span class="text-slate-800">{{ po.tax_term }}</span></p>
+                        <p>Discount: <span class="text-rose-600">{{ po.discount_rate }}%</span></p>
+                        <p class="mt-2 text-slate-400">Remarks:</p>
+                        <p class="italic text-slate-700 bg-slate-50 p-1 border border-slate-200">"{{ po.remarks|default:'No remarks.' }}"</p>
+                    </div>
+                    <div>
+                        <table class="w-full text-left border-collapse text-[10px]">
+                            <thead class="bg-slate-100 border-b border-slate-300">
+                                <tr>
+                                    <th class="py-1 px-2">Item</th>
+                                    <th class="py-1 px-2 text-center">Qty</th>
+                                    <th class="py-1 px-2 text-right">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody class="font-bold text-slate-700">
+                                {% for item in po.items.all %}
+                                <tr class="border-b border-slate-100">
+                                    <td class="py-1 px-2 text-teal-700">{{ item.item_code }}</td>
+                                    <td class="py-1 px-2 text-center">{{ item.qty }}</td>
+                                    <td class="py-1 px-2 text-right text-slate-900">₱{{ item.amount|floatformat:2 }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <div class="text-right mt-2 font-black text-xs text-rose-700">
+                            Total: ₱{{ po.grand_total|floatformat:2 }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="p-6 bg-slate-50 border-t flex justify-between items-center">
+            <div class="text-xs font-black uppercase tracking-widest text-slate-500">
+                Batch Grand Total: <span class="text-xl text-teal-900">₱{{ batch.batch_grand_total|floatformat:2 }}</span>
+            </div>
+            <button type="button" onclick="closePOModal('{{ batch.batch_id }}')" class="bg-slate-300 text-slate-800 px-6 py-2 text-xs font-black uppercase tracking-widest hover:bg-slate-400 transition-colors shadow-sm">Close</button>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<script>
+    function openPOModal(poNo) {
+        const modal = document.getElementById(`modal-${poNo}`);
+        if (modal) modal.classList.remove('hidden');
+    }
+    function closePOModal(poNo) {
+        const modal = document.getElementById(`modal-${poNo}`);
+        if (modal) modal.classList.add('hidden');
+    }
+    // Close modal if user clicks on the dark backdrop
+    window.onclick = function(event) {
+        if (event.target.id.startsWith('modal-')) {
+            event.target.classList.add('hidden');
+        }
+    }
+</script>
+{% endblock %}

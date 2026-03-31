@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Print Material Tags</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <style>
+        @media print {
+            @page { size: 100mm 150mm; margin: 0; }
+            .no-print { display: none; }
+            body { background: white; padding: 0; margin: 0; }
+            .tag-page { page-break-after: always; border: none !important; margin: 0 !important; box-shadow: none !important; }
+        }
+        body { font-family: 'Arial', sans-serif; background: #f3f4f6; }
+        
+        .lined-table { width: 100%; border-collapse: collapse; }
+        .lined-table th { border-top: -1px solid oklch(70.7% 0.022 261.325); border-bottom: 1px solid oklch(70.7% 0.022 261.325); padding: 4px; font-size: 8px; text-align: center; border-left: 1px solid oklch(70.7% 0.022 261.325); border-right: 1px solid oklch(70.7% 0.022 261.325);}
+        .lined-table td { border-bottom: 1px solid oklch(70.7% 0.022 261.325); border-right: 1px solid oklch(70.7% 0.022 261.325); border-left: 1px solid oklch(70.7% 0.022 261.325); padding: 2px; height: 18px; font-size: 8px; }
+        .lined-table td:last-child { border-right: 1px solid oklch(70.7% 0.022 261.325); }
+        .lined-table td:nth-child(4) { border-right: 1px solid oklch(70.7% 0.022 261.325); }
+    </style>
+</head>
+<body class="bg-gray-100 p-4">
+    <div class="fixed top-6 right-6 z-50 no-print">
+        <button onclick="window.print()" class="bg-indigo-600 text-white px-8 py-3 rounded-xl font-black shadow-2xl hover:bg-indigo-700 transition-transform hover:scale-105 active:scale-95 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            </svg>
+            START PRINTING
+        </button>
+    </div>
+
+    {% for page in print_pages %}
+    <div class="tag-page w-[100mm] h-[150mm] bg-white mx-auto p-5 border border-gray-300 shadow-md mb-6 flex flex-col relative overflow-hidden">
+        
+        {% if page.box_label %}
+        <div class="absolute top-5 right-5 text-gray-600 px-1 -py-1 text-[11px] font-black tracking-widest uppercase">
+            {{ page.box_label }}
+        </div>
+        {% endif %}
+
+        <div class="absolute inset-0 flex items-center justify-center opacity-[0.10] pointer-events-none">
+            <span class="text-9xl font-black transform -rotate-45">AIM</span>
+        </div>
+
+        <div class="relative z-10 text-[10px] border border-gray-400">
+
+            <!-- HEADER NA NASA GRID -->
+            <div class="border-b border-gray-400 text-center py-2">
+                <h1 class="text-lg font-black uppercase tracking-widest text-gray-800">
+                    Material Tag
+                </h1>
+            </div>
+
+            <!-- CONTENT -->
+            <div class="flex border-b border-gray-300">
+                <span class="w-24 font-bold text-gray-500 border-r border-gray-300 px-1 py-1 text-center">Supplier:</span> 
+                <span class="flex-1 text-center font-black text-gray-900 px-1 py-1">
+                    {{ page.tag.po_reference.supplier.name|default:"Manual Input" }}
+                </span>
+            </div>
+
+            <div class="flex border-b border-gray-300">
+                <span class="w-24 font-bold text-gray-500 border-r border-gray-300 px-1 py-1 text-center">Item Code:</span> 
+                <span class="flex-1 text-center font-black text-gray-900 truncate px-1 py-1">
+                    {{ page.tag.item_code }}
+                </span>
+            </div>
+
+            <div class="flex">
+                <span class="w-24 font-bold text-gray-500 border-r border-gray-300 px-1 py-1 text-center">Item Name:</span> 
+                <span class="flex-1 text-center font-black text-gray-900 truncate px-1 py-1">
+                    {{ page.tag.description }}
+                </span>
+            </div>
+
+            <div class="flex border-b border-gray-300">
+                <span class="w-24 font-bold text-gray-500 border-r border-gray-300 px-1 py-1 text-center">Arrival Date:</span> 
+                <span class="flex-1 text-center font-black text-gray-900 px-1 py-1">
+                    {{ page.tag.arrival_date|date:'Y-m-d' }}
+                </span>
+            </div>
+
+            <div class="flex border-b border-gray-300">
+                <span class="w-24 font-bold text-gray-500 border-r border-gray-300 px-1 py-1 text-center">Qty:</span> 
+                <span class="flex-1 text-center font-black text-gray-900 px-1 py-1">
+                    {{ page.tag.total_pcs }} PCS | {{ page.tag.packing_type }}
+                </span>
+            </div>
+
+            <div class="flex border-b border-gray-300">
+                <span class="w-24 font-bold text-gray-500 border-r border-gray-300 px-1 py-1 text-center">Lot No:</span> 
+                <span class="flex-1 text-center font-black text-xs px-1 py-1">
+                    {{ page.tag.lot_no }}
+                </span>
+            </div>
+
+            <div class="flex">
+                <span class="w-24 font-bold text-gray-500 border-r border-gray-300 px-1 py-1 text-center">Remarks</span>
+                <span class="flex-1 px-1 py-3"></span>
+            </div>
+
+        </div>
+
+        <div class="flex-grow relative z-20">
+            <table class="lined-table uppercase">
+                <thead>
+                    <tr>
+                        <th class="w-[12%]">Date</th><th class="w-[12%]">Qty</th><th class="w-[12%]">Rem</th><th class="w-[12%] border-r-2 border-gray-400">Sign</th>
+                        <th class="w-[12%]">Date</th><th class="w-[12%]">Qty</th><th class="w-[12%]">Rem</th><th class="w-[12%] border-r-2 border-gray-400">Sign</th><th class="w-[14%]">remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for i in "123456789012" %} 
+                    <tr>
+                        <td class="text-center font-semibold font-serif">/</td><td></td><td></td><td class="border-r-2 border-gray-400"></td>
+                        <td class="text-center font-semibold font-serif">/</td><td></td><td></td><td></td><td class="border-l-2 border-gray-400"></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="relative z-10 border border-gray-400 border-t-0 flex flex-col items-center py-2">
+            <span class="text-[9px] text-gray-500 mb-1">LOT NO.</span>
+            <svg class="barcode" data-value="{{ page.tag.lot_no }}"></svg>
+        </div>
+    </div>
+    {% endfor %}
+
+    <script>
+        document.querySelectorAll('.barcode').forEach(function(el) {
+            JsBarcode(el, el.getAttribute('data-value'), {
+                format: "CODE39",
+                width: 1.3,
+                height: 35,
+                displayValue: true,
+                fontSize: 12,
+                fontOptions: "bold",
+                margin: 0,
+                lineColor: "#000000"
+            });
+        });
+    </script>
+</body>
+</html>

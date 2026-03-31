@@ -1,0 +1,95 @@
+{% extends "Inventory/base.html" %}
+
+{% block content %}
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+
+<div class="max-w-2xl mx-auto px-4 mt-8 pb-12">
+    
+    <div class="bg-white p-8 rounded-[2.5rem] shadow-2xl border border-slate-100 relative overflow-hidden">
+        <h2 class="text-2xl font-black text-slate-800 tracking-tighter uppercase italic flex items-center gap-3 mb-8">
+            <i data-lucide="package-check" class="w-8 h-8 text-emerald-600"></i> Arrival Process
+        </h2>
+
+        <form method="POST" class="space-y-6">
+            {% csrf_token %}
+
+            <div class="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100">
+                <label class="text-[10px] font-black text-emerald-700 uppercase tracking-widest block mb-2">Step 1: Scan Storage Location</label>
+                <div class="flex gap-2">
+                    <input type="text" id="loc_input" name="location_code" required placeholder="Scan Rack/Bin Barcode" 
+                           class="flex-1 p-4 bg-white border border-emerald-200 rounded-xl text-sm font-black text-slate-800 uppercase focus:ring-2 focus:ring-emerald-500 outline-none">
+                    <button type="button" onclick="openScanner('loc_input')" class="bg-emerald-600 text-white px-5 rounded-xl shadow-lg shadow-emerald-200">
+                        <i data-lucide="map-pin" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
+                <label class="text-[10px] font-black text-blue-700 uppercase tracking-widest block mb-2">Step 2: Scan Item Barcode</label>
+                <div class="flex gap-2">
+                    <input type="text" id="item_input" name="item_code" required placeholder="Scan Item SKU" 
+                           class="flex-1 p-4 bg-white border border-blue-200 rounded-xl text-sm font-black text-slate-800 uppercase focus:ring-2 focus:ring-blue-500 outline-none">
+                    <button type="button" onclick="openScanner('item_input')" class="bg-blue-600 text-white px-5 rounded-xl shadow-lg shadow-blue-200">
+                        <i data-lucide="barcode" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Lot Number</label>
+                    <input type="text" name="lot_no" placeholder="LOT-2024-001" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-black outline-none focus:ring-2 focus:ring-slate-900">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Quantity (PCS)</label>
+                    <input type="number" name="qty" required placeholder="0" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-black outline-none focus:ring-2 focus:ring-slate-900">
+                </div>
+            </div>
+
+            <div id="reader" class="hidden fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
+                <div class="bg-white p-4 rounded-3xl w-full max-w-sm">
+                    <div id="scanner-view" class="overflow-hidden rounded-2xl"></div>
+                    <button type="button" onclick="closeScanner()" class="w-full mt-4 py-3 bg-rose-600 text-white rounded-xl font-black uppercase text-xs tracking-widest">Close Camera</button>
+                </div>
+            </div>
+
+            <button type="submit" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-black shadow-xl transition-all flex justify-center items-center gap-2 mt-4">
+                <i data-lucide="check-circle" class="w-5 h-5"></i> Confirm Arrival & Print Tag
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    let activeInputId = '';
+    let html5QrcodeScanner = null;
+
+    function openScanner(inputId) {
+        activeInputId = inputId;
+        document.getElementById('reader').classList.remove('hidden');
+        
+        html5QrcodeScanner = new Html5QrcodeScanner("scanner-view", { 
+            fps: 10, 
+            qrbox: {width: 250, height: 250},
+            aspectRatio: 1.0
+        });
+        
+        html5QrcodeScanner.render(onScanSuccess);
+    }
+
+    function onScanSuccess(decodedText) {
+        document.getElementById(activeInputId).value = decodedText;
+        closeScanner();
+    }
+
+    function closeScanner() {
+        if (html5QrcodeScanner) {
+            html5QrcodeScanner.clear();
+        }
+        document.getElementById('reader').classList.add('hidden');
+    }
+
+    if (typeof lucide !== 'undefined') { lucide.createIcons(); }
+</script>
+{% endblock %}

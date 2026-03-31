@@ -1,0 +1,108 @@
+{% extends "Inventory/processing/processing_base.html" %}
+
+{% block processing_content %}
+<div class="max-w-[100%] mx-auto pb-20 mt-4 text-slate-800">
+
+    <div class="bg-white border border-slate-300 shadow-sm mb-6">
+        <div class="bg-slate-800 px-4 py-2 flex justify-between items-center text-white border-b border-slate-700">
+            <h2 class="font-black text-sm uppercase tracking-widest flex items-center">
+                <i data-lucide="settings" class="w-4 h-4 mr-2 text-slate-400"></i> Global Inquiry Preferences
+            </h2>
+            <span class="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">System Configuration</span>
+        </div>
+    </div>
+
+    <form method="POST" action="{% url 'inquiry_settings' %}">
+        {% csrf_token %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            <div class="bg-white border border-slate-300 shadow-sm p-5">
+                <h3 class="font-black text-xs uppercase tracking-widest text-slate-800 border-b border-slate-200 pb-2 mb-4 flex items-center gap-2">
+                    <i data-lucide="monitor" class="w-4 h-4 text-teal-600"></i> View Preferences
+                </h3>
+                
+                <div class="space-y-4">
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Default Items Per Page</label>
+                        <select name="items_per_page" class="w-full p-2 text-xs font-bold border border-slate-300 bg-slate-50 focus:ring-1 focus:ring-teal-600 outline-none rounded-sm">
+                            <option value="25" {% if items_per_page == 25 %}selected{% endif %}>25 Records</option>
+                            <option value="50" {% if items_per_page == 50 %}selected{% endif %}>50 Records</option>
+                            <option value="100" {% if items_per_page == 100 %}selected{% endif %}>100 Records</option>
+                        </select>
+                        <p class="text-[8px] font-bold text-slate-400 uppercase mt-1">Affects all tables in processing module</p>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Default Target Warehouse</label>
+                        <select name="default_warehouse" class="w-full p-2 text-xs font-bold border border-slate-300 bg-slate-50 focus:ring-1 focus:ring-teal-600 outline-none rounded-sm">
+                            <option value="Material Warehouse">Material Warehouse</option>
+                            <option value="Product Warehouse">Product Warehouse</option>
+                            <option value="Receiving Warehouse">Receiving Warehouse</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white border border-slate-300 shadow-sm p-5">
+                <h3 class="font-black text-xs uppercase tracking-widest text-slate-800 border-b border-slate-200 pb-2 mb-4 flex items-center gap-2">
+                    <i data-lucide="bell" class="w-4 h-4 text-amber-500"></i> Thresholds & Alerts
+                </h3>
+                
+                <div class="space-y-4">
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Global Low Stock Limit (PCS)</label>
+                        <input type="number" name="low_stock_limit" value="{{ low_stock_limit }}" class="w-full p-2 text-lg font-black text-amber-700 border border-amber-300 bg-amber-50 focus:ring-2 focus:ring-amber-500 outline-none rounded-sm">
+                        <p class="text-[8px] font-bold text-slate-400 uppercase mt-1">Items below this amount will be marked red</p>
+                    </div>
+
+                    <div class="flex items-center gap-3 mt-4 p-3 bg-slate-50 border border-slate-200">
+                        <input type="checkbox" id="email_alerts" name="email_alerts" {% if email_alerts_enabled %}checked{% endif %} class="w-4 h-4 text-teal-600 bg-white border-slate-300 rounded focus:ring-teal-500 focus:ring-2">
+                        <label for="email_alerts" class="text-[9px] font-black uppercase text-slate-600 tracking-widest cursor-pointer">
+                            Enable System Notifications
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white border border-slate-300 shadow-sm p-5">
+                <h3 class="font-black text-xs uppercase tracking-widest text-slate-800 border-b border-slate-200 pb-2 mb-4 flex items-center gap-2">
+                    <i data-lucide="file-down" class="w-4 h-4 text-blue-500"></i> Data Export Settings
+                </h3>
+                
+                <div class="space-y-4">
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Default Excel Format</label>
+                        <select name="excel_format" class="w-full p-2 text-xs font-bold border border-slate-300 bg-slate-50 focus:ring-1 focus:ring-teal-600 outline-none rounded-sm">
+                            <option value="xlsx">.xlsx (Modern Excel)</option>
+                            <option value="xls">.xls (Legacy Excel 97-2003)</option>
+                            <option value="csv">.csv (Comma Separated)</option>
+                        </select>
+                    </div>
+
+                    <div class="space-y-1 mt-4">
+                        <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Include Audit Trail in Export?</label>
+                        <select name="include_audit" class="w-full p-2 text-xs font-bold border border-slate-300 bg-slate-50 focus:ring-1 focus:ring-teal-600 outline-none rounded-sm">
+                            <option value="yes">Yes, include system timestamps</option>
+                            <option value="no">No, raw data only</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="mt-6 flex justify-end">
+            <button type="submit" class="bg-slate-800 text-white border border-slate-900 px-10 py-3 text-[10px] font-black uppercase tracking-widest hover:bg-teal-700 hover:border-teal-800 transition-all shadow-md flex items-center gap-2">
+                <i data-lucide="save" class="w-4 h-4"></i> Apply System Settings
+            </button>
+        </div>
+    </form>
+
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    });
+</script>
+{% endblock %}

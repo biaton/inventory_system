@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Print Material Tag - {{ tag.lot_no }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"></script>
+    <style>
+        /* Pag nag-ctrl+p ang user, itatago nito yung "Back" button para di masama sa print */
+        @media print {
+            .no-print { display: none !important; }
+            body { background-color: white !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-200 min-h-screen flex flex-col items-center justify-center p-4">
+
+    <div class="no-print mb-6 flex gap-4">
+        <button onclick="window.print()" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg">🖨️ Print Now</button>
+        <a href="{% url 'receive_item' %}" class="bg-slate-900 text-white px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest">← Back to Receiving</a>
+    </div>
+
+    <div class="bg-white border-2 border-black w-[400px] p-6 rounded-lg shadow-2xl relative">
+        
+        <div class="text-center mb-4 border-b-2 border-black pb-4">
+            <h1 class="text-xl font-black uppercase tracking-tighter">Movaflex Designs</h1>
+            <p class="text-[10px] font-bold uppercase tracking-widest">Material Identification Tag</p>
+        </div>
+
+        <div class="space-y-3 mb-6">
+            <div class="flex justify-between border-b border-gray-200 pb-1">
+                <span class="text-xs font-bold text-gray-500 uppercase">Item Code:</span>
+                <span class="text-sm font-black text-black">{{ tag.item_code }}</span>
+            </div>
+            <div class="flex justify-between border-b border-gray-200 pb-1">
+                <span class="text-xs font-bold text-gray-500 uppercase">Quantity:</span>
+                <span class="text-lg font-black text-black">{{ tag.total_pcs }} {{ tag.packing_type }}</span>
+            </div>
+            <div class="flex justify-between border-b border-gray-200 pb-1">
+                <span class="text-xs font-bold text-gray-500 uppercase">Location:</span>
+                <span class="text-sm font-black text-black">{{ tag.location.location_code|default:"UNASSIGNED" }}</span>
+            </div>
+            <div class="flex justify-between border-b border-gray-200 pb-1">
+                <span class="text-xs font-bold text-gray-500 uppercase">Date Received:</span>
+                <span class="text-sm font-black text-black">{{ tag.arrival_date|date:"M d, Y" }}</span>
+            </div>
+        </div>
+
+        <div class="flex flex-col items-center justify-center">
+            <svg id="barcode"></svg>
+            <p class="text-[9px] font-bold text-gray-400 mt-1 uppercase">Scan to Process Inventory</p>
+        </div>
+
+    </div>
+
+    <script>
+        // Gawing barcode yung Lot No
+        JsBarcode("#barcode", "{{ tag.lot_no }}", {
+            format: "CODE128",
+            lineColor: "#000",
+            width: 2,
+            height: 60,
+            displayValue: true,
+            fontSize: 14,
+            fontOptions: "bold"
+        });
+
+        // Automatic na bubukas yung Print Window pag nag-load itong page!
+        window.onload = function() {
+            setTimeout(function() {
+                window.print();
+            }, 500); // 0.5 sec delay para mabuo muna yung barcode bago mag-print
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>New Delivery Request</title></head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f8fafc; color: #334155;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="padding: 20px;">
+        <tr><td align="center">
+            <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                <tr>
+                    <td style="background-color: #0d9488; padding: 20px; text-align: center;">
+                        <h2 style="margin: 0; color: #ffffff; font-size: 20px; letter-spacing: 2px; text-transform: uppercase;">🚚 New Movement Request</h2>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 30px;">
+                        <p style="margin: 0 0 15px 0; font-size: 16px;">Hello Warehouse Team,</p>
+                        <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 1.6;">A new Material Movement Slip has been generated. Please prepare the items for picking and transfer.</p>
+                        
+                        <table width="100%" cellpadding="15" cellspacing="0" style="background-color: #f0fdfa; border-left: 4px solid #0d9488; border-radius: 4px; margin-bottom: 25px;">
+                            <tr><td>
+                                <p style="margin: 0 0 8px 0; font-size: 12px; color: #0d9488; text-transform: uppercase; letter-spacing: 1px;">Request Details</p>
+                                <h3 style="margin: 0 0 5px 0; font-size: 18px; color: #134e4a;">REQ NO: {{ req_no }}</h3>
+                                
+                                <table width="100%" cellpadding="5" cellspacing="0" style="font-size: 14px; margin-top: 10px;">
+                                    <tr>
+                                        <td width="40%" style="color: #0d9488;"><strong>Destination:</strong></td>
+                                        <td width="60%" style="color: #0f172a; font-weight: bold;">{{ destination }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="color: #0d9488;"><strong>Requested By:</strong></td>
+                                        <td style="color: #0f172a;">{{ requestor }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="color: #0d9488;"><strong>No. of Items:</strong></td>
+                                        <td style="color: #0f172a;">{{ item_count }} Line Items</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="color: #0d9488;"><strong>Remarks:</strong></td>
+                                        <td style="color: #64748b; font-style: italic;">"{{ remarks|default:'None' }}"</td>
+                                    </tr>
+                                </table>
+                            </td></tr>
+                        </table>
+                        <p style="margin: 0; font-size: 13px; color: #64748b; text-align: center;">You can print the Movement Slip and start the picking process in the system.</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="background-color: #1e293b; padding: 15px; text-align: center;">
+                        <p style="margin: 0; color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">ASIA Integrated Corp. • Logistics Portal</p>
+                    </td>
+                </tr>
+            </table>
+        </td></tr>
+    </table>
+</body>
+</html>

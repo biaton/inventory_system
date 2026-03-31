@@ -1,0 +1,177 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASIA Integrated machine Inc.</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* ERP Style Grid Background */
+        .bg-grid-pattern {
+            background-image: linear-gradient(to right, #334155 1px, transparent 1px),
+                linear-gradient(to bottom, #334155 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-200 min-h-screen flex items-center justify-center p-4">
+
+    <div class="max-w-4xl w-full bg-white border border-slate-400 shadow-xl flex flex-col md:flex-row min-h-[500px]">
+
+        <div
+            class="md:w-5/12 bg-slate-900 border-r border-slate-800 p-8 text-white flex flex-col justify-between relative overflow-hidden bg-grid-pattern">
+
+            <div
+                class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-slate-800 via-teal-700 to-emerald-600 z-20">
+            </div>
+
+            <div class="absolute inset-0 bg-slate-900/80 pointer-events-none"></div>
+
+            <div class="relative z-10 mt-2">
+                <div class="flex items-center gap-4 mb-8 border-b border-slate-800 pb-6">
+
+                    <div
+                        class="w-20 h-24 bg-white flex items-center justify-center p-1.5 shadow-md rounded-sm border-2 border-slate-700 ">
+                        <img src="{% static 'images/asia-no-bg.png' %}" alt="AIM Logo"
+                            class="w-full h-full object-contain">
+                    </div>
+
+                    <div>
+                        <h1
+                            class="text-2xl md:text-3xl font-black tracking-tighter uppercase leading-none text-slate-100 mb-1">
+                            Asia Integrated
+                        </h1>
+                        <span
+                            class="text-[13px] md:text-[15px] font-black text-teal-500 uppercase tracking-[0.2em]">Machine
+                            Inc.</span>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div>
+                        <p
+                            class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                            <i data-lucide="user-round-key" class="w-3.5 h-3.5"></i> System Module
+                        </p>
+                        <p
+                            class="text-sm font-black text-slate-200 uppercase tracking-widest border-l-2 border-teal-600 pl-3">
+                            Inventory Control System
+                        </p>
+                    </div>
+                    <div>
+                        <p
+                            class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                            <i data-lucide="cpu" class="w-3.5 h-3.5"></i> Core Engine
+                        </p>
+                        <p
+                            class="text-xs font-bold text-slate-400 uppercase tracking-widest border-l-2 border-slate-700 pl-3">
+                            Version 1.0.0 - Stable Release
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="relative z-10 mt-12 md:mt-0 pt-6">
+
+                <div class="bg-slate-950/50 border border-slate-800 p-3 rounded-sm mb-5 shadow-inner">
+                    <div
+                        class="flex items-center gap-2 text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">
+                        <span class="relative flex h-2 w-2">
+                            <span
+                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                        Secure Gateway Active
+                    </div>
+                    <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest pl-4">
+                        Authentication Required
+                    </p>
+                </div>
+
+                <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest leading-relaxed">
+                    &copy; 2026 ASIA Integrated Machine Inc.<br>All Rights Reserved.
+                </p>
+            </div>
+        </div>
+
+        <div class="md:w-7/12 p-8 md:p-12 flex flex-col justify-center bg-white">
+            <div class="w-full max-w-sm mx-auto">
+
+                <div class="mb-8 border-b-2 border-slate-800 pb-2">
+                    <h2 class="text-2xl font-black text-slate-900 tracking-tighter uppercase flex items-center gap-2">
+                        <i data-lucide="lock-keyhole" class="w-5 h-5 text-teal-700"></i> Authentication
+                    </h2>
+                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">Provide valid
+                        credentials to proceed</p>
+                </div>
+
+                {% if messages %}
+                {% for message in messages %}
+                <div
+                    class="mb-6 p-3 text-[10px] font-black uppercase tracking-widest border border-rose-300 bg-rose-50 text-rose-700 flex items-start gap-2 shadow-sm">
+                    <i data-lucide="shield-alert" class="w-4 h-4 shrink-0"></i>
+                    <span>{{ message }}</span>
+                </div>
+                {% endfor %}
+                {% endif %}
+
+                <form method="POST" action="{% url 'login' %}" class="space-y-5">
+                    {% csrf_token %}
+
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Employee ID /
+                            Username</label>
+                        <div class="relative">
+                            <i data-lucide="user"
+                                class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                            <input type="text" name="username" required autofocus autocomplete="off"
+                                placeholder="Enter ID..."
+                                class="w-full p-2.5 pl-9 bg-slate-50 border border-slate-400 text-xs font-black text-slate-800 focus:ring-1 focus:ring-teal-700 outline-none shadow-inner uppercase">
+                        </div>
+                    </div>
+
+                    <div class="space-y-1">
+                        <div class="flex justify-between items-end">
+                            <label class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Access
+                                Password</label>
+                            <a href="{% url 'password_reset' %}"
+                                class="text-[9px] font-black text-teal-600 hover:text-teal-800 uppercase tracking-widest hover:underline decoration-teal-400 underline-offset-2 transition-all">
+                                Forgot Password?
+                            </a>
+                        </div>
+                        <div class="relative">
+                            <i data-lucide="key"
+                                class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                            <input type="password" name="password" required placeholder="Enter Password..."
+                                class="w-full p-2.5 pl-9 bg-slate-50 border border-slate-400 text-xs font-black text-slate-800 focus:ring-1 focus:ring-teal-700 outline-none shadow-inner">
+                        </div>
+                    </div>
+
+                    <button type="submit"
+                        class="w-full bg-slate-800 text-white border border-slate-900 py-3 font-black text-[11px] uppercase tracking-widest hover:bg-teal-700 transition-colors flex justify-center items-center gap-2 mt-6 shadow-sm">
+                        <i data-lucide="log-in" class="w-4 h-4"></i> Authenticate Session
+                    </button>
+                </form>
+
+                <div class="mt-8 text-center border-t border-slate-200 pt-4">
+                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                        Need technical support? <a href="#"
+                            class="text-slate-600 hover:text-teal-700 font-black">Contact IT Dept</a>
+                    </p>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>

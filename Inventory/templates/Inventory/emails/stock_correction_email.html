@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Stock Correction Alert</title></head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f8fafc; color: #334155;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="padding: 20px;">
+        <tr><td align="center">
+            <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                <tr>
+                    <td style="background-color: #7c3aed; padding: 20px; text-align: center;">
+                        <h2 style="margin: 0; color: #ffffff; font-size: 20px; letter-spacing: 2px; text-transform: uppercase;">📝 Audit Alert: Stock Override</h2>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 30px;">
+                        <p style="margin: 0 0 15px 0; font-size: 16px;">Attention Auditors & Management,</p>
+                        <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 1.6;">A manual stock correction has been executed in the WMS. Please review the discrepancy details below.</p>
+                        
+                        <table width="100%" cellpadding="15" cellspacing="0" style="background-color: #f5f3ff; border-left: 4px solid #6d28d9; border-radius: 4px; margin-bottom: 25px;">
+                            <tr><td>
+                                <p style="margin: 0 0 8px 0; font-size: 12px; color: #7c3aed; text-transform: uppercase; letter-spacing: 1px;">Discrepancy Report</p>
+                                <h3 style="margin: 0 0 5px 0; font-size: 18px; color: #4c1d95;">{{ item_code }}</h3>
+                                
+                                <table width="100%" cellpadding="5" cellspacing="0" style="font-size: 14px; margin-top: 10px;">
+                                    <tr>
+                                        <td width="40%" style="color: #6d28d9;"><strong>Lot Number:</strong></td>
+                                        <td width="60%" style="color: #4c1d95; font-weight: bold;">{{ lot_no }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="color: #6d28d9;"><strong>Previous Qty:</strong></td>
+                                        <td style="color: #64748b;">{{ old_qty }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="color: #6d28d9;"><strong>New Adjusted Qty:</strong></td>
+                                        <td style="color: #0f172a; font-weight: bold;">{{ new_qty }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="color: #6d28d9;"><strong>Variance:</strong></td>
+                                        <td style="color: {% if difference < 0 %}#e11d48{% else %}#059669{% endif %}; font-weight: black;">
+                                            {{ difference }}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="color: #6d28d9;"><strong>Reason Code:</strong></td>
+                                        <td style="color: #4c1d95; font-style: italic;">"{{ reason }}"</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="color: #6d28d9;"><strong>Executed By:</strong></td>
+                                        <td style="color: #0f172a; text-transform: uppercase;">{{ username }}</td>
+                                    </tr>
+                                </table>
+                            </td></tr>
+                        </table>
+                        <p style="margin: 0; font-size: 13px; color: #64748b; text-align: center;">If this adjustment is unauthorized, please check the system logs immediately.</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="background-color: #1e293b; padding: 15px; text-align: center;">
+                        <p style="margin: 0; color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">ASIA Integrated Corp. • Security & Audit</p>
+                    </td>
+                </tr>
+            </table>
+        </td></tr>
+    </table>
+</body>
+</html>

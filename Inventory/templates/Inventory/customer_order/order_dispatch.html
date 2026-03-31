@@ -1,0 +1,70 @@
+{% extends "Inventory/customer_order/order_base.html" %}
+
+{% block order_content %}
+<div class="max-w-[100%] mx-auto mt-6 pb-20 px-4">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <div class="lg:col-span-8 space-y-4">
+            <div class="bg-white border border-slate-300 shadow-sm p-6">
+                <div class="flex justify-between items-start border-b-2 border-slate-900 pb-4 mb-6">
+                    <div>
+                        <h2 class="text-2xl font-black text-slate-900 uppercase">Picking List: {{ order_no }}</h2>
+                        <p class="text-[10px] font-bold text-slate-500 uppercase mt-1">Client: <span class="text-indigo-600 font-black">{{ customer_name }}</span></p>
+                    </div>
+                </div>
+
+                <table class="w-full text-left text-xs border-collapse">
+                    <thead class="bg-slate-50 text-slate-500 uppercase font-black text-[9px]">
+                        <tr>
+                            <th class="py-3 px-2">Material Description</th>
+                            <th class="py-3 px-2 text-center">Required Qty</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 font-bold uppercase">
+                        {% for item in items %}
+                        <tr>
+                            <td class="py-4 px-2">
+                                <p class="text-slate-900 text-[11px] font-black">{{ item.item_code }}</p>
+                            </td>
+                            <td class="py-4 px-2 text-center text-lg text-slate-800">{{ item.quantity }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="lg:col-span-4">
+            <div class="bg-slate-900 text-white shadow-2xl p-6 border-b-4 border-teal-500 sticky top-4">
+                <h3 class="text-[10px] font-black uppercase mb-6 flex items-center gap-2 text-teal-400">
+                    <i data-lucide="truck" class="w-4 h-4"></i> Logistics Dispatch
+                </h3>
+
+                <form method="POST" class="space-y-5" onsubmit="return confirm('Deduct stocks and finalize shipment?')">
+                    {% csrf_token %}
+                    
+                    <div class="space-y-1.5">
+                        <label class="text-[9px] font-black text-slate-400 uppercase">Courier Partner</label>
+                        <select name="courier" required class="w-full bg-slate-800 border border-slate-700 p-3 text-xs font-bold text-white outline-none">
+                            <option value="LBC Express">LBC Express</option>
+                            <option value="J&T Express">J&T Express</option>
+                            <option value="In-House Fleet">In-House Fleet</option>
+                        </select>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label class="text-[9px] font-black text-slate-400 uppercase">Tracking No.</label>
+                        <input type="text" name="tracking" required class="w-full bg-slate-800 border border-slate-700 p-3 text-xs font-bold text-white outline-none uppercase">
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-800">
+                        <button type="submit" class="w-full bg-teal-600 hover:bg-teal-500 text-white py-4 font-black text-[11px] uppercase shadow-lg">
+                            Finalize Shipment
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

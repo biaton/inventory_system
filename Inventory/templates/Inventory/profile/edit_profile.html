@@ -1,0 +1,53 @@
+{% extends "Inventory/base.html" %}
+
+{% block title %}Edit Profile | AIM Inventory{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto mt-6 pb-12">
+    
+    <div class="border-b-2 border-slate-800 pb-2 mb-6 flex justify-between items-end">
+        <div>
+            <h1 class="text-xl font-black text-slate-900 uppercase tracking-tighter flex items-center gap-2">
+                <i data-lucide="user-cog" class="w-6 h-6 text-teal-700"></i> Update Account
+            </h1>
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Modify User Credentials</p>
+        </div>
+    </div>
+
+    <div class="bg-white border border-slate-300 shadow-sm p-6">
+        <form method="POST" action="{% url 'edit_profile' %}">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div>
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">First Name</label>
+                    <input type="text" name="first_name" value="{{ request.user.first_name }}" class="w-full p-2.5 bg-slate-50 border border-slate-300 text-sm font-bold text-slate-800 uppercase focus:border-teal-500 focus:bg-white outline-none shadow-inner" placeholder="Enter first name...">
+                </div>
+                
+                <div>
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Last Name</label>
+                    <input type="text" name="last_name" value="{{ request.user.last_name }}" class="w-full p-2.5 bg-slate-50 border border-slate-300 text-sm font-bold text-slate-800 uppercase focus:border-teal-500 focus:bg-white outline-none shadow-inner" placeholder="Enter last name...">
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Email Address</label>
+                    <input type="email" name="email" value="{{ request.user.email }}" class="w-full p-2.5 bg-slate-50 border border-slate-300 text-sm font-bold text-slate-800 focus:border-teal-500 focus:bg-white outline-none shadow-inner" placeholder="your.email@company.com">
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
+                <a href="{% url 'view_profile' %}" class="px-6 py-2.5 border border-slate-300 text-slate-600 text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-colors">
+                    Cancel
+                </a>
+                <button type="submit" class="bg-teal-700 text-white px-8 py-2.5 text-[10px] font-black uppercase tracking-widest hover:bg-teal-800 transition-colors shadow-sm flex items-center gap-2">
+                    <i data-lucide="save" class="w-3.5 h-3.5"></i> Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() { if (typeof lucide !== 'undefined') lucide.createIcons(); });
+</script>
+{% endblock %}
