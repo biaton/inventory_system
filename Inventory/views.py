@@ -1579,51 +1579,20 @@ def order_dispatch_view(request, order_no):
 
         try:
             with transaction.atomic():
-                for item in items:
-                    qty_to_deduct = item.quantity
-                    
-                    # FIFO Logic
-                    tags = MaterialTag.objects.filter(
-                        item_code=item.item_code, 
-                        total_pcs__gt=0
-                    ).order_by('expiration_date', 'id')
-
-                    for tag in tags:
-                        if qty_to_deduct <= 0: break
-                        
-                        deduct = min(tag.total_pcs, qty_to_deduct)
-                        old_qty = tag.total_pcs
-                        tag.total_pcs -= deduct
-                        tag.save()
-
-                        # Record to Stock History
-                        StockLog.objects.create(
-                            material_tag=tag,
-                            action_type='OUT',
-                            old_qty=old_qty,
-                            change_qty=-deduct,
-                            new_qty=tag.total_pcs,
-                            notes=f"Dispatched Order #{order_no}",
-                            user=request.user
-                        )
-                        qty_to_deduct -= deduct
-
-                    if qty_to_deduct > 0:
-                        raise ValueError(f"Insufficient stock for {item.item_code}.")
-
-                # 🚀 FIX: KUNIN ANG EMAIL BAGO MAG-UPDATE NG STATUS
+                # 🚀 KUNIN ANG EMAIL
                 first_item = items.first()
                 customer_email = None
                 if first_item and first_item.customer:
                     customer_email = getattr(first_item.customer, 'email', None)
 
-                # 🚀 UPDATE STATUS
+                # 🚀 UPDATE STATUS (Walang bawas ng inventory, status update lang)
                 items.update(
                     order_status='Shipped',
                     transport=courier,
                     remarks=f"TRK: {tracking}"
                 )
 
+                # 🚀 LOG SA SYSTEM
                 log_system_action(
                     user=request.user, 
                     action='UPDATE', 
@@ -1632,15 +1601,15 @@ def order_dispatch_view(request, order_no):
                     request=request
                 )
 
-                # 🚀 SEND EMAIL
+                # 🚀 SEND EMAIL SA CUSTOMER
                 if customer_email:
                     send_shipping_notification(order_no, customer_email, courier, tracking)
 
-                messages.success(request, f"Order #{order_no} dispatched successfully!")
-                return redirect('order_inquiry') # Pabalik sa Inquiry listahan natin
+            messages.success(request, f"Order #{order_no} dispatched successfully! Shipping email sent.")
+            return redirect('order_inquiry') # Pabalik sa listahan
 
         except Exception as e:
-            messages.error(request, str(e))
+            messages.error(request, f"System Error: {str(e)}")
             return redirect('order_dispatch', order_no=order_no)
 
     context = {

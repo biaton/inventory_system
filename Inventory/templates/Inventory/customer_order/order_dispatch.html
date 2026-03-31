@@ -40,7 +40,7 @@
                     <i data-lucide="truck" class="w-4 h-4"></i> Logistics Dispatch
                 </h3>
 
-                <form method="POST" class="space-y-5" onsubmit="return confirm('Deduct stocks and finalize shipment?')">
+                <form method="POST" class="space-y-5" onsubmit="return confirm('Confirm shipment and send tracking email to customer?')">
                     {% csrf_token %}
                     
                     <div class="space-y-1.5">
