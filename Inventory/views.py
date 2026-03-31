@@ -65,26 +65,24 @@ def custom_login_view(request):
         return redirect('dashboard')
 
     if request.method == 'POST':
-        # 🚀 BAGO: Email na ang kinukuha natin
-        email = request.POST.get('email').strip()
-        p = request.POST.get('password')
+        # 🚀 FIX 1: Tinanggal natin ang spaces sa unahan at dulo just in case!
+        email = request.POST.get('email', '').strip()
+        p = request.POST.get('password', '').strip() 
         
-        # Hanapin ang user gamit ang email
-        user_obj = User.objects.filter(email=email).first()
+        # 🚀 FIX 2: Gumamit ng __iexact para hindi maging case-sensitive (Juan@ vs juan@)
+        user_obj = User.objects.filter(email__iexact=email).first()
         
         if user_obj:
-            # Gamitin ang username ni user_obj para ma-authenticate sa Django
             user = authenticate(request, username=user_obj.username, password=p)
             
             if user is not None:
                 if user.is_active:
                     login(request, user)
-                    # log_system_action(user, 'LOGIN', 'Authentication', f"User {user.username} logged in via Email.", request)
                     return redirect('dashboard')
                 else:
                     messages.error(request, "Your account has been suspended. Contact Admin.")
             else:
-                messages.error(request, "Invalid email or password.")
+                messages.error(request, "Invalid email or password. Please make sure there are no spaces.")
         else:
             messages.error(request, "Email is not registered in the system.")
 
@@ -290,7 +288,6 @@ def user_master_view(request):
 
         if action == 'add':
             username = request.POST.get('username').strip()
-            password = request.POST.get('password')
             email = request.POST.get('email').strip()
             is_active = request.POST.get('is_active') == 'True'
             role = request.POST.get('role')
@@ -299,17 +296,22 @@ def user_master_view(request):
 
             if User.objects.filter(username=username).exists():
                 messages.error(request, "Error: Username is already taken!")
-            elif User.objects.filter(email=email).exists():
+            elif User.objects.filter(email__iexact=email).exists():
                 messages.error(request, "Error: Email is already registered to another user!")
             else:
                 try:
                     with transaction.atomic():
-
+                        # Generate 10-character Random Temporary Password
                         alphabet = string.ascii_letters + string.digits
                         temp_password = ''.join(secrets.choice(alphabet) for i in range(10))
 
-                        new_user = User.objects.create(username=username, email=email, is_active=is_active)
-                        new_user.set_password(password)
+                        # 🚀 FIX 3: Gumamit ng create_user() para official password hashing
+                        new_user = User.objects.create_user(
+                            username=username, 
+                            email=email, 
+                            password=temp_password
+                        )
+                        new_user.is_active = is_active
                         new_user.save()
 
                         profile, created = Profile.objects.get_or_create(user=new_user)
@@ -318,14 +320,14 @@ def user_master_view(request):
                         profile.contact_number = contact_number
                         profile.save()
 
-                        # 🚀 BAGO: SEND HTML EMAIL TO THE NEW USER
+                        # HTML EMAIL SENDING
                         html_content = render_to_string('Inventory/emails/user_welcome_email.html', {
                             'username': username,
                             'email': email,
                             'password': temp_password,
                             'role': profile.get_role_display()
                         })
-                        text_content = strip_tags(html_content) # Fallback kung hindi HTML-capable ang email ng user
+                        text_content = strip_tags(html_content) 
 
                         msg = EmailMultiAlternatives(
                             subject="Welcome to ASIA Integrated Machine Inc. WMS",
@@ -336,7 +338,7 @@ def user_master_view(request):
                         msg.attach_alternative(html_content, "text/html")
                         msg.send(fail_silently=False)
 
-                    messages.success(request, f"Success! Account for {username} has been created.")
+                    messages.success(request, f"Success! Account created and credentials emailed to {email}.")
                 except Exception as e:
                     messages.error(request, f"System Error: {str(e)}")
 
@@ -3873,24 +3875,21 @@ def shipping_confirmation_view(request):
 
 @login_required
 def analytics_view(request):
-    # 1. Kunin ang settings para sa Threshold
     try:
         settings = SystemSetting.objects.first()
         threshold = settings.low_stock_threshold if settings else 50
     except Exception:
         threshold = 50
 
-    # 2. Zone A Data: The Big 4 Totals
     total_skus = Item.objects.count()
     try:
-        # 🚀 FIX: Pinalitan natin ng CustomerOrder para tugma sa WMS flow natin
         pending_shipments = CustomerOrder.objects.filter(order_status='Pending').count()
     except Exception:
         pending_shipments = 0 
         
     total_pcs = MaterialTag.objects.aggregate(total=Sum('total_pcs'))['total'] or 0
 
-    # 🚀 3. TOTOONG COMPUTATION NG TOTAL INVENTORY VALUE (Pera)
+    # 1. TOTAL INVENTORY VALUE (Pera)
     item_prices = {
         item['item_code']: item['unit_price'] 
         for item in Item.objects.values('item_code', 'unit_price')
@@ -3903,58 +3902,86 @@ def analytics_view(request):
         price = item_prices.get(tag.item_code, Decimal('0.00'))
         total_inventory_value += Decimal(str(tag.total_pcs)) * price
 
-    # 4. Compute Stock Health (Healthy vs Critical)
+    # 2. STOCK HEALTH
     inventory_grouped = MaterialTag.objects.values('item_code', 'description').annotate(
         total_stock=Sum('total_pcs')
     )
-    
     low_stock_items = [item for item in inventory_grouped if item['total_stock'] < threshold]
     critical_count = len(low_stock_items)
     healthy_count = len([item for item in inventory_grouped if item['total_stock'] >= threshold])
 
-    # 5. Movement Trend (Total In vs Total Out)
-    total_in = StockLog.objects.filter(action_type__in=['IN', 'REG']).aggregate(Sum('change_qty'))['change_qty__sum'] or 0
-    total_out_raw = StockLog.objects.filter(action_type='OUT').aggregate(Sum('change_qty'))['change_qty__sum'] or 0
-    total_out = abs(total_out_raw) # 🚀 FIX: abs() para positive number sa chart
-
-    # 6. Recent Activity Feed (Huling 5 galaw)
-    recent_logs = StockLog.objects.select_related('user', 'material_tag').order_by('-timestamp')[:5]
-
-    # 7. WAREHOUSE SPACE UTILIZATION
-    total_capacity = LocationMaster.objects.aggregate(Sum('capacity'))['capacity__sum'] or 1 # Iwas divide-by-zero
-    total_used_space = MaterialTag.objects.filter(location__isnull=False).aggregate(Sum('total_pcs'))['total_pcs__sum'] or 0
+    # 🚀 3. INVENTORY FLOW (LAST 7 DAYS) - PARA SA LINE CHART
+    today = timezone.now().date()
+    last_7_days = [today - timedelta(days=i) for i in range(6, -1, -1)]
     
-    # Siguraduhing hindi lalampas sa 100% ang chart kung sakaling may overstock
-    used_space = min(total_used_space, total_capacity)
-    free_space = max(total_capacity - used_space, 0)
+    flow_dates = [d.strftime('%b %d') for d in last_7_days]
+    flow_in = []
+    flow_out = []
 
-    # 8. FAST MOVING ITEMS (Top 5 Base sa pinakamaraming 'OUT')
+    for d in last_7_days:
+        day_in = StockLog.objects.filter(timestamp__date=d, action_type__in=['IN', 'REG']).aggregate(Sum('change_qty'))['change_qty__sum'] or 0
+        day_out_raw = StockLog.objects.filter(timestamp__date=d, action_type='OUT').aggregate(Sum('change_qty'))['change_qty__sum'] or 0
+        flow_in.append(day_in)
+        flow_out.append(abs(day_out_raw)) # Gawing positive para sa chart
+
+    # 4. RECENT ACTIVITY FEED
+    recent_logs = StockLog.objects.select_related('user', 'material_tag').order_by('-timestamp')[:6]
+
+    # 🚀 5. PER WAREHOUSE UTILIZATION - PARA SA HORIZONTAL BAR CHART
+    warehouses = LocationMaster.objects.values('warehouse').annotate(
+        total_cap=Sum('capacity')
+    ).exclude(warehouse__exact='')
+
+    wh_labels = []
+    wh_util_data = []
+
+    for wh in warehouses:
+        wh_name = wh['warehouse']
+        t_cap = wh['total_cap'] or 1 # Iwas divide-by-zero
+        
+        # Ilan ang laman ng specific warehouse na ito?
+        used = MaterialTag.objects.filter(location__warehouse=wh_name).aggregate(Sum('total_pcs'))['total_pcs__sum'] or 0
+        
+        # Compute percentage (Ila-lock sa 100% max para hindi masira ang chart kung may overstock)
+        used_capped = min(used, t_cap)
+        pct = round((used_capped / t_cap) * 100, 1)
+
+        wh_labels.append(wh_name)
+        wh_util_data.append(pct)
+
+    # 6. FAST MOVING ITEMS
     fast_movers = StockLog.objects.filter(action_type='OUT').values(
         'material_tag__item_code'
     ).annotate(
         total_out=Sum('change_qty')
-    ).order_by('total_out')[:5] # Order ascending dahil negative ang OUT
+    ).order_by('total_out')[:5]
 
     top_items = []
     for item in fast_movers:
         top_items.append({
             'item_code': item['material_tag__item_code'],
-            'total_out': abs(item['total_out']) # Gawing positive bago ipasa sa HTML
+            'total_out': abs(item['total_out']) 
         })
 
-    # 9. I-PACK SA CONTEXT AT IPASA SA HTML
+    # 7. CONTEXT
     context = {
         'total_skus': total_skus,
         'pending_shipments': pending_shipments,
         'total_pcs': total_pcs,
-        'total_inventory_value': total_inventory_value, # 🚀 Pera is here!
+        'total_inventory_value': total_inventory_value,
         'critical_count': critical_count,
         'low_stock_items': low_stock_items[:5], 
         'recent_logs': recent_logs,
         'chart_health_data': json.dumps([healthy_count, critical_count]), 
-        'chart_movement_data': json.dumps([total_in, total_out]),        
-        'chart_space_data': json.dumps([used_space, free_space]), # 🚀 Space Chart is here!
-        'top_items': top_items, # 🚀 Fast Movers are here!
+        
+        # Bagong Chart Data:
+        'flow_dates': json.dumps(flow_dates),
+        'flow_in': json.dumps(flow_in),
+        'flow_out': json.dumps(flow_out),
+        'wh_labels': json.dumps(wh_labels),
+        'wh_util_data': json.dumps(wh_util_data),
+        
+        'top_items': top_items,
         'threshold': threshold
     }
     

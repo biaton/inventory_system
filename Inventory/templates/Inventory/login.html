@@ -142,8 +142,12 @@
                         <div class="relative">
                             <i data-lucide="key"
                                 class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
-                            <input type="password" name="password" required placeholder="Enter Password..."
-                                class="w-full p-2.5 pl-9 bg-slate-50 border border-slate-400 text-xs font-black text-slate-800 focus:ring-1 focus:ring-teal-700 outline-none shadow-inner">
+                            <input type="password" id="passwordInput" name="password" required placeholder="Enter Password..."
+                                class="w-full p-2.5 pl-9 pr-10 bg-slate-50 border border-slate-400 text-xs font-black text-slate-800 focus:ring-1 focus:ring-teal-700 outline-none shadow-inner">
+                            
+                            <button type="button" onclick="togglePassword()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-teal-700 transition-colors focus:outline-none">
+                                <i data-lucide="eye" id="toggleIcon" class="w-4 h-4"></i>
+                            </button>
                         </div>
                     </div>
 
@@ -167,6 +171,22 @@
 
     <script>
         lucide.createIcons();
+
+        function togglePassword() {
+            const pwdInput = document.getElementById('passwordInput');
+            const icon = document.getElementById('toggleIcon');
+            
+            if (pwdInput.type === "password") {
+                pwdInput.type = "text";
+                icon.setAttribute('data-lucide', 'eye-off'); // Pinapalitan ang icon ng may ekis
+            } else {
+                pwdInput.type = "password";
+                icon.setAttribute('data-lucide', 'eye'); // Ibinabalik ang normal na mata
+            }
+            
+            // Kailangang i-re-render ni Lucide yung icon kapag nagpalit ng data-lucide attribute
+            lucide.createIcons();
+        }
     </script>
 </body>
 
