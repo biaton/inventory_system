@@ -36,7 +36,9 @@
                     <div class="space-y-3">
                         <datalist id="location_list">
                             {% for loc in locations %}
-                                <option value="{{ loc.location_code }}"></option>
+                                <option value="{{ loc.location_code }}">
+                                    Warehouse: {{ loc.warehouse|default:"UNASSIGNED" }} | Zone: {{ loc.zone|default:"-" }}
+                                </option>
                             {% endfor %}
                         </datalist>
 
@@ -90,23 +92,23 @@
 
                 <div class="bg-white border border-slate-200 shadow-sm p-4 rounded-sm">
                     <h3 class="text-[10px] font-black text-slate-600 uppercase tracking-widest border-b border-slate-100 pb-2 mb-3 flex items-center gap-2">
-                        <i data-lucide="factory" class="w-3 h-3"></i> Supplier & Notes
+                        <i data-lucide="users" class="w-3 h-3"></i> Client & Notes
                     </h3>
                     <div class="space-y-3">
-                        <datalist id="supplier_list">
-                            {% for sup in suppliers %}
-                                <option value="{{ sup.name }}"></option>
+                        <datalist id="customer_list">
+                            {% for cust in customers %}
+                                <option value="{{ cust.name }}"></option>
                             {% endfor %}
                         </datalist>
 
                         <div class="flex gap-3">
                             <div class="flex flex-col w-1/3">
-                                <label class="text-[9px] font-bold text-slate-500 uppercase mb-1">Maker</label>
-                                <input type="text" name="maker_name" list="supplier_list" placeholder="Select Maker..." class="p-1.5 border border-slate-300 text-xs font-bold focus:border-teal-500 outline-none">
+                                <label class="text-[9px] font-bold text-slate-500 uppercase mb-1">Client Name</label>
+                                <input type="text" name="maker_name" list="customer_list" placeholder="Select Client..." class="p-1.5 border border-slate-300 text-xs font-bold focus:border-teal-500 outline-none">
                             </div>
                             <div class="flex flex-col w-1/3">
                                 <label class="text-[9px] font-bold text-slate-500 uppercase mb-1">Part Name</label>
-                                <input type="text" name="part_name" placeholder="Part description..." class="p-1.5 border border-slate-300 text-xs font-bold focus:border-teal-500 outline-none">
+                                <input type="text" id="header_part_name" name="part_name" placeholder="Part description..." class="p-1.5 border border-slate-300 text-xs font-bold focus:border-teal-500 outline-none">
                             </div>
                             <div class="flex flex-col w-32">
                                 <label class="text-[9px] font-bold text-slate-500 uppercase mb-1">PO No.</label>
@@ -133,21 +135,15 @@
                 </datalist>
 
                 <div class="flex border border-slate-300 rounded-sm overflow-hidden shadow-sm">
-                        <!--<input type="text" id="search_item_code" list="item_master_list" placeholder="Item Code..." class="w-32 p-1.5 text-xs font-black uppercase outline-none focus:bg-slate-50">
-                    <div class="w-[1px] bg-slate-300"></div>
-                        <input type="text" id="search_revision" placeholder="Rev" class="w-14 p-1.5 text-xs font-black text-center outline-none focus:bg-slate-50">-->
                     <button type="button" onclick="openStockModal()" class="bg-gray-300 text-black border border-slate-300 px-3 py-1.5 text-[10px] font-black uppercase hover:bg-yellow-300 transition-colors flex items-center gap-1 rounded-sm">
-                        <i data-lucide="search" class="w-3 h-3"></i> Search
+                        <i data-lucide="search" class="w-3 h-3"></i> Search Material
                     </button>
                 </div>
                 
                 <div class="h-6 w-[1px] bg-slate-300 mx-1"></div>
 
                 <button type="button" onclick="addItemRow()" class="bg-teal-50 text-teal-800 border border-teal-200 px-3 py-1.5 text-[10px] font-black uppercase hover:bg-teal-100 transition-colors flex items-center gap-1 rounded-sm">
-                    <i data-lucide="plus" class="w-3 h-3"></i> Add Row
-                </button>
-                <button type="button" class="bg-teal-50 text-teal-800 border border-teal-200 px-3 py-1.5 text-[10px] font-black uppercase hover:bg-teal-100 transition-colors flex items-center gap-1 rounded-sm">
-                    <i data-lucide="package-plus" class="w-3 h-3"></i> Add Material
+                    <i data-lucide="plus" class="w-3 h-3"></i> Add Blank Row
                 </button>
             </div>
 
@@ -201,41 +197,41 @@
 </div>
 
 <div id="stockModal" class="fixed inset-0 bg-slate-900/60 hidden z-50 flex items-center justify-center backdrop-blur-sm transition-all">
-            <div class="bg-white rounded-sm shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden">
-                
-                <div class="bg-teal-900 px-5 py-3 flex justify-between items-center shadow-md z-10">
-                    <h3 class="text-white font-black uppercase tracking-widest text-sm flex items-center gap-2">
-                        <i data-lucide="package-search" class="w-4 h-4 text-teal-300"></i> Select Material from Stock
-                    </h3>
-                    <button type="button" onclick="closeStockModal()" class="text-teal-300 hover:text-white transition-colors">
-                        <i data-lucide="x" class="w-6 h-6"></i>
-                    </button>
-                </div>
-                
-                <div class="p-3 border-b border-slate-200 bg-slate-100 flex gap-2">
-                    <div class="relative flex-1">
-                        <i data-lucide="filter" class="absolute left-3 top-2.5 w-4 h-4 text-slate-400"></i>
-                        <input type="text" id="modal_search_input" placeholder="Type to filter Item Code or Description..." class="w-full pl-9 pr-3 py-2 border border-slate-300 text-xs font-bold focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none rounded-sm shadow-inner" onkeyup="filterModalTable()">
-                    </div>
-                </div>
-                
-                <div class="overflow-y-auto flex-1 bg-white">
-                    <table class="w-full text-left border-collapse" style="font-size: 11px;">
-                        <thead class="sticky top-0 bg-slate-200 shadow-sm z-10">
-                            <tr class="text-slate-700 uppercase tracking-widest font-black text-[9px] border-b border-slate-300">
-                                <th class="py-3 px-4">Item Code</th>
-                                <th class="py-3 px-4">Description</th>
-                                <th class="py-3 px-4 text-center">Revision</th>
-                                <th class="py-3 px-4 text-center text-teal-800">Available Stock</th>
-                                <th class="py-3 px-4 text-center">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="modal_table_body" class="divide-y divide-slate-100">
-                            </tbody>
-                    </table>
-                </div>
+    <div class="bg-white rounded-sm shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden">
+        
+        <div class="bg-teal-900 px-5 py-3 flex justify-between items-center shadow-md z-10">
+            <h3 class="text-white font-black uppercase tracking-widest text-sm flex items-center gap-2">
+                <i data-lucide="package-search" class="w-4 h-4 text-teal-300"></i> Select Material from Stock
+            </h3>
+            <button type="button" onclick="closeStockModal()" class="text-teal-300 hover:text-white transition-colors">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+        
+        <div class="p-3 border-b border-slate-200 bg-slate-100 flex gap-2">
+            <div class="relative flex-1">
+                <i data-lucide="filter" class="absolute left-3 top-2.5 w-4 h-4 text-slate-400"></i>
+                <input type="text" id="modal_search_input" placeholder="Type to filter Item Code or Description..." class="w-full pl-9 pr-3 py-2 border border-slate-300 text-xs font-bold focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none rounded-sm shadow-inner" onkeyup="filterModalTable()">
             </div>
         </div>
+        
+        <div class="overflow-y-auto flex-1 bg-white">
+            <table class="w-full text-left border-collapse" style="font-size: 11px;">
+                <thead class="sticky top-0 bg-slate-200 shadow-sm z-10">
+                    <tr class="text-slate-700 uppercase tracking-widest font-black text-[9px] border-b border-slate-300">
+                        <th class="py-3 px-4">Item Code</th>
+                        <th class="py-3 px-4">Description</th>
+                        <th class="py-3 px-4 text-center">Revision</th>
+                        <th class="py-3 px-4 text-center text-teal-800">Available Stock</th>
+                        <th class="py-3 px-4 text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="modal_table_body" class="divide-y divide-slate-100">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
@@ -243,28 +239,22 @@
     });
 
     function printCurrentSlip() {
-        // 🚀 BAGO: Hahanapin niya yung mga toast messages na nakalutang sa top right
         const toastMessages = document.querySelectorAll('.toast-message');
-        
         let foundReqNo = null;
 
-        // I-check isa-isa kung may "REQ-" sa loob ng text
         toastMessages.forEach(toast => {
             const text = toast.innerText;
-            const match = text.match(/REQ-\d{8}-\d{3}/); // Naghahanap ng pattern na REQ-20260325-001
-            
+            const match = text.match(/REQ-\d{8}-\d{3}/); 
             if (match) {
                 foundReqNo = match[0];
             }
         });
 
-        // Kung nakakita ng REQ number, buksan sa bagong tab!
         if (foundReqNo) {
             window.open('/receiving/movement-slip/' + foundReqNo + '/', '_blank');
             return;
         }
         
-        // Kung walang nahanap (baka na-close na yung toast o hindi pa nag-save)
         alert("Please register the request first. If the alert box is gone, go to the Request List to print it.");
     }
 
@@ -274,43 +264,41 @@
         if (emptyState) emptyState.remove();
 
         const currentDeliveryPlace = document.getElementById('header_delivery_place').value || "Not Set";
-
-        // Kung ang 'rev' ay naglalaman ng old placeholder, gawin nating blangko
         const cleanRev = (rev === 'Select Goods') ? '' : rev;
+
+        // 🚀 BAGO: AUTO-FILL PART NAME LOGIC
+        // Kung may in-add na item galing modal at blangko pa yung Part Name sa header, kusa itong ipa-paste
+        const partNameHeader = document.getElementById('header_part_name');
+        if (desc !== "" && partNameHeader.value.trim() === "") {
+            partNameHeader.value = desc;
+        }
 
         const row = `
         <tr class="item-row hover:bg-teal-50/30 transition-colors bg-white border-b border-slate-200">
             <td class="py-2 px-3 border-r border-slate-200 text-[10px] font-bold text-slate-500 italic row-place-display align-middle">
                 ${currentDeliveryPlace}
             </td>
-            
             <td class="py-2 px-2 border-r border-slate-200 align-middle">
                 <input type="text" name="item_code[]" value="${itemCode}" placeholder="CODE" class="w-full p-1.5 bg-white border border-slate-300 text-xs font-black text-slate-800 uppercase focus:outline-none focus:border-teal-500 shadow-sm rounded-sm">
             </td>
-            
             <td class="py-2 px-2 border-r border-slate-200 align-middle">
                 <input type="text" name="description[]" value="${desc}" placeholder="Description" class="w-full p-1.5 bg-white border border-slate-300 text-[10px] font-bold text-slate-700 focus:outline-none focus:border-teal-500 shadow-sm rounded-sm">
             </td>
-            
             <td class="py-2 px-2 border-r border-slate-200 align-middle">
                 <input type="text" name="revision[]" value="${cleanRev}" placeholder="REV-..." class="w-full p-1.5 bg-white border border-slate-300 text-[10px] font-black text-slate-700 uppercase focus:outline-none focus:border-teal-500 shadow-sm rounded-sm text-center">
             </td>
-            
             <td class="py-2 px-3 border-r border-slate-200 text-center font-black text-teal-700 bg-slate-50/50 align-middle text-xs">
                 ${Number(stock).toLocaleString()}
             </td>
-            
             <td class="py-2 px-2 border-r border-slate-200 bg-amber-50/30 align-middle">
                 <div class="flex items-center justify-center border border-amber-400 bg-white rounded-sm overflow-hidden shadow-sm">
                     <input type="number" name="request_qty[]" value="1" required class="w-full p-1.5 text-xs font-black text-center text-teal-900 focus:outline-none focus:bg-amber-50">
                     <span class="text-[8px] font-black text-slate-500 uppercase px-2 border-l border-amber-300 bg-slate-100 h-full flex items-center">PCS</span>
                 </div>
             </td>
-
             <td class="py-2 px-2 border-r border-slate-200 align-middle">
                 <input type="text" name="item_remarks[]" value="${remarks}" placeholder="Type note..." class="w-full p-1.5 bg-white border border-slate-300 focus:border-teal-500 outline-none text-[10px] font-bold italic text-slate-600 shadow-sm rounded-sm">
             </td>
-            
             <td class="py-2 px-2 text-center align-middle">
                 <button type="button" onclick="this.closest('tr').remove(); updateListCount();" class="text-slate-400 hover:text-rose-600 transition-colors p-1.5 hover:bg-rose-50 rounded border border-transparent hover:border-rose-200 shadow-sm bg-white">
                     <i data-lucide="trash-2" class="w-4 h-4 mx-auto"></i>
@@ -357,7 +345,6 @@
                 const itemsToLoad = data.items || data.data;
                 
                 itemsToLoad.forEach(item => {
-                    // 🚀 FIX: Dinagdag ko yung item.revision dito!
                     const stockVal = item.stock_qty || item.qty || 0; 
                     const revVal = item.revision || '';
                     addItemRow(item.item_code, item.description, stockVal, revVal);
@@ -372,48 +359,6 @@
             console.error(err);
             alert("Server Error: Please check your connection.");
         });
-    }
-
-    function directStockSearch() {
-        const itemCode = document.getElementById('search_item_code').value.trim();
-        const revision = document.getElementById('search_revision').value.trim();
-
-        if (!itemCode) {
-            alert("Please enter an Item Code to search.");
-            return;
-        }
-
-        const url = `/receiving/search-items/?q=${itemCode}&rev=${revision}`;
-
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success && data.results.length > 0) {
-                    const item = data.results[0];
-
-                    const existingRows = document.querySelectorAll('input[name="item_code[]"]');
-                    for (let row of existingRows) {
-                        if (row.value === item.item_code) {
-                            alert("Item is already in the list!");
-                            return;
-                        }
-                    }
-
-                    addItemRow(item.item_code, item.description, item.stock_qty, item.revision);
-
-                    document.getElementById('search_item_code').value = '';
-                    document.getElementById('search_revision').value = '';
-                } else {
-                    alert("No item found matching those details.");
-                    // 🚀 DAGDAG: I-clear ang box para hindi malito
-                    document.getElementById('search_item_code').value = '';
-                    document.getElementById('search_revision').value = '';
-                }
-            })
-            .catch(err => {
-                console.error("Search error:", err);
-                alert("Error connecting to inventory database.");
-            });
     }
 
     function updateListCount() {
@@ -434,7 +379,7 @@
         }
     }
 
-    let allStockData = []; // Dito natin itatago ang data para mabilis ang search
+    let allStockData = []; 
 
     function openStockModal() {
         document.getElementById('stockModal').classList.remove('hidden');
@@ -443,7 +388,7 @@
 
     function closeStockModal() {
         document.getElementById('stockModal').classList.add('hidden');
-        document.getElementById('modal_search_input').value = ""; // Linisin ang search bar
+        document.getElementById('modal_search_input').value = ""; 
     }
 
     function fetchStocksForModal() {
@@ -451,7 +396,6 @@
         tbody.innerHTML = '<tr><td colspan="5" class="text-center py-10 text-slate-400 font-bold italic"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2 text-teal-600"></i>Loading inventory data...</td></tr>';
         lucide.createIcons();
 
-        // Tumawag sa views.py
         fetch('/receiving/search-items/')
             .then(response => response.json())
             .then(data => {
@@ -478,7 +422,6 @@
         }
 
         dataArray.forEach(item => {
-            // Gumagamit tayo ng backticks at escape characters para safe sa double quotes ang description
             const safeDesc = item.description ? item.description.replace(/'/g, "\\'").replace(/"/g, '&quot;') : "No Description";
             
             const row = `
@@ -500,7 +443,6 @@
     }
 
     function filterModalTable() {
-        // Ito yung nagfi-filter habang nagta-type ka sa search bar ng Modal (Real-time!)
         const query = document.getElementById('modal_search_input').value.toLowerCase();
         const filteredData = allStockData.filter(item => 
             item.item_code.toLowerCase().includes(query) || 
@@ -510,7 +452,6 @@
     }
 
     function selectStockFromModal(code, desc, qty, rev) {
-        // 1. Check muna natin kung nandiyan na siya sa main table para hindi madoble
         const existingRows = document.querySelectorAll('input[name="item_code[]"]');
         for (let row of existingRows) {
             if (row.value === code) {
@@ -519,10 +460,7 @@
             }
         }
         
-        // 2. Idagdag ang row gamit yung existing function mo!
         addItemRow(code, desc, qty, rev);
-        
-        // 3. Isara ang modal
         closeStockModal();
     }
 </script>

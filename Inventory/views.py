@@ -37,6 +37,7 @@ import random
 import uuid
 import json
 import csv
+import re
 from .utils import send_shipping_notification, send_order_acknowledgement, send_qc_rejection_alert, log_system_action, notify_admins, send_in_app_notification
 from .models import (
     Profile, 
@@ -120,9 +121,8 @@ def edit_profile(request):
     return render(request, 'Inventory/profile/edit_profile.html')
 
 def change_password_view(request):
-    # Kailangan naka-login para makapag-change password
     if not request.user.is_authenticated:
-        return redirect('login') # Palitan base sa login url mo
+        return redirect('login') 
 
     if request.method == 'POST':
         old_password = request.POST.get('old_password')
@@ -131,7 +131,7 @@ def change_password_view(request):
 
         # 1. I-check kung tama ang lumang password
         if not request.user.check_password(old_password):
-            messages.error(request, "Error: Incorrect old password.")
+            messages.error(request, "Error: Incorrect current password.")
             return redirect('change_password')
         
         # 2. I-check kung magkaparehas ang bago at confirm password
@@ -139,21 +139,32 @@ def change_password_view(request):
             messages.error(request, "Error: New passwords do not match.")
             return redirect('change_password')
             
-        # 3. Optional: I-check kung masyadong maiksi ang password
+        # 🚀 3. BULLETPROOF BACKEND VALIDATION
         if len(new_password) < 8:
             messages.error(request, "Error: Password must be at least 8 characters.")
+            return redirect('change_password')
+        if not re.search(r'[A-Z]', new_password):
+            messages.error(request, "Error: Password must contain at least one uppercase letter (A-Z).")
+            return redirect('change_password')
+        if not re.search(r'[a-z]', new_password):
+            messages.error(request, "Error: Password must contain at least one lowercase letter (a-z).")
+            return redirect('change_password')
+        if not re.search(r'[0-9]', new_password):
+            messages.error(request, "Error: Password must contain at least one number (0-9).")
+            return redirect('change_password')
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', new_password):
+            messages.error(request, "Error: Password must contain at least one special character.")
             return redirect('change_password')
 
         # 4. I-save ang bagong password
         request.user.set_password(new_password)
         request.user.save()
         
+        # Para hindi ma-log out ang user pagkatapos mag-change password
         update_session_auth_hash(request, request.user)
-
-#       log_system_action(request.user, 'UPDATE', 'User Security', f"User {request.user.username} changed their password.", request)
         
         messages.success(request, "Success! Your password has been updated securely.")
-        return redirect('settings_master') # Pwedeng ibalik sa settings hub o dashboard
+        return redirect('settings_master') 
 
     return render(request, 'Inventory/master/change_password.html')
 
@@ -2402,7 +2413,7 @@ def ri_delivery_request_view(request):
         'now': datetime.datetime.now(),
         'title': 'Delivery Request',
         'locations': LocationMaster.objects.all().order_by('zone', 'location_code'), 
-        'suppliers': Supplier.objects.all().order_by('name'),
+        'customers': Contact.objects.filter(contact_type='Customer').order_by('name'),
         'all_items': Item.objects.all().order_by('item_code') 
     }
     return render(request, 'Inventory/receiving/RI_delivery_request.html', context)
