@@ -3,152 +3,149 @@
 {% block order_content%}
 <div class="max-w-[100%] mx-auto pb-20 mt-1 text-slate-800">
 
-    <form method="POST" id="manualOrderForm" action="{% url 'order_manual' %}" class="bg-white border border-slate-300 shadow-sm p-4 border-t-4 border-t-teal-700">
+    <form method="POST" id="manualOrderForm" action="{% url 'order_manual' %}" class="bg-white border border-slate-300 shadow-sm border-t-4 border-t-teal-700">
         {% csrf_token %}
 
-        <div class="border-b-2 border-teal-800 pb-2 mb-4 flex justify-between items-end">
-            <h2 class="text-xl font-black text-teal-900 uppercase tracking-tight flex items-center gap-2">
-                <i data-lucide="keyboard" class="w-5 h-5 text-teal-700"></i> Customer Order Batch Entry
-            </h2>
-            <span class="text-xs font-bold text-slate-500">Sales Order Module v2.0</span>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-2 mb-4">
-            <div class="space-y-2">
-                <div class="flex items-center">
-                    <label class="w-32 text-xs font-bold text-slate-600">In Order No.</label>
-                    <div class="flex flex-1 gap-1">
-                        <input type="text" id="in_order_no" name="in_order_no" placeholder="Auto-generate..." required class="w-full p-1 border border-slate-400 bg-slate-100 text-xs font-bold focus:bg-white text-teal-900 uppercase">
-                        <button type="button" onclick="generateSpecificOrderNo(this)" class="bg-teal-700 text-white px-2 py-1 text-[10px] font-bold hover:bg-teal-800 border border-teal-800 transition-colors shadow-sm">Generate</button>
-                    </div>
-                </div>
-                <div class="flex items-center">
-                    <label class="w-32 text-xs font-bold text-slate-600">Customer</label>
-                    <input list="customer_choices" name="customer_name" placeholder="Search or type new..." required
-                           class="flex-1 p-1 border border-slate-400 text-xs focus:bg-emerald-50 uppercase font-bold"
-                           onchange="autoFillCustomer(this)" autocomplete="off">
-                    <datalist id="customer_choices">
-                        {% for c in customers %}<option value="{{ c.name }}"></option>{% endfor %}
-                    </datalist>
-                </div>
-                <div class="flex items-center">
-                    <label class="w-32 text-xs font-bold text-slate-600">Contact Person</label>
-                    <input type="text" name="contact_person" class="contact-person-field flex-1 p-1 border border-slate-400 text-xs focus:bg-emerald-50 uppercase font-bold" placeholder="Auto-filled or type manually...">
-                </div>
-                <div class="flex items-center">
-                    <label class="w-32 text-xs font-bold text-slate-600">Delivery Address</label>
-                    <div class="flex flex-1 gap-1">
-                        <input list="delivery_list" name="delivery_input" class="address-field w-full p-1 border border-slate-400 text-xs focus:bg-emerald-50 uppercase font-bold" placeholder="Auto-filled or search address...">
-                        <datalist id="delivery_list">
-                            {% for address in delivery_addresses %}<option value="{{ address }}"></option>{% endfor %}
-                        </datalist>
-                    </div>
-                </div>
+        <div class="p-5 bg-slate-50 border-b-2 border-slate-300">
+            <div class="border-b border-slate-300 pb-2 mb-4 flex justify-between items-end">
+                <h2 class="text-xl font-black text-teal-900 uppercase tracking-tight flex items-center gap-2">
+                    <i data-lucide="keyboard" class="w-5 h-5 text-teal-700"></i> Customer Order Batch Entry
+                </h2>
+                <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest bg-white px-2 py-1 border border-slate-200">Global Settings</span>
             </div>
 
-            <div class="space-y-2">
-                <div class="flex items-center">
-                    <label class="w-32 text-xs font-bold text-slate-600">Order Date</label>
-                    <input type="date" id="order_date" name="order_date" required class="flex-1 p-1 border border-slate-400 text-xs focus:bg-emerald-50 font-bold">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="space-y-1">
+                    <label class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Main PO No.</label>
+                    <div class="flex gap-1">
+                        <input type="text" name="main_po_no" placeholder="General PO..." class="w-full p-2 border border-slate-300 bg-white text-xs font-black uppercase focus:outline-none focus:border-teal-500 shadow-sm">
+                        <button type="button" onclick="generatePONo(this, 'MPO')" class="bg-teal-700 text-white px-3 text-[10px] font-bold hover:bg-teal-800 transition-colors shadow-sm">GEN</button>
+                    </div>
                 </div>
-                <div class="flex items-center">
-                    <label class="w-32 text-xs font-bold text-slate-600">Order Type</label>
-                    <select name="order_type" class="flex-1 p-1 border border-slate-400 text-xs focus:bg-emerald-50">
-                        <option>Standard</option><option>Express</option><option>Schedule</option><option>Pick up</option>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Global Status</label>
+                    <select name="main_status" class="w-full p-2 border border-teal-400 bg-teal-50 text-teal-900 text-xs font-black uppercase focus:outline-none shadow-sm">
+                        <option>Pending</option>
+                        <option>Processing</option>
+                        <option>Shipped</option>
+                        <option>Delivered</option>
+                        <option>In Transit</option>
+                        <option>Cancelled</option>
                     </select>
                 </div>
-                <div class="flex items-center">
-                    <label class="w-32 text-xs font-bold text-slate-600">Customer PO No.</label>
-                    <input type="text" name="cust_po_no" class="flex-1 p-1 border border-slate-400 text-xs focus:bg-emerald-50 uppercase">
+                <div class="space-y-1">
+                    <label class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Global Del. Date</label>
+                    <input type="date" id="main_delivery_date" name="main_delivery_date" required class="w-full p-2 border border-slate-300 bg-white text-xs font-black focus:outline-none focus:border-teal-500 shadow-sm">
                 </div>
-                <div class="flex items-center">
-                    <label class="w-32 text-xs font-bold text-slate-600">Order Contents</label>
-                    <input type="text" name="order_contents" class="flex-1 p-1 border border-slate-400 text-xs focus:bg-emerald-50 uppercase">
-                </div>
-            </div>
-
-            <div class="space-y-2">
-                <div class="flex items-center">
-                    <label class="w-32 text-xs font-bold text-slate-600">Order Status</label>
-                    <select name="order_status" class="flex-1 p-1 border border-teal-400 bg-teal-50 text-teal-900 text-xs font-bold focus:bg-white uppercase">
-                        <option>Pending</option><option>Processing</option><option>Shipped</option><option>Delivered</option><option>In Transit</option><option>Cancelled</option>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Global Transport</label>
+                    <select name="main_transport" class="w-full p-2 border border-slate-300 bg-white text-xs font-black uppercase focus:outline-none focus:border-teal-500 shadow-sm">
+                        <option>Truck</option><option>Van</option><option>Motorcycle</option><option>Cargo Ship</option><option>Cargo plane</option>
                     </select>
-                </div>
-                <div class="flex items-center">
-                    <label class="w-32 text-xs font-bold text-slate-600">Transport</label>
-                    <select id="transport_main" name="transport_main" class="flex-1 p-1 border border-slate-400 text-xs focus:bg-emerald-50 uppercase">
-                        <option>Motorcycle</option><option>Van</option><option>Truck</option><option>Cargo Ship</option><option>Cargo plane</option>
-                    </select>
-                </div>
-                <div class="flex items-center">
-                    <label class="w-32 text-xs font-bold text-slate-600">Remarks</label>
-                    <input type="text" name="remarks_main" class="flex-1 p-1 border border-slate-400 text-xs focus:bg-emerald-50 italic">
                 </div>
             </div>
         </div>
 
-        <div class="bg-slate-100 border-y border-slate-300 py-2 px-2 mb-4 flex flex-wrap justify-between items-center gap-2">
-            <div class="flex flex-wrap items-center gap-2">
-                <button type="button" onclick="cancelForm()" class="bg-rose-50 text-rose-700 border border-rose-200 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-rose-100 rounded-sm">Clear All</button>
-                <div class="h-6 w-[1px] bg-slate-300 mx-1"></div> 
-                
-                <div class="flex items-stretch shadow-sm">
-                    <div class="relative flex items-center">
-                        <i data-lucide="filter" class="absolute left-2 w-3 h-3 text-slate-400"></i>
-                        <input type="text" onkeyup="filterDynamicTable(this)" placeholder="Filter items..." class="pl-7 pr-2 py-1.5 border border-slate-300 text-[10px] font-bold w-40 focus:ring-1 focus:ring-teal-500 outline-none uppercase placeholder:text-slate-400 shadow-inner rounded-l-sm border-r-0">
-                    </div>
-                    <button type="button" class="bg-slate-200 text-slate-700 border border-slate-300 px-3 py-1.5 text-[10px] font-black uppercase hover:bg-slate-300 transition-colors rounded-r-sm">Search</button>
+        <div id="dynamic-blocks-container" class="p-4 bg-slate-200 space-y-6">
+            
+            <div class="dynamic-order-block bg-white border border-slate-300 shadow-md rounded-sm overflow-hidden" data-block-id="0">
+                <div class="bg-slate-800 px-4 py-2 flex justify-between items-center text-white">
+                    <h3 class="text-[11px] font-black uppercase tracking-widest flex items-center gap-2">
+                        <i data-lucide="user" class="w-4 h-4 text-teal-400"></i> Customer Order #1
+                    </h3>
                 </div>
 
-                <div class="h-6 w-[1px] bg-slate-300 mx-1"></div> 
-                <button type="button" onclick="addMainRow()" class="bg-teal-100 text-teal-900 border border-teal-400 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-teal-200 rounded-sm flex items-center gap-1">
-                    <i data-lucide="plus" class="w-3 h-3"></i> Add Row
+                <div class="p-4 grid grid-cols-1 md:grid-cols-4 gap-4 bg-white border-b border-slate-200">
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Customer PO</label>
+                        <div class="flex gap-1">
+                            <input type="text" name="cust_po_no[]" placeholder="Client PO..." class="w-full p-1.5 border border-slate-300 text-xs font-bold uppercase focus:bg-teal-50 outline-none">
+                            <button type="button" onclick="generatePONo(this, 'CPO')" class="bg-teal-700 text-white px-2 text-[9px] font-bold hover:bg-teal-800 transition-colors shadow-sm">GEN</button>
+                        </div>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Customer Name *</label>
+                        <input list="customer_choices" name="customer_name[]" placeholder="Select customer..." required onchange="autoFillCustomer(this)" autocomplete="off" class="w-full p-1.5 border border-slate-300 text-xs font-black uppercase focus:bg-teal-50 outline-none">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Contact Person</label>
+                        <input type="text" name="contact_person[]" placeholder="Auto-fill..." class="contact-person-field w-full p-1.5 border border-slate-300 text-xs font-bold uppercase focus:bg-teal-50 outline-none">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Specific Del. Date</label>
+                        <input type="date" name="delivery_date[]" class="w-full p-1.5 border border-slate-300 text-xs font-bold focus:bg-teal-50 outline-none">
+                    </div>
+                    
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Order Type</label>
+                        <select name="order_type[]" class="w-full p-1.5 border border-slate-300 text-xs font-bold focus:bg-teal-50 outline-none">
+                            <option>Standard</option><option>Express</option><option>Schedule</option><option>Pick up</option>
+                        </select>
+                    </div>
+                    <div class="space-y-1 md:col-span-2">
+                        <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Delivery Address</label>
+                        <input list="delivery_list" name="delivery_address[]" placeholder="Auto-fill or type address..." class="address-field w-full p-1.5 border border-slate-300 text-xs font-bold uppercase focus:bg-teal-50 outline-none">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Remarks</label>
+                        <input type="text" name="remarks[]" placeholder="Notes..." class="w-full p-1.5 border border-slate-300 text-xs font-bold italic focus:bg-teal-50 outline-none">
+                    </div>
+                    
+                    <div class="space-y-1 md:col-span-4">
+                        <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Order Content / Title</label>
+                        <input type="text" name="order_contents[]" placeholder="E.g. Full Assembly Set..." class="w-full p-1.5 border border-slate-300 text-xs font-bold uppercase focus:bg-teal-50 outline-none">
+                    </div>
+                </div>
+
+                <div class="bg-slate-100 border-b border-slate-200 py-1.5 px-3 flex justify-between items-center">
+                    <span class="text-[10px] font-black text-slate-600 uppercase tracking-widest"><i data-lucide="list" class="w-3 h-3 inline"></i> Item List</span>
+                    <button type="button" onclick="addDynamicRow(this, 0)" class="bg-teal-100 text-teal-900 border border-teal-400 px-3 py-1 text-[9px] font-black uppercase hover:bg-teal-200 rounded-sm flex items-center gap-1 shadow-sm">
+                        <i data-lucide="plus" class="w-3 h-3"></i> Add Item
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left min-w-[800px] border-collapse" style="font-size: 11px;">
+                        <thead class="bg-slate-200 text-slate-700">
+                            <tr>
+                                <th class="py-1.5 px-2 border-r border-slate-300 w-32">Item Code</th>
+                                <th class="py-1.5 px-2 border-r border-slate-300">Description</th>
+                                <th class="py-1.5 px-2 border-r border-slate-300 w-24 text-center">Qty</th>
+                                <th class="py-1.5 px-2 border-r border-slate-300 w-16 text-center">Unit</th>
+                                <th class="py-1.5 px-2 border-r border-slate-300 w-24 text-right">Unit Price</th>
+                                <th class="py-1.5 px-2 border-r border-slate-300 w-28 text-right text-teal-900">Amount</th>
+                                <th class="py-1.5 px-2 text-center w-8 text-rose-600">X</th>
+                            </tr>
+                        </thead>
+                        <tbody class="dynamic-table-body divide-y divide-slate-200">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="bg-white border-t border-slate-300 p-4">
+            <div class="flex justify-center mb-6">
+                <button type="button" onclick="addCustomerBlock()" class="bg-slate-100 text-slate-600 border-2 border-dashed border-slate-400 px-10 py-3 text-xs font-black uppercase tracking-widest hover:bg-slate-200 hover:text-slate-900 transition-colors flex items-center gap-2 rounded-sm">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i> Add Another Customer Order
                 </button>
             </div>
-            <div class="flex flex-wrap items-center gap-2">
-                <div class="flex items-center gap-2 bg-white border border-slate-300 px-3 py-1 text-[10px] font-black uppercase">
-                    <span class="text-slate-500">Total Record:</span><span id="list_count" class="text-teal-700">0</span>
+
+            <div class="bg-slate-800 p-4 flex justify-between items-center shadow-md rounded-sm">
+                <button type="button" onclick="if(confirm('Clear all data?')) location.reload();" class="text-white hover:text-rose-400 text-xs font-bold uppercase tracking-widest transition-colors flex items-center gap-1">
+                    <i data-lucide="trash" class="w-4 h-4"></i> Reset Form
+                </button>
+                
+                <div class="flex items-center gap-6">
+                    <div class="text-right">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Batch Grand Total</span>
+                        <span class="text-xl font-black text-emerald-400 tracking-tighter">₱ <span id="grand_total_display">0.00</span></span>
+                    </div>
+                    <button type="submit" onclick="return confirm('Register this entire Batch Order?')" class="bg-teal-600 text-white border border-teal-500 px-10 py-3 text-sm font-black uppercase tracking-widest hover:bg-teal-500 transition-colors shadow-lg flex items-center gap-2 rounded-sm">
+                        <i data-lucide="save" class="w-5 h-5"></i> Save Batch
+                    </button>
                 </div>
-            </div>
-        </div>
-
-        <div class="overflow-x-auto border border-slate-400 mb-4 min-h-[200px]">
-            <table class="w-full text-left min-w-[1300px] border-collapse" style="font-size: 11px;">
-                <thead>
-                    <tr class="bg-slate-200 text-slate-800 border-b border-slate-400">
-                        <th class="py-1.5 px-2 border-r border-slate-400 text-center w-8">No.</th>
-                        <th class="py-1.5 px-2 border-r border-slate-400 w-32">Item Code</th>
-                        <th class="py-1.5 px-2 border-r border-slate-400 w-32 text-blue-800">Cust Item Code</th>
-                        <th class="py-1.5 px-2 border-r border-slate-400">Description</th>
-                        <th class="py-1.5 px-2 border-r border-slate-400 w-24">Del. Date</th>
-                        <th class="py-1.5 px-2 border-r border-slate-400 w-20">Transport</th>
-                        <th class="py-1.5 px-2 border-r border-slate-400 w-20 text-center text-teal-900">Order Qty</th>
-                        <th class="py-1.5 px-2 border-r border-slate-400 w-16 text-center">Unit</th>
-                        <th class="py-1.5 px-2 border-r border-slate-400 w-24 text-right">Unit Price</th>
-                        <th class="py-1.5 px-2 border-r border-slate-400 w-28 text-right text-teal-900">Amount</th>
-                        <th class="py-1.5 px-2 border-r border-slate-400 w-24 text-center">Status</th>
-                        <th class="py-1.5 px-2 text-center w-8 text-rose-600">X</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody" class="divide-y divide-slate-300 block-table-body"></tbody>
-            </table>
-        </div>
-
-        <div id="dynamic-blocks-container" class="space-y-6 mt-6"></div>
-
-        <div class="mt-6 border-t border-dashed border-slate-300 pt-6 flex justify-center">
-            <button type="button" onclick="addCustomerBlock()" class="bg-teal-50 text-teal-800 border-2 border-dashed border-teal-400 px-10 py-3 text-xs font-black uppercase tracking-widest hover:bg-teal-100 transition-colors flex items-center gap-2 rounded-sm">
-                <i data-lucide="plus-circle" class="w-4 h-4"></i> Add Another Customer Order
-            </button>
-        </div>
-
-        <div class="mt-8 bg-slate-100 border border-slate-400 p-4 flex justify-between items-center shadow-md">
-            <button type="submit" onclick="return confirm('Register this entire Batch Order?')" class="bg-teal-700 text-white border border-teal-900 px-10 py-3 text-sm font-black uppercase tracking-widest hover:bg-teal-800 transition-colors shadow-sm flex items-center gap-2 rounded-sm">
-                <i data-lucide="save" class="w-4 h-4"></i> Save Batch Orders
-            </button>
-            <div class="flex items-center gap-4 pl-6 border-l border-slate-300">
-                <span class="text-xs font-black uppercase tracking-widest text-teal-900">Batch Grand Total:</span>
-                <span class="text-2xl font-black text-teal-800 w-48 text-right border-b-4 border-teal-800">₱ <span id="grand_total_display">0.00</span></span>
             </div>
         </div>
 
@@ -156,99 +153,92 @@
 </div>
 
 <template id="customer-block-template">
-    <div class="dynamic-order-block border-2 border-teal-200 bg-white p-4 shadow-sm relative rounded-sm mt-4">
-        <button type="button" onclick="this.closest('.dynamic-order-block').remove(); updateGrandTotal(); updateListCount();" class="absolute top-2 right-2 text-rose-500 hover:bg-rose-100 p-1 rounded" title="Remove Block">
-            <i data-lucide="x" class="w-5 h-5"></i>
+    <div class="dynamic-order-block bg-white border border-slate-300 shadow-md rounded-sm overflow-hidden mt-6 relative" data-block-id="{ID}">
+        <button type="button" onclick="this.closest('.dynamic-order-block').remove(); updateGrandTotal();" class="absolute top-2 right-2 text-rose-300 hover:text-rose-500 transition-colors" title="Remove Customer">
+            <i data-lucide="x-circle" class="w-5 h-5"></i>
         </button>
 
-        <h3 class="text-[10px] font-black text-teal-700 uppercase tracking-widest border-b border-teal-100 pb-2 mb-3 block-counter-label">Additional Customer Order</h3>
+        <div class="bg-slate-700 px-4 py-2 text-white">
+            <h3 class="text-[11px] font-black uppercase tracking-widest flex items-center gap-2 block-counter-label">
+                <i data-lucide="user" class="w-4 h-4 text-teal-400"></i> Customer Order #X
+            </h3>
+        </div>
 
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+        <div class="p-4 grid grid-cols-1 md:grid-cols-4 gap-4 bg-white border-b border-slate-200">
             <div class="space-y-1">
-                <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">In Order No.</label>
+                <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Customer PO</label>
                 <div class="flex gap-1">
-                    <input type="text" name="in_order_no" placeholder="Enter Order No." required class="w-full p-1.5 border border-slate-300 bg-slate-50 text-xs font-black text-teal-900 focus:bg-white uppercase outline-none">
-                    <button type="button" onclick="generateSpecificOrderNo(this)" class="bg-teal-700 text-white px-2 text-[9px] font-bold hover:bg-teal-800 transition-colors shadow-sm">Gen</button>
+                    <input type="text" name="cust_po_no[]" placeholder="Client PO..." class="w-full p-1.5 border border-slate-300 text-xs font-bold uppercase focus:bg-teal-50 outline-none">
+                    <button type="button" onclick="generatePONo(this, 'CPO')" class="bg-teal-700 text-white px-2 text-[9px] font-bold hover:bg-teal-800 transition-colors shadow-sm">GEN</button>
                 </div>
             </div>
             <div class="space-y-1">
-                <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Customer</label>
-                <input list="customer_choices" name="customer_name" placeholder="Select client..." required onchange="autoFillCustomer(this)" class="w-full p-1.5 border border-slate-300 text-xs focus:bg-teal-50 outline-none font-bold uppercase">
+                <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Customer Name *</label>
+                <input list="customer_choices" name="customer_name[]" placeholder="Select customer..." required onchange="autoFillCustomer(this)" autocomplete="off" class="w-full p-1.5 border border-slate-300 text-xs font-black uppercase focus:bg-teal-50 outline-none">
             </div>
             <div class="space-y-1">
                 <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Contact Person</label>
-                <input type="text" name="contact_person" placeholder="Receiver's Name..." class="contact-person-field w-full p-1.5 border border-slate-300 text-xs focus:bg-teal-50 outline-none uppercase font-bold">
+                <input type="text" name="contact_person[]" placeholder="Auto-fill..." class="contact-person-field w-full p-1.5 border border-slate-300 text-xs font-bold uppercase focus:bg-teal-50 outline-none">
             </div>
             <div class="space-y-1">
-                <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Delivery Address</label>
-                <input list="delivery_list" name="delivery_input" placeholder="Full address..." class="address-field w-full p-1.5 border border-slate-300 text-xs focus:bg-teal-50 outline-none uppercase font-bold">
+                <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Specific Del. Date</label>
+                <input type="date" name="delivery_date[]" class="w-full p-1.5 border border-slate-300 text-xs font-bold focus:bg-teal-50 outline-none">
             </div>
+            
             <div class="space-y-1">
                 <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Order Type</label>
-                <select name="order_type" class="w-full p-1.5 border border-slate-300 text-xs focus:bg-teal-50 outline-none font-bold">
+                <select name="order_type[]" class="w-full p-1.5 border border-slate-300 text-xs font-bold focus:bg-teal-50 outline-none">
                     <option>Standard</option><option>Express</option><option>Schedule</option><option>Pick up</option>
                 </select>
             </div>
-            <div class="space-y-1">
-                <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Cust PO No.</label>
-                <input type="text" name="cust_po_no" placeholder="Reference PO..." class="w-full p-1.5 border border-slate-300 text-xs focus:bg-teal-50 outline-none uppercase">
+            <div class="space-y-1 md:col-span-2">
+                <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Delivery Address</label>
+                <input list="delivery_list" name="delivery_address[]" placeholder="Auto-fill or type address..." class="address-field w-full p-1.5 border border-slate-300 text-xs font-bold uppercase focus:bg-teal-50 outline-none">
             </div>
             <div class="space-y-1">
-                <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Transport</label>
-                <select name="transport_main" class="w-full p-1.5 border border-slate-300 text-xs focus:bg-teal-50 outline-none font-bold">
-                    <option>Motorcycle</option><option>Van</option><option>Truck</option><option>Cargo Ship</option>
-                </select>
+                <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Remarks</label>
+                <input type="text" name="remarks[]" placeholder="Notes..." class="w-full p-1.5 border border-slate-300 text-xs font-bold italic focus:bg-teal-50 outline-none">
             </div>
-            <div class="space-y-1">
-                <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Status</label>
-                <select name="order_status" class="w-full p-1.5 border border-teal-300 bg-teal-50 text-xs focus:bg-white outline-none font-black text-teal-800 uppercase">
-                    <option>Pending</option><option>Processing</option>
-                </select>
+            
+            <div class="space-y-1 md:col-span-4">
+                <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Order Content / Title</label>
+                <input type="text" name="order_contents[]" placeholder="E.g. Full Assembly Set..." class="w-full p-1.5 border border-slate-300 text-xs font-bold uppercase focus:bg-teal-50 outline-none">
             </div>
         </div>
 
-        <div class="bg-slate-100 border-y border-slate-300 py-1.5 px-2 mb-2 flex justify-between items-center gap-2">
-            <div class="flex items-center gap-2">
-                <button type="button" onclick="this.closest('.dynamic-order-block').querySelector('tbody').innerHTML=''; updateGrandTotal(); updateListCount();" class="bg-rose-50 text-rose-700 border border-rose-200 px-3 py-1.5 text-[9px] font-black uppercase tracking-widest hover:bg-rose-100 rounded-sm flex items-center gap-1"><i data-lucide="eraser" class="w-3 h-3"></i> Clear Items</button>
-                
-                <div class="h-6 w-[1px] bg-slate-300 mx-1"></div> 
-                
-                <div class="flex items-stretch shadow-sm">
-                    <div class="relative flex items-center">
-                        <i data-lucide="filter" class="absolute left-2 w-3 h-3 text-slate-400"></i>
-                        <input type="text" onkeyup="filterDynamicTable(this)" placeholder="Filter items..." class="pl-7 pr-2 py-1.5 border border-slate-300 text-[10px] font-bold w-40 focus:ring-1 focus:ring-teal-500 outline-none uppercase placeholder:text-slate-400 shadow-inner rounded-l-sm border-r-0">
-                    </div>
-                    <button type="button" class="bg-slate-200 text-slate-700 border border-slate-300 px-3 py-1.5 text-[10px] font-black uppercase hover:bg-slate-300 transition-colors rounded-r-sm">Search</button>
-                </div>
-            </div>
-            <div class="flex items-center gap-2">
-                <button type="button" onclick="addDynamicRow(this)" class="bg-teal-100 text-teal-900 border border-teal-400 px-4 py-1.5 text-[9px] font-black uppercase tracking-widest hover:bg-teal-200 rounded-sm flex items-center gap-1"><i data-lucide="plus" class="w-3 h-3"></i> Add Row</button>
-            </div>
+        <div class="bg-slate-100 border-b border-slate-200 py-1.5 px-3 flex justify-between items-center">
+            <span class="text-[10px] font-black text-slate-600 uppercase tracking-widest"><i data-lucide="list" class="w-3 h-3 inline"></i> Item List</span>
+            <button type="button" onclick="addDynamicRow(this, '{ID}')" class="bg-teal-100 text-teal-900 border border-teal-400 px-3 py-1 text-[9px] font-black uppercase hover:bg-teal-200 rounded-sm flex items-center gap-1 shadow-sm">
+                <i data-lucide="plus" class="w-3 h-3"></i> Add Item
+            </button>
         </div>
 
-        <div class="overflow-x-auto border border-slate-300">
-            <table class="w-full text-left border-collapse min-w-[1300px]" style="font-size: 11px;">
-                <thead class="bg-slate-200 text-slate-800 border-b border-slate-400">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left min-w-[800px] border-collapse" style="font-size: 11px;">
+                <thead class="bg-slate-200 text-slate-700">
                     <tr>
-                        <th class="py-1.5 px-2 border-r border-slate-400 text-center w-8">No.</th>
-                        <th class="py-1.5 px-2 border-r border-slate-400 w-32">Item Code</th>
-                        <th class="py-1.5 px-2 border-r border-slate-400 w-32 text-blue-800">Cust Item Code</th>
-                        <th class="py-1.5 px-2 border-r border-slate-400">Description</th>
-                        <th class="py-1.5 px-2 border-r border-slate-400 w-24">Del. Date</th>
-                        <th class="py-1.5 px-2 border-r border-slate-400 w-20">Transport</th>
-                        <th class="py-1.5 px-2 border-r border-slate-400 w-20 text-center text-teal-900">Order Qty</th>
-                        <th class="py-1.5 px-2 border-r border-slate-400 w-16 text-center">Unit</th>
-                        <th class="py-1.5 px-2 border-r border-slate-400 w-24 text-right">Unit Price</th>
-                        <th class="py-1.5 px-2 border-r border-slate-400 w-28 text-right text-teal-900">Amount</th>
-                        <th class="py-1.5 px-2 border-r border-slate-400 w-24 text-center">Status</th>
+                        <th class="py-1.5 px-2 border-r border-slate-300 w-32">Item Code</th>
+                        <th class="py-1.5 px-2 border-r border-slate-300">Description</th>
+                        <th class="py-1.5 px-2 border-r border-slate-300 w-24 text-center">Qty</th>
+                        <th class="py-1.5 px-2 border-r border-slate-300 w-16 text-center">Unit</th>
+                        <th class="py-1.5 px-2 border-r border-slate-300 w-24 text-right">Unit Price</th>
+                        <th class="py-1.5 px-2 border-r border-slate-300 w-28 text-right text-teal-900">Amount</th>
                         <th class="py-1.5 px-2 text-center w-8 text-rose-600">X</th>
                     </tr>
                 </thead>
-                <tbody class="dynamic-table-body block-table-body divide-y divide-slate-300"></tbody>
+                <tbody class="dynamic-table-body divide-y divide-slate-200"></tbody>
             </table>
         </div>
     </div>
 </template>
+
+<datalist id="delivery_list">
+    {% for address in delivery_addresses %}<option value="{{ address }}"></option>{% endfor %}
+</datalist>
+
+<datalist id="customer_choices">
+    {% for c in customers %}<option value="{{ c.name }}"></option>{% endfor %}
+</datalist>
 
 <datalist id="item_master_list">
     {% for item in items %}
@@ -260,32 +250,43 @@
     let blockCounter = 0;
 
     document.addEventListener("DOMContentLoaded", function() {
-        const dateInput = document.getElementById('order_date');
+        const dateInput = document.getElementById('main_delivery_date');
         if (dateInput && !dateInput.value) {
             dateInput.valueAsDate = new Date();
         }
         lucide.createIcons();
+        
+        // Add 1 default row to the first block
+        const firstBlockBtn = document.querySelector('.dynamic-order-block button[onclick^="addDynamicRow"]');
+        if(firstBlockBtn) firstBlockBtn.click();
     });
 
-    // ==========================================
-    // CUSTOMER AUTO-FILL LOGIC
-    // ==========================================
+    // AUTO-GENERATE PO NUMBERS
+    function generatePONo(btnElement, prefix) {
+        const input = btnElement.previousElementSibling;
+        const date = new Date();
+        const year = date.getFullYear().toString().slice(-2);
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const random = Math.floor(1000 + Math.random() * 9000); 
+        
+        input.value = `${prefix}-${year}${month}${day}-${random}`;
+    }
+
     const customerDatabase = {
         {% for c in customers %}
         "{{ c.name|upper|escapejs }}": {
-            "contact": "{{ c.contact_person|default:''|escapejs }}", 
-            "address": "{{ c.address|default:''|escapejs }}"
+            "contact": "{{ c.contact_person|default:''|escapejs }}",
+            "address": "{{ c.address|default:''|escapejs }}" // 🚀 BAGO
         }{% if not forloop.last %},{% endif %}
         {% endfor %}
     };
 
     function autoFillCustomer(inputElement) {
         const selectedCustomer = inputElement.value.toUpperCase();
-        // Hanapin ang container ng kasalukuyang block para hindi maghalo-halo ang data
-        const container = inputElement.closest('.grid') || document; 
-        
+        const container = inputElement.closest('.dynamic-order-block'); 
         const contactField = container.querySelector('.contact-person-field');
-        const addressField = container.querySelector('.address-field');
+        const addressField = container.querySelector('.address-field'); // 🚀 BAGO
 
         if (customerDatabase[selectedCustomer]) {
             if(contactField) contactField.value = customerDatabase[selectedCustomer].contact;
@@ -296,156 +297,62 @@
         }
     }
 
-    // ==========================================
-    // ITEM AUTO-FILL LOGIC (Gumagamit ng AJAX tulad sa P.O.)
-    // ==========================================
+    const itemMasterDatabase = {
+        {% for item in items %}
+        "{{ item.item_code|upper|escapejs }}": {
+            "description": "{{ item.description|default:''|escapejs }}",
+            "unit_price": "{{ item.unit_price|default:'0.00' }}",
+            "uom": "{{ item.uom|default:'PCS'|escapejs }}"
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    };
+
     function autoFillItemRow(inputElement) {
         const itemCode = inputElement.value.trim().toUpperCase();
         if (!itemCode) return;
 
         const row = inputElement.closest('tr');
+        if (itemMasterDatabase[itemCode]) {
+            const data = itemMasterDatabase[itemCode];
+            const descInput = row.querySelector('input[name^="description"]');
+            const qtyInput = row.querySelector('input[name^="qty"]');
+            const unitInput = row.querySelector('input[name^="unit"]');
+            const priceInput = row.querySelector('input[name^="price"]');
 
-        // Note: Make sure ito ang URL path na ginawa natin kanina sa P.O. module
-        fetch(`/api/get-item-details/?code=${encodeURIComponent(itemCode)}`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    const descInput = row.querySelector('input[name^="description"]');
-                    const priceInput = row.querySelector('input[name^="price"]');
-                    const unitInput = row.querySelector('input[name^="unit"]');
+            if (descInput) descInput.value = data.description;
+            if (unitInput) unitInput.value = data.uom;
+            if (priceInput) priceInput.value = parseFloat(data.unit_price).toFixed(2);
+            if (qtyInput && (qtyInput.value === "0" || qtyInput.value === "")) qtyInput.value = 1; 
 
-                    if (descInput) descInput.value = data.description;
-                    if (priceInput) priceInput.value = data.unit_price;
-                    if (unitInput && data.uom) unitInput.value = data.uom;
-
-                    if (descInput) {
-                        descInput.classList.add('bg-emerald-100');
-                        setTimeout(() => descInput.classList.remove('bg-emerald-100'), 1000);
-                    }
-                    if (priceInput) {
-                        priceInput.classList.add('bg-emerald-100');
-                        setTimeout(() => priceInput.classList.remove('bg-emerald-100'), 1000);
-                    }
-
-                    calculateRow(row.querySelector('.qty-input'));
-                }
-            })
-            .catch(err => console.error("Error fetching item details:", err));
-    }
-
-    // ==========================================
-    // ROW GENERATORS
-    // ==========================================
-    function generateSpecificOrderNo(btnElement) {
-        const input = btnElement.previousElementSibling;
-        const date = new Date();
-        const random = Math.floor(1000 + Math.random() * 9000);
-        input.value = `SO-${date.getFullYear().toString().slice(-2)}${String(date.getMonth() + 1).padStart(2, '0')}-${random}`;
-    }
-
-    function cancelForm() {
-        if(confirm("Clear main form and all added clients?")) {
-            document.getElementById('manualOrderForm').reset();
-            document.getElementById('tableBody').innerHTML = '';
-            document.getElementById('dynamic-blocks-container').innerHTML = ''; 
-            document.getElementById('order_date').valueAsDate = new Date();
-            blockCounter = 0;
-            updateListCount();
-            updateGrandTotal();
+            if(qtyInput) calculateRow(qtyInput);
         }
-    }
-
-    function addMainRow() {
-        const tbody = document.getElementById("tableBody");
-        const rowId = `main-row-${Math.random().toString(36).substr(2, 5)}`;
-        
-        const mainDelDate = document.getElementById("order_date").value || "";
-        const mainTransport = document.getElementById("transport_main").value || "Truck";
-        const mainStatus = document.querySelector("select[name='order_status']").value || "Pending";
-
-        const rowHtml = `
-            <tr id="${rowId}" class="item-row bg-white hover:bg-emerald-50 transition-colors border-b border-slate-200">
-                <td class="py-1 px-1 border-r border-slate-300 text-center font-bold text-slate-500 row-num text-xs">0</td>
-                <td class="py-1 px-1 border-r border-slate-300">
-                    <input type="text" name="item_code[]" list="item_master_list" oninput="autoFillItemRow(this)" autocomplete="off" class="w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white text-xs font-bold uppercase" placeholder="CODE">
-                </td>
-                <td class="py-1 px-1 border-r border-slate-300">
-                    <input type="text" name="cust_item_code[]" class="w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white text-xs text-blue-700 italic">
-                </td>
-                <td class="py-1 px-1 border-r border-slate-300">
-                    <input type="text" name="description[]" class="w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white text-xs text-slate-600" placeholder="Description...">
-                </td>
-                <td class="py-1 px-1 border-r border-slate-300">
-                    <input type="date" name="del_date[]" value="${mainDelDate}" class="w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white text-[10px] text-slate-600 font-bold">
-                </td>
-                <td class="py-1 px-1 border-r border-slate-300">
-                    <input type="text" name="transport[]" value="${mainTransport}" class="w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white text-[10px] uppercase font-bold text-slate-500">
-                </td>
-                <td class="py-1 px-1 border-r border-slate-300 bg-teal-50">
-                    <input type="number" name="qty[]" value="1" min="1" oninput="calculateRow(this)" class="qty-input w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white text-xs font-black text-center text-teal-900">
-                </td>
-                <td class="py-1 px-1 border-r border-slate-300">
-                    <input type="text" name="unit[]" value="PCS" class="w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white text-[10px] text-center font-bold text-slate-500 uppercase">
-                </td>
-                <td class="py-1 px-1 border-r border-slate-300 bg-teal-50">
-                    <input type="number" name="price[]" value="0.00" step="0.01" oninput="calculateRow(this)" class="price-input w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white text-xs text-right font-black">
-                </td>
-                <td class="py-1 px-1 border-r border-slate-300 text-right bg-teal-50">
-                    <span class="row-total text-xs font-black text-teal-900 pr-1">0.00</span>
-                    <input type="hidden" name="amount[]" class="raw-amount-input" value="0">
-                </td>
-                <td class="py-1 px-1 border-r border-slate-300">
-                    <input type="text" name="status[]" value="${mainStatus}" readonly class="w-full p-1 border-none bg-transparent text-[10px] text-center text-slate-500 font-bold uppercase">
-                </td>
-                <td class="py-1 px-1 text-center">
-                    <button type="button" onclick="removeRow(this)" class="text-rose-600 font-bold px-2 hover:bg-rose-100 rounded">X</button>
-                </td>
-            </tr>
-        `;
-        tbody.insertAdjacentHTML("beforeend", rowHtml);
-        updateListCount();
     }
 
     function addCustomerBlock() {
         blockCounter++;
         const container = document.getElementById('dynamic-blocks-container');
-        const template = document.getElementById('customer-block-template');
+        const template = document.getElementById('customer-block-template').innerHTML;
         
-        const clone = template.content.cloneNode(true);
-        clone.querySelector('.block-counter-label').innerText = `Customer Order #${blockCounter + 1}`;
-        clone.querySelector('button[onclick="addDynamicRow(this)"]').setAttribute('onclick', `addDynamicRow(this, ${blockCounter})`);
+        let newBlockHTML = template.replace(/{ID}/g, blockCounter).replace(/#X/g, `#${blockCounter + 1}`);
         
-        container.appendChild(clone);
+        container.insertAdjacentHTML('beforeend', newBlockHTML);
         lucide.createIcons();
+
+        const newBlock = container.lastElementChild;
+        const addBtn = newBlock.querySelector('button[onclick^="addDynamicRow"]');
+        if(addBtn) addBtn.click();
     }
 
     function addDynamicRow(btnElement, blockId) {
         const tbody = btnElement.closest('.dynamic-order-block').querySelector('.dynamic-table-body');
-        const rowId = `dyn-row-${Math.random().toString(36).substr(2, 5)}`;
         
-        // Kukunin niya yung defaults sa mismong block niya, hindi sa main form
-        const block = btnElement.closest('.dynamic-order-block');
-        const blockTransport = block.querySelector("select[name='transport_main']").value || "Truck";
-        const blockStatus = block.querySelector("select[name='order_status']").value || "Pending";
-        const mainDelDate = document.getElementById("order_date").value || "";
-
         const rowHtml = `
-            <tr id="${rowId}" class="item-row bg-white hover:bg-teal-50 transition-colors border-b border-slate-200">
-                <td class="py-1 px-1 border-r border-slate-300 text-center font-bold text-slate-500 row-num text-xs">0</td>
+            <tr class="item-row bg-white hover:bg-emerald-50 transition-colors">
                 <td class="py-1 px-1 border-r border-slate-300">
-                    <input type="text" name="item_code_${blockId}[]" list="item_master_list" oninput="autoFillItemRow(this)" autocomplete="off" class="w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white text-xs font-bold uppercase" placeholder="CODE">
-                </td>
-                <td class="py-1 px-1 border-r border-slate-300">
-                    <input type="text" name="cust_item_code_${blockId}[]" class="w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white text-xs text-blue-700 italic">
+                    <input type="text" name="item_code_${blockId}[]" list="item_master_list" oninput="autoFillItemRow(this)" autocomplete="off" class="w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white text-xs font-black uppercase" placeholder="CODE">
                 </td>
                 <td class="py-1 px-1 border-r border-slate-300">
                     <input type="text" name="description_${blockId}[]" class="w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white text-xs text-slate-600" placeholder="Description...">
-                </td>
-                <td class="py-1 px-1 border-r border-slate-300">
-                    <input type="date" name="del_date_${blockId}[]" value="${mainDelDate}" class="w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white text-[10px] text-slate-600 font-bold">
-                </td>
-                <td class="py-1 px-1 border-r border-slate-300">
-                    <input type="text" name="transport_${blockId}[]" value="${blockTransport}" class="w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white text-[10px] uppercase font-bold text-slate-500">
                 </td>
                 <td class="py-1 px-1 border-r border-slate-300 bg-teal-50">
                     <input type="number" name="qty_${blockId}[]" value="1" min="1" oninput="calculateRow(this)" class="qty-input w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white text-xs font-black text-center text-teal-900">
@@ -460,21 +367,14 @@
                     <span class="row-total text-xs font-black text-teal-900 pr-1">0.00</span>
                     <input type="hidden" name="amount_${blockId}[]" class="raw-amount-input" value="0">
                 </td>
-                <td class="py-1 px-1 border-r border-slate-300">
-                    <input type="text" name="status_${blockId}[]" value="${blockStatus}" readonly class="w-full p-1 border-none bg-transparent text-[10px] text-center text-slate-500 font-bold uppercase">
-                </td>
                 <td class="py-1 px-1 text-center">
-                    <button type="button" onclick="removeRow(this)" class="text-rose-600 font-bold px-2 hover:bg-rose-100 rounded">X</button>
+                    <button type="button" onclick="removeRow(this)" class="text-rose-400 hover:text-rose-600 font-bold px-2 hover:bg-rose-50 rounded transition-colors">X</button>
                 </td>
             </tr>
         `;
         tbody.insertAdjacentHTML("beforeend", rowHtml);
-        updateListCount();
     }
 
-    // ==========================================
-    // COMPUTATIONS & TABLE UTILS
-    // ==========================================
     function calculateRow(element) {
         const row = element.closest('.item-row');
         const qty = parseFloat(row.querySelector(".qty-input").value) || 0;
@@ -496,104 +396,7 @@
 
     function removeRow(btn) {
         btn.closest('tr').remove();
-        updateListCount();
         updateGrandTotal();
-    }
-
-    function updateListCount() {
-        const rows = document.querySelectorAll(".item-row");
-        const listCountDisplay = document.getElementById("list_count");
-        if(listCountDisplay) listCountDisplay.innerText = rows.length;
-        
-        rows.forEach((row, index) => {
-            const numCell = row.querySelector('.row-num');
-            if(numCell) numCell.innerText = index + 1;
-        });
-    }
-
-    function updateListCount() {
-        // I-update ang total rows count sa Main Toolbar
-        const allRows = document.querySelectorAll(".item-row");
-        const listCountDisplay = document.getElementById("list_count");
-        if(listCountDisplay) listCountDisplay.innerText = allRows.length;
-        
-        // I-reset ang numero kada table (tbody) para laging mag-start sa 1
-        document.querySelectorAll('tbody.divide-y').forEach(tbody => {
-            const rows = tbody.querySelectorAll('tr.item-row');
-            rows.forEach((row, index) => {
-                const numCell = row.querySelector('.row-num');
-                if(numCell) numCell.innerText = index + 1; // Laging mag-start sa 1
-            });
-        });
-    }
-
-    // 🚀 BAGO: Table Search Function
-    function filterDynamicTable(inputElement) {
-        const query = inputElement.value.toUpperCase();
-        const container = inputElement.closest('.bg-white') || document;
-        const tbody = container.querySelector('tbody');
-        if (!tbody) return;
-        
-        const rows = tbody.querySelectorAll('tr.item-row');
-
-        rows.forEach(row => {
-            const codeInput = row.querySelector('input[name^="item_code"]');
-            const descInput = row.querySelector('input[name^="description"]');
-            const code = codeInput ? codeInput.value.toUpperCase() : "";
-            const desc = descInput ? descInput.value.toUpperCase() : "";
-
-            if (code.includes(query) || desc.includes(query)) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
-        });
-    }
-
-    const itemMasterDatabase = {
-        {% for item in items %}
-        "{{ item.item_code|upper|escapejs }}": {
-            "description": "{{ item.description|default:''|escapejs }}",
-            "unit_price": "{{ item.unit_price|default:'0.00' }}",
-            "uom": "{{ item.uom|default:'PCS'|escapejs }}"
-        }{% if not forloop.last %},{% endif %}
-        {% endfor %}
-    };
-
-    function autoFillItemRow(inputElement) {
-        const itemCode = inputElement.value.trim().toUpperCase();
-        if (!itemCode) return;
-
-        const row = inputElement.closest('tr');
-        
-        // Hahanapin sa local database imbes na mag-fetch sa server
-        if (itemMasterDatabase[itemCode]) {
-            const data = itemMasterDatabase[itemCode];
-
-            const descInput = row.querySelector('input[name^="description"]');
-            const qtyInput = row.querySelector('input[name^="qty"]');
-            const unitInput = row.querySelector('input[name^="unit"]');
-            const priceInput = row.querySelector('input[name^="price"]');
-
-            if (descInput) descInput.value = data.description;
-            if (unitInput) unitInput.value = data.uom;
-            if (priceInput) priceInput.value = parseFloat(data.unit_price).toFixed(2);
-
-            if (qtyInput && (qtyInput.value === "0" || qtyInput.value === "")) {
-                qtyInput.value = 1; 
-            }
-
-            // Mag-flash ng green
-            [descInput, unitInput, priceInput, qtyInput].forEach(el => {
-                if(el) {
-                    el.classList.add('bg-emerald-100');
-                    setTimeout(() => el.classList.remove('bg-emerald-100'), 1000);
-                }
-            });
-
-            // Auto compute
-            if(qtyInput) calculateRow(qtyInput);
-        }
     }
 </script>
 {% endblock %}

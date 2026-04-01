@@ -95,16 +95,22 @@
                 </thead>
                 <tbody class="divide-y divide-slate-200 font-bold">
                     {% for batch in items %}
-                    <tr class="hover:bg-indigo-50/50 transition-colors group">
-                        
+                    <tr class="hover:bg-indigo-50/50 transition-colors group border-b border-slate-200">
                         <td class="py-2.5 px-3 border-r border-slate-100">
-                            <span class="text-indigo-700 font-black tracking-tighter block">{{ batch.main_order.header.order_no }}</span>
-                            {% if batch.sub_orders_count > 0 %}
-                                <span class="text-[8px] bg-indigo-100 text-indigo-800 px-1 py-0.5 rounded border border-indigo-200 mt-1 inline-block uppercase">+ {{ batch.sub_orders_count }} Sub-Order(s)</span>
-                            {% endif %}
+                            <span class="text-indigo-700 font-black tracking-tighter text-sm block">{{ batch.main_po_no }}</span>
+                            <span class="text-[8px] bg-indigo-100 text-indigo-800 px-1.5 py-0.5 rounded border border-indigo-200 mt-1 inline-block uppercase font-black">
+                                {{ batch.sub_orders_count }} Customer Order(s)
+                            </span>
                         </td>
                         <td class="py-2.5 px-3 text-center border-r border-slate-100 text-slate-500">{{ batch.main_order.header.order_date|date:"Y-m-d" }}</td>
-                        <td class="py-2.5 px-3 border-r border-slate-100 text-slate-800 uppercase">{{ batch.main_order.header.customer }}</td>
+                        
+                        <td class="py-2.5 px-3 border-r border-slate-100 text-slate-800 uppercase">
+                            <span class="block truncate max-w-[200px]">{{ batch.main_order.header.customer }}</span>
+                            {% if batch.sub_orders_count > 1 %}
+                                <span class="text-[9px] text-slate-400 italic">and others...</span>
+                            {% endif %}
+                        </td>
+                        
                         <td class="py-2.5 px-3 text-center border-r border-slate-100 text-slate-600">{{ batch.total_items }} <span class="text-[9px]">items</span></td>
                         <td class="py-2.5 px-3 text-right border-r border-slate-100 text-teal-800 font-black tracking-tighter bg-slate-50/50">₱ {{ batch.batch_grand_total|floatformat:"2" }}</td>
                         
@@ -122,17 +128,11 @@
 
                         <td class="py-2.5 px-3 text-center">
                             <button type="button" onclick="openPOModal('{{ batch.batch_id }}')" class="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 text-[9px] font-black uppercase tracking-widest shadow-sm transition-all transform active:scale-95">
-                                <i data-lucide="eye" class="w-3 h-3"></i> Review
+                                <i data-lucide="eye" class="w-3 h-3"></i> View Batch
                             </button>
                         </td>
                     </tr>
                     {% empty %}
-                    <tr>
-                        <td colspan="7" class="py-12 text-center text-slate-400">
-                            <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-30"></i>
-                            <p class="text-[10px] font-bold uppercase tracking-widest">No orders found in the system.</p>
-                        </td>
-                    </tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -173,29 +173,44 @@
 <div id="modal-{{ batch.batch_id }}" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex justify-center items-center p-4">
     <div class="bg-white border-t-8 border-indigo-800 shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
         
-        <div class="px-6 py-4 border-b flex justify-between items-center bg-slate-50">
+        <div class="px-6 py-4 border-b flex justify-between items-center bg-indigo-50">
             <div>
-                <h2 class="text-xl font-black text-slate-900 uppercase tracking-tighter flex items-center gap-2">
-                    <i data-lucide="layers" class="w-6 h-6 text-indigo-700"></i> Batch Order Details
+                <h2 class="text-xl md:text-2xl font-black text-indigo-900 uppercase tracking-tighter flex items-center gap-3">
+                    <i data-lucide="layers" class="w-6 h-6 text-indigo-700"></i> Main PO: {{ batch.main_po_no }}
                 </h2>
-                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">Batch Ref: <span class="text-slate-800">{{ batch.batch_id }}</span></p>
+                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">
+                    System Batch Reference: <span class="text-indigo-600">{{ batch.batch_id }}</span>
+                </p>
             </div>
             <button type="button" onclick="closePOModal('{{ batch.batch_id }}')" class="text-rose-600 hover:bg-rose-100 p-2 rounded-full transition-colors"><i data-lucide="x" class="w-6 h-6"></i></button>
         </div>
 
         <div class="overflow-y-auto p-6 bg-slate-200 space-y-6">
+            
             {% for order_data in batch.all_orders %}
-            <div class="bg-white border {% if forloop.first %}border-indigo-400 shadow-md{% else %}border-slate-300 shadow-sm opacity-95{% endif %}">
-                <div class="px-4 py-3 border-b flex justify-between items-center {% if forloop.first %}bg-indigo-50{% else %}bg-slate-100{% endif %}">
+            <div class="bg-white border border-slate-300 shadow-sm relative pt-4">
+                
+                <div class="absolute -top-3 -left-3 bg-teal-800 text-white w-8 h-8 flex items-center justify-center text-xs font-black rounded-full shadow-md">
+                    {{ forloop.counter }}
+                </div>
+
+                <div class="px-6 py-2 border-b flex justify-between items-end bg-white">
                     <div>
-                        <h3 class="text-xs font-black uppercase tracking-widest {% if forloop.first %}text-indigo-800{% else %}text-slate-800{% endif %}">
-                            {% if forloop.first %}⭐ MAIN ORDER - {{ order_data.header.order_no }}{% else %}🔹 SUB ORDER - {{ order_data.header.order_no }}{% endif %}
+                        <h3 class="text-sm font-black uppercase tracking-widest text-slate-800 flex items-center gap-2">
+                            <i data-lucide="user" class="w-4 h-4 text-teal-600"></i> Customer: <span class="text-teal-900">{{ order_data.header.customer }}</span>
                         </h3>
-                        <span class="text-[10px] font-bold text-slate-500 uppercase">{{ order_data.header.customer }}</span>
+                        <div class="flex items-center gap-4 mt-1">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase">System Order: <span class="text-indigo-600 font-black">{{ order_data.header.order_no }}</span></span>
+                            {% if order_data.header.cust_po_no != 'N/A' and order_data.header.cust_po_no %}
+                            <span class="text-[10px] font-bold text-slate-500 uppercase">Cust PO: <span class="text-slate-800 font-black">{{ order_data.header.cust_po_no }}</span></span>
+                            {% endif %}
+                        </div>
                     </div>
 
                     <div class="flex items-center gap-2">
-                        <span class="bg-white px-2 py-1 border border-slate-300 text-[9px] font-black uppercase text-slate-500">Status: <span class="text-slate-800">{{ order_data.header.status }}</span></span>
+                        <span class="bg-slate-100 px-3 py-1.5 border border-slate-300 text-[10px] font-black uppercase text-slate-600 shadow-inner">
+                            Status: <span class="{% if order_data.header.status == 'Pending' %}text-amber-600{% elif order_data.header.status == 'Shipped' %}text-indigo-600{% else %}text-emerald-600{% endif %}">{{ order_data.header.status }}</span>
+                        </span>
                         
                         {% if order_data.header.status == 'Pending' %}
                             <a href="{% url 'order_dispatch' order_data.header.order_no %}" class="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 text-[9px] font-black uppercase tracking-widest shadow-sm transition-all transform active:scale-95">
@@ -213,24 +228,24 @@
                     </div>
                 </div>
                 
-                <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50">
                     <div class="text-[10px] font-bold text-slate-500 uppercase space-y-1">
                         <p>Date: <span class="text-slate-800">{{ order_data.header.order_date|date:"Y-m-d" }}</span></p>
                         <p>Transport: <span class="text-slate-800">{{ order_data.header.transport }}</span></p>
                         <p>Address: <span class="text-slate-800">{{ order_data.header.delivery_address|default:"-" }}</span></p>
                         <p class="mt-2 text-slate-400">Remarks:</p>
-                        <p class="italic text-slate-700 bg-slate-50 p-2 border border-slate-200">"{{ order_data.header.remarks|default:'No remarks.' }}"</p>
+                        <p class="italic text-slate-700 bg-white p-2 border border-slate-200">"{{ order_data.header.remarks|default:'No remarks.' }}"</p>
                     </div>
                     <div>
-                        <table class="w-full text-left border-collapse text-[10px]">
-                            <thead class="bg-slate-100 border-b border-slate-300">
+                        <table class="w-full text-left border-collapse text-[10px] shadow-sm">
+                            <thead class="bg-slate-200 border-b border-slate-300 text-slate-700 uppercase">
                                 <tr>
-                                    <th class="py-1 px-2">Item</th>
-                                    <th class="py-1 px-2 text-center">Qty</th>
-                                    <th class="py-1 px-2 text-right">Amount</th>
+                                    <th class="py-1.5 px-2">Item</th>
+                                    <th class="py-1.5 px-2 text-center">Qty</th>
+                                    <th class="py-1.5 px-2 text-right">Amount</th>
                                 </tr>
                             </thead>
-                            <tbody class="font-bold text-slate-700">
+                            <tbody class="font-bold text-slate-700 bg-white">
                                 {% for item in order_data.items %}
                                 <tr class="border-b border-slate-100">
                                     <td class="py-1 px-2 text-indigo-700">{{ item.item_code }}</td>
@@ -241,7 +256,7 @@
                             </tbody>
                         </table>
                         <div class="text-right mt-2 font-black text-xs text-rose-700 border-t border-slate-200 pt-1">
-                            Order Total: ₱{{ order_data.header.grand_total|floatformat:2 }}
+                            Customer Total: ₱{{ order_data.header.grand_total|floatformat:2 }}
                         </div>
                     </div>
                 </div>
@@ -249,11 +264,20 @@
             {% endfor %}
         </div>
         
-        <div class="p-6 bg-slate-50 border-t flex justify-between items-center">
+        <div class="p-4 bg-slate-100 border-t flex justify-between items-center">
             <div class="text-xs font-black uppercase tracking-widest text-slate-500">
-                Batch Grand Total: <span class="text-xl text-indigo-900 border-b-2 border-indigo-300 ml-2">₱{{ batch.batch_grand_total|floatformat:2 }}</span>
+                Total Batch Amount: <span class="text-xl text-indigo-900 border-b-2 border-indigo-300 ml-2">₱{{ batch.batch_grand_total|floatformat:2 }}</span>
             </div>
-            <button type="button" onclick="closePOModal('{{ batch.batch_id }}')" class="bg-slate-800 text-white px-8 py-2 text-xs font-black uppercase tracking-widest hover:bg-slate-700 transition-colors shadow-sm">Close View</button>
+            
+            <div class="flex items-center gap-2">
+                {% if batch.main_order.header.status == 'Pending' or batch.main_order.header.status == 'Processing' %}
+                <a href="{% url 'order_dispatch' batch.batch_id %}" class="bg-indigo-600 text-white px-6 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-colors shadow-sm rounded-sm flex items-center gap-2">
+                    <i data-lucide="truck" class="w-4 h-4"></i> Dispatch Entire Batch
+                </a>
+                {% endif %}
+                
+                <button type="button" onclick="closePOModal('{{ batch.batch_id }}')" class="bg-slate-800 text-white px-8 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-slate-700 transition-colors shadow-sm rounded-sm">Close View</button>
+            </div>
         </div>
     </div>
 </div>

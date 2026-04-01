@@ -62,7 +62,7 @@ urlpatterns = [
     path('po-confirmation/', views.po_confirmation_view, name='po_confirmation'),
     path('order-excel/', views.order_input_excel_view, name='order_excel'),
     path('order-correction/', views.order_correction_view, name='order_correction'),
-    path('dispatch/<str:order_no>/', views.order_dispatch_view, name='order_dispatch'),
+    path('dispatch/<str:batch_id>/', views.order_dispatch_view, name='order_dispatch'),
     path('order/delivered/<str:order_no>/', views.mark_delivered_view, name='mark_delivered'),
     path('inquiry/', views.order_inquiry_view, name='order_inquiry'),
 

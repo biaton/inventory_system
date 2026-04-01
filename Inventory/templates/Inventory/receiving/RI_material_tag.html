@@ -146,6 +146,21 @@
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         lucide.createIcons();
+        
+        // 🚀 BAGO: Automatic Load kapag nanggaling sa Receiving Page
+        const urlParams = new URLSearchParams(window.location.search);
+        const poNoFromUrl = urlParams.get('po_no');
+        
+        if (poNoFromUrl) {
+            const poInput = document.getElementById('po_no_input');
+            if (poInput) {
+                poInput.value = poNoFromUrl;
+                // Lagyan ng konting delay para mag-render muna yung page bago mag-fetch ng data
+                setTimeout(() => {
+                    loadPoData();
+                }, 300);
+            }
+        }
     });
 
     const masterItemDatabase = {
@@ -382,6 +397,10 @@
             const data = await response.json();
 
             if (data.success) {
+                // 🚀 FIX: Linisin muna natin ang table bago mag-load para walang ma-doble!
+                const tbody = document.getElementById('table_body');
+                if (tbody) tbody.innerHTML = ''; 
+
                 data.items.forEach(item => {
                     appendNewRow({
                         po_no: item.po_no,

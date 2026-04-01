@@ -11,8 +11,17 @@
                 <p class="text-[10px] font-bold text-teal-700">Pakisuri ang mga detalye sa ibaba. Kapag kinumpirma, ito ay opisyal nang papasok sa records.</p>
             </div>
         </div>
+        
+        <div class="hidden md:flex items-center gap-4 bg-white px-4 py-2 border border-teal-200 shadow-inner rounded-sm">
+            <div class="text-right">
+                <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest block leading-none">Main PO No.</span>
+                <span class="text-xl font-black text-teal-900 tracking-tighter">{{ main_po_no }}</span>
+            </div>
+            <i data-lucide="files" class="w-6 h-6 text-teal-300"></i>
+        </div>
+
         <div class="flex gap-2">
-            <a href="javascript:history.back()" class="bg-white text-slate-600 border border-slate-300 px-4 py-1.5 text-xs font-black uppercase hover:bg-slate-50 transition-all shadow-sm">
+            <a href="javascript:history.back()" class="bg-white text-slate-600 border border-slate-300 px-4 py-1.5 text-xs font-black uppercase hover:bg-slate-50 transition-all shadow-sm flex items-center justify-center">
                 Go Back / Edit
             </a>
             <form method="POST" action="{% url 'po_confirmation' %}" class="m-0">
@@ -34,9 +43,15 @@
             <h2 class="text-2xl font-black text-slate-900 uppercase tracking-tight flex items-center gap-3">
                 <i data-lucide="file-check" class="w-6 h-6 text-teal-700"></i> Customer Order Details
             </h2>
-            <div class="text-right">
-                <span class="text-xs font-bold text-slate-500 mr-2 uppercase tracking-widest">Order No:</span>
-                <span class="text-2xl font-black text-teal-800">{{ order_data.header.order_no }}</span>
+            <div class="flex items-end gap-6 text-right">
+                <div class="border-r-2 border-slate-200 pr-6">
+                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest block leading-none mb-1">Customer PO:</span>
+                    <span class="text-lg font-black text-indigo-700 uppercase">{{ order_data.header.cust_po_no|default:"NONE" }}</span>
+                </div>
+                <div>
+                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest block leading-none mb-1">System Order No:</span>
+                    <span class="text-2xl font-black text-teal-800 leading-none">{{ order_data.header.order_no }}</span>
+                </div>
             </div>
         </div>
 
@@ -157,4 +172,4 @@
         lucide.createIcons();
     });
 </script>
-{% endblock %}  
+{% endblock %}

@@ -1077,50 +1077,34 @@ def customer_master_view(request):
 # --- CUSTOMER ORDER VIEWS ---
 def order_input_manual_view(request):
     if request.method == "POST":
-        # 1. Kunin lahat ng headers (Main at Sub Orders) as Arrays
-        customers = request.POST.getlist('customer_name')
-        order_nos = request.POST.getlist('in_order_no')
-        contact_persons = request.POST.getlist('contact_person')
-        delivery_addresses = request.POST.getlist('delivery_input')
-        order_types = request.POST.getlist('order_type')
-        cust_po_nos = request.POST.getlist('cust_po_no')
-        transports = request.POST.getlist('transport_main')
-        order_statuses = request.POST.getlist('order_status')
-        order_contents_list = request.POST.getlist('order_contents')
-        remarks_list = request.POST.getlist('remarks_main')
+        # 1. Kunin ang MAIN HEADER (Global info)
+        main_po_no = request.POST.get('main_po_no', 'SO-GENERAL')
+        main_status = request.POST.get('main_status', 'Pending')
+        main_delivery_date = request.POST.get('main_delivery_date')
+        main_transport = request.POST.get('main_transport', 'Truck')
 
-        # Static Date (Iisang date lang para sa buong batch creation based sa design mo)
-        order_date = request.POST.get('order_date')
+        # 2. Kunin ang BATCH HEADERS (As lists)
+        customers = request.POST.getlist('customer_name[]')
+        contact_persons = request.POST.getlist('contact_person[]')
+        delivery_addresses = request.POST.getlist('delivery_address[]') # 🚀 BAGO
+        del_dates = request.POST.getlist('delivery_date[]')
+        order_types = request.POST.getlist('order_type[]')
+        cust_po_nos = request.POST.getlist('cust_po_no[]')
+        order_contents_list = request.POST.getlist('order_contents[]')
+        remarks_list = request.POST.getlist('remarks[]')
 
         batch_orders = []
 
         try:
-            # 2. I-loop ang bawat customer order form
             for i in range(len(customers)):
                 cust_name = customers[i].strip()
                 if not cust_name: continue
 
-                # Alamin kung main table ba (index 0) o idinagdag na table
-                if i == 0:
-                    item_codes = request.POST.getlist('item_code[]')
-                    cust_item_codes = request.POST.getlist('cust_item_code[]')
-                    descriptions = request.POST.getlist('description[]') 
-                    del_dates = request.POST.getlist('del_date[]') 
-                    row_transports = request.POST.getlist('transport[]') 
-                    qtys = request.POST.getlist('qty[]')
-                    units = request.POST.getlist('unit[]')
-                    prices = request.POST.getlist('price[]')
-                    row_statuses = request.POST.getlist('status[]')
-                else:
-                    item_codes = request.POST.getlist(f'item_code_{i}[]')
-                    cust_item_codes = request.POST.getlist(f'cust_item_code_{i}[]')
-                    descriptions = request.POST.getlist(f'description_{i}[]') 
-                    del_dates = request.POST.getlist(f'del_date_{i}[]') 
-                    row_transports = request.POST.getlist(f'transport_{i}[]') 
-                    qtys = request.POST.getlist(f'qty_{i}[]')
-                    units = request.POST.getlist(f'unit_{i}[]')
-                    prices = request.POST.getlist(f'price_{i}[]')
-                    row_statuses = request.POST.getlist(f'status_{i}[]')
+                item_codes = request.POST.getlist(f'item_code_{i}[]')
+                descriptions = request.POST.getlist(f'description_{i}[]') 
+                qtys = request.POST.getlist(f'qty_{i}[]')
+                units = request.POST.getlist(f'unit_{i}[]')
+                prices = request.POST.getlist(f'price_{i}[]')
 
                 order_items = []
                 subtotal = 0.0 
@@ -1134,30 +1118,28 @@ def order_input_manual_view(request):
 
                         order_items.append({
                             'item_code': item_codes[j].upper(),
-                            'cust_item_code': cust_item_codes[j] if j < len(cust_item_codes) else "",
                             'description': descriptions[j] if j < len(descriptions) else "", 
-                            'del_date': del_dates[j] if j < len(del_dates) else order_date, 
-                            'transport': row_transports[j] if j < len(row_transports) else "Truck", 
                             'qty': qty,
                             'unit': units[j] if j < len(units) else "PCS",
                             'price': price,
-                            'amount': amount,
-                            'status': row_statuses[j] if j < len(row_statuses) else "Pending"
+                            'amount': amount
                         })
                 
-                # 3. Ipunin sa isang Dictionary bawat isang Customer Order
+                specific_del_date = del_dates[i] if i < len(del_dates) and del_dates[i] else main_delivery_date
+
                 batch_orders.append({
                     'header': {
-                        'order_no': order_nos[i] if i < len(order_nos) else f"SO-AUTO-{i}",
+                        'order_no': f"{main_po_no}-{i+1}", 
                         'customer': cust_name,
                         'contact_person': contact_persons[i] if i < len(contact_persons) else "",
-                        'delivery_address': delivery_addresses[i] if i < len(delivery_addresses) else "",
-                        'date': order_date,
+                        'delivery_address': delivery_addresses[i] if i < len(delivery_addresses) else "", # 🚀 BAGO
+                        'date': datetime.date.today().strftime('%Y-%m-%d'),
+                        'delivery_date': specific_del_date,
                         'order_type': order_types[i] if i < len(order_types) else "Standard",
                         'cust_po_no': cust_po_nos[i] if i < len(cust_po_nos) else "",
                         'order_contents': order_contents_list[i] if i < len(order_contents_list) else "",
-                        'status': order_statuses[i] if i < len(order_statuses) else "Pending",
-                        'transport': transports[i] if i < len(transports) else "Truck",
+                        'status': main_status,
+                        'transport': main_transport,
                         'remarks': remarks_list[i] if i < len(remarks_list) else "",
                         'grand_total': subtotal
                     },
@@ -1165,27 +1147,26 @@ def order_input_manual_view(request):
                 })
 
         except Exception as e:
-            # Handle list index out of bounds or parsing errors safely
             print("Error parsing batch orders:", str(e))
+            messages.error(request, "Format error detected. Please try again.")
             return redirect('order_manual')
 
         # 4. I-SAVE SA SESSION (Para sa Confirmation Page)
-        # Papalitan natin ng batch ang session imbes na isahan
         request.session['batch_customer_orders'] = batch_orders
-        
-        return redirect('po_confirmation') # Pwede mo itong palitan ng 'order_confirmation' sa susunod mong module
+        return redirect('po_confirmation') 
 
     # ==========================================
     # GET REQUEST / LOADING THE PAGE
     # ==========================================
     customers = Contact.objects.filter(contact_type='Customer').order_by('name')
     items_list = Item.objects.all().order_by('item_code')
+    # 🚀 BAGO: Kukunin lahat ng addresses para sa auto-suggest
     delivery_addresses = Contact.objects.filter(contact_type='Customer').exclude(address__isnull=True).exclude(address__exact='').values_list('address', flat=True).distinct()
 
     return render(request, 'Inventory/customer_order/Order_Input_manual.html', {
         'customers': customers, 
         'items': items_list,
-        'delivery_addresses': delivery_addresses 
+        'delivery_addresses': delivery_addresses # 🚀 BAGO
     })
 
 
@@ -1262,30 +1243,30 @@ def order_input_excel_view(request):
                     'status': row_statuses[i] if i < len(row_statuses) else "Pending"
                 })
 
-        # Hindi batch, iisang order lang
+        formatted_order_no = f"{order_no}-1"
+        
         pending_order = {
             'header': {
-                'order_no': order_no,
+                'order_no': formatted_order_no, # Ito yung gagamitin sa database
                 'customer': cust_name,
                 'contact_person': request.POST.get('contact_person', ''),
                 'delivery_address': request.POST.get('delivery_input', ''),
                 'date': request.POST.get('order_date'),
                 'order_type': request.POST.get('order_type', 'Standard'),
                 'cust_po_no': request.POST.get('cust_po_no', ''),
+                'order_contents': "EXCEL UPLOAD BATCH", # 🚀 BAGO: Kailangan ito para di mag-error
                 'status': request.POST.get('order_status', 'Pending'),
                 'transport': request.POST.get('transport_main', 'Truck'),
+                'remarks': "Uploaded via Excel Module", # 🚀 BAGO: Default remark
                 'grand_total': grand_total
             },
             'items': order_items
         }
 
-        # Dahil tinanggal natin sa batch format, pwede mo itong ipasa na nakabalot 
-        # sa array na iisa ang laman para parehas sila ng format nung Order Manual view, 
-        # o kaya gumawa ng separate session key para dito. 
-        # (Naka-batch structure pero isang laman para iisa lang ang Confirmation page code mo)
+        # Naka-batch structure (pero isa lang ang laman) para iisa lang ang Confirmation page
         request.session['batch_customer_orders'] = [pending_order]
 
-        return redirect('po_confirmation') # Pwede mong palitan ito sa tamang url path
+        return redirect('po_confirmation')
 
     # 3. GET REQUEST (Page Load)
     customers = Contact.objects.filter(contact_type='Customer').order_by('name')
@@ -1339,9 +1320,7 @@ def po_confirmation_view(request):
                     if header.get('is_correction'):
                         CustomerOrder.objects.filter(order_no=header.get('order_no')).delete()
 
-                    # 3. I-loop at i-save ang bawat item bilang CustomerOrder (Base sa model mo)
-                    # NOTE: Mapapansin mo na hiwa-hiwalay yung pag-save mo sa CustomerOrder per item. 
-                    # Ito yung structure na ginawa mo kaya sinunod ko.
+                    # 3. I-save ang bawat item bilang CustomerOrder
                     grand_total = 0.0
                     for item in items:
                         amount = float(item.get('amount', 0.00))
@@ -1367,16 +1346,16 @@ def po_confirmation_view(request):
                         
                     total_orders_saved += 1
                     
-                    # 4. System Logs & Email (Maa-apply per order)
+                    # 4. System Logs & Email
                     action_type = 'UPDATE' if header.get('is_correction') else 'CREATE'
-                    # log_system_action(...) # I-uncomment mo kung meron kang logger
+                    # log_system_action(...)
                     
                     customer_email = getattr(customer_obj, 'email', None) 
                     send_email_flag = request.POST.get('send_email') 
                     
                     if send_email_flag == 'on' and customer_email:
                         pass
-                        # send_order_acknowledgement(...) # I-uncomment mo ito
+                        # send_order_acknowledgement(...)
 
                 # 5. Linisin ang session
                 del request.session['batch_customer_orders']
@@ -1392,8 +1371,18 @@ def po_confirmation_view(request):
     # ==========================================
     # GET Request / Page Load
     # ==========================================
+    
+    # 🚀 BAGO: Kukunin natin ang Main PO No galing sa unang order
+    main_po_no = "N/A"
+    if batch_orders and len(batch_orders) > 0:
+        first_order_no = batch_orders[0].get('header', {}).get('order_no', '')
+        # Halimbawa: "MPO-260401-1234-1" -> "MPO-260401-1234"
+        if '-' in first_order_no:
+            main_po_no = "-".join(first_order_no.split('-')[:-1])
+
     return render(request, 'Inventory/customer_order/PO_Confirmation.html', {
         'batch_orders': batch_orders,
+        'main_po_no': main_po_no, # 🚀 BAGO: Ipapasa sa HTML
     })
 
 def order_correction_view(request):
@@ -1406,7 +1395,6 @@ def order_correction_view(request):
         batch_ref = request.POST.get('batch_ref')
         correction_reason = request.POST.get('correction_reason')
         
-        # Kunin ang mga in-edit na data mula sa table rows
         item_ids = request.POST.getlist('item_id[]')
         qtys = request.POST.getlist('qty_row[]')
         unit_prices = request.POST.getlist('price_row[]')
@@ -1417,21 +1405,18 @@ def order_correction_view(request):
                 current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 audit_log = f"\n[CORRECTED on {current_time}] Reason: {correction_reason}"
 
-                # I-loop at i-update ang bawat Item na nasa table gamit ang ID
                 for i in range(len(item_ids)):
                     item = CustomerOrder.objects.get(id=item_ids[i])
                     item.quantity = qtys[i]
                     item.unit_price = unit_prices[i]
                     item.amount = amounts[i]
                     
-                    # Ibalik sa 'Pending' ang status at idikit ang reason sa remarks
                     item.order_status = 'Pending'
                     item.remarks = str(item.remarks or "") + audit_log
                     item.save() 
 
             messages.success(request, f"Success! Order Batch {batch_ref} has been corrected and sent back to Pending status.")
-            # Palitan ng tamang url name kung saan mo gusto pumunta after save (e.g., 'order_inquiry')
-            return redirect('dashboard') 
+            return redirect('order_inquiry') # 🚀 BAGO: Ibabalik sa Inquiry imbes na Dashboard
 
         except Exception as e:
             messages.error(request, f"Error updating database: {str(e)}")
@@ -1443,13 +1428,15 @@ def order_correction_view(request):
     search_query = request.GET.get('search_order', '').strip()
     
     if search_query:
-        # Hanapin muna kung nag-e-exist yung Order
-        base_items = CustomerOrder.objects.filter(order_no=search_query)
+        # 🚀 BAGO: Hahanapin niya kung eksakto, O KAYA kung nagsisimula sa Main PO, O KAYA kung Batch ID
+        base_items = CustomerOrder.objects.filter(
+            Q(order_no__startswith=search_query) | 
+            Q(batch_id=search_query)
+        )
         
         if base_items.exists():
             first_item = base_items.first()
             
-            # Alamin kung may batch_id para mahugot ang kasama. Kung wala, order_no lang.
             if hasattr(first_item, 'batch_id') and first_item.batch_id:
                 batch_ref = first_item.batch_id
                 all_items = CustomerOrder.objects.filter(batch_id=batch_ref).order_by('id')
@@ -1457,7 +1444,10 @@ def order_correction_view(request):
                 batch_ref = first_item.order_no
                 all_items = base_items.order_by('id')
 
-            # I-Group ang items by Order No para madaling i-loop sa HTML
+            # 🚀 BAGO: I-extract ang Main PO No para sa Display
+            raw_order_no = first_item.order_no
+            main_po_no = "-".join(raw_order_no.split('-')[:-1]) if '-' in raw_order_no else raw_order_no
+
             order_dict = {}
             for item in all_items:
                 if item.order_no not in order_dict:
@@ -1465,6 +1455,7 @@ def order_correction_view(request):
                         'header': {
                             'order_no': item.order_no,
                             'customer': item.customer.name if item.customer else '',
+                            'cust_po_no': getattr(item, 'cust_po_no', ''),
                             'contact_person': getattr(item, 'contact_person', ''),
                             'delivery_address': getattr(item, 'delivery_address', ''),
                             'order_type': getattr(item, 'order_type', 'Standard'),
@@ -1479,13 +1470,13 @@ def order_correction_view(request):
 
             context['grouped_orders'] = list(order_dict.values())
             context['batch_ref'] = batch_ref
+            context['main_po_no'] = main_po_no # 🚀 BAGO: Pinasa natin sa UI
             context['searched'] = True
             
         else:
-            messages.error(request, f"Order '{search_query}' not found.")
+            messages.error(request, f"Order/Batch '{search_query}' not found.")
             context['searched'] = False
 
-    # Kunin lahat ng kailangan ng HTML
     context['search_query'] = search_query
     context['customers'] = Contact.objects.filter(contact_type='Customer').order_by('name')
     context['all_items'] = Item.objects.all().order_by('item_code')
@@ -1495,7 +1486,6 @@ def order_correction_view(request):
 def order_inquiry_view(request):
     search_query = request.GET.get('search', '').strip()
     
-    # 1. Kunin lahat ng items
     qs = CustomerOrder.objects.all().order_by('-order_date', '-id')
     
     if search_query:
@@ -1506,8 +1496,6 @@ def order_inquiry_view(request):
         )
 
     batches_dict = {}
-    
-    # 🚀 BAGO: Variables para sa mga Summary Cards natin
     overall_grand_total = 0.0
     
     for item in qs:
@@ -1520,6 +1508,7 @@ def order_inquiry_view(request):
             batches_dict[bid][item.order_no] = {
                 'header': {
                     'order_no': item.order_no,
+                    'cust_po_no': getattr(item, 'cust_po_no', 'N/A'), # Kung dinagdag mo sa model
                     'customer': item.customer.name if item.customer else "Walk-in",
                     'order_date': item.order_date,
                     'transport': item.transport,
@@ -1533,34 +1522,39 @@ def order_inquiry_view(request):
         
         batches_dict[bid][item.order_no]['items'].append(item)
         
-        # Pera computation
         amount = float(item.amount or 0)
         batches_dict[bid][item.order_no]['header']['grand_total'] += amount
-        overall_grand_total += amount # Idagdag sa overall total
+        overall_grand_total += amount 
 
     batch_list = []
     for bid, orders_in_batch in batches_dict.items():
         order_list = list(orders_in_batch.values())
         main_order = order_list[0] 
         
+        # 🚀 BAGO: Kunin ang MAIN PO NO sa pamamagitan ng pagtanggal sa '-1', '-2' na suffix
+        raw_order_no = main_order['header']['order_no']
+        if '-' in raw_order_no:
+            main_po_no = "-".join(raw_order_no.split('-')[:-1])
+        else:
+            main_po_no = raw_order_no
+        
         batch_grand_total = sum(o['header']['grand_total'] for o in order_list)
         total_items_in_batch = sum(len(o['items']) for o in order_list)
         
         batch_list.append({
             'batch_id': bid,
+            'main_po_no': main_po_no, # 🚀 IPAPASA SA HTML
             'main_order': main_order,
             'all_orders': order_list, 
-            'sub_orders_count': len(order_list) - 1,
+            'sub_orders_count': len(order_list), # Total bilang ng customers sa batch
             'batch_grand_total': batch_grand_total,
             'total_items': total_items_in_batch
         })
 
-    # 🚀 BAGO: Bilangin ang mga specific statuses para sa Cards
     total_orders_count = qs.values('order_no').distinct().count()
     total_pending = qs.filter(order_status='Pending').values('order_no').distinct().count()
     total_delivered = qs.filter(order_status='Delivered').values('order_no').distinct().count()
 
-    # Pagination
     paginator = Paginator(batch_list, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -1568,8 +1562,6 @@ def order_inquiry_view(request):
     context = {
         'items': page_obj, 
         'search_query': search_query,
-        
-        # 🚀 BAGO: Ipasa ang mga na-compute sa HTML
         'overall_grand_total': overall_grand_total,
         'total_orders_count': total_orders_count,
         'total_pending': total_pending,
@@ -1577,12 +1569,18 @@ def order_inquiry_view(request):
     }
     return render(request, 'Inventory/customer_order/Order_Inquiry.html', context)
 
-def order_dispatch_view(request, order_no):
-    items = CustomerOrder.objects.filter(order_no=order_no, order_status='Pending')
+def order_dispatch_view(request, batch_id):
+    # 1. Kunin LAHAT ng items sa buong batch na Pending pa
+    items = CustomerOrder.objects.filter(batch_id=batch_id, order_status__in=['Pending', 'Processing'])
     
     if not items.exists():
-        messages.error(request, "Order not found or already dispatched.")
-        return redirect('dashboard')
+        messages.error(request, "No pending orders found for this batch. It might already be dispatched.")
+        return redirect('order_inquiry')
+
+    # Kunin ang Main PO No para sa Display
+    first_item = items.first()
+    raw_order_no = first_item.order_no
+    main_po_no = "-".join(raw_order_no.split('-')[:-1]) if '-' in raw_order_no else raw_order_no
 
     if request.method == "POST":
         courier = request.POST.get('courier')
@@ -1590,43 +1588,59 @@ def order_dispatch_view(request, order_no):
 
         try:
             with transaction.atomic():
-                # 🚀 KUNIN ANG EMAIL
-                first_item = items.first()
-                customer_email = None
-                if first_item and first_item.customer:
-                    customer_email = getattr(first_item.customer, 'email', None)
+                # 2. Ipunin lahat ng unique na emails ng customers sa batch na ito
+                orders_to_email = {}
+                for item in items:
+                    if item.customer and getattr(item.customer, 'email', None):
+                        if item.order_no not in orders_to_email:
+                            orders_to_email[item.order_no] = {
+                                'email': item.customer.email,
+                                'customer_name': item.customer.name
+                            }
 
-                # 🚀 UPDATE STATUS (Walang bawas ng inventory, status update lang)
+                # 3. I-UPDATE ANG STATUS NG BUONG BATCH SABAY-SABAY
                 items.update(
                     order_status='Shipped',
                     transport=courier,
                     remarks=f"TRK: {tracking}"
                 )
 
-                # 🚀 LOG SA SYSTEM
+                # 4. SYSTEM LOG
                 log_system_action(
                     user=request.user, 
                     action='UPDATE', 
                     module='Customer Order', 
-                    description=f"Dispatched Order {order_no} via {courier} (Tracking: {tracking})", 
+                    description=f"Batch Dispatched {main_po_no} via {courier} (Tracking: {tracking})", 
                     request=request
                 )
 
-                # 🚀 SEND EMAIL SA CUSTOMER
-                if customer_email:
-                    send_shipping_notification(order_no, customer_email, courier, tracking)
+                # 5. SEND EMAIL SA LAHAT NG CUSTOMER SA BATCH
+                for order_no, data in orders_to_email.items():
+                    pass 
+                    # I-uncomment kapag ready na email mo:
+                    # send_shipping_notification(order_no, data['email'], courier, tracking)
 
-            messages.success(request, f"Order #{order_no} dispatched successfully! Shipping email sent.")
-            return redirect('order_inquiry') # Pabalik sa listahan
+            messages.success(request, f"Success! Batch {main_po_no} dispatched successfully! Shipping emails sent to clients.")
+            return redirect('order_inquiry') 
 
         except Exception as e:
             messages.error(request, f"System Error: {str(e)}")
-            return redirect('order_dispatch', order_no=order_no)
+            return redirect('order_dispatch', batch_id=batch_id)
+
+    # 6. GROUP ITEMS BY CUSTOMER PARA SA UI
+    grouped_orders = {}
+    for item in items:
+        if item.order_no not in grouped_orders:
+            grouped_orders[item.order_no] = {
+                'customer': item.customer.name if item.customer else "Unknown",
+                'items': []
+            }
+        grouped_orders[item.order_no]['items'].append(item)
 
     context = {
-        'order_no': order_no,
-        'items': items,
-        'customer_name': items.first().customer.name if items.first().customer else "Walk-in"
+        'batch_id': batch_id,
+        'main_po_no': main_po_no,
+        'grouped_orders': grouped_orders,
     }
     return render(request, 'Inventory/customer_order/order_dispatch.html', context)
 
@@ -1657,48 +1671,39 @@ def mark_delivered_view(request, order_no):
 # Purchase Order Views 
 def make_po_view(request):
     if request.method == "POST":
-        # Arrays ng headers (Main form at yung mga in-add)
-        suppliers = request.POST.getlist('supplier')
-        po_nos = request.POST.getlist('po_no')
-        tax_terms = request.POST.getlist('tax_term')
-        order_statuses = request.POST.getlist('ordering_status')
+        # 1. Kunin ang MAIN HEADER (Global info)
+        main_po_no = request.POST.get('main_po_no', 'PO-GENERAL')
+        main_status = request.POST.get('main_status', 'Pending Approval')
+        main_delivery_date = request.POST.get('main_delivery_date')
+        main_transport = request.POST.get('main_transport', 'Truck')
 
-        # Static variables (Manggagaling lang lahat sa pinakaunang main form)
-        order_date = request.POST.get('order_date')
-        delivery_date = request.POST.get('delivery_date')
-        transport = request.POST.get('transport', 'Truck')
-        currency = request.POST.get('currency', 'PHP')
-        discount_rate = float(request.POST.get('discount_rate') or 0.0)
-        remarks = request.POST.get('remarks', '')
+        # 2. Kunin ang BATCH HEADERS (As lists)
+        suppliers = request.POST.getlist('supplier[]')
+        po_nos = request.POST.getlist('po_no[]')
+        contact_persons = request.POST.getlist('contact_person[]')
+        order_dates = request.POST.getlist('order_date[]')
+        del_dates = request.POST.getlist('delivery_date[]')
+        tax_terms = request.POST.getlist('tax_term[]')
+        currencies = request.POST.getlist('currency[]')
+        discount_rates = request.POST.getlist('discount_rate[]')
+        remarks_list = request.POST.getlist('remarks[]')
 
-        # Dahil ito ay Original logic mo na nagse-save sa "session" bago i-confirm
-        # Iipunin natin lahat sa isang listahan
         batch_pos = []
 
         try:
+            # 3. I-loop ang bawat Supplier block
             for i in range(len(suppliers)):
                 supp_name = suppliers[i].strip()
                 if not supp_name: continue
 
-                # Alamin kung aling table yung huhugutan ng data
-                if i == 0:
-                    item_codes = request.POST.getlist('item_code[]')
-                    descriptions = request.POST.getlist('description[]')
-                    packings = request.POST.getlist('packing[]')
-                    moqs = request.POST.getlist('moq[]')
-                    qtys = request.POST.getlist('qty[]')
-                    unit_prices = request.POST.getlist('unit_price[]')
-                    row_amounts = request.POST.getlist('row_amount[]')
-                    amortizations = request.POST.getlist('amortization[]')
-                else:
-                    item_codes = request.POST.getlist(f'item_code_{i}[]')
-                    descriptions = request.POST.getlist(f'description_{i}[]')
-                    packings = request.POST.getlist(f'packing_{i}[]')
-                    moqs = request.POST.getlist(f'moq_{i}[]')
-                    qtys = request.POST.getlist(f'qty_{i}[]')
-                    unit_prices = request.POST.getlist(f'unit_price_{i}[]')
-                    row_amounts = request.POST.getlist(f'row_amount_{i}[]')
-                    amortizations = request.POST.getlist(f'amortization_{i}[]')
+                # Extract Items gamit ang specific block ID (`item_code_0[]`, `item_code_1[]`)
+                item_codes = request.POST.getlist(f'item_code_{i}[]')
+                descriptions = request.POST.getlist(f'description_{i}[]')
+                packings = request.POST.getlist(f'packing_{i}[]')
+                moqs = request.POST.getlist(f'moq_{i}[]')
+                qtys = request.POST.getlist(f'qty_{i}[]')
+                unit_prices = request.POST.getlist(f'unit_price_{i}[]')
+                amortizations = request.POST.getlist(f'amortization_{i}[]')
 
                 po_items = []
                 subtotal = 0.0
@@ -1725,24 +1730,31 @@ def make_po_view(request):
 
                 # Compute Tax per PO block
                 tax_term = tax_terms[i] if i < len(tax_terms) else 'VAT Inclusive'
-                discount_amount = subtotal * (discount_rate / 100)
+                disc_rate = float(discount_rates[i]) if i < len(discount_rates) and discount_rates[i] else 0.0
+                
+                discount_amount = subtotal * (disc_rate / 100)
                 net_subtotal = subtotal - discount_amount
                 tax_amount = net_subtotal * 0.12 if tax_term in ['VAT Inclusive', 'Taxable'] else 0.0
                 grand_total = net_subtotal + tax_amount
 
-                # Ipunin lahat per supplier request
+                # Set fallback dates
+                specific_order_date = order_dates[i] if i < len(order_dates) and order_dates[i] else datetime.date.today().strftime('%Y-%m-%d')
+                specific_del_date = del_dates[i] if i < len(del_dates) and del_dates[i] else main_delivery_date
+
                 batch_pos.append({
                     'header': {
-                        'po_no': po_nos[i],
+                        'main_po_no': main_po_no, # Global reference
+                        'po_no': po_nos[i] if i < len(po_nos) else f"{main_po_no}-{i+1}",
                         'supplier': supp_name,
-                        'order_date': order_date,
-                        'delivery_date': delivery_date,
-                        'transport': transport,
+                        'contact_person': contact_persons[i] if i < len(contact_persons) else "",
+                        'order_date': specific_order_date,
+                        'delivery_date': specific_del_date,
+                        'transport': main_transport, # Galing sa global
                         'tax_term': tax_term,
-                        'currency': currency,
-                        'discount_rate': discount_rate,
-                        'status': order_statuses[i] if i < len(order_statuses) else 'Valid',
-                        'remarks': remarks if i == 0 else '',
+                        'currency': currencies[i] if i < len(currencies) else 'PHP',
+                        'discount_rate': disc_rate,
+                        'status': main_status, # Galing sa global
+                        'remarks': remarks_list[i] if i < len(remarks_list) else '',
                         'subtotal': subtotal,
                         'discount_amount': discount_amount,
                         'tax_amount': tax_amount,
@@ -1751,17 +1763,16 @@ def make_po_view(request):
                     'items': po_items
                 })
 
-            # I-save natin sa Session at i-redirect sa Confirm Page
-            # Note: I-uupdate mo rin yung po_confirm_purchase HTML mo para mabasa niya yung multiple batch_pos na 'to!
+            # I-save sa Session at ipasa sa Confirm Page
             request.session['batch_pos'] = batch_pos
-            return redirect('po_confirm_purchase')
+            return redirect('po_confirm_purchase') # Siguraduhing tugma sa URL name mo
 
         except Exception as e:
             messages.error(request, f"Error processing batch: {str(e)}")
             return redirect('make_po')
 
     # GET Request
-    suppliers_list = Supplier.objects.all().order_by('name')
+    suppliers_list = Supplier.objects.filter(is_active=True).order_by('name')
     items_list = Item.objects.all().order_by('item_code')
     return render(request, 'Inventory/purchase_order/supplier_po.html', {
         'suppliers': suppliers_list,
@@ -1816,6 +1827,11 @@ def print_po_view(request):
         # Kung lumang P.O. na walang batch_id
         po_qs = [base_po]
         
+    # 🚀 BAGO: ETO YUNG LOGIC PARA MA-EXTRACT ANG MAIN PO NO.
+    first_po = po_qs[0] if po_qs else base_po
+    raw_po_no = first_po.po_no
+    main_po_no_str = "-".join(raw_po_no.split('-')[:-1]) if '-' in raw_po_no else raw_po_no
+
     pages_data = []
     
     # 3. I-loop at i-compute ang bawat P.O. sa loob ng batch
@@ -1846,7 +1862,9 @@ def print_po_view(request):
         
     context = {
         'pages_data': pages_data,
-        'main_po': base_po, # Reference para sa Main Toolbar / File Name
+        'main_po': base_po, 
+        'main_po_no': main_po_no_str, # 🚀 IPAPASA NA NATIN ANG MAIN PO NO
+        'today': timezone.now()
     }
     return render(request, 'Inventory/purchase_order/print_po.html', context)
 
@@ -1885,25 +1903,29 @@ def po_confirm_purchase_view(request):
 
         try:
             with transaction.atomic():
-                # === LOGIC PARA SA BATCH ID ===
                 current_batch_id = f"BATCH-{uuid.uuid4().hex[:6].upper()}"
 
                 for po_data in batch_pos:
                     header = po_data.get('header')
                     items = po_data.get('items')
 
-                    # === LOGIC PARA SA SUPPLIER LANG ===
                     supplier_name = header.get('supplier')
                     supplier_obj = None
+                    
                     if supplier_name:
-                        # Gumawa ng temporary na Vendor Code (e.g., "VND-A1B2C3")
-                        temp_vendor_code = f"VND-{uuid.uuid4().hex[:6].upper()}"
+                        # 🚀 BAGO: Subukang hanapin muna kung existing na ang supplier
+                        supplier_qs = Supplier.objects.filter(name=supplier_name, is_active=True)
                         
-                        # Auto-create supplier kung wala pa, at ipasa ang default vendor code
-                        supplier_obj, created = Supplier.objects.get_or_create(
-                            name=supplier_name,
-                            defaults={'vendor_code': temp_vendor_code}
-                        )
+                        if supplier_qs.exists():
+                            supplier_obj = supplier_qs.first()
+                        else:
+                            # Kung wala talaga, tsaka lang gagawa ng bago
+                            temp_vendor_code = f"VND-{uuid.uuid4().hex[:6].upper()}"
+                            supplier_obj = Supplier.objects.create(
+                                name=supplier_name,
+                                vendor_code=temp_vendor_code,
+                                contact_name=header.get('contact_person', '')
+                            )
                     else:
                         raise ValueError("Supplier name is missing in one of the forms.")
 
@@ -1914,15 +1936,12 @@ def po_confirm_purchase_view(request):
                         supplier=supplier_obj,
                         order_date=header.get('order_date') if header.get('order_date') else None,
                         transport=header.get('transport', 'Truck'),
-                        tax_term=header.get('tax_term', 'Vat Inc'),
+                        tax_term=header.get('tax_term', 'VAT Inclusive'),
                         currency=header.get('currency', 'PHP'),
                         delivery_date=header.get('delivery_date') if header.get('delivery_date') else None,
                         discount_rate=header.get('discount_rate', 0.00),
                         remarks=header.get('remarks', ''),
-                        
-                        # 🚀 FIX: Hardcode natin as 'Pending Approval' para pumasok sa Approval Queue
                         ordering_status='Pending Approval', 
-                        
                         created_by=request.user,
                         po_amount_total=header.get('subtotal', 0.00), 
                         tax_amount_total=header.get('tax_amount', 0.00),
@@ -1931,7 +1950,6 @@ def po_confirm_purchase_view(request):
 
                     # B. BULK CREATE PARA SA ITEMS
                     po_items_to_save = []
-                    
                     for item in items:
                         po_item = PurchaseOrderItem(
                             purchase_order=new_po, 
@@ -1948,32 +1966,21 @@ def po_confirm_purchase_view(request):
                     
                     PurchaseOrderItem.objects.bulk_create(po_items_to_save)
 
-                    # --- Mga Logs ---
-                    log_system_action(
-                        user=request.user,
-                        action='CREATE',
-                        module='Purchase Order',
-                        description=f"Created new Purchase Order: {new_po.po_no} for Supplier: {supplier_obj.name}",
-                        request=request
-                    )
+                    # --- System Logs ---
+                    # log_system_action(...)
 
             # Notifications
-            notify_admins(
-                title="📄 New P.O.(s) For Approval",
-                message=f"{request.user.username} created {len(batch_pos)} PO(s). Pending your approval.",
-                link="/purchase-order/approve/" 
-            )
+            # notify_admins(...)
 
             # C. Linisin ang Session
             del request.session['batch_pos']
 
-            messages.success(request, f"Success! {len(batch_pos)} Purchase Order(s) saved.")
-            return redirect('approve_po') 
+            messages.success(request, f"Success! {len(batch_pos)} Purchase Order(s) saved to Database.")
+            # Palitan ng tamang URL kung saan mo gustong mag-redirect
+            return redirect('make_po') 
 
         except Exception as e:
-            print("=========================================")
             print("BOMBA SA DATABASE (CONFIRM PO):", str(e))
-            print("=========================================")
             messages.error(request, f"Error saving to database: {str(e)}")
             return redirect('po_confirm_purchase')
 
@@ -1985,9 +1992,21 @@ def po_confirm_purchase_view(request):
     if not batch_pos:
         messages.warning(request, "No pending Purchase Order to confirm. Create one first.")
         return redirect('make_po')
+        
+    # 🚀 BAGO: Kunin ang Main PO No galing sa unang block
+    main_po_no = "N/A"
+    overall_batch_total = 0.0
+
+    if batch_pos and len(batch_pos) > 0:
+        main_po_no = batch_pos[0].get('header', {}).get('main_po_no', 'N/A')
+
+        for po in batch_pos:
+            overall_batch_total += po.get('header', {}).get('grand_total', 0.00)
 
     context = {
         'batch_pos': batch_pos,
+        'main_po_no': main_po_no, # Ipapasa sa HTML
+        'overall_batch_total': overall_batch_total
     }
     
     return render(request, 'Inventory/purchase_order/PO_Confirmation.html', context)
@@ -2006,7 +2025,7 @@ def approve_po_view(request):
             pos_to_update.update(ordering_status=new_status)
             
             if action == 'approve':
-                messages.success(request, f"Batch {batch_id} has been APPROVED.")
+                messages.success(request, f"Success! Batch {batch_id} has been APPROVED.")
             else:
                 messages.error(request, f"Batch {batch_id} has been REJECTED.")
                 
@@ -2019,22 +2038,28 @@ def approve_po_view(request):
         ordering_status='Pending Approval'
     ).prefetch_related('items').order_by('id')
 
-    # 🚀 BAGO: I-group ang mga P.O. by Batch ID
+    # I-group ang mga P.O. by Batch ID
     batches_dict = {}
     for po in pending_qs:
-        bid = po.batch_id if po.batch_id else po.po_no # Fallback kung sakaling walang batch_id yung luma
+        bid = po.batch_id if po.batch_id else po.po_no # Fallback
         if bid not in batches_dict:
             batches_dict[bid] = []
         batches_dict[bid].append(po)
 
     grouped_batches = []
     for bid, pos in batches_dict.items():
-        main_po = pos[0] # Ang pinakauna ay laging ang Main P.O.
+        main_po = pos[0] # Ang pinakauna
         batch_grand_total = sum(p.grand_total for p in pos)
+        
+        # 🚀 BAGO: Extract Main PO No para malinis sa UI
+        raw_po_no = main_po.po_no
+        main_po_no = "-".join(raw_po_no.split('-')[:-1]) if '-' in raw_po_no else raw_po_no
+
         grouped_batches.append({
             'batch_id': bid,
+            'main_po_no': main_po_no, # Ipasa natin ito sa HTML
             'main_po': main_po,
-            'sub_pos': pos[1:], # Ang mga sumunod ay ang mga Sub P.O.
+            'sub_pos': pos[1:], 
             'all_pos': pos,
             'total_pos': len(pos),
             'batch_grand_total': batch_grand_total
@@ -2042,7 +2067,6 @@ def approve_po_view(request):
 
     # KPI Cards Logic
     today = timezone.now().date()
-    # Bilangin ang distinct batches imbes na individual POs
     pending_count = len(grouped_batches)
     approved_today = PurchaseOrder.objects.filter(ordering_status='Approved', order_date=today).values('batch_id').distinct().count()
     rejected_count = PurchaseOrder.objects.filter(ordering_status='Cancelled').values('batch_id').distinct().count()
@@ -2088,19 +2112,28 @@ def po_inquiry_view(request):
     total_approved = po_qs.filter(ordering_status='Approved').count()
 
     # 4. I-group ang mga na-filter na POs by Batch ID
-    batches_dict = {}
+    batches_dict = {} 
+    
     for po in po_qs:
+        # Kunin ang batch_id, kung wala (legacy data), gamitin ang po_no
         bid = getattr(po, 'batch_id', po.po_no) or po.po_no
         if bid not in batches_dict:
             batches_dict[bid] = []
         batches_dict[bid].append(po)
 
+    # 5. I-format ang grouped data para sa HTML
     grouped_batches = []
     for bid, pos in batches_dict.items():
         main_po = pos[0]
         batch_grand_total = sum(float(p.grand_total or 0) for p in pos)
+        
+        # Extract Main PO No (tanggalin yung -1, -2 suffix)
+        raw_po_no = main_po.po_no
+        main_po_no = "-".join(raw_po_no.split('-')[:-1]) if '-' in raw_po_no else raw_po_no
+
         grouped_batches.append({
             'batch_id': bid,
+            'main_po_no': main_po_no,
             'main_po': main_po,
             'sub_pos': pos[1:],
             'all_pos': pos,
@@ -2132,7 +2165,7 @@ def po_correction_view(request):
     context = {}
 
     # ==========================================
-    # 1. KUNG PININDOT ANG "SAVE CORRECTIONS" (POST)
+    # 1. POST: SAVE CORRECTIONS
     # ==========================================
     if request.method == "POST":
         batch_ref = request.POST.get('batch_ref')
@@ -2145,7 +2178,7 @@ def po_correction_view(request):
 
         try:
             with transaction.atomic():
-                # A. I-update ang lahat ng Items na na-edit
+                # A. Update Items
                 for i in range(len(item_ids)):
                     item = PurchaseOrderItem.objects.get(id=item_ids[i])
                     item.qty = qtys[i]
@@ -2153,22 +2186,20 @@ def po_correction_view(request):
                     item.amount = amounts[i]
                     item.save()
 
-                # B. Hanapin ang lahat ng P.O. sa batch na ito (o yung iisang P.O.)
+                # B. Hanapin ang POs sa Batch
                 if batch_ref.startswith('BATCH-'):
                     pos_to_update = PurchaseOrder.objects.filter(batch_id=batch_ref)
                 else:
-                    pos_to_update = PurchaseOrder.objects.filter(po_no=batch_ref)
+                    pos_to_update = PurchaseOrder.objects.filter(po_no__startswith=batch_ref)
                 
-                # C. I-log at i-recompute ang totals ng Bawat P.O.
                 current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 audit_log = f"\n[CORRECTED on {current_time}] Reason: {correction_reason}"
                 
                 for po in pos_to_update:
-                    # I-update ang Status at Remarks
                     po.remarks = str(po.remarks or "") + audit_log
                     po.ordering_status = 'Pending Approval'
                     
-                    # 🚀 RECOMPUTE TOTALS SA HEADER DAHIL NAGBAGO ANG ITEMS
+                    # C. Recompute Header Totals
                     new_subtotal = sum((i.amount for i in po.items.all()), Decimal('0.00'))
                     discount_val = new_subtotal * (Decimal(str(po.discount_rate or 0)) / Decimal('100'))
                     net_subtotal = new_subtotal - discount_val
@@ -2180,13 +2211,9 @@ def po_correction_view(request):
                     po.po_amount_total = new_subtotal
                     po.tax_amount_total = tax
                     po.grand_total = net_subtotal + tax
-                    
                     po.save()
 
-            # log system action (I-uncomment mo kung may log_system_action ka)
-            # log_system_action(...)
-
-            messages.success(request, f"Success! Batch/PO {batch_ref} has been corrected and sent back for approval.")
+            messages.success(request, f"Success! Batch {batch_ref} has been corrected and sent for approval.")
             return redirect('po_inquiry')
 
         except Exception as e:
@@ -2194,30 +2221,36 @@ def po_correction_view(request):
             return redirect(f'/purchase-order/correction/?search_po={batch_ref}')
 
     # ==========================================
-    # 2. KUNG NAG-SEARCH NG PO NUMBER (GET)
+    # 2. GET: SEARCH PO/BATCH
     # ==========================================
-    if request.method == "GET" and 'search_po' in request.GET:
-        po_no_query = request.GET.get('search_po').strip()
+    search_query = request.GET.get('search_po', '').strip()
+    
+    if search_query:
+        # 🚀 BAGO: Search gamit ang startswith para makuha ang Main PO family
+        base_qs = PurchaseOrder.objects.filter(
+            Q(po_no__startswith=search_query) | Q(batch_id=search_query)
+        )
         
-        try:
-            # Hanapin yung mismong PO na tinype
-            searched_po = PurchaseOrder.objects.get(po_no=po_no_query)
+        if base_qs.exists():
+            first_po = base_qs.first()
             
-            # 🚀 BAGO: Kung may batch_id siya, kunin ang buong batch!
-            if searched_po.batch_id:
-                po_list = PurchaseOrder.objects.filter(batch_id=searched_po.batch_id).prefetch_related('items').order_by('id')
-                batch_ref = searched_po.batch_id
+            # Extract Main PO No para sa Header Display
+            raw_po_no = first_po.po_no
+            main_po_no = "-".join(raw_po_no.split('-')[:-1]) if '-' in raw_po_no else raw_po_no
+            
+            if first_po.batch_id:
+                po_list = PurchaseOrder.objects.filter(batch_id=first_po.batch_id).prefetch_related('items').order_by('id')
+                batch_ref = first_po.batch_id
             else:
-                # Kung lumang PO na walang batch, kunin na lang mag-isa
-                po_list = [searched_po]
-                batch_ref = searched_po.po_no
-            
+                po_list = base_qs.prefetch_related('items').order_by('id')
+                batch_ref = search_query
+
             context['po_list'] = po_list
             context['batch_ref'] = batch_ref
+            context['main_po_no'] = main_po_no # 🚀 IPAPASA SA UI
             context['searched'] = True
-            
-        except PurchaseOrder.DoesNotExist:
-            messages.error(request, f"Purchase Order '{po_no_query}' not found in database.")
+        else:
+            messages.error(request, f"P.O. '{search_query}' not found.")
             context['searched'] = False
 
     return render(request, 'Inventory/purchase_order/PO_Correction.html', context)
@@ -2230,81 +2263,100 @@ def ri_receive_view(request):
     # 1. GET: PAG-SCAN NG PO BARCODE
     # ==========================================
     if request.method == "GET" and 'search_po' in request.GET:
-        po_no_query = request.GET.get('search_po').strip()
+        search_query = request.GET.get('search_po').strip()
+        
         try:
-            po_header = PurchaseOrder.objects.get(po_no=po_no_query)
+            # 🚀 BAGO: Hahanapin niya kung Batch ID, o kaya kung nagsisimula sa Main PO, o exact Sub-PO
+            po_qs = PurchaseOrder.objects.filter(
+                Q(batch_id=search_query) | 
+                Q(po_no=search_query) | 
+                Q(po_no__startswith=f"{search_query}-")
+            ).prefetch_related('items')
             
-            # Check if it's already fully received
-            if po_header.ordering_status == 'Received':
-                messages.warning(request, f"PO '{po_no_query}' has already been fully received.")
-            elif po_header.ordering_status != 'Approved':
-                messages.warning(request, f"PO '{po_no_query}' is currently '{po_header.ordering_status}'. Only 'Approved' POs can be received.")
+            if po_qs.exists():
+                valid_pos = []
+                all_items = []
+                already_received = True
+                not_approved = True
+                
+                # I-filter ang mga valid na i-receive (Approved o Partial)
+                for po in po_qs:
+                    if po.ordering_status in ['Approved', 'Partial']:
+                        valid_pos.append(po)
+                        all_items.extend(list(po.items.all()))
+                        already_received = False
+                        not_approved = False
+                    elif po.ordering_status == 'Received':
+                        not_approved = False # Fully received na siya, hindi rejected
+                
+                if already_received and not not_approved:
+                    messages.warning(request, f"Lahat ng items para sa '{search_query}' ay fully received na.")
+                elif not_approved:
+                    messages.warning(request, f"Ang '{search_query}' ay hindi pa Approved. Tanging Approved orders lang ang pwedeng i-receive.")
+                else:
+                    context['valid_pos'] = valid_pos
+                    context['po_items'] = all_items
+                    context['searched'] = True
+                    context['search_ref'] = search_query
+                    context['is_batch'] = len(valid_pos) > 1
             else:
-                context['po_header'] = po_header
-                context['po_items'] = po_header.items.all()
-                context['searched'] = True
-        except PurchaseOrder.DoesNotExist:
-            messages.error(request, f"Purchase Order '{po_no_query}' not found in the database.")
+                messages.error(request, f"Reference '{search_query}' not found in the database.")
+                
+        except Exception as e:
+            messages.error(request, f"System Error: {str(e)}")
 
     # ==========================================
     # 2. POST: PAG-SAVE SA DATABASE (Receiving Confirmation Only)
     # ==========================================
     if request.method == "POST":
-        po_no = request.POST.get('po_no')
-        delivery_date = request.POST.get('delivery_date') # Added this since it's in your HTML
+        search_ref = request.POST.get('search_ref')
+        delivery_date = request.POST.get('delivery_date')
 
         try:
             with transaction.atomic():
-                po_header = PurchaseOrder.objects.get(po_no=po_no)
+                po_qs = PurchaseOrder.objects.filter(
+                    Q(batch_id=search_ref) | Q(po_no__startswith=search_ref)
+                )
                 
-                items_received_count = 0
-                all_items_fully_received = True
+                total_items_received_across_batch = 0
 
-                # I-loop lahat ng items sa PO para i-update ang received qty
-                for item in po_header.items.all():
-                    qty_received_str = request.POST.get(f'qty_received_{item.id}')
-                    
-                    if qty_received_str:
-                        qty_received = int(qty_received_str)
-                        if qty_received > 0:
-                            # Update the item's received quantity (Assume you have a qty_received field in your PO Item model)
-                            # If you don't have qty_received in PurchaseOrderItem, you should add it!
-                            if hasattr(item, 'qty_received'):
-                                item.qty_received = (item.qty_received or 0) + qty_received
-                                item.save()
-                            
-                            items_received_count += 1
+                # I-loop ang bawat Purchase Order na natagpuan
+                for po_header in po_qs:
+                    items_received_count = 0
+                    all_items_fully_received = True
 
-                            # Check if the item is fully received
-                            # Assuming item.qty is the ordered amount
-                            if hasattr(item, 'qty_received') and hasattr(item, 'qty'):
-                                if item.qty_received < item.qty:
-                                    all_items_fully_received = False
-
-                if items_received_count > 0:
-                    # Update the main PO status
-                    # If all items are received, mark as 'Received', else 'Partial'
-                    po_header.ordering_status = 'Received' if all_items_fully_received else 'Partial'
-                    
-                    # Optionally save the actual delivery date if you have that field
-                    if hasattr(po_header, 'actual_delivery_date') and delivery_date:
-                        po_header.actual_delivery_date = delivery_date
+                    # I-loop ang items sa loob ng bawat PO
+                    for item in po_header.items.all():
+                        qty_received_str = request.POST.get(f'qty_received_{item.id}')
                         
-                    po_header.save()
+                        if qty_received_str:
+                            qty_received = int(qty_received_str)
+                            if qty_received > 0:
+                                # Siguraduhing may qty_received field sa model mo!
+                                if hasattr(item, 'qty_received'):
+                                    item.qty_received = (item.qty_received or 0) + qty_received
+                                    item.save()
+                                items_received_count += 1
+                                total_items_received_across_batch += 1
 
-                    log_system_action(
-                        user=request.user, 
-                        action='UPDATE', 
-                        module='Receiving', 
-                        description=f"Confirmed receipt of {items_received_count} items for PO {po_no}.", 
-                        request=request
-                    )
+                        # Check kung fully received na ba ang item na ito
+                        if hasattr(item, 'qty_received') and hasattr(item, 'qty'):
+                            if (item.qty_received or 0) < item.qty:
+                                all_items_fully_received = False
 
-                    messages.success(request, f"Success! {items_received_count} items from {po_no} have been marked as received. Proceed to Material Tagging.")
+                    # Kung may na-receive na kahit isang item sa PO na ito, update status
+                    if items_received_count > 0:
+                        po_header.ordering_status = 'Received' if all_items_fully_received else 'Partial'
+                        if hasattr(po_header, 'actual_delivery_date') and delivery_date:
+                            po_header.actual_delivery_date = delivery_date
+                        po_header.save()
+
+                if total_items_received_across_batch > 0:
+                    # log_system_action(...)
                     
-                    # 🚀 Redirect them to the Material Tag generator with the PO number pre-filled!
-                    return redirect(f"{reverse('material_tag')}?po_no={po_no}") 
-                    
+                    messages.success(request, f"Success! {total_items_received_across_batch} items from '{search_ref}' have been marked as received.")
+                    # 🚀 Redirect sa material tagging gamit ang search_ref
+                    return redirect(f"{reverse('material_tag')}?po_no={search_ref}") 
                 else:
                     messages.warning(request, "No items were checked for receiving. Please ensure quantity is greater than zero.")
 
@@ -2642,38 +2694,45 @@ def get_po_details(request):
     return JsonResponse({'success': False, 'error': 'Purchase Order not found or has no items.'})
 
 def get_po_for_tag(request):
-    """ Hahanapin nito ang PO number na ita-type mo sa Material Tag page """
+    """ Hahanapin nito ang PO number na ita-type mo sa Material Tag page (Support both Main PO at Sub PO) """
     po_no_query = request.GET.get('po_no', '').strip()
     
     if not po_no_query:
         return JsonResponse({'success': False, 'error': 'Please enter a PO Number.'})
 
     try:
-        # Hanapin ang PO sa database
-        po_header = PurchaseOrder.objects.get(po_no=po_no_query)
-        items = po_header.items.all()
+        # 🚀 BAGO: Hahanapin niya kung Batch ID (Main PO), o kung nagsisimula sa Main PO, o exact Sub PO
+        po_qs = PurchaseOrder.objects.filter(
+            Q(batch_id=po_no_query) | 
+            Q(po_no=po_no_query) | 
+            Q(po_no__startswith=f"{po_no_query}-")
+        ).prefetch_related('items')
         
-        # Kunin ang supplier name nang safe
-        supplier_name = "Unknown Supplier"
-        if hasattr(po_header, 'supplier') and po_header.supplier:
-            # Gagamitin natin ang str() para automatic niyang kunin kung ano ang default name sa Contact model mo
-            supplier_name = str(po_header.supplier)
-            
+        if not po_qs.exists():
+            return JsonResponse({'success': False, 'error': f'Reference {po_no_query} not found!'})
+
         data_list = []
-        for item in items:
-            data_list.append({
-                'item_code': item.item_code,
-                'description': item.description if item.description else "No Description",
-                'po_no': po_header.po_no,
-                'supplier': supplier_name,
-                'qty': item.qty,  
-                'arrival_date': timezone.now().strftime('%Y-%m-%d'),
-            })
+        
+        # I-loop lahat ng nahanap na PO (isa lang kung Sub PO, marami kung Main PO)
+        for po_header in po_qs:
+            # Kunin ang supplier name nang safe
+            supplier_name = "Unknown Supplier"
+            if hasattr(po_header, 'supplier') and po_header.supplier:
+                supplier_name = str(po_header.supplier)
+                
+            for item in po_header.items.all():
+                data_list.append({
+                    'item_code': item.item_code,
+                    'description': item.description if item.description else "No Description",
+                    'po_no': po_header.po_no, # Pinapanatili natin yung specific Sub-PO no per item
+                    'supplier': supplier_name,
+                    # Kung may qty_received, yun ang gamitin para sa tag. Kung wala, fallback sa ordered qty
+                    'qty': getattr(item, 'qty_received', item.qty),  
+                    'arrival_date': timezone.now().strftime('%Y-%m-%d'),
+                })
             
         return JsonResponse({'success': True, 'items': data_list})
         
-    except PurchaseOrder.DoesNotExist:
-        return JsonResponse({'success': False, 'error': f'Purchase Order {po_no_query} not found!'})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 

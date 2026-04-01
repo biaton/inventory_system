@@ -83,7 +83,12 @@
                 <div class="flex items-center">
                     <label class="w-32 text-xs font-bold text-slate-600">Order Status</label>
                     <select name="order_status" id="main_status" class="flex-1 p-1 border border-teal-400 bg-teal-50 text-teal-900 text-xs font-bold focus:bg-white uppercase">
-                        <option>Pending</option><option>Processing</option><option>Shipped</option><option>Delivered</option><option>In Transit</option><option>Cancelled</option>
+                        <option>Pending</option>
+                        <option>Processing</option>
+                        <option>Shipped</option>
+                        <option>Delivered</option>
+                        <option>In Transit</option>
+                        <option>Cancelled</option>
                     </select>
                 </div>
                 <div class="flex items-center">
@@ -231,17 +236,20 @@
             row.querySelector('.row-del-date').value = mainDate;
         });
 
-        // 🚀 BAGO: I-trigger ang auto-fill para sa lahat ng na-upload na codes galing Excel
         document.querySelectorAll('.code-input').forEach(input => {
             autoFillItemRow(input);
         });
     });
 
+    // 🚀 BAGO: Generator para sa Main PO No.
     function generateSpecificOrderNo(btnElement) {
         const input = btnElement.previousElementSibling;
         const date = new Date();
+        const year = date.getFullYear().toString().slice(-2);
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
         const random = Math.floor(1000 + Math.random() * 9000);
-        input.value = `SO-${date.getFullYear().toString().slice(-2)}${String(date.getMonth() + 1).padStart(2, '0')}-${random}`;
+        input.value = `SO-${year}${month}${day}-${random}`;
     }
 
     function calculateRow(element) {
@@ -297,6 +305,7 @@
         }
     }
 
+    // 🚀 BAGO: Mas malinis na Database handling para hindi mag-error kapag may special characters
     const customerDatabase = {
         {% for c in customers %}
         "{{ c.name|upper|escapejs }}": {
@@ -327,6 +336,16 @@
         }
     }
 
+    const itemMasterDatabase = {
+        {% for item in items %}
+        "{{ item.item_code|upper|escapejs }}": {
+            "description": "{{ item.description|default:''|escapejs }}",
+            "unit_price": "{{ item.unit_price|default:'0.00' }}",
+            "uom": "{{ item.uom|default:'PCS'|escapejs }}"
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    };
+
     function autoFillItemRow(inputElement) {
         const itemCode = inputElement.value.trim().toUpperCase();
         if (!itemCode) return;
@@ -343,7 +362,6 @@
 
             if (descInput) descInput.value = data.description;
             if (unitInput) unitInput.value = data.uom;
-            // Maglalagay lang ng price kung wala pa o 0 pa yung nasa excel
             if (priceInput && (priceInput.value === "0.00" || priceInput.value === "0" || priceInput.value === "")) {
                 priceInput.value = parseFloat(data.unit_price).toFixed(2);
             }
