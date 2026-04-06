@@ -119,8 +119,16 @@ urlpatterns = [
     path('inquiry/shipping-confirmation/', views.shipping_confirmation_view, name='shipping_confirmation'),
 
     path('master/locations/', views.location_master_view, name='location_master'),
-    path('receive/scan/', views.receive_item_scan_view, name='receive_item_scan'), # {% url 'receive_item_scan' %}
+    path('receive/scan/', views.receive_item_scan_view, name='receive_item_scan'), 
     path('receive/print/<int:tag_id>/', views.print_tag_view, name='print_tag'),
+
+    # Assembly & Asset Management
+    path('assembly/dashboard/', views.assembly_dashboard_view, name='assembly_dashboard'),
+    path('assembly/machine/create/', views.machine_create_view, name='machine_create'),
+    path('assembly/machine/<int:machine_id>/', views.machine_detail_view, name='machine_detail'),
+    path('assembly/print-label/<int:log_id>/', views.print_assembly_label, name='print_assembly_label'),
+    path('api/assembly/action/', views.api_assembly_action, name='api_assembly_action'),
+    path('api/assembly/complete/', views.api_assembly_complete, name='api_assembly_complete'),
 
     # PASSWORD RESET PATHS
     path('reset_password/', auth_views.PasswordResetView.as_view(template_name='Inventory/auth/password_reset_form.html'), name='password_reset'),

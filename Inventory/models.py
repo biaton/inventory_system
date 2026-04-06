@@ -464,3 +464,61 @@ class SystemNotification(models.Model):
 
     def __str__(self):
         return f"[{self.is_read}] {self.user.username} - {self.title}"
+
+# models.py (Idagdag sa dulo)
+
+class MachineAsset(models.Model):
+    """
+    Ito yung Master Record ng Makina na binubuo o binebenta ninyo.
+    """
+    STATUS_CHOICES = [
+        ('Building', 'Building / Incomplete'),
+        ('Available', 'Available / Complete'),
+        ('Partial', 'Partial / Missing Parts'),
+        ('Dismantled', 'Dismantled / Cannibalized'),
+        ('Deployed', 'Deployed to Client')
+    ]
+
+    machine_code = models.CharField(max_length=50, unique=True, verbose_name="Machine Serial/Code")
+    name = models.CharField(max_length=200, verbose_name="Machine Name/Model")
+    description = models.TextField(blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Building')
+    
+    # Sino nagbuo at kailan ginawa
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.machine_code} - {self.name}"
+
+    def update_status(self):
+        """
+        Dito natin ilalagay yung 'State Engine' mo in the future
+        para automatic na magpalit ng status base sa laman niyang parts.
+        """
+        pass
+
+
+class MachineComponent(models.Model):
+    """
+    Ito ang 'Ledger' o Event Movement ng mga piyesa na ikinakabit sa Makina.
+    """
+    ACTION_CHOICES = [
+        ('Assemble', 'Assemble (Install to Machine)'),
+        ('Dismantle', 'Dismantle (Remove from Machine)')
+    ]
+
+    machine = models.ForeignKey(MachineAsset, on_delete=models.CASCADE, related_name='components')
+    # Iko-konekta natin sa Material Tag kasi yun ang specific physical stock mo!
+    material_tag = models.ForeignKey('MaterialTag', on_delete=models.PROTECT, related_name='machine_usages')
+    
+    action = models.CharField(max_length=20, choices=ACTION_CHOICES)
+    qty = models.DecimalField(max_digits=10, decimal_places=2, default=1)
+    
+    # Sino nagkabit/nagbaklas at kailan
+    performed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    remarks = models.CharField(max_length=255, blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.action} {self.qty}x {self.material_tag.item_code} on {self.machine.machine_code}"

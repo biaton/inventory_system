@@ -80,7 +80,7 @@
                         <td class="py-2 px-4 border-r border-slate-200 font-bold text-slate-600">{{ log.timestamp|date:"Y-m-d h:i A" }}</td>
                         
                         <td class="py-2 px-4 border-r border-slate-200 text-center">
-                            {% if log.action_type == 'REG' %}
+                            {% if log.action_type == 'REG' or log.action_type == 'IN' %}
                                 <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 text-[9px] font-black uppercase rounded-sm border border-emerald-200">Registration</span>
                             {% elif log.action_type == 'OUT' %}
                                 <span class="bg-rose-100 text-rose-800 px-2 py-0.5 text-[9px] font-black uppercase rounded-sm border border-rose-200">Stock Out</span>
@@ -94,13 +94,13 @@
                         <td class="py-2 px-4 border-r border-slate-200 font-black text-teal-800 uppercase">{{ log.material_tag.item_code }}</td>
                         <td class="py-2 px-4 border-r border-slate-200 font-bold text-slate-800">{{ log.material_tag.lot_no }}</td>
                         
-                        <td class="py-2 px-4 border-r border-slate-200 text-right font-bold text-slate-500">{{ log.old_qty }}</td>
+                        <td class="py-2 px-4 border-r border-slate-200 text-right font-bold text-slate-500">{{ log.old_qty|floatformat:0 }}</td>
                         
-                        <td class="py-2 px-4 border-r border-slate-200 text-right font-black {% if log.change_qty > 0 %}text-emerald-600{% elif log.change_qty < 0 %}text-rose-600{% else %}text-slate-500{% endif %}">
-                            {% if log.change_qty > 0 %}+{% endif %}{{ log.change_qty }}
+                        <td class="py-2 px-4 border-r border-slate-200 text-right font-black {% if log.action_type == 'OUT' %}text-rose-600{% else %}text-emerald-600{% endif %}">
+                            {% if log.action_type == 'OUT' %}-{% else %}+{% endif %}{{ log.change_qty|floatformat:0 }}
                         </td>
                         
-                        <td class="py-2 px-4 border-r border-slate-200 text-right font-black text-slate-800 bg-slate-50/50">{{ log.new_qty }}</td>
+                        <td class="py-2 px-4 border-r border-slate-200 text-right font-black text-slate-800 bg-slate-50/50">{{ log.new_qty|floatformat:0 }}</td>
                         
                         <td class="py-2 px-4 border-r border-slate-200 text-center font-bold text-slate-600 uppercase">{{ log.user.username|default:"SYSTEM" }}</td>
                         <td class="py-2 px-4 text-xs text-slate-600 truncate max-w-[200px]" title="{{ log.notes }}">{{ log.notes|default:"-" }}</td>
@@ -122,10 +122,10 @@
             <p>Showing Page {{ logs.number }} of {{ logs.paginator.num_pages }}</p>
             <div class="flex items-center gap-4">
                 {% if logs.has_previous %}
-                    <a href="?page={{ logs.previous_page_number }}" class="hover:text-amber-600 transition-colors">Prev</a>
+                    <a href="?{{ filter_params }}&page={{ logs.previous_page_number }}" class="hover:text-amber-600 transition-colors">Prev</a>
                 {% endif %}
                 {% if logs.has_next %}
-                    <a href="?page={{ logs.next_page_number }}" class="hover:text-amber-600 transition-colors">Next</a>
+                    <a href="?{{ filter_params }}&page={{ logs.next_page_number }}" class="hover:text-amber-600 transition-colors">Next</a>
                 {% endif %}
             </div>
         </div>

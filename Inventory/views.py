@@ -14,7 +14,7 @@ from django.db.models import Prefetch
 from django.contrib import messages
 from django.db import transaction
 from django.utils import timezone
-from django.db.models import Sum, Count, Q, F    
+from django.db.models import Sum, Count, Q, F, When, DecimalField, Case, Value 
 from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.http import HttpResponse
@@ -58,6 +58,8 @@ from .models import (
     SystemAuditLog,
     LocationMaster,
     SystemNotification,
+    MachineAsset,
+    MachineComponent,
 )
 
 # 1. ANG CUSTOM LOGIN VIEW
@@ -3431,40 +3433,40 @@ def stock_out_view(request):
 
 def stock_inquiry_view(request):
     # 1. Kunin ang lahat ng Physical Stocks (MaterialTags)
-    # Gagamit tayo ng select_related para mabilis hugutin yung PO at Location data
     stocks = MaterialTag.objects.select_related('po_reference', 'po_reference__supplier', 'location').all().order_by('-arrival_date')
 
-    # 2. Kunin ang mga isinubmit na Search Filters galing sa HTML Form
-    inquiry_type = request.GET.get('inquiry_type')
-    company = request.GET.get('company')
-    item_code = request.GET.get('item_code')
-    description = request.GET.get('description')
-    lot_no = request.GET.get('lot_no')
-    # (Pwede mong idagdag yung iba pang filters dito in the future)
+    # 2. Kunin ang mga isinubmit na Search Filters
+    inquiry_type = request.GET.get('inquiry_type', 'current')
+    company = request.GET.get('company', '').strip()
+    item_code = request.GET.get('item_code', '').strip()
+    description = request.GET.get('description', '').strip()
+    lot_no = request.GET.get('lot_no', '').strip()
 
-    # 3. I-apply ang Filters kung may tinype/pinili ang user
+    # 3. I-apply ang Filters
     if inquiry_type == 'current':  
         stocks = stocks.filter(total_pcs__gt=0) 
     elif inquiry_type == 'out':
         stocks = stocks.filter(total_pcs__lte=0)
         
     if company:
-        # Hahanapin sa loob ng PO -> Supplier -> Name
         stocks = stocks.filter(po_reference__supplier__name__icontains=company)
-        
     if item_code:
         stocks = stocks.filter(item_code__icontains=item_code)
-        
     if description:
         stocks = stocks.filter(description__icontains=description)
-        
     if lot_no:
         stocks = stocks.filter(lot_no__icontains=lot_no)
 
+    # 🚀 BAGO: Compute KPI Cards Data (Base sa na-filter na stocks)
+    total_active_tags = stocks.filter(total_pcs__gt=0).count()
+    total_qty_stock = stocks.filter(total_pcs__gt=0).aggregate(total=Sum('total_pcs'))['total'] or 0
+    out_of_stock_tags = stocks.filter(total_pcs__lte=0).count()
+
+    # 4. EXCEL EXPORT LOGIC
     if request.GET.get('export_excel') == 'true':
-        # 1. I-prepare natin yung data format na papasok sa Excel
         all_item_codes = stocks.values_list('item_code', flat=True).distinct()
         item_prices = dict(Item.objects.filter(item_code__in=all_item_codes).values_list('item_code', 'unit_price'))
+        
         data = []
         for s in stocks:
             u_price = item_prices.get(s.item_code, 0.00)
@@ -3486,12 +3488,10 @@ def stock_inquiry_view(request):
                 'Unit Price': float(u_price),
             })
 
-        # 2. I-convert yung data papuntang Pandas DataFrame
         df = pd.DataFrame(data)
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         response['Content-Disposition'] = 'attachment; filename="Stock_Masterlist_Export.xlsx"'
 
-        # 4. Isulat yung DataFrame sa Excel file
         with pd.ExcelWriter(response, engine='openpyxl') as writer:
             df.to_excel(writer, index=False, sheet_name='Inventory Data')
             worksheet = writer.sheets['Inventory Data']
@@ -3500,18 +3500,30 @@ def stock_inquiry_view(request):
                 worksheet.column_dimensions[column_cells[0].column_letter].width = length + 2
 
         return response
-    # ==========================================
 
-    # Pag hindi Excel, ituloy lang sa normal na Pagination at rendering
+    # 5. PAGINATION AT RENDERING
     paginator = Paginator(stocks, 20) 
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
+    # 🚀 FIX: I-attach ang unit_price sa object list para lumabas sa HTML
     page_item_codes = [s.item_code for s in page_obj.object_list]
     page_item_prices = dict(Item.objects.filter(item_code__in=page_item_codes).values_list('item_code', 'unit_price'))
+    for s in page_obj.object_list:
+        s.unit_price = page_item_prices.get(s.item_code, 0.00)
 
     context = {
         'page_obj': page_obj,
+        # Ipasa ang KPI Values
+        'total_active_tags': total_active_tags,
+        'total_qty_stock': total_qty_stock,
+        'out_of_stock_tags': out_of_stock_tags,
+        # Ipasa ang mga tinype sa filter para hindi mabura sa textbox kapag nag-refresh
+        'inquiry_type': inquiry_type,
+        'company': company,
+        'item_code': item_code,
+        'description': description,
+        'lot_no': lot_no,
     }
     return render(request, 'Inventory/processing/stock_inquiry.html', context)
 
@@ -3591,8 +3603,7 @@ def stock_item_inquiry_view(request):
     return render(request, 'Inventory/processing/stock_item_inquiry.html', context)
 
 def stock_history_view(request):
-    # 1. Kunin ang lahat ng movement logs, pinakabago ang nasa itaas
-    # Gagamit tayo ng select_related para mabilis makuha yung Item Code at Lot No galing sa MaterialTag
+    # 1. Kunin ang lahat ng movement logs
     logs = StockLog.objects.select_related('material_tag', 'user').all().order_by('-timestamp')
 
     # 2. Kunin ang mga filters
@@ -3604,9 +3615,9 @@ def stock_history_view(request):
 
     # 3. I-apply ang Filters
     if date_from:
-        logs = logs.filter(timestamp__date__gte=date_from) # gte = Greater Than or Equal
+        logs = logs.filter(timestamp__date__gte=date_from)
     if date_to:
-        logs = logs.filter(timestamp__date__lte=date_to)   # lte = Less Than or Equal
+        logs = logs.filter(timestamp__date__lte=date_to)
     if action_type:
         logs = logs.filter(action_type=action_type)
     if item_code:
@@ -3619,8 +3630,15 @@ def stock_history_view(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
+    # 🚀 BAGONG LOGIC: Kunin lahat ng filters para ilagay sa Next/Prev buttons
+    query_dict = request.GET.copy()
+    if 'page' in query_dict:
+        del query_dict['page']
+    filter_params = query_dict.urlencode()
+
     context = {
         'logs': page_obj,
+        'filter_params': filter_params, # 🚀 Ipapasa natin 'to sa HTML
     }
     return render(request, 'Inventory/processing/stock_history.html', context)
 
@@ -4224,6 +4242,303 @@ def receive_item_scan_view(request):
         'items': ItemMaster.objects.all()
     })
 
+@login_required(login_url='login')
+def stock_out_item(request, item_id):
+    # Kukunin natin yung item sa database gamit ang ID
+    item = get_object_or_404(Item, id=item_id) 
+
+    if request.method == 'POST':
+        # Kunin ang tinype na quantity sa form
+        deduct_qty = int(request.POST.get('quantity', 0))
+
+        if deduct_qty > 0 and deduct_qty <= item.current_stock:
+            # 1. Bawasan ang stock sa database
+            item.current_stock -= deduct_qty
+            item.save()
+
+            log_system_action(
+                user=request.user, 
+                action='UPDATE', 
+                module='Inventory Adjustment', 
+                description=f"Dispensed {deduct_qty} pcs of {item.item_name}. Remaining: {item.current_stock}", 
+                request=request
+            )
+
+            # ==========================================
+            # 2. TAWAGIN ANG EMAIL TRIGGER NATIN!
+            # ==========================================
+            check_and_alert_low_stock(item)
+
+            messages.success(request, f"Success! Dispensed {deduct_qty} units of {item.item_name}. Remaining stock: {item.current_stock}")
+            
+            # I-redirect pabalik sa listahan ng items (palitan ng tamang url name mo kung iba)
+            # return redirect('item_list') 
+            return redirect('/admin/') # Pansamantala, ibalik muna natin sa admin page mo
+        else:
+            messages.error(request, "Error: Invalid quantity. You cannot deduct more than the current stock.")
+
+    # Kung GET request, ipapakita yung form
+    return render(request, 'Inventory/stock_out.html', {'item': item})
+
+def system_audit_logs_view(request):
+    log_list = SystemAuditLog.objects.all().select_related('user').order_by('-timestamp')
+    paginator = Paginator(log_list, 15) 
+    page_number = request.GET.get('page')
+    logs = paginator.get_page(page_number)
+    
+    return render(request, 'Inventory/master/System_Audit_Logs.html', {'logs': logs})
+
+@login_required
+def all_notifications_view(request):
+    """ Ipapakita lahat ng notifications ng user, luma man o bago """
+    # Kukunin lahat ng notifs ng naka-login na user
+    notifs = SystemNotification.objects.filter(user=request.user).order_by('-created_at')
+    
+    # Optional: Paginator kung sakaling umabot na sa libo yung alerts
+    from django.core.paginator import Paginator
+    paginator = Paginator(notifs, 50) # 50 alerts per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    return render(request, 'Inventory/notifications_list.html', {'notifs': page_obj})
+
+@login_required
+def mark_all_read_view(request):
+    """ Isang pindot para gawing 'Read' lahat ng unread notifications """
+    SystemNotification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+    
+    messages.success(request, "All notifications marked as read.")
+    # Ibabalik ka niya kung saang page ka man nanggaling nung pinindot mo 'to
+    return redirect(request.META.get('HTTP_REFERER', 'dashboard'))
+
+def assembly_dashboard_view(request):
+    # ==========================================
+    # 1. POST: CREATE NEW MACHINE / ASSET
+    # ==========================================
+    if request.method == 'POST':
+        machine_code = request.POST.get('machine_code').strip().upper()
+        name = request.POST.get('name').strip()
+        description = request.POST.get('description').strip()
+
+        if MachineAsset.objects.filter(machine_code=machine_code).exists():
+            messages.error(request, f"Error: Machine Code '{machine_code}' already exists!")
+        else:
+            MachineAsset.objects.create(
+                machine_code=machine_code,
+                name=name,
+                description=description,
+                status='Building' 
+            )
+            messages.success(request, f"Success: Asset '{machine_code}' created. Ready for assembly.")
+        
+        return redirect('assembly_dashboard')
+
+    # ==========================================
+    # 2. GET: LOAD DASHBOARD, KPIs & FILTERS
+    # ==========================================
+    machines_query = MachineAsset.objects.all().order_by('-created_at')
+
+    # Compute KPI Stats (Compute bago mag-filter para accurate ang totals)
+    total_assets = machines_query.count()
+    building_count = machines_query.filter(status='Building').count()
+    available_count = machines_query.filter(status='Available').count()
+    partial_count = machines_query.filter(status='Partial').count()
+
+    # Apply Search & Filters
+    search_query = request.GET.get('search', '').strip()
+    status_filter = request.GET.get('status', '')
+
+    if search_query:
+        machines_query = machines_query.filter(
+            Q(machine_code__icontains=search_query) | 
+            Q(name__icontains=search_query)
+        )
+    if status_filter:
+        machines_query = machines_query.filter(status=status_filter)
+
+    # Pagination (20 machines per page)
+    paginator = Paginator(machines_query, 20)
+    page_number = request.GET.get('page')
+    machines_page = paginator.get_page(page_number)
+
+    # Preserve filters para sa Next/Prev page
+    query_dict = request.GET.copy()
+    if 'page' in query_dict:
+        del query_dict['page']
+    filter_params = query_dict.urlencode()
+
+    context = {
+        'machines': machines_page,
+        'total_assets': total_assets,
+        'building_count': building_count,
+        'available_count': available_count,
+        'partial_count': partial_count,
+        'search_query': search_query,
+        'status_filter': status_filter,
+        'filter_params': filter_params,
+    }
+    return render(request, 'Inventory/assembly/assembly_dashboard.html', context)
+
+def machine_detail_view(request, machine_id):
+    machine = get_object_or_404(MachineAsset, id=machine_id)
+
+    # ==========================================
+    # CORE PRINCIPLE: DERIVE STATE FROM EVENTS
+    # ==========================================
+    # Hindi tayo nagse-save ng "current_qty" sa machine. Kino-compute natin siya!
+    # Formula: (Sum ng Assemble) - (Sum ng Dismantle) per Material Tag
+    
+    installed_parts = MachineComponent.objects.filter(machine=machine).values(
+        'material_tag__id',
+        'material_tag__item_code',
+        'material_tag__description',
+        'material_tag__lot_no'
+    ).annotate(
+        net_qty=Sum(
+            Case(
+                When(action='Assemble', then=F('qty')),
+                When(action='Dismantle', then=-F('qty')),
+                default=0,
+                output_field=DecimalField()
+            )
+        )
+    ).filter(net_qty__gt=0) # Ipakita lang yung mga may natitira pang nakakabit
+
+    # Kunin yung buong Event Ledger / History para sa Audit Trail
+    ledger_logs = machine.components.all().order_by('-timestamp')
+
+    print_log_id = request.GET.get('print_log')
+    print_log = None
+    if print_log_id:
+        print_log = MachineComponent.objects.filter(id=print_log_id).first()
+
+    context = {
+        'machine': machine,
+        'installed_parts': installed_parts,
+        'ledger_logs': ledger_logs,
+        'print_log': print_log, # 🚀 IDAGDAG ITO SA CONTEXT
+    }
+    return render(request, 'Inventory/assembly/machine_detail.html', context)
+
+
+def api_assembly_action(request):
+    if request.method == 'POST':
+        machine_id = request.POST.get('machine_id')
+        tag_id_raw = request.POST.get('tag_id').strip().upper()
+        action = request.POST.get('action')
+        qty = Decimal(request.POST.get('qty', 1))
+        custom_remarks = request.POST.get('remarks', '').strip()
+
+        try:
+            tag_id = int(tag_id_raw.replace('TAG-', ''))
+        except ValueError:
+            messages.error(request, "Invalid TAG format. Please use 'TAG-00001'.")
+            return redirect('machine_detail', machine_id=machine_id)
+
+        try:
+            with transaction.atomic():
+                machine = MachineAsset.objects.get(id=machine_id)
+                tag = MaterialTag.objects.get(id=tag_id)
+
+                if action == 'Assemble':
+                    if tag.total_pcs < qty:
+                        messages.error(request, f"Insufficient stock! Tag {tag_id_raw} only has {tag.total_pcs} pcs.")
+                        return redirect('machine_detail', machine_id=machine_id)
+                    
+                    tag.total_pcs -= qty
+                    tag.save()
+                    
+                    StockLog.objects.create(
+                        material_tag=tag, action_type='OUT', old_qty=tag.total_pcs + qty,
+                        new_qty=tag.total_pcs, change_qty=qty, user=request.user,
+                        notes=f"Assembled into Machine: {machine.machine_code}"
+                    )
+
+                elif action == 'Dismantle':
+                    tag.total_pcs += qty
+                    tag.save()
+                    
+                    StockLog.objects.create(
+                        material_tag=tag, action_type='IN', old_qty=tag.total_pcs - qty,
+                        new_qty=tag.total_pcs, change_qty=qty, user=request.user,
+                        notes=f"Dismantled from Machine: {machine.machine_code}"
+                    )
+
+                final_remarks = custom_remarks if custom_remarks else f"System generated {action.lower()} log."
+
+                # CREATE LEDGER LOG
+                new_log = MachineComponent.objects.create(
+                    machine=machine,
+                    material_tag=tag,
+                    action=action,
+                    qty=qty,
+                    performed_by=request.user,
+                    remarks=final_remarks
+                )
+
+                if action == 'Dismantle':
+                    machine.status = 'Partial'
+                elif action == 'Assemble':
+                    machine.status = 'Building'
+                    
+                machine.save()
+                messages.success(request, f"Successfully {action.lower()}d {qty}x of {tag.item_code}.")
+
+                # 🚀 KUNG ASSEMBLE, IPAPASA NATIN YUNG LOG ID PARA MA-PRINT ANG STICKER
+                return redirect(f"{reverse('machine_detail', args=[machine_id])}?print_log={new_log.id}")
+
+        except Exception as e:
+            messages.error(request, f"System Error: {str(e)}")
+
+        return redirect('machine_detail', machine_id=machine_id)
+
+def api_assembly_complete(request):
+    """ View para tapusin ang assembly at gawing 'Available' ang makina """
+    if request.method == 'POST':
+        machine_id = request.POST.get('machine_id')
+        machine = get_object_or_404(MachineAsset, id=machine_id)
+        
+        # Papalitan ang status niya to Available
+        machine.status = 'Available'
+        machine.save()
+        
+        messages.success(request, f"Asset {machine.machine_code} marked as Complete and Available!")
+        
+        # Babalik sa workspace
+        return redirect('machine_detail', machine_id=machine_id)
+
+# 2. IDAGDAG ITO SA PINAKABABA NG views.py
+def print_assembly_label(request, log_id):
+    """ View na maglalabas ng format para sa Thermal Barcode Printer """
+    log = get_object_or_404(MachineComponent, id=log_id)
+    return render(request, 'Inventory/assembly/assembly_print_label.html', {'log': log})
+
+def machine_create_view(request):
+    """ View na taga-salos ng Form Submission para sa bagong Makina """
+    if request.method == 'POST':
+        machine_code = request.POST.get('machine_code').strip().upper()
+        name = request.POST.get('name').strip()
+        description = request.POST.get('description').strip()
+
+        # Check kung may kapangalan nang Machine Code (bawal ang duplicate)
+        if MachineAsset.objects.filter(machine_code=machine_code).exists():
+            messages.error(request, f"Error: Machine Code '{machine_code}' already exists!")
+        else:
+            MachineAsset.objects.create(
+                machine_code=machine_code,
+                name=name,
+                description=description,
+                status='Building' # Default status
+            )
+            messages.success(request, f"Success: Asset '{machine_code}' created. Ready for assembly.")
+        
+    return redirect('assembly_dashboard')
+
+    
+
+
+# Email views
+
 def check_and_alert_low_stock(tag):
     try:
         system_settings = SystemSetting.objects.first()
@@ -4314,44 +4629,6 @@ def alert_new_po_created(po):
         print("Notice: Walang naka-setup na email sa PO_APPROVAL route.")
     except Exception as e:
         print(f"Error sending PO email: {str(e)}")
-
-@login_required(login_url='login')
-def stock_out_item(request, item_id):
-    # Kukunin natin yung item sa database gamit ang ID
-    item = get_object_or_404(Item, id=item_id) 
-
-    if request.method == 'POST':
-        # Kunin ang tinype na quantity sa form
-        deduct_qty = int(request.POST.get('quantity', 0))
-
-        if deduct_qty > 0 and deduct_qty <= item.current_stock:
-            # 1. Bawasan ang stock sa database
-            item.current_stock -= deduct_qty
-            item.save()
-
-            log_system_action(
-                user=request.user, 
-                action='UPDATE', 
-                module='Inventory Adjustment', 
-                description=f"Dispensed {deduct_qty} pcs of {item.item_name}. Remaining: {item.current_stock}", 
-                request=request
-            )
-
-            # ==========================================
-            # 2. TAWAGIN ANG EMAIL TRIGGER NATIN!
-            # ==========================================
-            check_and_alert_low_stock(item)
-
-            messages.success(request, f"Success! Dispensed {deduct_qty} units of {item.item_name}. Remaining stock: {item.current_stock}")
-            
-            # I-redirect pabalik sa listahan ng items (palitan ng tamang url name mo kung iba)
-            # return redirect('item_list') 
-            return redirect('/admin/') # Pansamantala, ibalik muna natin sa admin page mo
-        else:
-            messages.error(request, "Error: Invalid quantity. You cannot deduct more than the current stock.")
-
-    # Kung GET request, ipapakita yung form
-    return render(request, 'Inventory/stock_out.html', {'item': item})
 
 @login_required
 def email_master_view(request):
@@ -4801,37 +5078,6 @@ def scan_and_alert_low_stock():
             print(f"Error sending Low Stock email: {str(e)}")
             
     return len(low_stock_items)
-
-def system_audit_logs_view(request):
-    log_list = SystemAuditLog.objects.all().select_related('user').order_by('-timestamp')
-    paginator = Paginator(log_list, 15) 
-    page_number = request.GET.get('page')
-    logs = paginator.get_page(page_number)
-    
-    return render(request, 'Inventory/master/System_Audit_Logs.html', {'logs': logs})
-
-@login_required
-def all_notifications_view(request):
-    """ Ipapakita lahat ng notifications ng user, luma man o bago """
-    # Kukunin lahat ng notifs ng naka-login na user
-    notifs = SystemNotification.objects.filter(user=request.user).order_by('-created_at')
-    
-    # Optional: Paginator kung sakaling umabot na sa libo yung alerts
-    from django.core.paginator import Paginator
-    paginator = Paginator(notifs, 50) # 50 alerts per page
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    
-    return render(request, 'Inventory/notifications_list.html', {'notifs': page_obj})
-
-@login_required
-def mark_all_read_view(request):
-    """ Isang pindot para gawing 'Read' lahat ng unread notifications """
-    SystemNotification.objects.filter(user=request.user, is_read=False).update(is_read=True)
-    
-    messages.success(request, "All notifications marked as read.")
-    # Ibabalik ka niya kung saang page ka man nanggaling nung pinindot mo 'to
-    return redirect(request.META.get('HTTP_REFERER', 'dashboard'))
 
 @login_required
 def test_all_email_templates_view(request):

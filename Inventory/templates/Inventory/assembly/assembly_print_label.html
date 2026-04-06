@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ log.action }} Label - {{ log.machine.machine_code }}</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.5/JsBarcode.all.min.js"></script>
+    <style>
+        /* DESIGN PARA SA THERMAL PRINTER */
+        @page {
+            margin: 0; 
+            size: 100mm 50mm;
+        }
+        body {
+            margin: 0;
+            padding: 8px;
+            font-family: 'Courier New', Courier, monospace;
+            color: #000;
+            background: #fff;
+            width: 100mm;
+            height: 50mm;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            
+            /* 🚀 ITO ANG MAGIC PARA HINDI TANGGALIN NG CHROME ANG KULAY ITIM SA PRINT */
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        .header {
+            text-align: center;
+            font-weight: bold;
+            font-size: 12px;
+            padding: 2px 0;
+            margin-bottom: 2px;
+        }
+        /* Normal Header para sa Assemble */
+        .header.assemble {
+            border-bottom: 1px dashed #000;
+        }
+        /* Inverted/Dark Header para sa Dismantle (Cannibalized) */
+        .header.dismantle {
+            background-color: #000 !important;
+            color: #fff !important;
+            letter-spacing: 1px;
+        }
+        .content {
+            font-size: 11px;
+            line-height: 1.2;
+            flex-grow: 1;
+        }
+        .content .label { font-weight: bold; }
+        .qty-box {
+            font-size: 16px;
+            font-weight: bold;
+            border: 1px solid #000;
+            display: inline-block;
+            padding: 2px 6px;
+            margin: 2px 0;
+        }
+        .warning-box {
+            border: 1px dashed #000;
+            text-align: center;
+            font-size: 10px;
+            font-weight: bold;
+            margin-top: 2px;
+            padding: 2px;
+        }
+        .barcode-container {
+            text-align: center;
+            margin-top: auto;
+            overflow: hidden;
+        }
+        svg {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    {% if log.action == 'Assemble' %}
+        <div class="header assemble">WIP ALLOCATION SLIP</div>
+    {% else %}
+        <div class="header dismantle">WARNING: PART REMOVED</div>
+    {% endif %}
+
+    <div class="content">
+        <div><span class="label">Asset:</span> {{ log.machine.machine_code }}</div>
+        <div><span class="label">Item:</span> {{ log.material_tag.item_code }}</div>
+        <div style="font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ log.material_tag.description }}</div>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2px;">
+            <div><span class="label">Ref:</span> TAG-{{ log.material_tag.id|stringformat:"05d" }}</div>
+            <div class="qty-box">{% if log.action == 'Dismantle' %}-{% endif %}{{ log.qty|floatformat:0 }} PCS</div>
+        </div>
+        
+        <div style="font-size: 9px; margin-top: 2px;">
+            <span class="label">By:</span> {{ log.performed_by.username|default:"System" }} | {{ log.timestamp|date:"m/d/y H:i" }}
+        </div>
+
+        {% if log.remarks and "System generated" not in log.remarks %}
+        <div style="font-size: 8px; margin-top: 2px; font-style: italic; border-top: 1px dotted #000; padding-top: 2px;">
+            <span class="label">Note:</span> {{ log.remarks }}
+        </div>
+        {% endif %}
+
+        {% if log.action == 'Dismantle' %}
+        <div class="warning-box">
+            ASSET INCOMPLETE - DO NOT USE
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="barcode-container">
+        <svg id="barcode"></svg>
+    </div>
+
+    <script>
+        window.onload = function() {
+            var actionType = "{{ log.action }}";
+            var barcodeValue = actionType === 'Assemble' ? 
+                               'TAG-{{ log.material_tag.id|stringformat:"05d" }}' : 
+                               '{{ log.machine.machine_code }}';
+
+            JsBarcode("#barcode", barcodeValue, {
+                format: "CODE128",
+                displayValue: true, 
+                fontSize: 12, // 🚀 Niliitan ng konti font
+                fontOptions: "bold",
+                textMargin: 2,
+                margin: 0,
+                width: 1.5,
+                height: 20 // 🚀 Niliitan yung mga guhit para magkasya yung text sa ilalim
+            });
+
+            setTimeout(function() {
+                window.print();
+            }, 500);
+        };
+
+        window.onafterprint = function() {
+            window.close();
+        };
+    </script>
+</body>
+</html>
