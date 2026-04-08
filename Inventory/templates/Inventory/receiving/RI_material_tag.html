@@ -5,7 +5,7 @@
 {% block receiving_content %}
 <div class="max-w-[100%] mx-auto pb-20 mt-4 text-slate-800">
 
-    <form method="POST" action="" id="material_tag_form">
+    <form method="POST" action="" id="material_tag_form" target="_blank">
         {% csrf_token %}
 
         <div class="bg-white border border-slate-300 shadow-sm p-4 mb-4">
@@ -440,7 +440,7 @@
                     supplier: row['Supplier'] || "N/A",
                     qty: row['Qty'] || 1,
                     arrival_date: new Date().toISOString().split('T')[0],
-                    revision: row['Revision'] || "-"
+                    revision: row['Revision'] || ""
                 });
             });
             alert(`${jsonData.length} items imported!`);
@@ -464,7 +464,14 @@
         }
 
         if (confirm(`Save and process ${count} material tags?`)) {
+            // 1. I-submit ang form (pupunta ito sa bagong tab dahil sa target="_blank")
             document.getElementById('material_tag_form').submit();
+            
+            // 🚀 BAGO: 2. Linisin ang kasalukuyang screen pagkalipas ng 1 second
+            setTimeout(() => {
+                // Ire-reload ang page nang walang laman para pwede ka na ulit mag-scan ng bago
+                window.location.href = window.location.pathname; 
+            }, 1000);
         }
     }
 </script>

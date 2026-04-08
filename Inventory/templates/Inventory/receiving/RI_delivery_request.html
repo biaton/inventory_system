@@ -244,7 +244,7 @@
 
         toastMessages.forEach(toast => {
             const text = toast.innerText;
-            const match = text.match(/REQ-\d{8}-\d{3}/); 
+            const match = text.match(/REQ-\d{8}-\d+/); 
             if (match) {
                 foundReqNo = match[0];
             }

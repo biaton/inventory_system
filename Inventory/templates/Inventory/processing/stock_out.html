@@ -1,18 +1,17 @@
-{% extends "Inventory/inventory_request/request_base.html" %}
+{% extends "Inventory/processing/processing_base.html" %}
 
-{% block request_content %}
+{% block processing_content %}
 <div class="max-w-[100%] mx-auto pb-20 mt-4 text-slate-800">
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
 
         <div class="lg:col-span-4 bg-white border border-slate-300 shadow-sm flex flex-col h-[480px]">
             
-            <div class="bg-emerald-700 px-4 py-3 border-b border-emerald-800 flex items-center justify-between">
+            <div class="bg-rose-700 px-4 py-3 border-b border-emerald-800 flex items-center justify-between">
                 <div class="flex items-center gap-2">
                     <i data-lucide="package-minus" class="w-4 h-4 text-emerald-100"></i>
                     <h2 class="text-xs font-black tracking-widest text-white uppercase">Stock Out Terminal</h2>
                 </div>
-                <span class="text-[8px] font-black text-emerald-100 uppercase border border-emerald-400 px-1.5 py-0.5">Issuance</span>
             </div>
             
             <div class="flex-1 bg-slate-50 p-6 flex flex-col justify-center relative overflow-hidden">

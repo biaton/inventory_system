@@ -1,11 +1,18 @@
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.contrib import messages
+from functools import wraps # 🚀 DAGDAG ITO
 
 def allowed_roles(allowed_roles=[]):
     def decorator(view_func):
+        @wraps(view_func) # 🚀 DAGDAG ITO (Sobrang importante nito sa Django)
         def wrapper_func(request, *args, **kwargs):
             
+            # 🚀 SAFETY CHECK: Kung hindi siya naka-login, sipain papuntang login page!
+            if not request.user.is_authenticated:
+                messages.warning(request, "Please login to access this page.")
+                return redirect('login') # Siguraduhing tama itong login URL name mo
+
             # 1. Kunin ang role ng naka-login na user
             group = None
             if hasattr(request.user, 'profile'):

@@ -1,58 +1,37 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <title>New Purchase Order</title>
+    <meta charset="utf-8">
+    <title>PO Approval Request</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f8fafc; color: #334155;">
-    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 20px;">
-        <tr>
-            <td align="center">
-                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-                    <tr>
-                        <td style="background-color: #2563eb; padding: 20px; text-align: center;">
-                            <h2 style="margin: 0; color: #ffffff; font-size: 20px; letter-spacing: 2px; text-transform: uppercase;">📄 New P.O. Generated</h2>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 30px;">
-                            <p style="margin: 0 0 15px 0; font-size: 16px;">Hello Team,</p>
-                            <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 1.6;">
-                                A new Purchase Order has been successfully generated and is awaiting next steps in the system.
-                            </p>
-                            <table width="100%" cellpadding="15" cellspacing="0" style="background-color: #f1f5f9; border-left: 4px solid #3b82f6; border-radius: 4px; margin-bottom: 25px;">
-                                <tr>
-                                    <td>
-                                        <p style="margin: 0 0 8px 0; font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 1px;">Order Summary</p>
-                                        <h3 style="margin: 0 0 15px 0; font-size: 18px; color: #0f172a;">{{ po_no }}</h3>
-                                        <table width="100%" cellpadding="5" cellspacing="0" style="font-size: 14px;">
-                                            <tr>
-                                                <td width="35%" style="color: #64748b;"><strong>Supplier:</strong></td>
-                                                <td width="65%" style="color: #0f172a; font-weight: bold;">{{ supplier_name }}</td>
-                                            </tr>
-                                            <tr>
-                                                <td style="color: #64748b;"><strong>Date Created:</strong></td>
-                                                <td style="color: #0f172a;">{{ order_date }}</td>
-                                            </tr>
-                                        </table>
-                                    </td>
-                                </tr>
-                            </table>
-                            <p style="margin: 0; font-size: 13px; color: #64748b; text-align: center; font-style: italic;">
-                                Please log in to the ERP System to view full item details and approve the order.
-                            </p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="background-color: #1e293b; padding: 15px; text-align: center;">
-                            <p style="margin: 0; color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">
-                                ASIA Integrated Corp. • Purchasing Module
-                            </p>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </table>
+<body style="font-family: Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 20px;">
+    
+    <div style="max-w-[600px] margin: 0 auto; background-color: #ffffff; border-top: 4px solid #4338ca; border-radius: 4px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+        
+        <div style="background-color: #3730a3; padding: 20px; text-align: center;">
+            <h2 style="color: #ffffff; margin: 0; font-size: 18px; letter-spacing: 2px;">P.O. APPROVAL REQUIRED</h2>
+            <p style="color: #e0e7ff; margin: 5px 0 0 0; font-size: 12px;">ASIA Integrated Machine Inc.</p>
+        </div>
+
+        <div style="padding: 30px; color: #334155;">
+            <h3 style="color: #0f172a; margin-top: 0;">Attention: Purchasing Manager / Admin</h3>
+            <p style="font-size: 14px; line-height: 1.6;">A new batch of Purchase Orders has been drafted and is now waiting for your approval in the WMS queue.</p>
+            
+            <div style="background-color: #eef2ff; border: 1px solid #c7d2fe; border-radius: 4px; padding: 15px; margin: 20px 0;">
+                <p style="margin: 5px 0; font-size: 14px;"><strong>Main PO Reference:</strong> <span style="color: #4338ca; font-weight: bold; font-size: 16px;">{{ main_po_no }}</span></p>
+                <p style="margin: 5px 0; font-size: 14px;"><strong>System Batch ID:</strong> <span style="font-family: monospace; color: #475569;">{{ batch_id }}</span></p>
+                <hr style="border: none; border-top: 1px solid #c7d2fe; margin: 10px 0;">
+                <p style="margin: 5px 0; font-size: 14px;"><strong>Total P.O. Count:</strong> <span style="color: #059669; font-weight: black;">{{ po_count }} Documents</span></p>
+                <p style="margin: 5px 0; font-size: 14px;"><strong>Drafted By:</strong> {{ user }}</p>
+            </div>
+
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="http://127.0.0.1:8000/login/" style="background-color: #4338ca; color: #ffffff; text-decoration: none; padding: 12px 25px; border-radius: 4px; font-weight: bold; font-size: 14px; display: inline-block;">Review & Approve in WMS</a>
+            </div>
+            
+            <p style="font-size: 12px; color: #94a3b8; text-align: center; margin-bottom: 0;">This is an automated system workflow message. Please do not reply.</p>
+        </div>
+    </div>
+
 </body>
 </html>

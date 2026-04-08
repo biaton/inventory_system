@@ -1,7 +1,7 @@
-{% extends "Inventory/inventory_request/request_base.html" %}
+{% extends "Inventory/processing/processing_base.html" %}
 
-{% block request_content %}
-<div class="max-w-[98%] mx-auto pb-20 mt-4 text-slate-800">
+{% block processing_content %}
+<div class="max-w-[100%] mx-auto pb-20 mt-4 text-slate-800">
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
 
@@ -81,8 +81,18 @@
                         <label class="text-[10px] font-black text-amber-800 uppercase tracking-widest flex items-center gap-1 mb-2">
                             <i data-lucide="map-pin" class="w-3 h-3"></i> Correct Location (Rack/Bin)
                         </label>
-                        <input type="text" name="new_location" id="new_location_input" required
+    
+                        <input type="text" name="new_location" id="new_location_input" required placeholder="e.g. RACK-A1" list="correction_locations"
                                class="w-full p-3 bg-white border border-amber-300 text-xl font-black text-slate-900 focus:ring-2 focus:ring-amber-500 focus:outline-none shadow-sm transition-all text-center uppercase placeholder:text-slate-300">
+                        
+                        <datalist id="correction_locations">
+                            {% for loc in locations %}
+                                <option value="{{ loc.location_code }}">
+                                    {{ loc.warehouse }} | {{ loc.zone }}
+                                </option>
+                            {% endfor %}
+                        </datalist>
+
                         <p class="text-[9px] text-slate-500 mt-2 font-bold uppercase tracking-widest text-center">System loc was: <span id="display_old_loc" class="text-slate-800 font-black">---</span></p>
                     </div>
 

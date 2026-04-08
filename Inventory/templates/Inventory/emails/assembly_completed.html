@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Assembly Completed</title>
+</head>
+<body style="font-family: Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 20px;">
+    
+    <div style="max-w-[600px] margin: 0 auto; background-color: #ffffff; border-top: 4px solid #059669; border-radius: 4px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+        
+        <div style="background-color: #047857; padding: 20px; text-align: center;">
+            <h2 style="color: #ffffff; margin: 0; font-size: 18px; letter-spacing: 2px;">PRODUCTION ALERT</h2>
+            <p style="color: #a7f3d0; margin: 5px 0 0 0; font-size: 12px;">ASIA Integrated Machine Inc.</p>
+        </div>
+
+        <div style="padding: 30px; color: #334155;">
+            <h3 style="color: #0f172a; margin-top: 0;">Hello Team,</h3>
+            <p style="font-size: 14px; line-height: 1.6;">Good news! A machine assembly has been successfully completed and is now marked as <strong style="color: #059669;">AVAILABLE</strong>.</p>
+            
+            <div style="background-color: #f0fdf4; border: 1px solid #a7f3d0; border-radius: 4px; padding: 15px; margin: 20px 0;">
+                <p style="margin: 5px 0; font-size: 14px;"><strong>Machine Code:</strong> <span style="color: #059669;">{{ machine.machine_code }}</span></p>
+                <p style="margin: 5px 0; font-size: 14px;"><strong>Asset Name:</strong> {{ machine.name }}</p>
+                <p style="margin: 5px 0; font-size: 14px;"><strong>Current Status:</strong> AVAILABLE</p>
+            </div>
+
+            <p style="font-size: 14px; line-height: 1.6;">This asset is now ready for sales dispatch or final deployment. You can view the full build log and component ledger in the WMS Dashboard.</p>
+
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="http://127.0.0.1:8000/login/" style="background-color: #059669; color: #ffffff; text-decoration: none; padding: 12px 25px; border-radius: 4px; font-weight: bold; font-size: 14px; display: inline-block;">Open WMS Dashboard</a>
+            </div>
+            
+            <p style="font-size: 12px; color: #94a3b8; text-align: center; margin-bottom: 0;">This is an automated system message. Please do not reply to this email.</p>
+        </div>
+        
+    </div>
+
+</body>
+</html>

@@ -1,6 +1,6 @@
-{% extends "Inventory/inquiry/inquiry_base.html" %}
+{% extends "Inventory/inbound/inbound_base.html" %}
 
-{% block receiving_content %}
+{% block inbound_content %}
 <div class="max-w-[100%] mx-auto pb-20 mt-4 text-slate-800">
 
     <div class="border-b-2 border-slate-800 pb-2 mb-4 flex justify-between items-end">
@@ -56,9 +56,11 @@
                     <select name="transport"
                         class="w-full p-2 text-xs font-bold border border-slate-300 bg-slate-50 focus:ring-1 focus:ring-teal-600 outline-none rounded-sm">
                         <option value="">-- Select Transport --</option>
-                        <option value="Sea Freight">Sea Freight</option>
-                        <option value="Air Freight">Air Freight</option>
-                        <option value="Land Trucking">Land Trucking</option>
+                        <option>Truck</option>
+                        <option>Van</option>
+                        <option>Motorcycle</option>
+                        <option>Cargo Ship</option>
+                        <option>Cargo plane</option>
                     </select>
                 </div>
 
@@ -124,10 +126,13 @@
                     {% for ship in shipments %}
                     <tr class="hover:bg-teal-50/30 transition-colors">
                         <td class="py-2 px-4 border-r border-slate-200 text-center flex justify-center gap-1">
-                            <button
+                            <button onclick="openUpdateModal('{{ ship.id }}')"
                                 class="bg-amber-600 text-white px-2 py-1 text-[9px] font-black uppercase rounded-sm hover:bg-amber-700 shadow-sm">Update</button>
-                            <button
-                                class="bg-blue-600 text-white px-2 py-1 text-[9px] font-black uppercase rounded-sm hover:bg-blue-700 shadow-sm">Inquiry</button>
+
+                            <a href="{% url 'shipment_allocation' ship.id %}" 
+                                class="bg-blue-600 text-white px-2 py-1 text-[9px] font-black uppercase rounded-sm hover:bg-blue-700 shadow-sm text-center">
+                                Inquiry
+                            </a>
                         </td>
 
                         <td class="py-2 px-4 border-r border-slate-200 text-xs font-black text-slate-800">
@@ -152,14 +157,12 @@
                         </td>
 
                         <td class="py-2 px-4 text-center flex justify-center gap-1">
-                            <button
-                                class="bg-slate-700 text-white px-2 py-1 text-[9px] font-black uppercase rounded-sm hover:bg-slate-800 shadow-sm flex items-center gap-1">
+                            <a href="{% url 'shipment_invoice' ship.id %}" target="_blank" class="bg-slate-700 text-white px-2 py-1 text-[9px] font-black uppercase rounded-sm hover:bg-slate-800 shadow-sm flex items-center gap-1">
                                 <i data-lucide="file-text" class="w-3 h-3"></i> Invoice
-                            </button>
-                            <button
-                                class="bg-slate-200 text-slate-800 border border-slate-300 px-2 py-1 text-[9px] font-black uppercase rounded-sm hover:bg-slate-300 shadow-sm flex items-center gap-1">
+                            </a>
+                            <a href="{% url 'shipment_print' ship.id %}" target="_blank" class="bg-slate-200 text-slate-800 border border-slate-300 px-2 py-1 text-[9px] font-black uppercase rounded-sm hover:bg-slate-300 shadow-sm flex items-center gap-1">
                                 <i data-lucide="printer" class="w-3 h-3"></i> Print
-                            </button>
+                            </a>
                         </td>
                     </tr>
                     {% empty %}
@@ -187,8 +190,8 @@
 
             <div class="flex items-center gap-1 shadow-sm">
                 {% if shipments.has_previous %}
-                    <a href="?page=1" class="px-3 py-1.5 bg-white border border-slate-300 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-300 transition-colors rounded-l-sm">First</a>
-                    <a href="?page={{ shipments.previous_page_number }}" class="px-3 py-1.5 bg-white border-y border-r border-slate-300 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-300 transition-colors">Prev</a>
+                    <a href="?{{ filter_params }}&page=1" class="px-3 py-1.5 bg-white border border-slate-300 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-300 transition-colors rounded-l-sm">First</a>
+                    <a href="?{{ filter_params }}&page={{ shipments.previous_page_number }}" class="px-3 py-1.5 bg-white border-y border-r border-slate-300 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-300 transition-colors">Prev</a>
                 {% else %}
                     <span class="px-3 py-1.5 bg-slate-100 border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 rounded-l-sm cursor-not-allowed">First</span>
                     <span class="px-3 py-1.5 bg-slate-100 border-y border-r border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 cursor-not-allowed">Prev</span>
@@ -197,8 +200,8 @@
                 <span class="px-4 py-1.5 bg-slate-800 text-white border-y border-slate-800 text-[10px] font-black uppercase tracking-widest">{{ shipments.number }}</span>
 
                 {% if shipments.has_next %}
-                    <a href="?page={{ shipments.next_page_number }}" class="px-3 py-1.5 bg-white border-y border-l border-slate-300 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-300 transition-colors">Next</a>
-                    <a href="?page={{ shipments.paginator.num_pages }}" class="px-3 py-1.5 bg-white border border-slate-300 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-300 transition-colors rounded-r-sm">Last</a>
+                    <a href="?{{ filter_params }}&page={{ shipments.next_page_number }}" class="px-3 py-1.5 bg-white border-y border-l border-slate-300 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-300 transition-colors">Next</a>
+                    <a href="?{{ filter_params }}&page={{ shipments.paginator.num_pages }}" class="px-3 py-1.5 bg-white border border-slate-300 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-300 transition-colors rounded-r-sm">Last</a>
                 {% else %}
                     <span class="px-3 py-1.5 bg-slate-100 border-y border-l border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 cursor-not-allowed">Next</span>
                     <span class="px-3 py-1.5 bg-slate-100 border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 rounded-r-sm cursor-not-allowed">Last</span>
@@ -209,11 +212,55 @@
 
 </div>
 
+<div id="updateModal" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex justify-center items-center p-4 text-slate-800">
+    <div class="bg-white border-t-4 border-amber-600 w-full max-w-md p-6 shadow-2xl">
+        <h2 class="font-black text-sm uppercase tracking-widest mb-4 border-b pb-2">Update Shipment Plan</h2>
+        <form method="POST" action="{% url 'shipment_update' %}" class="space-y-3">
+            {% csrf_token %}
+            <input type="hidden" name="ship_id" id="update_ship_id">
+            <div>
+                <label class="text-[9px] font-black uppercase text-slate-500">New Schedule Date</label>
+                <input type="date" name="schedule_date" id="update_date" class="w-full p-2 text-xs border border-slate-300 outline-none">
+            </div>
+            <div>
+                <label class="text-[9px] font-black uppercase text-slate-500">Transport Type</label>
+                <input type="text" name="transport" id="update_transport" class="w-full p-2 text-xs border border-slate-300 outline-none">
+            </div>
+            <div>
+                <label class="text-[9px] font-black uppercase text-slate-500">Invoice No.</label>
+                <input type="text" name="invoice_no" id="update_invoice" class="w-full p-2 text-xs border border-slate-300 outline-none">
+            </div>
+            <div class="flex justify-end gap-2 pt-4">
+                <button type="button" onclick="closeModals()" class="text-[10px] font-black uppercase px-4 py-2 border">Cancel</button>
+                <button type="submit" class="bg-amber-600 text-white text-[10px] font-black uppercase px-6 py-2">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         if (typeof lucide !== 'undefined') {
             lucide.createIcons();
         }
     });
+
+    function openUpdateModal(id) {
+        fetch(`/api/shipment-details/${id}/`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('update_ship_id').value = id;
+                document.getElementById('update_date').value = data.schedule_date;
+                document.getElementById('update_transport').value = data.transport === 'Not Set' ? '' : data.transport;
+                document.getElementById('update_invoice').value = data.invoice_no === 'Not Set' ? '' : data.invoice_no;
+                document.getElementById('updateModal').classList.remove('hidden');
+            });
+    }
+
+    function closeModals() {
+        document.getElementById('inquiryModal').classList.add('hidden');
+        document.getElementById('updateModal').classList.add('hidden');
+    }
 </script>
 {% endblock %}

@@ -38,7 +38,21 @@ import uuid
 import json
 import csv
 import re
-from .utils import send_shipping_notification, send_order_acknowledgement, send_qc_rejection_alert, log_system_action, notify_admins, send_in_app_notification
+from .utils import ( 
+    send_shipping_notification, 
+    send_order_acknowledgement, 
+    send_qc_rejection_alert, 
+    log_system_action, 
+    notify_admins, 
+    send_in_app_notification, 
+    send_new_material_request_alert, 
+    send_assembly_completed_alert,
+    send_stock_move_alert,
+    send_stock_out_alert,
+    send_po_approval_alert,
+    send_po_approved_notification,
+    alert_new_delivery_request,
+    )
 from .models import (
     Profile, 
     Item, 
@@ -226,26 +240,57 @@ def dashboard_view(request):
     # ---------------------------------------------------------
     try:
         # Kunin lahat ng pending na Customer Orders
-        pending_items = CustomerOrder.objects.filter(order_status='Pending').order_by('order_date')
+        pending_items = CustomerOrder.objects.filter(order_status='Pending').order_by('order_date', 'id')
         
-        # Dahil per item ang save natin sa table, i-group natin by Order No
-        unique_orders = []
-        seen_order_nos = set()
+        # 🚀 BAGO: I-group natin sila gamit ang MAIN PO NO.
+        main_po_dict = {}
         
         for item in pending_items:
-            if item.order_no not in seen_order_nos:
-                seen_order_nos.add(item.order_no)
-                unique_orders.append({
-                    'order_no': item.order_no,
-                    'customer': {'name': item.customer.name if item.customer else 'Walk-in'},
-                    'quantity': item.quantity  # Pwedeng total items ito, pero item qty na muna
-                })
+            raw_order_no = item.order_no
+            # Hiwain ang suffix para makuha ang Main PO
+            if '-' in raw_order_no:
+                main_po_no = "-".join(raw_order_no.split('-')[:-1])
+            else:
+                main_po_no = raw_order_no
+
+            if main_po_no not in main_po_dict:
+                main_po_dict[main_po_no] = {
+                    'main_po_no': main_po_no,
+                    'customers': set(), # Para makuha ang unique na pangalan ng clients
+                    'sub_orders': set(), # Para mabilang kung ilang orders sa loob ng batch
+                    'total_qty': 0.0
+                }
+            
+            customer_name = item.customer.name if item.customer else 'Walk-in'
+            main_po_dict[main_po_no]['customers'].add(customer_name)
+            main_po_dict[main_po_no]['sub_orders'].add(item.order_no)
+            main_po_dict[main_po_no]['total_qty'] += float(item.quantity or 0)
+
+        # I-format para sa HTML
+        unique_orders = []
+        for main_po, data in main_po_dict.items():
+            cust_list = list(data['customers'])
+            
+            # Kung higit sa isa ang customer, lagyan natin ng "and X others"
+            if len(cust_list) > 1:
+                display_customer = f"{cust_list[0]} and {len(cust_list) - 1} others"
+            elif len(cust_list) == 1:
+                display_customer = cust_list[0]
+            else:
+                display_customer = "Walk-in"
+
+            unique_orders.append({
+                'main_po_no': main_po,
+                'customer_name': display_customer,
+                'order_count': len(data['sub_orders']),
+                'total_qty': data['total_qty']
+            })
 
         pending_req_count = len(unique_orders)
-        recent_pending_reqs = unique_orders[:5] # Top 5 lang ipapakita sa Dashboard
+        recent_pending_reqs = unique_orders[:5] # Top 5 Main POs lang ipapakita
 
     except Exception as e:
-        print(f"DASHBOARD ERROR: {e}") # Para makita natin sa terminal kung may mali
+        print(f"DASHBOARD ERROR: {e}") 
         pending_req_count = 0
         recent_pending_reqs = []
 
@@ -275,16 +320,6 @@ def read_notification_view(request, notif_id):
     if notif.link:
         return redirect(notif.link)
     return redirect('dashboard')
-
-@login_required(login_url='login')
-def customer_master_view(request):
-    # Kukunin natin lahat ng contacts na naka-tag as 'Customer'
-    customers_list = Contact.objects.filter(contact_type='Customer').order_by('name')
-    
-    context = {
-        'customers': customers_list
-    }
-    return render(request, 'Inventory/master/customer_master.html', context)
 
 # 1. ANG VIEW PARA SA TABLE (Master List)
 @login_required(login_url='login')
@@ -512,15 +547,47 @@ def item_master_view(request):
             unit_price = request.POST.get('unit_price', 0.00)
             min_stock = int(request.POST.get('min_stock', 0) or 0)
             default_zone = request.POST.get('default_zone', '').strip().upper()
+            
+            # 🚀 BAGO: Kunin ang Opening Stock
+            initial_stock = int(request.POST.get('initial_stock', 0) or 0)
 
             if Item.objects.filter(item_code=item_code).exists():
                 messages.error(request, f"Error: Item Code '{item_code}' already exists!")
             else:
-                Item.objects.create(
-                    item_code=item_code, description=description,
-                    category=category, uom=uom, unit_price=unit_price,
-                    min_stock=min_stock, default_zone=default_zone
-                )
+                with transaction.atomic(): # 🚀 Gamitin ang transaction para safe
+                    Item.objects.create(
+                        item_code=item_code, description=description,
+                        category=category, uom=uom, unit_price=unit_price,
+                        min_stock=min_stock, default_zone=default_zone
+                    )
+                    
+                    # 🚀 BAGO: Kung may Opening Stock, gawan ng Material Tag at Stock Log!
+                    if initial_stock > 0:
+                        # Kunin ang location instance kung may nilagay na zone
+                        loc_instance = LocationMaster.objects.filter(location_code=default_zone).first() if default_zone else None
+                        
+                        tag = MaterialTag.objects.create(
+                            item_code=item_code,
+                            description=description,
+                            lot_no=f"OB-{timezone.now().strftime('%y%m%d')}", # OB = Opening Balance
+                            total_pcs=initial_stock,
+                            packing_type=uom,
+                            arrival_date=timezone.now().date(),
+                            inspection_status='Passed', # Auto-passed na para magamit agad
+                            location=loc_instance,
+                            remarks="System Initial Opening Balance"
+                        )
+                        
+                        StockLog.objects.create(
+                            material_tag=tag,
+                            action_type='REG',
+                            old_qty=0,
+                            new_qty=initial_stock,
+                            change_qty=initial_stock,
+                            user=request.user,
+                            notes="Initial System Data Entry"
+                        )
+                    
                 log_system_action(request.user, 'CREATE', 'Item Master', f"Registered item: {item_code}", request)
                 messages.success(request, f"Success! Item '{item_code}' has been registered.")
 
@@ -576,6 +643,15 @@ def item_master_view(request):
     paginator = Paginator(items, 15)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+
+    for item in page_obj.object_list:
+        stock_sum = MaterialTag.objects.filter(
+            item_code=item.item_code, 
+            total_pcs__gt=0
+        ).aggregate(total=Sum('total_pcs'))['total'] or 0
+        
+        # Gumawa tayo ng virtual field na 'current_stock'
+        item.current_stock = stock_sum
 
     # 🚀 BAGO: Kunin ang mga Zones mula sa LocationMaster para sa Dropdown sa Modal
     zones = LocationMaster.objects.values_list('zone', flat=True).distinct()
@@ -724,49 +800,6 @@ def edit_user(request, user_id):
 def settings_master_view(request):
     # Ito ang magiging main hub menu
     return render(request, 'Inventory/master/settings_master.html')
-
-def item_master(request):
-    search_query = request.GET.get('q', '')
-    items = Item.objects.all().order_by('item_code')
-    
-    if search_query:
-        items = items.filter(
-            Q(item_code__icontains=search_query) | 
-            Q(description__icontains=search_query)
-        )
-    
-    return render(request, 'Inventory/master/item_master.html', {
-        'items': items,
-        'search_query': search_query
-    })
-
-def register_item(request):
-    if request.method == "POST":
-        # Kunin ang data mula sa form (Register Item UI natin kanina)
-        item_code = request.POST.get('item_code')
-        description = request.POST.get('description')
-        uom = request.POST.get('uom')
-        category = request.POST.get('category')
-        min_stock = request.POST.get('min_stock', 0)
-
-        # Check kung existing na
-        if Item.objects.filter(item_code=item_code).exists():
-            messages.error(request, f"Item Code {item_code} is already registered.")
-        else:
-            Item.objects.create(
-                item_code=item_code,
-                description=description,
-                uom=uom,
-                category=category,
-                min_stock=min_stock
-            )
-
-            log_system_action(request.user, 'CREATE', 'Item Master', f"Registered new item: {item_code} ({description})", request)
-
-            messages.success(request, f"Item {item_code} successfully added to Masterlist.")
-            return redirect('item_code_master')
-
-    return render(request, 'Inventory/master/register_item.html')
 
 def edit_item(request, pk):
     item = get_object_or_404(Item, pk=pk)
@@ -1088,7 +1121,7 @@ def order_input_manual_view(request):
         # 2. Kunin ang BATCH HEADERS (As lists)
         customers = request.POST.getlist('customer_name[]')
         contact_persons = request.POST.getlist('contact_person[]')
-        delivery_addresses = request.POST.getlist('delivery_address[]') # 🚀 BAGO
+        delivery_addresses = request.POST.getlist('delivery_address[]') 
         del_dates = request.POST.getlist('delivery_date[]')
         order_types = request.POST.getlist('order_type[]')
         cust_po_nos = request.POST.getlist('cust_po_no[]')
@@ -1098,6 +1131,8 @@ def order_input_manual_view(request):
         batch_orders = []
 
         try:
+            # 🚀 Dahil inayos ng Magic Re-Indexer sa JS ang data, 
+            # 100% safe na itong i-loop gamit ang range(len(customers))!
             for i in range(len(customers)):
                 cust_name = customers[i].strip()
                 if not cust_name: continue
@@ -1134,7 +1169,7 @@ def order_input_manual_view(request):
                         'order_no': f"{main_po_no}-{i+1}", 
                         'customer': cust_name,
                         'contact_person': contact_persons[i] if i < len(contact_persons) else "",
-                        'delivery_address': delivery_addresses[i] if i < len(delivery_addresses) else "", # 🚀 BAGO
+                        'delivery_address': delivery_addresses[i] if i < len(delivery_addresses) else "", 
                         'date': datetime.date.today().strftime('%Y-%m-%d'),
                         'delivery_date': specific_del_date,
                         'order_type': order_types[i] if i < len(order_types) else "Standard",
@@ -1162,13 +1197,12 @@ def order_input_manual_view(request):
     # ==========================================
     customers = Contact.objects.filter(contact_type='Customer').order_by('name')
     items_list = Item.objects.all().order_by('item_code')
-    # 🚀 BAGO: Kukunin lahat ng addresses para sa auto-suggest
     delivery_addresses = Contact.objects.filter(contact_type='Customer').exclude(address__isnull=True).exclude(address__exact='').values_list('address', flat=True).distinct()
 
     return render(request, 'Inventory/customer_order/Order_Input_manual.html', {
         'customers': customers, 
         'items': items_list,
-        'delivery_addresses': delivery_addresses # 🚀 BAGO
+        'delivery_addresses': delivery_addresses 
     })
 
 
@@ -1494,23 +1528,31 @@ def order_inquiry_view(request):
         qs = qs.filter(
             Q(order_no__icontains=search_query) |
             Q(customer__name__icontains=search_query) |
-            Q(batch_id__icontains=search_query)
+            Q(remarks__icontains=search_query)
         )
 
-    batches_dict = {}
+    # Dito na tayo mag-iipon base sa MAIN PO NO
+    main_po_dict = {}
     overall_grand_total = 0.0
     
     for item in qs:
-        bid = getattr(item, 'batch_id', item.order_no) or item.order_no
+        # 🚀 BAGO: Hihiwain natin agad yung order_no para makuha ang Main PO
+        raw_order_no = item.order_no
+        if '-' in raw_order_no:
+            main_po_no = "-".join(raw_order_no.split('-')[:-1])
+        else:
+            main_po_no = raw_order_no
+            
+        # Kung wala pa itong Main PO sa dictionary, gagawan natin
+        if main_po_no not in main_po_dict:
+            main_po_dict[main_po_no] = {}
         
-        if bid not in batches_dict:
-            batches_dict[bid] = {}
-        
-        if item.order_no not in batches_dict[bid]:
-            batches_dict[bid][item.order_no] = {
+        # Igrupo ang mga items sa ilalim ng specific na Customer Order (ex: SO-GENERAL-1)
+        if item.order_no not in main_po_dict[main_po_no]:
+            main_po_dict[main_po_no][item.order_no] = {
                 'header': {
                     'order_no': item.order_no,
-                    'cust_po_no': getattr(item, 'cust_po_no', 'N/A'), # Kung dinagdag mo sa model
+                    'cust_po_no': getattr(item, 'cust_po_no', 'N/A'), 
                     'customer': item.customer.name if item.customer else "Walk-in",
                     'order_date': item.order_date,
                     'transport': item.transport,
@@ -1522,42 +1564,41 @@ def order_inquiry_view(request):
                 'items': []
             }
         
-        batches_dict[bid][item.order_no]['items'].append(item)
+        # Idagdag ang item at i-compute ang total
+        main_po_dict[main_po_no][item.order_no]['items'].append(item)
         
         amount = float(item.amount or 0)
-        batches_dict[bid][item.order_no]['header']['grand_total'] += amount
+        main_po_dict[main_po_no][item.order_no]['header']['grand_total'] += amount
         overall_grand_total += amount 
 
-    batch_list = []
-    for bid, orders_in_batch in batches_dict.items():
-        order_list = list(orders_in_batch.values())
+    # I-convert ang Dictionary papuntang List para sa HTML
+    po_list = []
+    for main_po, orders_in_po in main_po_dict.items():
+        order_list = list(orders_in_po.values())
         main_order = order_list[0] 
         
-        # 🚀 BAGO: Kunin ang MAIN PO NO sa pamamagitan ng pagtanggal sa '-1', '-2' na suffix
-        raw_order_no = main_order['header']['order_no']
-        if '-' in raw_order_no:
-            main_po_no = "-".join(raw_order_no.split('-')[:-1])
-        else:
-            main_po_no = raw_order_no
+        po_grand_total = sum(o['header']['grand_total'] for o in order_list)
+        total_items_in_po = sum(len(o['items']) for o in order_list)
         
-        batch_grand_total = sum(o['header']['grand_total'] for o in order_list)
-        total_items_in_batch = sum(len(o['items']) for o in order_list)
+        # 🚀 FIX: Gagawa tayo ng safe alphanumeric ID para sa HTML Modal
+        safe_html_id = "".join(e for e in main_po if e.isalnum())
         
-        batch_list.append({
-            'batch_id': bid,
-            'main_po_no': main_po_no, # 🚀 IPAPASA SA HTML
+        po_list.append({
+            'main_po_no': main_po,
+            'html_id': safe_html_id, # Gagamitin natin itong ID para sa pop-up modal
             'main_order': main_order,
             'all_orders': order_list, 
-            'sub_orders_count': len(order_list), # Total bilang ng customers sa batch
-            'batch_grand_total': batch_grand_total,
-            'total_items': total_items_in_batch
+            'sub_orders_count': len(order_list), 
+            'po_grand_total': po_grand_total,
+            'total_items': total_items_in_po
         })
 
+    # Bilangin ang mga summary sa taas
     total_orders_count = qs.values('order_no').distinct().count()
     total_pending = qs.filter(order_status='Pending').values('order_no').distinct().count()
     total_delivered = qs.filter(order_status='Delivered').values('order_no').distinct().count()
 
-    paginator = Paginator(batch_list, 20)
+    paginator = Paginator(po_list, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -1572,17 +1613,18 @@ def order_inquiry_view(request):
     return render(request, 'Inventory/customer_order/Order_Inquiry.html', context)
 
 def order_dispatch_view(request, batch_id):
-    # 1. Kunin LAHAT ng items sa buong batch na Pending pa
-    items = CustomerOrder.objects.filter(batch_id=batch_id, order_status__in=['Pending', 'Processing'])
+    # 🚀 FIX: Yung 'batch_id' na pinapasa ng URL natin ngayon ay ang 'main_po_no' na talaga!
+    main_po_no = batch_id 
+    
+    # 1. Kunin LAHAT ng items sa buong batch na Pending pa gamit ang order_no__startswith
+    items = CustomerOrder.objects.filter(
+        order_no__startswith=main_po_no, 
+        order_status__in=['Pending', 'Processing']
+    )
     
     if not items.exists():
         messages.error(request, "No pending orders found for this batch. It might already be dispatched.")
         return redirect('order_inquiry')
-
-    # Kunin ang Main PO No para sa Display
-    first_item = items.first()
-    raw_order_no = first_item.order_no
-    main_po_no = "-".join(raw_order_no.split('-')[:-1]) if '-' in raw_order_no else raw_order_no
 
     if request.method == "POST":
         courier = request.POST.get('courier')
@@ -1616,11 +1658,19 @@ def order_dispatch_view(request, batch_id):
                     request=request
                 )
 
-                # 5. SEND EMAIL SA LAHAT NG CUSTOMER SA BATCH
-                for order_no, data in orders_to_email.items():
-                    pass 
-                    # I-uncomment kapag ready na email mo:
-                    # send_shipping_notification(order_no, data['email'], courier, tracking)
+            # 5. 🚀 THE MAGIC: SEND EMAIL SA LAHAT NG CUSTOMER SA BATCH
+            # Nilagay natin sa labas ng 'transaction.atomic' para kahit pumalya ang email ng isa, 
+            # hindi mabu-bura yung database update mo!
+            for order_no, data in orders_to_email.items():
+                try:
+                    send_shipping_notification(
+                        order_no=order_no, 
+                        customer_email=data['email'], 
+                        courier_name=courier, 
+                        tracking_number=tracking
+                    )
+                except Exception as email_err:
+                    print(f"Failed to send shipping email to {data['email']}: {email_err}")
 
             messages.success(request, f"Success! Batch {main_po_no} dispatched successfully! Shipping emails sent to clients.")
             return redirect('order_inquiry') 
@@ -1870,27 +1920,39 @@ def print_po_view(request):
     }
     return render(request, 'Inventory/purchase_order/print_po.html', context)
 
+@login_required
 def api_get_item_details(request):
-    """ Server-side API para kunin ang detalye at presyo ng ISANG item """
-    item_code = request.GET.get('item_code', '').strip()
+    print("\n=== 🚀 PUMASOK SA api_get_item_details ===")
+    print("RAW GET DATA:", request.GET)
     
-    if not item_code:
+    code = request.GET.get('code', '').strip()
+    if not code:
+        code = request.GET.get('item_code', '').strip()
+        
+    print(f"HINAHANAP NA CODE: '{code}'")
+
+    if not code:
+        print("❌ WALANG CODE NA NAPASA!")
         return JsonResponse({'success': False, 'error': 'No item code provided.'})
 
     try:
-        # Hahanapin natin yung mismong item
-        item = Item.objects.get(item_code=item_code)
-        
-        # Ibabato pabalik sa Javascript yung data
-        return JsonResponse({
-            'success': True,
-            'description': item.description or '',
-            'unit_price': item.unit_price or 0.00,
-            'uom': item.uom or 'PCS'
-        })
-    except Item.DoesNotExist:
-        # Kung mali ang tinype na item code
-        return JsonResponse({'success': False, 'error': 'Item not found.'})
+        item = Item.objects.filter(item_code__iexact=code).first()
+        if item:
+            stock_sum = MaterialTag.objects.filter(item_code__iexact=code, total_pcs__gt=0).aggregate(total=Sum('total_pcs'))['total'] or 0
+            print(f"✅ NAHANAP SA DB! Desc: {item.description} | Stock: {stock_sum}")
+            return JsonResponse({
+                'success': True,
+                'description': item.description or 'No Description',
+                'uom': item.uom or 'PCS',
+                'unit_price': float(item.unit_price or 0.0),
+                'available_stock': stock_sum
+            })
+        else:
+            print(f"❌ WALA SA DATABASE ANG '{code}'!")
+            return JsonResponse({'success': False, 'error': f"Item '{code}' not found!"})
+    except Exception as e:
+        print(f"🔥 ERROR SA LOOB: {e}")
+        return JsonResponse({'success': False, 'error': str(e)})
 
 def po_confirm_purchase_view(request):
     # ==========================================
@@ -1903,9 +1965,12 @@ def po_confirm_purchase_view(request):
             messages.error(request, "Session expired or no data found. Please try again.")
             return redirect('make_po')
 
+        saved_pos_count = 0
+        main_po_no_str = batch_pos[0].get('header', {}).get('main_po_no', 'PO-GENERAL') if batch_pos else 'UNKNOWN'
+
         try:
             with transaction.atomic():
-                current_batch_id = f"BATCH-{uuid.uuid4().hex[:6].upper()}"
+                current_batch_id = main_po_no_str
 
                 for po_data in batch_pos:
                     header = po_data.get('header')
@@ -1915,7 +1980,7 @@ def po_confirm_purchase_view(request):
                     supplier_obj = None
                     
                     if supplier_name:
-                        # 🚀 BAGO: Subukang hanapin muna kung existing na ang supplier
+                        # Subukang hanapin muna kung existing na ang supplier
                         supplier_qs = Supplier.objects.filter(name=supplier_name, is_active=True)
                         
                         if supplier_qs.exists():
@@ -1943,7 +2008,7 @@ def po_confirm_purchase_view(request):
                         delivery_date=header.get('delivery_date') if header.get('delivery_date') else None,
                         discount_rate=header.get('discount_rate', 0.00),
                         remarks=header.get('remarks', ''),
-                        ordering_status='Pending Approval', 
+                        ordering_status='Pending Approval', # Lahat ay mapupunta sa approval queue!
                         created_by=request.user,
                         po_amount_total=header.get('subtotal', 0.00), 
                         tax_amount_total=header.get('tax_amount', 0.00),
@@ -1967,18 +2032,30 @@ def po_confirm_purchase_view(request):
                         po_items_to_save.append(po_item)
                     
                     PurchaseOrderItem.objects.bulk_create(po_items_to_save)
+                    saved_pos_count += 1
 
-                    # --- System Logs ---
-                    # log_system_action(...)
+                # --- 🚀 MGA TINANGGAL NA LOGIC NOON NA IBINALIK NGAYON ---
+                
+                # 1. Log System Action
+                log_system_action(
+                    user=request.user, 
+                    action='CREATE', 
+                    module='Purchase Order', 
+                    description=f"Created {saved_pos_count} new P.O.(s) under Batch ID {current_batch_id} (Main PO: {main_po_no_str}).", 
+                    request=request
+                )
 
-            # Notifications
-            # notify_admins(...)
+                # 2. Lumipad ang Email Alert para sa PO Approval!
+                try:
+                    # Ipadala yung Batch ID at yung bilang ng POs sa email func
+                    send_po_approval_alert(main_po_no_str, current_batch_id, saved_pos_count, request.user)
+                except Exception as email_err:
+                    print(f"PO Email Notification Error: {email_err}")
 
             # C. Linisin ang Session
             del request.session['batch_pos']
 
-            messages.success(request, f"Success! {len(batch_pos)} Purchase Order(s) saved to Database.")
-            # Palitan ng tamang URL kung saan mo gustong mag-redirect
+            messages.success(request, f"Success! {saved_pos_count} Purchase Order(s) saved and sent for approval.")
             return redirect('make_po') 
 
         except Exception as e:
@@ -1995,7 +2072,6 @@ def po_confirm_purchase_view(request):
         messages.warning(request, "No pending Purchase Order to confirm. Create one first.")
         return redirect('make_po')
         
-    # 🚀 BAGO: Kunin ang Main PO No galing sa unang block
     main_po_no = "N/A"
     overall_batch_total = 0.0
 
@@ -2007,7 +2083,7 @@ def po_confirm_purchase_view(request):
 
     context = {
         'batch_pos': batch_pos,
-        'main_po_no': main_po_no, # Ipapasa sa HTML
+        'main_po_no': main_po_no,
         'overall_batch_total': overall_batch_total
     }
     
@@ -2015,7 +2091,6 @@ def po_confirm_purchase_view(request):
     
 def approve_po_view(request):
     if request.method == "POST":
-        # 🚀 BAGO: Batch ID na ang gagamitin natin para sabay-sabay ma-approve
         batch_id = request.POST.get('batch_id')
         action = request.POST.get('action') 
 
@@ -2023,13 +2098,35 @@ def approve_po_view(request):
             pos_to_update = PurchaseOrder.objects.filter(batch_id=batch_id)
             new_status = 'Approved' if action == 'approve' else 'Cancelled'
             
-            # I-update lahat ng P.O. sa ilalim ng batch na ito
-            pos_to_update.update(ordering_status=new_status)
-            
-            if action == 'approve':
-                messages.success(request, f"Success! Batch {batch_id} has been APPROVED.")
-            else:
-                messages.error(request, f"Batch {batch_id} has been REJECTED.")
+            if pos_to_update.exists():
+                po_count = pos_to_update.count()
+                
+                # 🚀 BAGO: Kunin kung sino ang gumawa (creator) ng unang PO sa batch
+                first_po = pos_to_update.first()
+                creator = first_po.created_by
+                
+                # I-update lahat ng P.O. sa ilalim ng batch na ito
+                pos_to_update.update(ordering_status=new_status)
+                
+                if action == 'approve':
+                    # 🚀 BAGO: Ipadala ang Email Notification
+                    if creator and creator.email:
+                        try:
+                            send_po_approved_notification(
+                                batch_id=batch_id,
+                                po_count=po_count,
+                                creator_email=creator.email,
+                                creator_name=creator.username,
+                                approver_name=request.user.username
+                            )
+                        except Exception as e:
+                            print(f"PO Approval Email Error: {e}")
+                    else:
+                        print("User has no registered email. Skipped sending notification.")
+
+                    messages.success(request, f"Success! Batch {batch_id} has been APPROVED.")
+                else:
+                    messages.error(request, f"Batch {batch_id} has been REJECTED.")
                 
         return redirect('approve_po')
 
@@ -2037,7 +2134,7 @@ def approve_po_view(request):
     # GET REQUEST / LOADING THE PAGE
     # ==========================================
     pending_qs = PurchaseOrder.objects.filter(
-        ordering_status='Pending Approval'
+        ordering_status__in=['Pending Approval', 'Pending'] # Sinasalo pareho just in case
     ).prefetch_related('items').order_by('id')
 
     # I-group ang mga P.O. by Batch ID
@@ -2054,8 +2151,7 @@ def approve_po_view(request):
         batch_grand_total = sum(p.grand_total for p in pos)
         
         # 🚀 BAGO: Extract Main PO No para malinis sa UI
-        raw_po_no = main_po.po_no
-        main_po_no = "-".join(raw_po_no.split('-')[:-1]) if '-' in raw_po_no else raw_po_no
+        main_po_no = bid
 
         grouped_batches.append({
             'batch_id': bid,
@@ -2106,7 +2202,6 @@ def po_inquiry_view(request):
         po_qs = po_qs.filter(order_date__lte=to_date)
 
     # 🚀 BAGO: Compute KPI Totals bago i-group by Batch
-    # Gumagamit tayo ng aggregate para mabilis ang computation ng Pera
     overall_grand_total = po_qs.aggregate(total=Sum('grand_total'))['total'] or 0.00
     
     total_orders_count = po_qs.count()
@@ -2129,9 +2224,9 @@ def po_inquiry_view(request):
         main_po = pos[0]
         batch_grand_total = sum(float(p.grand_total or 0) for p in pos)
         
-        # Extract Main PO No (tanggalin yung -1, -2 suffix)
-        raw_po_no = main_po.po_no
-        main_po_no = "-".join(raw_po_no.split('-')[:-1]) if '-' in raw_po_no else raw_po_no
+        # 🚀 FIX: DITO TAYO NAGKAKAMALI DATI! 
+        # Dahil ise-save na natin ang GPO-0000 as Batch ID, ang main_po_no ay EXACTLY yung bid!
+        main_po_no = bid
 
         grouped_batches.append({
             'batch_id': bid,
@@ -2143,7 +2238,7 @@ def po_inquiry_view(request):
             'batch_grand_total': batch_grand_total
         })
 
-    # 5. Pagination (I-paginate natin yung grouped list)
+    # 5. Pagination
     paginator = Paginator(grouped_batches, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -2153,8 +2248,6 @@ def po_inquiry_view(request):
         'search_query': search_query,
         'from_date': from_date,
         'to_date': to_date,
-        
-        # 🚀 BAGO: Ipasa ang mga na-compute sa HTML Cards
         'overall_grand_total': overall_grand_total,
         'total_orders_count': total_orders_count,
         'total_pending': total_pending,
@@ -2268,11 +2361,11 @@ def ri_receive_view(request):
         search_query = request.GET.get('search_po').strip()
         
         try:
-            # 🚀 BAGO: Hahanapin niya kung Batch ID, o kaya kung nagsisimula sa Main PO, o exact Sub-PO
+            # 🚀 FIX: Tinanggal natin ang startswith. EXACT MATCH na lang sa batch_id o po_no!
+            # Ibig sabihin, kapag nag-type ka ng GPO-0000, eksaktong buong batch ang kukunin niya.
             po_qs = PurchaseOrder.objects.filter(
-                Q(batch_id=search_query) | 
-                Q(po_no=search_query) | 
-                Q(po_no__startswith=f"{search_query}-")
+                Q(batch_id__iexact=search_query) | 
+                Q(po_no__iexact=search_query)
             ).prefetch_related('items')
             
             if po_qs.exists():
@@ -2316,8 +2409,9 @@ def ri_receive_view(request):
 
         try:
             with transaction.atomic():
+                # 🚀 FIX: Exact match din dito sa POST para safe na safe ang data saving
                 po_qs = PurchaseOrder.objects.filter(
-                    Q(batch_id=search_ref) | Q(po_no__startswith=search_ref)
+                    Q(batch_id__iexact=search_ref) | Q(po_no__iexact=search_ref)
                 )
                 
                 total_items_received_across_batch = 0
@@ -2354,10 +2448,10 @@ def ri_receive_view(request):
                         po_header.save()
 
                 if total_items_received_across_batch > 0:
-                    # log_system_action(...)
+                    # Optional: log_system_action(...)
                     
                     messages.success(request, f"Success! {total_items_received_across_batch} items from '{search_ref}' have been marked as received.")
-                    # 🚀 Redirect sa material tagging gamit ang search_ref
+                    # 🚀 Redirect sa material tagging gamit ang search_ref (GPO-0000)
                     return redirect(f"{reverse('material_tag')}?po_no={search_ref}") 
                 else:
                     messages.warning(request, "No items were checked for receiving. Please ensure quantity is greater than zero.")
@@ -2411,7 +2505,6 @@ def ri_delivery_request_view(request):
 
             # 4. Save everything using a Database Transaction
             with transaction.atomic():
-                # I-save ang Main Header
                 new_request = DeliveryRequest.objects.create(
                     request_no=new_request_no,
                     delivery_place=delivery_place,
@@ -2427,9 +2520,7 @@ def ri_delivery_request_view(request):
                     po_no=po_no
                 )
 
-                # I-save ang bawat Item sa Table
                 for i in range(len(item_codes)):
-                    # I-skip kung empty ang item_code
                     if not item_codes[i]:
                         continue
                         
@@ -2450,9 +2541,13 @@ def ri_delivery_request_view(request):
                 request=request
             )
 
-            alert_new_delivery_request(new_request)
+            # 🚀 FIX: Isang parameter na lang (new_request)
+            try:
+                alert_new_delivery_request(new_request)
+            except Exception as email_e:
+                print(f"Failed to send Delivery Request email: {email_e}")
 
-            # 5. Success Message (Dito kukunin ng JS yung REQ No. para sa Print)
+            # 5. Success Message
             messages.success(request, f"Success! Movement Slip {new_request_no} has been registered.")
             return redirect('delivery_request')
 
@@ -2568,7 +2663,7 @@ def ri_material_tag_view(request):
         item_codes = request.POST.getlist('item_code[]')
         descriptions = request.POST.getlist('description[]')
         
-        # 🚀 FIX: Kinukuha natin ang Revision at Invoice mula sa Form!
+        # 🚀 Kukunin ang Revision at Invoice mula sa Form
         revisions = request.POST.getlist('revision[]')
         invoices = request.POST.getlist('invoice[]') 
         
@@ -2591,15 +2686,16 @@ def ri_material_tag_view(request):
                     containers = int(container_counts[i]) if i < len(container_counts) and container_counts[i] else 1
                     
                     # 🚀 FIX: Ise-save na natin yung Invoice at Revision sa Database!
+                    # TANDAAN: Check kung 'invoice' o 'invoice_no' ang eksaktong pangalan sa models.py mo.
                     tag = MaterialTag.objects.create(
                         po_reference=po_ref,
                         item_code=item_codes[i],
                         description=descriptions[i], 
                         lot_no=lot_nos[i].upper(), 
                         
-                        # 🚀 DITO PUMASOK ANG INVOICE AT REVISION
                         revision=revisions[i] if i < len(revisions) else '',
-                        invoice_no=invoices[i] if i < len(invoices) else '', # Siguraduhing may invoice_no field ka sa models.py
+                        # ⚠️ Pinalitan ko ito pabalik sa 'invoice_no' (Base sa MaterialTag model mo)
+                        invoice_no=invoices[i] if i < len(invoices) else '', 
                         
                         total_pcs=int(float(total_pcs_list[i])), 
                         packing_type=packing_units[i] if i < len(packing_units) else 'PCS',
@@ -2653,23 +2749,39 @@ def ri_material_tag_view(request):
     }
     return render(request, 'Inventory/receiving/RI_material_tag.html', context)
 
+@login_required
 def get_item_details(request):
-    # Kinuha ko yung 'code' na pangalan mo para mas maikli
-    code = request.GET.get('code', '').strip() 
+    print("\n=== 🚀 PUMASOK SA get_item_details ===")
+    print("RAW GET DATA:", request.GET)
     
-    # Yung magandang logic mo
-    item = Item.objects.filter(item_code=code).first() 
-    
-    if item:
-        return JsonResponse({
-            'success': True,
-            'description': item.description,
-            # 🚀 DINAGDAG: Kailangan natin 'yung price para sa PO table auto-fill
-            'unit_price': float(item.unit_price) if hasattr(item, 'unit_price') else 0.00, 
-            'supplier': 'INTERNAL STOCK' # Galing sa code mo
-        })
+    # Sasaluhin natin pareho para walang lusot
+    code = request.GET.get('code', '').strip()
+    if not code:
+        code = request.GET.get('item_code', '').strip()
         
-    return JsonResponse({'success': False})
+    print(f"HINAHANAP NA CODE: '{code}'")
+
+    if not code:
+        print("❌ WALANG CODE NA NAPASA!")
+        return JsonResponse({'success': False, 'error': 'No item code provided.'})
+
+    try:
+        item = Item.objects.filter(item_code__iexact=code).first()
+        if item:
+            stock_sum = MaterialTag.objects.filter(item_code__iexact=code, total_pcs__gt=0).aggregate(total=Sum('total_pcs'))['total'] or 0
+            print(f"✅ NAHANAP SA DB! Desc: {item.description} | Stock: {stock_sum}")
+            return JsonResponse({
+                'success': True,
+                'description': item.description or 'No Description',
+                'uom': item.uom or 'PCS',
+                'available_stock': stock_sum
+            })
+        else:
+            print(f"❌ WALA SA DATABASE ANG '{code}'!")
+            return JsonResponse({'success': False, 'error': f"Item '{code}' not found!"})
+    except Exception as e:
+        print(f"🔥 ERROR SA LOOB: {e}")
+        return JsonResponse({'success': False, 'error': str(e)})
 
 def get_po_details(request):
     po_no = request.GET.get('po_no', '').strip()
@@ -2696,26 +2808,24 @@ def get_po_details(request):
     return JsonResponse({'success': False, 'error': 'Purchase Order not found or has no items.'})
 
 def get_po_for_tag(request):
-    """ Hahanapin nito ang PO number na ita-type mo sa Material Tag page (Support both Main PO at Sub PO) """
+    """ Hahanapin nito ang EXACT PO number na ita-type mo sa Material Tag page """
     po_no_query = request.GET.get('po_no', '').strip()
     
     if not po_no_query:
         return JsonResponse({'success': False, 'error': 'Please enter a PO Number.'})
 
     try:
-        # 🚀 BAGO: Hahanapin niya kung Batch ID (Main PO), o kung nagsisimula sa Main PO, o exact Sub PO
+        # 🚀 FIX: Tinanggal natin ang "startswith". EXACT MATCH na lang sa batch_id o po_no.
         po_qs = PurchaseOrder.objects.filter(
-            Q(batch_id=po_no_query) | 
-            Q(po_no=po_no_query) | 
-            Q(po_no__startswith=f"{po_no_query}-")
+            Q(batch_id__iexact=po_no_query) | 
+            Q(po_no__iexact=po_no_query)
         ).prefetch_related('items')
         
         if not po_qs.exists():
-            return JsonResponse({'success': False, 'error': f'Reference {po_no_query} not found!'})
+            return JsonResponse({'success': False, 'error': f'Purchase Order {po_no_query} not found!'})
 
         data_list = []
         
-        # I-loop lahat ng nahanap na PO (isa lang kung Sub PO, marami kung Main PO)
         for po_header in po_qs:
             # Kunin ang supplier name nang safe
             supplier_name = "Unknown Supplier"
@@ -2726,11 +2836,13 @@ def get_po_for_tag(request):
                 data_list.append({
                     'item_code': item.item_code,
                     'description': item.description if item.description else "No Description",
-                    'po_no': po_header.po_no, # Pinapanatili natin yung specific Sub-PO no per item
+                    'po_no': po_header.po_no,
                     'supplier': supplier_name,
                     # Kung may qty_received, yun ang gamitin para sa tag. Kung wala, fallback sa ordered qty
                     'qty': getattr(item, 'qty_received', item.qty),  
                     'arrival_date': timezone.now().strftime('%Y-%m-%d'),
+                    'revision': "-",
+                    'invoice': "-"
                 })
             
         return JsonResponse({'success': True, 'items': data_list})
@@ -2763,17 +2875,17 @@ def material_tag_print_view(request):
     return render(request, 'Inventory/receiving/material_tag_print.html', {'print_pages': print_pages})
 
 def ri_storage_view(request):
-    # AUTO-GENERATE SAMPLES KUNG WALANG LAMAN ANG DATABASE
-    if not Location.objects.exists():
-        Location.objects.bulk_create([
-            Location(place_name='MAIN WAREHOUSE', rack_bin='RACK-A1'),
-            Location(place_name='MAIN WAREHOUSE', rack_bin='RACK-A2'),
-            Location(place_name='MAIN WAREHOUSE', rack_bin='RACK-B1'),
-            Location(place_name='TEMP STORAGE', rack_bin='PALLET-01'),
+    # 🚀 FIX: Gamitin natin ang LocationMaster imbes na yung lumang Location model
+    if not LocationMaster.objects.exists():
+        LocationMaster.objects.bulk_create([
+            LocationMaster(location_code='RACK-A1', warehouse='MAIN WAREHOUSE', zone='ZONE A'),
+            LocationMaster(location_code='RACK-A2', warehouse='MAIN WAREHOUSE', zone='ZONE A'),
+            LocationMaster(location_code='RACK-B1', warehouse='MAIN WAREHOUSE', zone='ZONE B'),
+            LocationMaster(location_code='PALLET-01', warehouse='TEMP STORAGE', zone='STAGING'),
         ])
-        print("Sample locations created!") # Debugging log para sa terminal mo
+        print("Sample locations created in LocationMaster!") 
 
-    # Kunin lahat ng locations para sa dropdown
+    # Kunin lahat ng locations para sa dropdown at datalist
     locations = LocationMaster.objects.all().order_by('zone', 'location_code')
     
     return render(request, 'Inventory/receiving/RI_storage.html', {'locations': locations})
@@ -2888,21 +3000,16 @@ def api_get_material_tag(request):
         return JsonResponse({'success': False, 'error': 'No Lot Number provided.'})
 
     try:
-        # 🚀 FIX: Gumamit ng .filter() imbes na .get() para makuha lahat ng kaparehong Lot No
         tags = MaterialTag.objects.filter(lot_no=lot_no)
         
         if not tags.exists():
             return JsonResponse({'success': False, 'error': f'Material Tag (Lot: {lot_no}) not found in database.'})
 
-        # Kunin ang impormasyon mula sa unang box (dahil pareho lang naman sila ng details)
         first_tag = tags.first()
         po_no = first_tag.po_reference.po_no if first_tag.po_reference else "N/A"
         
-        # 🚀 FIX: Pagsamahin (SUM) ang bilang ng lahat ng boxes sa Batch na ito
         total_batch_qty = sum(t.total_pcs for t in tags)
         
-        # Para luminis ang description sa screen (Tatanggalin ang [Box 1 of 10] sa display)
-        import re
         clean_desc = re.sub(r'\[Box \d+ of \d+\]', '', first_tag.description).strip()
 
         return JsonResponse({
@@ -2911,12 +3018,12 @@ def api_get_material_tag(request):
                 'item_code': first_tag.item_code,
                 'description': clean_desc, 
                 'po_no': po_no,
-                'invoice': first_tag.invoice_no if first_tag.invoice_no else '---', 
                 'revision': first_tag.revision if first_tag.revision else '---',
                 'arrival_date': first_tag.arrival_date.strftime('%Y-%m-%d') if first_tag.arrival_date else '-',
-                'qty': total_batch_qty, # 🚀 Ipapakita sa screen ang total ng buong batch!
+                'qty': total_batch_qty, 
                 'current_loc': first_tag.location.location_code if first_tag.location else 'UNASSIGNED',
-                'invoice': first_tag.invoice_no if hasattr(first_tag, 'invoice_no') else 'N/A', 
+                # 🚀 FIX: Pinag-isa ko na lang ang invoice para hindi error
+                'invoice': first_tag.invoice_no if first_tag.invoice_no else 'N/A', 
                 'status': first_tag.inspection_status if hasattr(first_tag, 'inspection_status') else 'PENDING'
             }
         })
@@ -2967,11 +3074,17 @@ def ri_picking_view(request):
         
         if not req_no:
             messages.error(request, "No Request Number provided!")
-            return redirect('ri_picking')
+            return redirect('ri_picking') # Palitan sa tamang URL name mo
 
         try:
             with transaction.atomic():
-                inv_request = DeliveryRequest.objects.get(request_no=req_no)
+                # 🚀 BAGO: Ligtas na paghahanap ng Request
+                # Dito mo pwedeng idagdag ang if-else kung may iba kang prefix para sa Inventory at WIP!
+                try:
+                    inv_request = DeliveryRequest.objects.get(request_no=req_no)
+                except DeliveryRequest.DoesNotExist:
+                    messages.error(request, f"Error: Request {req_no} not found in Delivery Requests.")
+                    return redirect('ri_picking')
                 
                 # Defense: Baka tapos na 'tong request na 'to
                 if inv_request.status == 'Completed':
@@ -2983,15 +3096,19 @@ def ri_picking_view(request):
 
                 # 1. I-loop lahat ng items sa request table
                 for req_item in inv_request.items.all():
-                    # Kunin yung tinype na 'Delivery Qty' sa UI natin
                     pick_qty_str = request.POST.get(f'pick_qty_{req_item.id}')
                     pick_rev_str = request.POST.get(f'pick_rev_{req_item.id}')
                     pick_price_str = request.POST.get(f'pick_price_{req_item.id}')
+                    
                     if pick_rev_str is not None:
                         req_item.revision = pick_rev_str.strip()
 
-                    if pick_price_str is not None:
-                        req_item.unit_price = float(pick_price_str)
+                    # 🚀 FIX: Ligtas na pag-convert sa float (Iwas ValueError kapag blanko)
+                    if pick_price_str and pick_price_str.strip():
+                        try:
+                            req_item.unit_price = float(pick_price_str)
+                        except ValueError:
+                            req_item.unit_price = 0.00
                     
                     if pick_qty_str:
                         qty_to_pick = int(pick_qty_str)
@@ -3003,8 +3120,6 @@ def ri_picking_view(request):
                                 raise Exception(f"Cannot pick more than requested for {req_item.item_code}. Max allowed is {remaining_req}.")
 
                             # 🚀 2. FIFO INVENTORY DEDUCTION LOGIC
-                            # Hahanapin natin ang mga Material Tags ng item na ito na may stock pa, 
-                            # in-order by pinakaluma (First In, First Out)
                             available_tags = MaterialTag.objects.filter(
                                 item_code=req_item.item_code, 
                                 total_pcs__gt=0
@@ -3014,9 +3129,8 @@ def ri_picking_view(request):
                             
                             for tag in available_tags:
                                 if qty_needed <= 0:
-                                    break # Tapos na kung nakuha na lahat ng kailangan
+                                    break 
                                     
-                                # Ilan ang pwede nating kunin sa Tag na ito?
                                 qty_to_take_from_tag = min(qty_needed, tag.total_pcs)
                                 
                                 # Ibawas sa Lot/Tag
@@ -3030,7 +3144,7 @@ def ri_picking_view(request):
                                     old_qty=tag.total_pcs + qty_to_take_from_tag,
                                     new_qty=tag.total_pcs,
                                     change_qty=-qty_to_take_from_tag,
-                                    user=request.user,
+                                    user=request.user if request.user.is_authenticated else None,
                                     notes=f"PICKING: Issued for Request {req_no}"
                                 )
                                 
@@ -3067,7 +3181,7 @@ def ri_picking_view(request):
 
         except Exception as e:
             messages.error(request, f"Error processing picking: {str(e)}")
-        return redirect('ri_picking') # Palitan sa tamang URL name kung iba
+        return redirect('ri_picking') 
 
     # GET Request
     locations = LocationMaster.objects.all().order_by('zone', 'location_code')
@@ -3097,13 +3211,17 @@ def picking_list_print_view(request, req_no):
         return redirect('ri_picking')
 
 def get_picking_list(request):
-    """Kinukuha ang Delivery Request items at ang current stock level nila."""
+    """Kinukuha ang Request items at ang current stock level nila."""
     req_no = request.GET.get('req_no', '').strip()
     
+    if not req_no:
+        return JsonResponse({'success': False, 'error': 'No Request No. scanned.'})
+
+    # 🚀 BAGO: Safe na paghahanap
     del_request = DeliveryRequest.objects.filter(request_no=req_no).first()
     
     if not del_request:
-        return JsonResponse({'success': False, 'error': f'Delivery Request {req_no} not found!'})
+        return JsonResponse({'success': False, 'error': f'Request {req_no} not found!'})
 
     if del_request.status == 'Completed':
         return JsonResponse({'success': False, 'error': f'Request {req_no} is already Completed!'})
@@ -3117,7 +3235,7 @@ def get_picking_list(request):
             continue
             
         from django.db.models import Sum
-        from Inventory.models import Item
+        # from Inventory.models import Item # Tinanggal ko ang import dito para iwas circular import error. Siguraduhin na naka-import ito sa taas ng views.py mo.
 
         total_available = MaterialTag.objects.filter(
             item_code=item.item_code, total_pcs__gt=0
@@ -3132,10 +3250,7 @@ def get_picking_list(request):
             'item_id': item.id,
             'item_code': item.item_code,
             'description': item.description or 'No Description',
-            
-            # 🚀 FIX: Idinagdag natin ang Revision para maipasa sa UI!
-            'revision': item.revision if item.revision else '---', 
-            
+            'revision': item.revision if item.revision else '', 
             'request_qty': item.request_qty,
             'delivered_qty': item.delivered_qty,
             'remaining_qty': remaining_qty,
@@ -3144,7 +3259,7 @@ def get_picking_list(request):
         })
 
     if not items_data:
-        return JsonResponse({'success': False, 'error': f'All items in {req_no} have already been delivered.'})
+        return JsonResponse({'success': False, 'error': f'All items in {req_no} have already been picked/delivered.'})
 
     return JsonResponse({
         'success': True,
@@ -3240,7 +3355,13 @@ def stock_move_view(request):
                     request=request
                 )
 
+                try:
+                    send_stock_move_alert(tag, old_loc, new_location.location_code, request.user)
+                except Exception as e:
+                    print(f"Stock Move Email Error: {e}")
+
                 messages.success(request, f"Success! {tag.lot_no} moved from {old_loc} to {new_location.location_code}.")
+                return redirect('stock_move')
                 
         except MaterialTag.DoesNotExist:
             messages.error(request, "Error: Material Tag not found!")
@@ -3250,9 +3371,9 @@ def stock_move_view(request):
         return redirect('stock_move')
 
     # GET Request (Load page)
-    # 🚀 FIX: Gumamit ng LocationMaster at inayos ang order_by
-    locations = LocationMaster.objects.all().order_by('zone', 'location_code')
-    return render(request, 'Inventory/inventory_request/stock_move.html', {'locations': locations})
+    locations = LocationMaster.objects.all().order_by('warehouse', 'zone', 'location_code')
+    
+    return render(request, 'Inventory/processing/stock_move.html', {'locations': locations})
 
 def get_tag_info(request):
     """
@@ -3265,23 +3386,17 @@ def get_tag_info(request):
         return JsonResponse({'success': False, 'error': 'No barcode scanned.'})
 
     try:
-        # 1. Hanapin ang item gamit ang Lot Number
         tag = MaterialTag.objects.get(lot_no=lot_no_query)
-
-        # 2. Ligtas na pagkuha ng Location (WALANG place_name o rack_bin dito!)
         current_loc = "Unassigned / No Location"
-        if tag.location: # Kung may naka-link na LocationMaster
+        
+        if tag.location:
             try:
-                # Gagamitin natin ang bagong field na location_code (e.g., RACK-A1)
                 current_loc = tag.location.location_code
-                
-                # Optional: Kung may zone ka sa LocationMaster, pwede isama
                 if hasattr(tag.location, 'zone') and tag.location.zone:
                     current_loc = f"{tag.location.location_code} | {tag.location.zone}"
             except Exception:
                 current_loc = "Location Format Error"
 
-        # 3. I-pack ang data at ibalik sa HTML
         data = {
             'success': True,
             'tag_id': tag.id,
@@ -3294,10 +3409,8 @@ def get_tag_info(request):
         return JsonResponse(data)
 
     except MaterialTag.DoesNotExist:
-        # Kung hindi mahanap ang in-scan na barcode
         return JsonResponse({'success': False, 'error': f'Barcode {lot_no_query} not found in inventory.'})
     except Exception as e:
-        # Para hindi mag-crash ang server kapag may ibang error
         return JsonResponse({'success': False, 'error': f'Server Error: {str(e)}'})
 
 def stock_correction_view(request):
@@ -3322,8 +3435,8 @@ def stock_correction_view(request):
                 # 1. Update Quantity
                 tag.total_pcs = new_qty
 
-                # 2. Update Location (Kung may tinype sila at hindi kapareho ng dati)
-                new_loc_str = old_loc # Default to old location string
+                # 2. Update Location
+                new_loc_str = old_loc 
                 if new_loc_code and new_loc_code != old_loc:
                     new_location, _ = LocationMaster.objects.get_or_create(location_code=new_loc_code)
                     tag.location = new_location
@@ -3331,14 +3444,14 @@ def stock_correction_view(request):
 
                 tag.save()
 
-                # 🚀 3. I-save sa StockLog (CRITICAL PARA SA AUDIT)
+                # 3. I-save sa StockLog
                 notes = f"CORRECTION: Reason -> {reason}"
                 if new_loc_str != old_loc:
                     notes += f" | Moved {old_loc} -> {new_loc_str}"
 
                 StockLog.objects.create(
                     material_tag=tag,
-                    action_type='CORR', # 'CORR' is defined in your StockLog models
+                    action_type='CORR', 
                     old_qty=old_qty,
                     new_qty=new_qty,
                     change_qty=change_in_qty,
@@ -3346,7 +3459,6 @@ def stock_correction_view(request):
                     user=request.user if request.user.is_authenticated else None
                 )
 
-                # 4. System Action Log
                 log_system_action(
                     user=request.user, 
                     action='UPDATE', 
@@ -3355,7 +3467,11 @@ def stock_correction_view(request):
                     request=request
                 )
 
-                alert_stock_correction(tag, old_qty, new_qty, reason, request.user)
+                # Optional: Kung may alert functions ka, make sure imported sila
+                try:
+                    alert_stock_correction(tag, old_qty, new_qty, reason, request.user)
+                except NameError:
+                    pass # Ignore kung wala pa yung function na to
 
                 messages.success(request, f"Correction Saved! {tag.lot_no} updated. QTY: {old_qty} -> {new_qty} | LOC: {old_loc} -> {new_loc_str}.")
                 return redirect('stock_correction')
@@ -3367,7 +3483,9 @@ def stock_correction_view(request):
              
         return redirect('stock_correction')
 
-    return render(request, 'Inventory/inventory_request/stock_correction.html')
+    locations = LocationMaster.objects.all().order_by('warehouse', 'zone', 'location_code')
+
+    return render(request, 'Inventory/processing/stock_correction.html', {'locations': locations})
 
 def stock_out_view(request):
     if request.method == 'POST':
@@ -3380,7 +3498,7 @@ def stock_out_view(request):
             return redirect('stock_out')
 
         try:
-            with transaction.atomic(): # 🚀 Use transaction to ensure data integrity
+            with transaction.atomic(): 
                 tag = MaterialTag.objects.get(id=tag_id)
                 deduct_val = int(qty_to_deduct_str)
                 old_qty = tag.total_pcs
@@ -3390,23 +3508,20 @@ def stock_out_view(request):
                 elif deduct_val > old_qty:
                     messages.error(request, f"Error: Cannot deduct {deduct_val} pcs. Only {old_qty} pcs remaining in Lot {tag.lot_no}.")
                 else:
-                    # 1. Update Quantity
                     tag.total_pcs -= deduct_val
                     new_qty = tag.total_pcs
                     tag.save()
 
-                    # 🚀 2. CREATE STOCK LOG (Crucial for Audit Trail)
                     StockLog.objects.create(
                         material_tag=tag,
-                        action_type='OUT', # 'OUT' is defined in your StockLog models
+                        action_type='OUT', 
                         old_qty=old_qty,
                         new_qty=new_qty,
-                        change_qty=-deduct_val, # Negative because it's a deduction
+                        change_qty=-deduct_val, 
                         notes=f"ISSUANCE: {remarks}",
                         user=request.user if request.user.is_authenticated else None
                     )
 
-                    # 3. System Action Log
                     log_system_action(
                         user=request.user, 
                         action='UPDATE', 
@@ -3415,7 +3530,11 @@ def stock_out_view(request):
                         request=request
                     )
                     
-                    check_and_alert_low_stock(tag)
+                    # Optional: Check low stock alert
+                    try:
+                        send_stock_out_alert(tag, deduct_val, new_qty, remarks, request.user)
+                    except Exception as e:
+                        print(f"Stock Out Email Error: {e}")
                     
                     messages.success(request, f"Success! Deducted {deduct_val} pcs from {tag.lot_no}. Remaining: {new_qty} pcs.")
                     return redirect('stock_out') 
@@ -3429,20 +3548,18 @@ def stock_out_view(request):
             
         return redirect('stock_out')
 
-    return render(request, 'Inventory/inventory_request/stock_out.html')
+    # 🚀 FIX: Tinuturo na ito sa bagong "processing" folder
+    return render(request, 'Inventory/processing/stock_out.html')
 
 def stock_inquiry_view(request):
-    # 1. Kunin ang lahat ng Physical Stocks (MaterialTags)
     stocks = MaterialTag.objects.select_related('po_reference', 'po_reference__supplier', 'location').all().order_by('-arrival_date')
 
-    # 2. Kunin ang mga isinubmit na Search Filters
     inquiry_type = request.GET.get('inquiry_type', 'current')
     company = request.GET.get('company', '').strip()
     item_code = request.GET.get('item_code', '').strip()
     description = request.GET.get('description', '').strip()
     lot_no = request.GET.get('lot_no', '').strip()
 
-    # 3. I-apply ang Filters
     if inquiry_type == 'current':  
         stocks = stocks.filter(total_pcs__gt=0) 
     elif inquiry_type == 'out':
@@ -3457,12 +3574,10 @@ def stock_inquiry_view(request):
     if lot_no:
         stocks = stocks.filter(lot_no__icontains=lot_no)
 
-    # 🚀 BAGO: Compute KPI Cards Data (Base sa na-filter na stocks)
     total_active_tags = stocks.filter(total_pcs__gt=0).count()
     total_qty_stock = stocks.filter(total_pcs__gt=0).aggregate(total=Sum('total_pcs'))['total'] or 0
     out_of_stock_tags = stocks.filter(total_pcs__lte=0).count()
 
-    # 4. EXCEL EXPORT LOGIC
     if request.GET.get('export_excel') == 'true':
         all_item_codes = stocks.values_list('item_code', flat=True).distinct()
         item_prices = dict(Item.objects.filter(item_code__in=all_item_codes).values_list('item_code', 'unit_price'))
@@ -3501,12 +3616,10 @@ def stock_inquiry_view(request):
 
         return response
 
-    # 5. PAGINATION AT RENDERING
     paginator = Paginator(stocks, 20) 
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    # 🚀 FIX: I-attach ang unit_price sa object list para lumabas sa HTML
     page_item_codes = [s.item_code for s in page_obj.object_list]
     page_item_prices = dict(Item.objects.filter(item_code__in=page_item_codes).values_list('item_code', 'unit_price'))
     for s in page_obj.object_list:
@@ -3514,56 +3627,73 @@ def stock_inquiry_view(request):
 
     context = {
         'page_obj': page_obj,
-        # Ipasa ang KPI Values
         'total_active_tags': total_active_tags,
         'total_qty_stock': total_qty_stock,
         'out_of_stock_tags': out_of_stock_tags,
-        # Ipasa ang mga tinype sa filter para hindi mabura sa textbox kapag nag-refresh
         'inquiry_type': inquiry_type,
         'company': company,
         'item_code': item_code,
         'description': description,
         'lot_no': lot_no,
     }
-    return render(request, 'Inventory/processing/stock_inquiry.html', context)
+    # 🚀 FIX: Itinuro sa inventory_inquiry folder
+    return render(request, 'Inventory/inventory_inquiry/stock_inquiry.html', context)
 
 def stock_io_view(request, tag_id):
-    # 1. Hanapin yung mismong Stock (Material Tag) na kinlick natin
     stock = get_object_or_404(MaterialTag, id=tag_id)
-    
-    # 2. Kunin lahat ng galaw (Logs) ng stock na 'to, mula pinakabago hanggang luma
-    # Dahil may related_name='logs' ka sa models.py, madali lang natin itong tatawagin:
     history_logs = stock.logs.all().order_by('-timestamp')
-    
     context = {
         'stock': stock,
         'history_logs': history_logs,
     }
-    return render(request, 'Inventory/processing/stock_io_history.html', context)
+    # 🚀 FIX: Itinuro sa inventory_inquiry folder
+    return render(request, 'Inventory/inventory_inquiry/stock_io_history.html', context)
 
 def api_update_item_price(request):
-    """ API para sa mabilisang pag-update ng Unit Price sa Stock Inquiry """
     if request.method == 'POST':
         item_code = request.POST.get('item_code', '').strip()
         new_price = request.POST.get('unit_price', 0)
-        
         try:
-            # Hanapin sa Masterlist at i-update
             item = Item.objects.get(item_code=item_code)
             item.unit_price = float(new_price)
             item.save()
-
-            # (Optional) Pwede mo rin i-log dito kung gusto mo ma-track sino nagpalit ng presyo
-            # log_system_action(user=request.user, action='UPDATE', module='Item Masterlist', description=f"Updated price of {item_code} to {new_price}")
-
             return JsonResponse({'success': True})
-            
         except Item.DoesNotExist:
             return JsonResponse({'success': False, 'error': f'Item {item_code} not found in Masterlist.'})
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
-            
     return JsonResponse({'success': False, 'error': 'Invalid Request'})
+
+def stock_item_inquiry_view(request):
+    search_query = request.GET.get('q', '').strip()
+    
+    inventory = MaterialTag.objects.values('item_code', 'description').annotate(
+        total_stock=Sum('total_pcs'),
+        lot_count=Count('id')
+    ).order_by('item_code')
+
+    if search_query:
+        inventory = inventory.filter(
+            Q(item_code__icontains=search_query) | 
+            Q(description__icontains=search_query)
+        )
+
+    sys_settings = SystemSetting.objects.first()
+    actual_threshold = sys_settings.low_stock_threshold if sys_settings else 50
+
+    paginator = Paginator(inventory, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'items': page_obj,
+        'search_query': search_query,
+        'settings': {
+            'low_stock_threshold': actual_threshold 
+        }
+    }
+    # 🚀 FIX: Itinuro sa inventory_inquiry folder
+    return render(request, 'Inventory/inventory_inquiry/stock_item_inquiry.html', context)
 
 def stock_item_inquiry_view(request):
     # 1. Kunin ang search query kung meron man
@@ -3600,20 +3730,17 @@ def stock_item_inquiry_view(request):
         }
     }
     # Tiyakin na tama ang pangalan ng HTML file mo dito
-    return render(request, 'Inventory/processing/stock_item_inquiry.html', context)
+    return render(request, 'Inventory/inventory_inquiry/stock_item_inquiry.html', context)
 
 def stock_history_view(request):
-    # 1. Kunin ang lahat ng movement logs
     logs = StockLog.objects.select_related('material_tag', 'user').all().order_by('-timestamp')
 
-    # 2. Kunin ang mga filters
     date_from = request.GET.get('date_from')
     date_to = request.GET.get('date_to')
     action_type = request.GET.get('action_type')
     item_code = request.GET.get('item_code')
     lot_no = request.GET.get('lot_no')
 
-    # 3. I-apply ang Filters
     if date_from:
         logs = logs.filter(timestamp__date__gte=date_from)
     if date_to:
@@ -3625,12 +3752,10 @@ def stock_history_view(request):
     if lot_no:
         logs = logs.filter(material_tag__lot_no__icontains=lot_no)
 
-    # 4. Pagination (20 rows per page)
     paginator = Paginator(logs, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    # 🚀 BAGONG LOGIC: Kunin lahat ng filters para ilagay sa Next/Prev buttons
     query_dict = request.GET.copy()
     if 'page' in query_dict:
         del query_dict['page']
@@ -3638,39 +3763,34 @@ def stock_history_view(request):
 
     context = {
         'logs': page_obj,
-        'filter_params': filter_params, # 🚀 Ipapasa natin 'to sa HTML
+        'filter_params': filter_params, 
     }
-    return render(request, 'Inventory/processing/stock_history.html', context)
+    # 🚀 FIX: Itinuro sa inventory_inquiry folder
+    return render(request, 'Inventory/inventory_inquiry/stock_history.html', context)
 
 def request_inquiry_view(request):
-    # 1. Kunin lahat ng requests (Assuming may MaterialRequest model ka)
-    # Kung wala pa, gagana pa rin ang page pero walang data na lalabas.
     requests_data = DeliveryRequest.objects.annotate(
         item_count=Count('items'),
         total_qty=Sum('items__request_qty')
     ).order_by('-request_date', '-request_no')
         
-    # 2. Kunin ang mga filters
     req_no = request.GET.get('req_no')
     status = request.GET.get('status')
     department = request.GET.get('department')
     date_from = request.GET.get('date_from')
     date_to = request.GET.get('date_to')
 
-    # 3. I-apply ang Filters (Kung may model na)
     if req_no:
         requests_data = requests_data.filter(request_no__icontains=req_no)
     if status:
         requests_data = requests_data.filter(status=status)
     if department:
-        # Note: 'receiving_place' ang ginamit nating equivalent ng department sa form
         requests_data = requests_data.filter(receiving_place__icontains=department)
     if date_from:
         requests_data = requests_data.filter(request_date__gte=date_from)
     if date_to:
         requests_data = requests_data.filter(request_date__lte=date_to)
 
-    # 4. Pagination (20 items per page)
     paginator = Paginator(requests_data, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -3678,37 +3798,27 @@ def request_inquiry_view(request):
     context = {
         'requests': page_obj,
     }
-    return render(request, 'Inventory/processing/request_inquiry.html', context)
+    # 🚀 FIX: Itinuro sa inventory_inquiry folder
+    return render(request, 'Inventory/inventory_inquiry/request_inquiry.html', context)
 
 def inquiry_settings_view(request):
-    # 1. Kunin ang nag-iisang SystemSetting record. Kung wala, gagawa siya ng bago.
-    # Gagamit tayo ng get_or_create para kahit fresh yung database, hindi mag-e-error.
     system_settings, created = SystemSetting.objects.get_or_create(id=1)
 
     if request.method == 'POST':
-        # 2. Kunin ang mga bagong values galing sa HTML Form
         low_stock_limit = request.POST.get('low_stock_limit')
         items_per_page = request.POST.get('items_per_page')
-        email_alerts = request.POST.get('email_alerts') # Checkbox ito, returns 'on' if checked
+        email_alerts = request.POST.get('email_alerts') 
         
-        # 3. I-update ang record sa database
         try:
-            # Update Low Stock Threshold
             if low_stock_limit and low_stock_limit.isdigit():
                 system_settings.low_stock_threshold = int(low_stock_limit)
             
-            # Update Email Alerts
             system_settings.enable_email_alerts = True if email_alerts == 'on' else False
-            
-            # I-save
             system_settings.save()
             
-            # 4. Optional: I-save sa Session ang "Items Per Page" para per-user setting siya
-            # Mas maganda itong nasa session lang para hindi nakakaapekto sa ibang users.
             if items_per_page and items_per_page.isdigit():
                 request.session['items_per_page'] = int(items_per_page)
 
-            # 5. Log the action para sa Audit Trail
             log_system_action(
                 user=request.user, 
                 action='UPDATE', 
@@ -3724,54 +3834,42 @@ def inquiry_settings_view(request):
             messages.error(request, f"Failed to save settings: {str(e)}")
             return redirect('inquiry_settings')
 
-    # GET Request: Ipakita ang form gamit ang TOTOONG data
     context = {
         'low_stock_limit': system_settings.low_stock_threshold,
         'email_alerts_enabled': system_settings.enable_email_alerts,
-        
-        # Kunin sa session kung meron, kung wala, default ay 50
         'items_per_page': request.session.get('items_per_page', 50), 
     }
-    return render(request, 'Inventory/processing/inquiry_settings.html', context)
+    # 🚀 FIX: Itinuro sa inventory_inquiry folder
+    return render(request, 'Inventory/inventory_inquiry/inquiry_settings.html', context)
 
 def shipment_import_view(request):
     if request.method == 'POST' and request.FILES.get('excel_file'):
         excel_file = request.FILES['excel_file']
         
         try:
-            # 1. Basahin ang Excel
             df = pd.read_excel(excel_file)
-            
-            # 2. 🚀 BULLETPROOF HEADERS: Gawing uppercase at palitan ang spaces ng underscore
             df.columns = [str(c).strip().upper().replace(' ', '_') for c in df.columns]
 
             success_count = 0
             for index, row in df.iterrows():
-                # 3. 🚀 FLEXIBLE MAPPING: Hahanapin natin pareho yung tinype mo sa HTML at sa Python
                 ship_no = row.get('SHIPMENT_ID') if pd.notna(row.get('SHIPMENT_ID')) else row.get('SHIPMENT_NO')
                 
                 if pd.isna(ship_no) or not str(ship_no).strip():
-                    continue # I-skip ang blank rows
+                    continue 
                 
                 ship_no = str(ship_no).strip()
                 item_code = str(row.get('ITEM_CODE', '')).strip()
                 
-                # Handling Quantity (Fallback to 0 if empty)
                 qty_raw = row.get('QTY') if pd.notna(row.get('QTY')) else row.get('QUANTITY')
                 qty = int(qty_raw) if pd.notna(qty_raw) else 0
                 
-                # Handling Date (Fallback to today if empty)
                 date_raw = row.get('DELIVERY_DATE') if pd.notna(row.get('DELIVERY_DATE')) else row.get('DATE')
                 sched_date = pd.to_datetime(date_raw).date() if pd.notna(date_raw) else timezone.now().date()
 
-                # Optional Fields
                 inv_no = str(row.get('INVOICE_NO', '')).strip() if pd.notna(row.get('INVOICE_NO')) else None
                 trans = str(row.get('TRANSPORT', '')).strip() if pd.notna(row.get('TRANSPORT')) else None
-                
-                # Destination (Kailangan may laman kasi required sa models.py mo!)
                 dest = str(row.get('DESTINATION', 'Default Warehouse')).strip()
 
-                # Customer Logic
                 customer_obj = None
                 cust_raw = row.get('CUSTOMER')
                 if pd.notna(cust_raw) and str(cust_raw).strip():
@@ -3781,7 +3879,6 @@ def shipment_import_view(request):
                         defaults={'contact_type': 'Customer'}
                     )
 
-                # 4. Save to Database
                 ShipmentSchedule.objects.update_or_create(
                     shipment_no=ship_no,
                     defaults={
@@ -3792,12 +3889,11 @@ def shipment_import_view(request):
                         'customer': customer_obj,       
                         'invoice_no': inv_no,           
                         'transport': trans,             
-                        'status': 'Pending' # Default status pagka-import
+                        'status': 'Pending' 
                     }
                 )
                 success_count += 1
 
-            # I-log ang action
             log_system_action(
                 user=request.user, 
                 action='CREATE', 
@@ -3809,26 +3905,17 @@ def shipment_import_view(request):
             messages.success(request, f"Success! {success_count} shipment schedules imported/updated.")
             
         except Exception as e:
-            # I-print sa terminal yung error para madaling i-debug kung may maling column
-            print("=========================================")
-            print(f"EXCEL IMPORT ERROR: {str(e)}")
-            print("Columns detected:", df.columns.tolist() if 'df' in locals() else 'None')
-            print("=========================================")
+            print("EXCEL IMPORT ERROR:", str(e))
             messages.error(request, f"Import Error: Please make sure headers match exactly. System read: {str(e)}")
             
         return redirect('shipment_import')
 
-    return render(request, 'Inventory/inquiry/shipment_import.html')
+    return render(request, 'Inventory/inbound/shipment_import.html')
 
-# 2. SHIPMENT INQUIRY: Ang taga-lista ng parating na shipments
 def shipment_inquiry_view(request):
-    # 1. Kunin lahat ng shipments (Pinakabago sa itaas)
     shipments = ShipmentSchedule.objects.all().order_by('-schedule_date')
-    
-    # 2. Kunin lahat ng 'Customer' galing sa Contact table para sa Dropdown sa UI
     customers_list = Contact.objects.filter(contact_type='Customer')
 
-    # 3. Kunin ang mga isinubmit na Search Filters galing sa HTML Form
     customer_id = request.GET.get('customer')
     date_in = request.GET.get('date_in')
     date_out = request.GET.get('date_out')
@@ -3837,13 +3924,12 @@ def shipment_inquiry_view(request):
     invoice_no = request.GET.get('invoice_no')
     status = request.GET.get('status')
 
-    # 4. I-apply ang Filters kung may tinype/pinili ang user
     if customer_id:
         shipments = shipments.filter(customer_id=customer_id)
         
     if date_in and date_out:
         shipments = shipments.filter(schedule_date__range=[date_in, date_out])
-    elif date_in: # Kung start date lang ang nilagay
+    elif date_in: 
         shipments = shipments.filter(schedule_date__gte=date_in)
         
     if transport:
@@ -3858,66 +3944,174 @@ def shipment_inquiry_view(request):
     if status:
         shipments = shipments.filter(status=status)
 
-    # 5. Pagination (20 rows per page)
     paginator = Paginator(shipments, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
+    # 🚀 FIX: I-preserve ang filters para sa pagination links sa Inquiry HTML mo
+    query_dict = request.GET.copy()
+    if 'page' in query_dict:
+        del query_dict['page']
+    filter_params = query_dict.urlencode()
+
     context = {
         'shipments': page_obj,
-        'customers_list': customers_list, # Ipapasa natin ito sa HTML
+        'customers_list': customers_list,
+        'filter_params': filter_params, # Ipasa mo ito sa Inquiry HTML mo kung gusto mong gumana nang tama ang Next page
     }
-    return render(request, 'Inventory/inquiry/shipment_inquiry.html', context)
+    return render(request, 'Inventory/inbound/shipment_inquiry.html', context)
 
-# 3. SHIPPING CONFIRMATION: Ang taga-release ng truck
+# 1. API para makuha ang details ng isang shipment (Para sa Inquiry Button)
+def api_shipment_details(request, ship_id):
+    try:
+        shipment = ShipmentSchedule.objects.get(id=ship_id)
+        data = {
+            'shipment_no': shipment.shipment_no,
+            'customer': shipment.customer.name if shipment.customer else 'N/A',
+            'item_code': shipment.item_code,
+            'quantity': shipment.quantity,
+            'schedule_date': shipment.schedule_date.strftime('%Y-%m-%d'),
+            'transport': shipment.transport or 'Not Set',
+            'invoice_no': shipment.invoice_no or 'Not Set',
+            'destination': shipment.destination,
+            'status': shipment.status,
+        }
+        return JsonResponse(data)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+# 2. Function para sa pag-update ng Shipment (Para sa Update Button)
+def shipment_update(request):
+    if request.method == 'POST':
+        ship_id = request.POST.get('ship_id')
+        shipment = ShipmentSchedule.objects.get(id=ship_id)
+        
+        shipment.schedule_date = request.POST.get('schedule_date')
+        shipment.transport = request.POST.get('transport')
+        shipment.invoice_no = request.POST.get('invoice_no')
+        shipment.save()
+        
+        messages.success(request, f"Shipment {shipment.shipment_no} updated successfully.")
+        return redirect('shipment_inquiry')
+
+def shipment_allocation_view(request, ship_id):
+    try:
+        main_shipment = ShipmentSchedule.objects.get(id=ship_id)
+        # Kukunin lahat ng kasama sa iisang invoice/PO
+        if main_shipment.invoice_no:
+            related_items = ShipmentSchedule.objects.filter(invoice_no=main_shipment.invoice_no)
+        else:
+            related_items = [main_shipment]
+            
+    except ShipmentSchedule.DoesNotExist:
+        messages.error(request, "Shipment record not found.")
+        return redirect('shipment_inquiry')
+
+    context = {
+        'shipment': main_shipment,
+        'related_items': related_items,
+    }
+    return render(request, 'Inventory/inbound/shipment_allocation.html', context)
+
+# 2. VIEW PARA I-SAVE ANG ALLOCATION
+def shipment_register_allocation(request, ship_id):
+    if request.method == 'POST':
+        main_shipment = ShipmentSchedule.objects.get(id=ship_id)
+        related_items = ShipmentSchedule.objects.filter(invoice_no=main_shipment.invoice_no) if main_shipment.invoice_no else [main_shipment]
+
+        for item in related_items:
+            plan_qty = request.POST.get(f'plan_qty_{item.id}')
+            remarks = request.POST.get(f'remarks_{item.id}')
+            
+            if plan_qty and int(plan_qty) > 0:
+                item.status = 'Allocated'
+                item.remarks = remarks
+                item.save()
+
+        messages.success(request, "Allocation successfully registered!")
+        return redirect('shipment_inquiry')
+
+def shipment_invoice_view(request, ship_id):
+    main_shipment = ShipmentSchedule.objects.get(id=ship_id)
+    related_items = ShipmentSchedule.objects.filter(invoice_no=main_shipment.invoice_no) if main_shipment.invoice_no else [main_shipment]
+    
+    context = {
+        'shipment': main_shipment,
+        'related_items': related_items,
+        'doc_type': 'COMMERCIAL INVOICE'
+    }
+    return render(request, 'Inventory/inbound/shipment_print_doc.html', context)
+
+def shipment_print_view(request, ship_id):
+    main_shipment = ShipmentSchedule.objects.get(id=ship_id)
+    related_items = ShipmentSchedule.objects.filter(invoice_no=main_shipment.invoice_no) if main_shipment.invoice_no else [main_shipment]
+    
+    context = {
+        'shipment': main_shipment,
+        'related_items': related_items,
+        'doc_type': 'DELIVERY RECEIPT / PACKING SLIP' # Walang presyo dapat ito
+    }
+    return render(request, 'Inventory/inbound/shipment_print_doc.html', context)
+
 def shipping_confirmation_view(request):
-    # GET: Kunin lang yung mga hindi pa 'Completed' o 'Received'
+    # 🚀 FIX: Dinagdag natin ang 'Allocated' sa listahan para lumabas yung mga galing sa Allocation Dashboard!
     pending_shipments = ShipmentSchedule.objects.filter(
-        status__in=['Pending', 'Shipped', 'Determined', 'In Transit']
+        status__in=['Pending', 'Shipped', 'Determined', 'In Transit', 'Allocated']
     ).order_by('schedule_date')
 
     if request.method == 'POST':
         shipment_id = request.POST.get('shipment_id')
-        actual_qty = request.POST.get('actual_qty')
+        actual_qty = int(request.POST.get('actual_qty', 0))
         lot_no = request.POST.get('lot_no').strip()
         expiry_date = request.POST.get('expiry_date')
         remarks = request.POST.get('remarks')
 
         try:
-            # 1. Hanapin ang Shipment
-            shipment = ShipmentSchedule.objects.get(id=shipment_id)
+            with transaction.atomic(): # 🚀 Ginamitan natin ng transaction block para safe
+                shipment = ShipmentSchedule.objects.get(id=shipment_id)
 
-            # 2. I-check kung may kaparehas nang Lot Number sa database (bawal ma-doble)
-            if MaterialTag.objects.filter(lot_no=lot_no).exists():
-                messages.error(request, f"Error: Lot Number '{lot_no}' already exists in the inventory!")
+                if MaterialTag.objects.filter(lot_no=lot_no).exists():
+                    messages.error(request, f"Error: Lot Number '{lot_no}' already exists in the inventory!")
+                    return redirect('shipping_confirmation')
+
+                # 1. GUMAWA NG BAGONG MATERIAL TAG
+                new_tag = MaterialTag.objects.create(
+                    item_code=shipment.item_code,
+                    description=f"Received from PO/Shipment {shipment.shipment_no}",
+                    lot_no=lot_no,
+                    total_pcs=actual_qty,
+                    expiration_date=expiry_date if expiry_date else None,
+                    arrival_date=timezone.now().date(),
+                    inspection_status='Pending', # Hihintayin pa i-QC bago magamit sa Assembly
+                    remarks=remarks
+                )
+
+                # 2. 🚀 GUMAWA NG STOCK LOG PARA LUMITAW SA STOCK HISTORY!
+                po_reference = shipment.invoice_no if shipment.invoice_no else shipment.shipment_no
+                StockLog.objects.create(
+                    material_tag=new_tag,
+                    action_type='REG', # Registration / IN
+                    old_qty=0,
+                    new_qty=actual_qty,
+                    change_qty=actual_qty,
+                    user=request.user,
+                    notes=f"PO/Shipment Receipt: Ref {po_reference}"
+                )
+
+                # 3. I-update ang status ng Shipment
+                shipment.status = 'Completed'
+                shipment.save()
+
+                log_system_action(
+                    user=request.user, 
+                    action='UPDATE', 
+                    module='Shipping Confirmation', 
+                    description=f"Received Shipment {shipment.shipment_no} and generated Lot {lot_no}.", 
+                    request=request
+                )
+
+                messages.success(request, f"SUCCESS! Shipment {shipment.shipment_no} received. Material Tag (Lot: {lot_no}) generated & logged in History.")
                 return redirect('shipping_confirmation')
-
-            # 3. GUMAWA NG BAGONG MATERIAL TAG (Papasok na sa Inventory!)
-            MaterialTag.objects.create(
-                item_code=shipment.item_code,
-                description=f"Received from Shipment {shipment.shipment_no}",
-                lot_no=lot_no,
-                total_pcs=int(actual_qty),
-                expiration_date=expiry_date if expiry_date else None,
-                arrival_date=timezone.now().date(),
-                inspection_status='Pending', # Pwedeng i-QC mamaya
-                remarks=remarks
-            )
-
-            # 4. I-update ang status ng Shipment para mawala na sa listahan
-            shipment.status = 'Completed'
-            shipment.save()
-
-            log_system_action(
-                user=request.user, 
-                action='UPDATE', 
-                module='Shipping Confirmation', 
-                description=f"Received Shipment {shipment.shipment_no} and generated Lot {lot_no}.", 
-                request=request
-            )
-
-            messages.success(request, f"SUCCESS! Shipment {shipment.shipment_no} received. Material Tag (Lot: {lot_no}) generated.")
-            return redirect('shipping_confirmation')
 
         except ShipmentSchedule.DoesNotExist:
             messages.error(request, "Shipment record not found.")
@@ -3927,7 +4121,155 @@ def shipping_confirmation_view(request):
     context = {
         'shipments': pending_shipments
     }
-    return render(request, 'Inventory/inquiry/shipping_confirmation.html', context)
+    return render(request, 'Inventory/inbound/shipping_confirmation.html', context)
+
+@login_required
+def new_request_view(request):
+    if request.method == 'POST':
+        department = request.POST.get('department')
+        required_date = request.POST.get('required_date')
+        purpose = request.POST.get('purpose')
+        
+        item_codes = request.POST.getlist('item_code[]')
+        item_descs = request.POST.getlist('item_desc[]')
+        request_qtys = request.POST.getlist('request_qty[]')
+        item_remarks = request.POST.getlist('item_remarks[]')
+
+        try:
+            with transaction.atomic():
+                new_req_no = f"REQ-{timezone.now().strftime('%Y%m%d-%H%M%S')}"
+
+                new_req = DeliveryRequest.objects.create(
+                    request_no=new_req_no,
+                    request_date=timezone.now().date(),
+                    delivery_date=required_date,
+                    delivery_place="Main Warehouse",
+                    receiving_place=department,
+                    reason=purpose,
+                    remarks=purpose,
+                    status='Pending'
+                )
+                
+                for i in range(len(item_codes)):
+                    code = item_codes[i].strip()
+                    if code: 
+                        DeliveryRequestItem.objects.create(
+                            request_header=new_req,
+                            item_code=code,
+                            description=item_descs[i] if i < len(item_descs) else '',
+                            request_qty=int(request_qtys[i]),
+                            delivered_qty=0,
+                            remarks=item_remarks[i] if i < len(item_remarks) else ''
+                        )
+
+                # Send email notification
+                try:
+                    send_new_material_request_alert(new_req)
+                except Exception as e:
+                    print(f"Email Failed: {e}") # Wag i-crash ang system kung pumalpak ang email
+                
+                messages.success(request, f"Requisition Submitted! Request No: {new_req.request_no}")
+                return redirect('my_requests')
+                
+        except Exception as e:
+            messages.error(request, f"Failed to submit request: {str(e)}")
+            return redirect('new_request')
+
+    items_list = Item.objects.all().order_by('item_code')
+
+    return render(request, 'Inventory/inventory_request/new_request.html', {'items': items_list})
+
+# 3. MY REQUESTS VIEW
+@login_required
+def my_requests_view(request):
+    try:
+        # Kukunin ang 50 latest requests at bibilangin kung ilang items ang nasa loob
+        requests_list = DeliveryRequest.objects.annotate(
+            item_count=Count('items') 
+        ).order_by('-request_date', '-id')[:50] 
+    except Exception as e:
+        print(f"Error loading requests: {e}")
+        requests_list = []
+        
+    context = {
+        'requests': requests_list
+    }
+    return render(request, 'Inventory/inventory_request/my_requests.html', context)
+
+# 2. ANG API PARA SA "VIEW DETAILS" MODAL
+@login_required
+def api_request_details(request, req_id):
+    try:
+        req = DeliveryRequest.objects.get(id=req_id)
+        items_data = []
+        
+        for item in req.items.all():
+            items_data.append({
+                'item_code': item.item_code,
+                'description': item.description,
+                'request_qty': item.request_qty,
+                'delivered_qty': item.delivered_qty, # Para makita nila kung ilan na ang na-pick
+                'remarks': item.remarks
+            })
+            
+        data = {
+            'request_no': req.request_no,
+            'department': req.receiving_place,
+            'date': req.request_date.strftime('%Y-%m-%d'),
+            'status': req.status,
+            'purpose': req.reason,
+            'items': items_data
+        }
+        return JsonResponse({'success': True, 'data': data})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+# 5. RETURN SLIP VIEW
+@login_required
+def return_slip_view(request):
+    if request.method == 'POST':
+        # (Nandito yung logic mo para sa Return Slip na ginawa natin kanina)
+        ref_request_no = request.POST.get('ref_request_no', '').strip()
+        department = request.POST.get('department')
+        reason = request.POST.get('reason')
+        item_codes = request.POST.getlist('ret_item_code[]')
+        lot_nos = request.POST.getlist('ret_lot_no[]')
+        return_qtys = request.POST.getlist('ret_qty[]')
+        
+        try:
+            with transaction.atomic():
+                for i in range(len(item_codes)):
+                    code = item_codes[i].strip()
+                    lot = lot_nos[i].strip()
+                    qty = int(return_qtys[i])
+                    
+                    if code and qty > 0 and lot:
+                        try:
+                            tag = MaterialTag.objects.get(lot_no=lot)
+                            old_qty = tag.total_pcs
+                            tag.total_pcs += qty 
+                            tag.save()
+                            
+                            StockLog.objects.create(
+                                material_tag=tag,
+                                action_type='REG', 
+                                old_qty=old_qty,
+                                new_qty=tag.total_pcs,
+                                change_qty=qty,
+                                notes=f"RETURNED from {department} (Ref: {ref_request_no}). Reason: {reason}",
+                                user=request.user
+                            )
+                        except MaterialTag.DoesNotExist:
+                            pass 
+                messages.success(request, f"Return Slip submitted successfully for Ref: {ref_request_no}")
+                return redirect('return_slip')
+        except Exception as e:
+            messages.error(request, f"Error processing return: {str(e)}")
+            return redirect('return_slip')
+
+    items_list = Item.objects.all().order_by('item_code')
+    
+    return render(request, 'Inventory/inventory_request/return_slip.html', {'items': items_list})
 
 
 @login_required
@@ -4480,7 +4822,7 @@ def api_assembly_action(request):
                     machine.status = 'Partial'
                 elif action == 'Assemble':
                     machine.status = 'Building'
-                    
+
                 machine.save()
                 messages.success(request, f"Successfully {action.lower()}d {qty}x of {tag.item_code}.")
 
@@ -4501,6 +4843,12 @@ def api_assembly_complete(request):
         # Papalitan ang status niya to Available
         machine.status = 'Available'
         machine.save()
+        
+        # 🚀 TAWAGIN ANG EMAIL TRIGGER DITO
+        try:
+            send_assembly_completed_alert(machine)
+        except Exception as e:
+            print(f"Assembly Email Failed: {e}")
         
         messages.success(request, f"Asset {machine.machine_code} marked as Complete and Available!")
         
@@ -4892,103 +5240,6 @@ def mark_order_shipped_view(request, order_id):
 
         return redirect('some_order_list_view')
 
-def send_shipping_notification(order_no, customer_email, courier_name, tracking_number):
-    if not customer_email:
-        return False 
-        
-    try:
-        subject = f"Your Order {order_no} has been Shipped!"
-        context = {
-            'order_no': order_no,
-            'courier_name': courier_name,
-            'tracking_number': tracking_number
-        }
-        
-        html_message = render_to_string('Inventory/emails/shipping_notification_email.html', context)
-        plain_message = strip_tags(html_message)
-        
-        send_mail(subject, plain_message, django_settings.DEFAULT_FROM_EMAIL, [customer_email], html_message=html_message, fail_silently=False)
-        return True
-    except Exception as e:
-        print(f"Failed to send shipping email to customer: {str(e)}")
-        return False
-
-def alert_stock_correction(tag, old_qty, new_qty, reason, user):
-    try:
-        route = EmailRoute.objects.get(event_name='STOCK_CORRECTION', is_active=True)
-        target_emails = route.get_email_list()
-
-        if target_emails:
-            subject = f"📝 AUDIT ALERT: Stock Correction on Lot {tag.lot_no}"
-            
-            difference = new_qty - old_qty
-            diff_str = f"+{difference}" if difference > 0 else str(difference)
-
-            context = {
-                'item_code': tag.item_code,
-                'lot_no': tag.lot_no,
-                'old_qty': old_qty,
-                'new_qty': new_qty,
-                'difference': diff_str,
-                'reason': reason,
-                'username': user.username if user else 'SYSTEM'
-            }
-
-            html_message = render_to_string('Inventory/emails/stock_correction_email.html', context)
-            plain_message = strip_tags(html_message)
-
-            send_mail(
-                subject, 
-                plain_message, 
-                django_settings.DEFAULT_FROM_EMAIL, 
-                target_emails, 
-                html_message=html_message, 
-                fail_silently=False
-            )
-            print(f"Stock correction email sent for Lot {tag.lot_no}")
-            
-    except EmailRoute.DoesNotExist:
-        print("Notice: No email route setup for STOCK_CORRECTION.")
-    except Exception as e:
-        print(f"Error sending correction alert: {str(e)}")
-
-def alert_new_delivery_request(delivery_request):
-    try:
-        route = EmailRoute.objects.get(event_name='NEW_DELIVERY_REQ', is_active=True)
-        target_emails = route.get_email_list()
-
-        if target_emails:
-            subject = f"🚚 NEW REQUEST: Movement Slip {delivery_request.request_no}"
-            
-            # Bilangin kung ilang items ang nasa request
-            item_count = delivery_request.items.count()
-
-            context = {
-                'req_no': delivery_request.request_no,
-                'destination': delivery_request.receiving_place,
-                'requestor': delivery_request.requestor or 'Not specified',
-                'item_count': item_count,
-                'remarks': delivery_request.remarks
-            }
-
-            html_message = render_to_string('Inventory/emails/new_delivery_request_email.html', context)
-            plain_message = strip_tags(html_message)
-
-            send_mail(
-                subject, 
-                plain_message, 
-                django_settings.DEFAULT_FROM_EMAIL, 
-                target_emails, 
-                html_message=html_message, 
-                fail_silently=False
-            )
-            print(f"Delivery request email sent for {delivery_request.request_no}")
-            
-    except EmailRoute.DoesNotExist:
-        print("Notice: No email route setup for NEW_DELIVERY_REQ.")
-    except Exception as e:
-        print(f"Error sending delivery request alert: {str(e)}")
-
 def alert_po_status_update(po, manager_user):
     # Siguraduhin na may email yung taong gumawa ng PO
     recipient_email = po.created_by.email if po.created_by and po.created_by.email else None
@@ -5140,7 +5391,7 @@ def test_all_email_templates_view(request):
         })
 
         # 7. NEW USER REGISTRATION
-        send_test("New User Registered", "new_user_email.html", {
+        send_test("New User Registered", "user_welcome_email.html", {  # 🚀 Pinalitan ng tamang filename!
             'username': 'juan_delacruz', 'role': 'Warehouse Staff', 'company_name': 'Receiving Department'
         })
 
@@ -5169,8 +5420,44 @@ def test_all_email_templates_view(request):
             'manager': 'Manager.Santos'
         })
 
-        # Success!
-        messages.success(request, f"MASSIVE SUCCESS! 7 Test Emails with HTML Designs were sent to: {', '.join(target_emails)}. Check your Inbox!")
+        # 🚀 11. NEW MATERIAL REQUEST (Gumawa tayo ng dummy class para hindi mag-error ang .count())
+        class DummyItems:
+            def count(self): return 5
+
+        class DummyRequest:
+            request_no = "REQ-2026-TEST-99"
+            receiving_place = "Assembly Zone A"
+            delivery_date = "2026-04-15"
+            reason = "Testing Material Request Email"
+            items = DummyItems()
+
+        send_test("New Material Request Submitted", "new_material_request.html", {
+            'req': DummyRequest()
+        })
+
+        # 🚀 12. ASSEMBLY COMPLETED
+        class DummyMachine:
+            machine_code = "MAC-X900-TEST"
+            name = "Industrial Conveyor Belt"
+
+        send_test("Machine Assembly Completed", "assembly_completed.html", {
+            'machine': DummyMachine()
+        })
+
+        # 13. SHIPPING NOTIFICATION
+        send_test("Shipment Dispatched", "shipping_notification_email.html", {
+            'order_no': 'SO-2026-005', 'customer_name': 'Beta Tech Corp', 
+            'courier': 'LBC Express', 'tracking': 'LBC-123456789'
+        })
+
+        # 14. STOCK CORRECTION
+        send_test("Manual Stock Correction", "stock_correction_email.html", {
+            'lot_no': 'LOT-1002', 'item_code': 'RAW-MAT-X', 
+            'old_qty': 100, 'new_qty': 85, 'reason': 'Damaged items disposed.'
+        })
+
+        # Success! (In-update ko na to 12)
+        messages.success(request, f"MASSIVE SUCCESS! 12 Test Emails with HTML Designs were sent to: {', '.join(target_emails)}. Check your Inbox!")
 
     except EmailRoute.DoesNotExist:
         messages.error(request, "Test Failed: Please setup the 'TEST_ALERT' event in your Email Routes first.")

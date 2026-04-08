@@ -256,12 +256,27 @@
         }
         lucide.createIcons();
         
-        // Add 1 default row to the first block
         const firstBlockBtn = document.querySelector('.dynamic-order-block button[onclick^="addDynamicRow"]');
         if(firstBlockBtn) firstBlockBtn.click();
     });
 
-    // AUTO-GENERATE PO NUMBERS
+    // 🚀 THE MAGIC FIX: "Re-Indexer"
+    // Bago ipadala sa server, aayusin niya ang numbering ng mga order blocks para hindi malito ang database!
+    document.getElementById('manualOrderForm').addEventListener('submit', function(e) {
+        const blocks = document.querySelectorAll('.dynamic-order-block');
+        blocks.forEach((block, index) => {
+            // Hanapin ang lahat ng items sa loob ng block na ito
+            const itemInputs = block.querySelectorAll('input[name]');
+            itemInputs.forEach(input => {
+                // Kapag nakita niya yung name na may underscore at number (ex. item_code_5[])
+                // papalitan niya yung number base sa tamang pwesto (ex. item_code_1[])
+                if (input.name.match(/_\d+\[\]/)) {
+                    input.name = input.name.replace(/_\d+\[\]/, `_${index}[]`);
+                }
+            });
+        });
+    });
+
     function generatePONo(btnElement, prefix) {
         const input = btnElement.previousElementSibling;
         const date = new Date();
@@ -277,7 +292,7 @@
         {% for c in customers %}
         "{{ c.name|upper|escapejs }}": {
             "contact": "{{ c.contact_person|default:''|escapejs }}",
-            "address": "{{ c.address|default:''|escapejs }}" // 🚀 BAGO
+            "address": "{{ c.address|default:''|escapejs }}"
         }{% if not forloop.last %},{% endif %}
         {% endfor %}
     };
@@ -286,7 +301,7 @@
         const selectedCustomer = inputElement.value.toUpperCase();
         const container = inputElement.closest('.dynamic-order-block'); 
         const contactField = container.querySelector('.contact-person-field');
-        const addressField = container.querySelector('.address-field'); // 🚀 BAGO
+        const addressField = container.querySelector('.address-field');
 
         if (customerDatabase[selectedCustomer]) {
             if(contactField) contactField.value = customerDatabase[selectedCustomer].contact;

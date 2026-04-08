@@ -97,26 +97,42 @@ urlpatterns = [
     path('api/update-tag-status/', views.api_update_tag_status, name='api_update_tag_status'),
     path('api/get-picking-list/', views.get_picking_list, name='api_get_picking_list'),
 
-    # Inventory Requests 
-    path('inventory-request/move/', views.stock_move_view, name='stock_move'),
-    path('inventory-request/correction/', views.stock_correction_view, name='stock_correction'),
-    path('inventory-request/out/', views.stock_out_view, name='stock_out'),
+    # MATERIAL REQUEST MODULE
+    path('request/new/', views.new_request_view, name='new_request'),
+    path('request/my-list/', views.my_requests_view, name='my_requests'),
+    path('request/return/', views.return_slip_view, name='return_slip'),
+
+    # API para sa View Button
+    path('api/request-details/<int:req_id>/', views.api_request_details, name='api_request_details'),    
+
+    # INVENTORY PROCESSING MODULE
+    path('processing/move/', views.stock_move_view, name='stock_move'),
+    path('processing/correction/', views.stock_correction_view, name='stock_correction'),
+    path('processing/out/', views.stock_out_view, name='stock_out'),
+    path('processing/get-tag/', views.get_tag_info, name='get_tag_info'),
     path('inventory-request/get-tag/', views.get_tag_info, name='get_tag_info'),
 
-    # Inventory Processing
-    path('processing/stock-inquiry/', views.stock_inquiry_view, name='stock_inquiry'),
-    path('processing/stock-item-inquiry/', views.stock_item_inquiry_view, name='stock_item_inquiry'),
-    path('processing/stock-history/', views.stock_history_view, name='stock_history'),
-    path('inventory-request/get-tag/', views.get_tag_info, name='get_tag_info'),
-    path('processing/request-inquiry/', views.request_inquiry_view, name='request_inquiry'),
-    path('processing/settings/', views.inquiry_settings_view, name='inquiry_settings'),
-    path('processing/stock-io/<int:tag_id>/', views.stock_io_view, name='stock_io_history'),
+    # INVENTORY INQUIRY MODULE
+    path('inventory-inquiry/stock/', views.stock_inquiry_view, name='stock_inquiry'),
+    path('inventory-inquiry/item/', views.stock_item_inquiry_view, name='stock_item_inquiry'),
+    path('inventory-inquiry/history/', views.stock_history_view, name='stock_history'),
+    path('inventory-inquiry/request/', views.request_inquiry_view, name='request_inquiry'),
+    path('inventory-inquiry/settings/', views.inquiry_settings_view, name='inquiry_settings'),
+    path('inventory-inquiry/stock-io/<int:tag_id>/', views.stock_io_view, name='stock_io_history'),
+    
+    # API
     path('api/update-item-price/', views.api_update_item_price, name='api_update_item_price'),
 
-    # Inventory Inquiry / Shipping
-    path('inquiry/shipment-import/', views.shipment_import_view, name='shipment_import'),
-    path('inquiry/shipment-inquiry/', views.shipment_inquiry_view, name='shipment_inquiry'),
-    path('inquiry/shipping-confirmation/', views.shipping_confirmation_view, name='shipping_confirmation'),
+    # INBOUND & RECEIVING MODULE
+    path('inbound/shipment-import/', views.shipment_import_view, name='shipment_import'),
+    path('inbound/shipment-inquiry/', views.shipment_inquiry_view, name='shipment_inquiry'),
+    path('inbound/shipping-confirmation/', views.shipping_confirmation_view, name='shipping_confirmation'),
+    path('inbound/shipment-update/', views.shipment_update, name='shipment_update'),
+    path('api/shipment-details/<int:ship_id>/', views.api_shipment_details, name='api_shipment_details'),
+    path('inbound/shipment-allocation/<int:ship_id>/', views.shipment_allocation_view, name='shipment_allocation'),
+    path('inbound/shipment-allocate/register/<int:ship_id>/', views.shipment_register_allocation, name='shipment_register_allocation'),
+    path('inbound/shipment-invoice/<int:ship_id>/', views.shipment_invoice_view, name='shipment_invoice'),
+    path('inbound/shipment-print/<int:ship_id>/', views.shipment_print_view, name='shipment_print'),
 
     path('master/locations/', views.location_master_view, name='location_master'),
     path('receive/scan/', views.receive_item_scan_view, name='receive_item_scan'), 

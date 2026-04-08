@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>New Material Request</title>
+</head>
+<body style="font-family: Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 20px;">
+    
+    <div style="max-w-[600px] margin: 0 auto; background-color: #ffffff; border-top: 4px solid #6d28d9; border-radius: 4px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+        
+        <div style="background-color: #4c1d95; padding: 20px; text-align: center;">
+            <h2 style="color: #ffffff; margin: 0; font-size: 18px; letter-spacing: 2px;">WMS INVENTORY ALERT</h2>
+            <p style="color: #c4b5fd; margin: 5px 0 0 0; font-size: 12px;">ASIA Integrated Machine Inc.</p>
+        </div>
+
+        <div style="padding: 30px; color: #334155;">
+            <h3 style="color: #0f172a; margin-top: 0;">Hello Warehouse Team,</h3>
+            <p style="font-size: 14px; line-height: 1.6;">A new material requisition form has been submitted and requires picking/preparation.</p>
+            
+            <div style="background-color: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 4px; padding: 15px; margin: 20px 0;">
+                <p style="margin: 5px 0; font-size: 14px;"><strong>Request No:</strong> <span style="color: #6d28d9;">{{ req.request_no }}</span></p>
+                <p style="margin: 5px 0; font-size: 14px;"><strong>Requesting Dept:</strong> {{ req.receiving_place }}</p>
+                <p style="margin: 5px 0; font-size: 14px;"><strong>Required Date:</strong> {{ req.delivery_date }}</p>
+                <p style="margin: 5px 0; font-size: 14px;"><strong>Purpose:</strong> {{ req.reason }}</p>
+                <p style="margin: 5px 0; font-size: 14px;"><strong>Items Requested:</strong> {{ req.items.count }} items</p>
+            </div>
+
+            <p style="font-size: 14px; line-height: 1.6;">Please log in to the Inventory Control System to view the full item list, check available stocks, and generate the picking list.</p>
+
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="http://127.0.0.1:8000/login/" style="background-color: #6d28d9; color: #ffffff; text-decoration: none; padding: 12px 25px; border-radius: 4px; font-weight: bold; font-size: 14px; display: inline-block;">Open WMS Dashboard</a>
+            </div>
+            
+            <p style="font-size: 12px; color: #94a3b8; text-align: center; margin-bottom: 0;">This is an automated system message. Please do not reply to this email.</p>
+        </div>
+        
+    </div>
+
+</body>
+</html>

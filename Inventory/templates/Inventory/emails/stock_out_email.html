@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Stock Out Alert</title>
+</head>
+<body style="font-family: Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 20px;">
+    
+    <div style="max-w-[600px] margin: 0 auto; background-color: #ffffff; border-top: 4px solid #e11d48; border-radius: 4px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+        
+        <div style="background-color: #be123c; padding: 20px; text-align: center;">
+            <h2 style="color: #ffffff; margin: 0; font-size: 18px; letter-spacing: 2px;">STOCK ISSUANCE ALERT</h2>
+            <p style="color: #ffe4e6; margin: 5px 0 0 0; font-size: 12px;">ASIA Integrated Machine Inc.</p>
+        </div>
+
+        <div style="padding: 30px; color: #334155;">
+            <h3 style="color: #0f172a; margin-top: 0;">Hello Team,</h3>
+            <p style="font-size: 14px; line-height: 1.6;">Items have been successfully deducted from the warehouse inventory.</p>
+            
+            <div style="background-color: #fff1f2; border: 1px solid #fecdd3; border-radius: 4px; padding: 15px; margin: 20px 0;">
+                <p style="margin: 5px 0; font-size: 14px;"><strong>Lot Number:</strong> <span style="color: #e11d48; font-weight: bold;">{{ lot_no }}</span></p>
+                <p style="margin: 5px 0; font-size: 14px;"><strong>Item Code:</strong> {{ item_code }}</p>
+                <hr style="border: none; border-top: 1px solid #fecdd3; margin: 10px 0;">
+                <p style="margin: 5px 0; font-size: 14px;"><strong>Quantity Deducted:</strong> <span style="color: #e11d48; font-weight: black; font-size: 16px;">-{{ deduct_qty }}</span></p>
+                <p style="margin: 5px 0; font-size: 14px;"><strong>Remaining Stock:</strong> {{ remaining_qty }}</p>
+                <p style="margin: 5px 0; font-size: 14px;"><strong>Reference/Remarks:</strong> <span style="font-style: italic;">"{{ remarks }}"</span></p>
+                <hr style="border: none; border-top: 1px solid #fecdd3; margin: 10px 0;">
+                <p style="margin: 5px 0; font-size: 14px;"><strong>Issued By:</strong> {{ user|default:"System" }}</p>
+            </div>
+
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="http://127.0.0.1:8000/login/" style="background-color: #e11d48; color: #ffffff; text-decoration: none; padding: 12px 25px; border-radius: 4px; font-weight: bold; font-size: 14px; display: inline-block;">View Inventory</a>
+            </div>
+            
+            <p style="font-size: 12px; color: #94a3b8; text-align: center; margin-bottom: 0;">This is an automated system message. Please do not reply.</p>
+        </div>
+    </div>
+
+</body>
+</html>

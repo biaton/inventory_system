@@ -1,6 +1,6 @@
-{% extends "Inventory/inventory_request/request_base.html" %}
+{% extends "Inventory/processing/processing_base.html" %}
 
-{% block request_content %}
+{% block processing_content %}
 <div class="max-w-[100%] mx-auto pb-20 mt-4 text-slate-800">
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
@@ -86,11 +86,15 @@
                         <label class="text-[10px] font-black text-emerald-800 uppercase tracking-widest flex items-center gap-1 mb-2">
                             <i data-lucide="map-pin" class="w-3 h-3"></i> 2. Type/Scan New Dest.
                         </label>
-                        <input type="text" name="new_location" id="new_location_input" required placeholder="e.g. RACK-B2"
+    
+                        <input type="text" name="new_location" id="new_location_input" required placeholder="e.g. RACK-B2" list="location_options"
                                class="w-full p-3 bg-white border border-emerald-300 text-lg font-black text-slate-900 uppercase focus:ring-2 focus:ring-emerald-500 focus:outline-none shadow-sm transition-all placeholder:text-slate-300">
-                        <datalist id="move_location_options">
+                        
+                        <datalist id="location_options">
                             {% for loc in locations %}
-                                <option value="{{ loc.location_code }}">{{ loc.zone }}</option>
+                                <option value="{{ loc.location_code }}">
+                                    {{ loc.warehouse }} | {{ loc.zone }} | Capacity: {{ loc.capacity }}
+                                </option>
                             {% endfor %}
                         </datalist>
                     </div>

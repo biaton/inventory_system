@@ -401,5 +401,27 @@
             selectElement.classList.add("bg-amber-100", "text-amber-700", "border-amber-300");
         }
     }
+    async function fetchLocationStock() {
+        const locDropdown = document.getElementById('view_location');
+        const locId = locDropdown.value;
+        
+        if (!locId) return;
+
+        try {
+            // Siguraduhing tama ang URL pathing nito base sa urls.py mo
+            const response = await fetch(`/api/get-location-stock/?loc_id=${locId}`);
+            const data = await response.json();
+
+            if (data.success) {
+                console.log("Stock in Location:", data.stock);
+                // Hint: Pwede ka gumawa ng maliit na table sa UI sa susunod 
+                // para i-display yung laman ng `data.stock`!
+            } else {
+                console.error("Error:", data.error);
+            }
+        } catch (error) {
+            console.error("Failed to fetch location stock:", error);
+        }
+    }
 </script>
 {% endblock %}

@@ -369,6 +369,10 @@ class EmailRoute(models.Model):
         ('LATE_DELIVERY', 'Logistics: Overdue / Late Delivery Alert'),
         ('STOCK_CORRECTION', 'Inventory: Manual Stock Override/Correction Alert'),
         ('NEW_DELIVERY_REQ', 'Logistics: New Movement Slip / Transfer Request'),
+        ('NEW_MATERIAL_REQ', 'Warehouse: New Material Request Submitted'),
+        ('ASSEMBLY_COMPLETED', 'Production: Machine Assembly Completed'),
+        ('STOCK_MOVE', 'Inventory: Item Location Transfer Alert'),
+        ('STOCK_OUT', 'Inventory: Stock Issuance / Deduction Alert'),
     ]
     
     event_name = models.CharField(max_length=50, choices=EVENT_CHOICES, unique=True, verbose_name="Notification Event")
