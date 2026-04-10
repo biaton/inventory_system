@@ -7,32 +7,32 @@
 
         <div class="lg:col-span-4 bg-white border border-slate-300 shadow-sm flex flex-col h-[480px]">
             
-            <div class="bg-rose-700 px-4 py-3 border-b border-emerald-800 flex items-center justify-between">
+            <div class="bg-rose-700 px-4 py-3 border-b border-rose-800 flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <i data-lucide="package-minus" class="w-4 h-4 text-emerald-100"></i>
+                    <i data-lucide="package-minus" class="w-4 h-4 text-rose-100"></i>
                     <h2 class="text-xs font-black tracking-widest text-white uppercase">Stock Out Terminal</h2>
                 </div>
             </div>
             
             <div class="flex-1 bg-slate-50 p-6 flex flex-col justify-center relative overflow-hidden">
-                <i data-lucide="scan-line" class="absolute right-[-20px] bottom-10 w-48 h-48 text-emerald-200 opacity-20 pointer-events-none transform -rotate-12"></i>
+                <i data-lucide="scan-line" class="absolute right-[-20px] bottom-10 w-48 h-48 text-rose-200 opacity-20 pointer-events-none transform -rotate-12"></i>
 
                 <div class="relative z-10 space-y-4">
                     <div>
-                        <label class="text-[10px] font-black text-emerald-700 uppercase tracking-widest mb-1 block">Scan Target Lot Number</label>
+                        <label class="text-[10px] font-black text-rose-700 uppercase tracking-widest mb-1 block">Scan Target Lot Number</label>
                         <p class="text-[9px] font-bold text-slate-500 uppercase mb-3 leading-tight">Scan a valid tag to begin the stock deduction process.</p>
                     </div>
                     
                     <div class="relative">
                         <i data-lucide="barcode" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
                         <input type="text" id="scan_lot_no" placeholder="SCAN STICKER..." autofocus
-                               class="w-full pl-12 pr-4 py-4 bg-white border-2 border-slate-300 shadow-inner text-lg font-black text-slate-800 uppercase tracking-widest focus:ring-0 focus:border-emerald-500 transition-all placeholder:text-slate-300">
+                               class="w-full pl-12 pr-4 py-4 bg-white border-2 border-slate-300 shadow-inner text-lg font-black text-slate-800 uppercase tracking-widest focus:ring-0 focus:border-rose-500 transition-all placeholder:text-slate-300">
                     </div>
                     
                     <div class="flex items-center gap-2 mt-4 bg-white border border-slate-200 p-2 shadow-sm">
                         <span class="relative flex h-3 w-3 ml-1">
-                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" id="ping_indicator"></span>
-                          <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" id="dot_indicator"></span>
+                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" id="ping_indicator"></span>
+                          <span class="relative inline-flex rounded-full h-3 w-3 bg-rose-500" id="dot_indicator"></span>
                         </span>
                         <p class="text-[10px] text-slate-600 font-bold uppercase tracking-widest" id="scan_status">Awaiting scanner input...</p>
                     </div>
@@ -54,15 +54,15 @@
                 {% csrf_token %}
                 <input type="hidden" name="tag_id" id="hidden_tag_id">
 
-                <div class="p-6 border-b border-emerald-200 bg-emerald-50/50 flex justify-between items-start">
+                <div class="p-6 border-b border-rose-200 bg-rose-50/50 flex justify-between items-start">
                     <div>
-                        <span class="px-2 py-0.5 bg-emerald-200 text-emerald-900 text-[9px] font-black uppercase tracking-widest mb-2 inline-block border border-emerald-300">Item Found</span>
+                        <span class="px-2 py-0.5 bg-rose-200 text-rose-900 text-[9px] font-black uppercase tracking-widest mb-2 inline-block border border-rose-300">Item Found</span>
                         <h2 class="text-2xl font-black text-slate-900 tracking-tighter uppercase" id="display_item_code">ITEM-CODE</h2>
                         <p class="text-xs font-bold text-slate-600 mt-0.5" id="display_description">Item Description Here</p>
                     </div>
                     <div class="text-right">
                         <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Lot Number</p>
-                        <p class="font-black text-lg text-emerald-700 bg-white border border-emerald-300 px-3 py-1 shadow-sm" id="display_lot_no">LOT-000</p>
+                        <p class="font-black text-lg text-rose-700 bg-white border border-rose-300 px-3 py-1 shadow-sm" id="display_lot_no">LOT-000</p>
                     </div>
                 </div>
 
@@ -72,7 +72,7 @@
                         <div class="border border-slate-200 bg-slate-50 p-4 shadow-inner">
                             <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Available Quantity</p>
                             <div class="flex items-baseline gap-2">
-                                <p class="font-black text-3xl text-emerald-600 leading-none" id="display_qty">0</p>
+                                <p class="font-black text-3xl text-rose-600 leading-none" id="display_qty">0</p>
                                 <span class="text-xs font-bold text-slate-500 uppercase">PCS</span>
                             </div>
                         </div>
@@ -99,7 +99,7 @@
                         <div class="bg-slate-50 border border-slate-200 p-4">
                             <label class="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-2 block">Remarks / Reference</label>
                             <input type="text" name="remarks" placeholder="e.g. Sales Order / Delivery" required
-                                   class="w-full p-2.5 bg-white border border-slate-300 text-xs font-bold text-slate-700 focus:ring-1 focus:ring-emerald-500 outline-none">
+                                   class="w-full p-2.5 bg-white border border-slate-300 text-xs font-bold text-slate-700 focus:ring-1 focus:ring-rose-500 outline-none">
                         </div>
 
                     </div>

@@ -126,13 +126,17 @@ urlpatterns = [
     # INBOUND & RECEIVING MODULE
     path('inbound/shipment-import/', views.shipment_import_view, name='shipment_import'),
     path('inbound/shipment-inquiry/', views.shipment_inquiry_view, name='shipment_inquiry'),
-    path('inbound/shipping-confirmation/', views.shipping_confirmation_view, name='shipping_confirmation'),
+    path('inbound/shipping-confirmation/', views.shipping_confirmation_view, name='shipping_confirmation_base'),
+    path('inbound/shipping-confirmation/<str:po_no>/', views.shipping_confirmation_view, name='shipping_confirmation'),
     path('inbound/shipment-update/', views.shipment_update, name='shipment_update'),
     path('api/shipment-details/<int:ship_id>/', views.api_shipment_details, name='api_shipment_details'),
-    path('inbound/shipment-allocation/<int:ship_id>/', views.shipment_allocation_view, name='shipment_allocation'),
+    path('inbound/shipment-allocation/<str:po_no>/', views.shipment_allocation_view, name='shipment_allocation'),
     path('inbound/shipment-allocate/register/<int:ship_id>/', views.shipment_register_allocation, name='shipment_register_allocation'),
     path('inbound/shipment-invoice/<int:ship_id>/', views.shipment_invoice_view, name='shipment_invoice'),
     path('inbound/shipment-print/<int:ship_id>/', views.shipment_print_view, name='shipment_print'),
+
+    path('shipment-calendar/', views.shipment_calendar_view, name='shipment_calendar'),
+    path('inbound/print-grn/<str:po_no>/', views.shipment_print_doc_view, name='shipment_print_doc'),
 
     path('master/locations/', views.location_master_view, name='location_master'),
     path('receive/scan/', views.receive_item_scan_view, name='receive_item_scan'), 

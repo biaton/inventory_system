@@ -1,266 +1,277 @@
 {% extends "Inventory/inbound/inbound_base.html" %}
 
 {% block inbound_content %}
+
 <div class="max-w-[100%] mx-auto pb-20 mt-4 text-slate-800">
 
-    <div class="border-b-2 border-slate-800 pb-2 mb-4 flex justify-between items-end">
-        <div>
-            <h1 class="text-2xl font-black text-slate-900 uppercase tracking-tighter flex items-center gap-2">
-                <i data-lucide="truck" class="w-6 h-6 text-teal-700"></i> Shipment Schedule Inquiry
-            </h1>
-            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">
-                Logistics and Outbound Delivery Tracking
-            </p>
+    <div class="mt-6 mb-8 grid grid-cols-1 md:grid-cols-4 gap-4">
+        
+        <div class="bg-white border border-slate-300 p-4 shadow-sm relative overflow-hidden group">
+            <div class="absolute left-0 top-0 w-1 h-full bg-blue-600 transition-all group-hover:w-1.5"></div>
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Expected Shipments</p>
+                    <h2 class="text-2xl font-black text-slate-800 leading-none">{{ total_shipments|default:"0" }}</h2>
+                </div>
+                <div class="bg-blue-50 p-2 rounded">
+                    <i data-lucide="package-search" class="w-5 h-5 text-blue-600"></i>
+                </div>
+            </div>
         </div>
+
+        <div class="bg-white border border-slate-300 p-4 shadow-sm relative overflow-hidden group">
+            <div class="absolute left-0 top-0 w-1 h-full bg-cyan-500 transition-all group-hover:w-1.5"></div>
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">In Transit / Shipped</p>
+                    <h2 class="text-2xl font-black text-slate-800 leading-none">{{ total_in_transit|default:"0" }}</h2>
+                </div>
+                <div class="bg-cyan-50 p-2 rounded">
+                    <i data-lucide="truck" class="w-5 h-5 text-cyan-600"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white border border-slate-300 p-4 shadow-sm relative overflow-hidden group">
+            <div class="absolute left-0 top-0 w-1 h-full {% if total_delayed > 0 %}bg-rose-500{% else %}bg-emerald-500{% endif %} transition-all group-hover:w-1.5"></div>
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Delayed Deliveries</p>
+                    <h2 class="text-2xl font-black {% if total_delayed > 0 %}text-rose-600{% else %}text-slate-800{% endif %} leading-none">{{ total_delayed|default:"0" }}</h2>
+                </div>
+                <div class="{% if total_delayed > 0 %}bg-rose-50{% else %}bg-emerald-50{% endif %} p-2 rounded">
+                    <i data-lucide="alert-triangle" class="w-5 h-5 {% if total_delayed > 0 %}text-rose-600{% else %}text-emerald-600{% endif %}"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-slate-800 border border-slate-900 p-4 shadow-md relative overflow-hidden group">
+            <div class="absolute right-0 top-0 w-1 h-full bg-blue-400 transition-all group-hover:w-1.5"></div>
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1">Incoming Value</p>
+                    <h2 class="text-2xl font-black text-white leading-none tracking-tight">₱ {{ overall_inbound_value|floatformat:2 }}</h2>
+                </div>
+                <div class="bg-slate-700 p-2 rounded border border-slate-600">
+                    <i data-lucide="banknote" class="w-5 h-5 text-blue-300"></i>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <div class="bg-white border border-slate-300 shadow-sm p-4 mb-4">
-        <form method="GET" action="{% url 'shipment_inquiry' %}">
-            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-
-                <div class="space-y-1">
-                    <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Search Content</label>
-                    <select name="search_content"
-                        class="w-full p-2 text-xs font-bold border border-slate-300 bg-slate-50 focus:ring-1 focus:ring-teal-600 outline-none rounded-sm">
-                        <option value="plan">Shipment Plan</option>
-                        <option value="details">Shipment Plan Details</option>
-                    </select>
-                </div>
-
-                <div class="space-y-1">
-                    <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Customer</label>
-                    <select name="customer"
-                        class="w-full p-2 text-xs font-bold border border-slate-300 bg-slate-50 focus:ring-1 focus:ring-teal-600 outline-none rounded-sm">
-                        <option value="">-- Select Customer --</option>
-                        {% for cust in customers_list %}
-                        <option value="{{ cust.id }}">
-                            {{ cust.name }}
-                        </option>
-                        {% endfor %}    
-                    </select>
-                </div>
-
-                <div class="space-y-1 lg:col-span-2">
-                    <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Shipment Date </label>
-                    <div class="flex items-center gap-2">
-                        <input type="date" name="date_in"
-                            class="w-full p-2 text-xs font-bold border border-slate-300 bg-slate-50 focus:ring-1 focus:ring-teal-600 outline-none rounded-sm">
-                        <span class="text-xs font-black text-slate-400">TO</span>
-                        <input type="date" name="date_out"
-                            class="w-full p-2 text-xs font-bold border border-slate-300 bg-slate-50 focus:ring-1 focus:ring-teal-600 outline-none rounded-sm">
-                    </div>
-                </div>
-
-                <div class="space-y-1">
-                    <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Transport</label>
-                    <select name="transport"
-                        class="w-full p-2 text-xs font-bold border border-slate-300 bg-slate-50 focus:ring-1 focus:ring-teal-600 outline-none rounded-sm">
-                        <option value="">-- Select Transport --</option>
-                        <option>Truck</option>
-                        <option>Van</option>
-                        <option>Motorcycle</option>
-                        <option>Cargo Ship</option>
-                        <option>Cargo plane</option>
-                    </select>
-                </div>
-
-                <div class="space-y-1">
-                    <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Item Code</label>
-                    <div class="flex">
-                        <input type="text" name="item_code" placeholder="Enter item..."
-                            class="w-full p-2 text-xs font-bold border border-slate-300 border-r-0 bg-slate-50 focus:ring-1 focus:ring-teal-600 outline-none rounded-l-sm uppercase">
-                        <button type="button"
-                            class="bg-slate-700 text-white px-3 text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 rounded-r-sm transition-colors shadow-sm">
-                            Set
-                        </button>
-                    </div>
-                </div>
-
-                <div class="space-y-1">
-                    <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Invoice No.</label>
-                    <input type="text" name="invoice_no" placeholder="e.g. INV-2026-001"
-                        class="w-full p-2 text-xs font-bold border border-slate-300 bg-slate-50 focus:ring-1 focus:ring-teal-600 outline-none rounded-sm uppercase">
-                </div>
-
-                <div class="space-y-1">
-                    <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Shipment
-                        Status</label>
-                    <select name="status"
-                        class="w-full p-2 text-xs font-bold border border-slate-300 bg-slate-50 focus:ring-1 focus:ring-teal-600 outline-none rounded-sm">
-                        <option value="">-- All Status --</option>
-                        <option value="Determined">Determined</option>
-                        <option value="Undetermined">Undetermined</option>
-                    </select>
-                </div>
+    <div class="bg-white border border-slate-300 shadow-sm p-4 mb-4 flex flex-col md:flex-row justify-between items-center gap-4 border-l-4 border-l-blue-600">
+        <div class="flex items-center gap-2">
+            <div class="bg-blue-100 p-2 rounded-sm text-blue-700">
+                <i data-lucide="radar" class="w-5 h-5"></i>
             </div>
-
-            <div class="mt-4 pt-4 border-t border-slate-200 flex justify-end gap-2">
-                <a href="{% url 'shipment_inquiry' %}"
-                    class="bg-white text-slate-600 border border-slate-300 px-6 py-2 text-[10px] font-black uppercase hover:bg-slate-50 transition-all shadow-sm">
-                    Cancel
-                </a>
-                <button type="submit"
-                    class="bg-teal-700 text-white border border-teal-900 px-8 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-teal-800 transition-all shadow-sm flex items-center gap-2">
-                    <i data-lucide="search" class="w-3 h-3"></i> Set / Search
-                </button>
+            <div>
+                <h2 class="text-lg font-black text-slate-900 uppercase tracking-tight">Shipment Schedule Inquiry</h2>
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Track incoming supplier deliveries</p>
             </div>
+        </div>
+
+        <form method="GET" class="flex flex-wrap items-center gap-2 w-full md:w-auto m-0">
+            <select name="status" class="p-2 text-xs font-bold border border-slate-300 focus:border-blue-500 outline-none uppercase bg-slate-50">
+                <option value="">All Status</option>
+                <option value="Approved" {% if status_filter == 'Approved' %}selected{% endif %}>Approved</option>
+                <option value="Shipped" {% if status_filter == 'Shipped' %}selected{% endif %}>Shipped / In Transit</option>
+                <option value="Pending Approval" {% if status_filter == 'Pending Approval' %}selected{% endif %}>Pending</option>
+            </select>
+            <input type="text" name="search" value="{{ search_query }}" placeholder="Search PO No. or Supplier..." class="w-full md:w-64 p-2 text-xs font-bold border border-slate-300 focus:border-blue-500 focus:bg-blue-50 outline-none uppercase placeholder:text-slate-400">
+            <button type="submit" class="bg-slate-800 text-white px-4 py-2 text-xs font-black uppercase tracking-widest hover:bg-slate-700 transition-colors">Search</button>
+            {% if search_query or status_filter %}
+                <a href="{% url 'shipment_inquiry' %}" class="bg-rose-100 text-rose-700 px-3 py-2 text-xs font-black uppercase tracking-widest hover:bg-rose-200 border border-rose-300">Clear</a>
+            {% endif %}
         </form>
     </div>
 
     <div class="bg-white border border-slate-300 shadow-sm overflow-hidden">
         <div class="overflow-x-auto min-h-[400px]">
             <table class="w-full text-left border-collapse" style="font-size: 11px;">
-                <thead
-                    class="bg-slate-200 text-slate-800 uppercase tracking-widest border-b border-slate-400 font-black text-[10px]">
+                <thead class="bg-slate-100 text-slate-600 uppercase tracking-widest font-black text-[9px]">
                     <tr>
-                        <th class="py-2 px-4 border-r border-slate-300 text-center w-32">Manage</th>
-                        <th class="py-2 px-4 border-r border-slate-300">Customer</th>
-                        <th class="py-2 px-4 border-r border-slate-300">Shipment Date</th>
-                        <th class="py-2 px-4 border-r border-slate-300">Invoice No.</th>
-                        <th class="py-2 px-4 border-r border-slate-300">Transport</th>
-                        <th class="py-2 px-4 border-r border-slate-300 text-center">Status</th>
-                        <th class="py-2 px-4 text-center w-48">Documents</th>
+                        <th class="py-3 px-3 border-b border-slate-300 w-40">Purchase Order</th>
+                        <th class="py-3 px-3 border-b border-slate-300 w-28 text-center">Expected Date</th>
+                        <th class="py-3 px-3 border-b border-slate-300">Supplier Name</th>
+                        <th class="py-3 px-3 border-b border-slate-300 w-24 text-center">Items</th>
+                        <th class="py-3 px-3 border-b border-slate-300 w-32 text-right">PO Total</th>
+                        <th class="py-3 px-3 border-b border-slate-300 w-32 text-center">Status</th>
+                        <th class="py-3 px-3 border-b border-slate-300 w-24 text-center">Action</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-200">
-                    {% for ship in shipments %}
-                    <tr class="hover:bg-teal-50/30 transition-colors">
-                        <td class="py-2 px-4 border-r border-slate-200 text-center flex justify-center gap-1">
-                            <button onclick="openUpdateModal('{{ ship.id }}')"
-                                class="bg-amber-600 text-white px-2 py-1 text-[9px] font-black uppercase rounded-sm hover:bg-amber-700 shadow-sm">Update</button>
-
-                            <a href="{% url 'shipment_allocation' ship.id %}" 
-                                class="bg-blue-600 text-white px-2 py-1 text-[9px] font-black uppercase rounded-sm hover:bg-blue-700 shadow-sm text-center">
-                                Inquiry
-                            </a>
+                <tbody class="divide-y divide-slate-200 font-bold">
+                    {% for po in items %}
+                    <tr class="hover:bg-blue-50/50 transition-colors group border-b border-slate-200">
+                        <td class="py-2.5 px-3 border-r border-slate-100">
+                            <span class="text-blue-700 font-black tracking-tighter text-sm block">{{ po.header.po_no }}</span>
                         </td>
-
-                        <td class="py-2 px-4 border-r border-slate-200 text-xs font-black text-slate-800">
-                            {{ ship.customer.name|default:"N/A" }}
+                        <td class="py-2.5 px-3 text-center border-r border-slate-100 text-slate-600">
+                            {{ po.header.delivery_date|date:"Y-m-d"|default:"TBD" }}
                         </td>
-                        <td class="py-2 px-4 border-r border-slate-200 text-xs font-bold text-slate-600">
-                            {{ ship.schedule_date|date:"Y-m-d" }}
+                        
+                        <td class="py-2.5 px-3 border-r border-slate-100 text-slate-800 uppercase">
+                            <span class="block truncate max-w-[250px]">{{ po.header.supplier }}</span>
                         </td>
-                        <td class="py-2 px-4 border-r border-slate-200 text-xs font-black text-slate-800">
-                            {{ ship.invoice_no|default:"-" }}
-                        </td>
-                        <td class="py-2 px-4 border-r border-slate-200 text-xs font-bold text-slate-600">
-                            {{ ship.transport|default:"-" }}
-                        </td>
-
-                        <td class="py-2 px-4 border-r border-slate-200 text-center">
-                            {% if ship.status == 'Determined' or ship.status == 'Shipped' or ship.status == 'Confirmed' %}
-                                <span class="bg-teal-100 text-teal-800 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded-sm border border-teal-200">{{ ship.status }}</span>
+                        
+                        <td class="py-2.5 px-3 text-center border-r border-slate-100 text-slate-600">{{ po.items|length }} <span class="text-[9px]">items</span></td>
+                        <td class="py-2.5 px-3 text-right border-r border-slate-100 text-slate-800 font-black tracking-tighter bg-slate-50/50">₱ {{ po.header.grand_total|floatformat:"2" }}</td>
+                        
+                        <td class="py-2.5 px-3 text-center border-r border-slate-100">
+                            {% if po.header.status == 'Pending Approval' or po.header.status == 'Pending' %}
+                                <span class="bg-amber-100 text-amber-700 px-2 py-0.5 text-[9px] uppercase tracking-widest border border-amber-200">Pending</span>
+                            {% elif po.header.status == 'Shipped' or po.header.status == 'In Transit' %}
+                                <span class="bg-cyan-100 text-cyan-700 px-2 py-0.5 text-[9px] uppercase tracking-widest border border-cyan-200">In Transit</span>
+                            {% elif po.header.status == 'Approved' %}
+                                <span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 text-[9px] uppercase tracking-widest border border-emerald-200">Approved</span>
                             {% else %}
-                                <span class="bg-slate-100 text-slate-600 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded-sm border border-slate-300">{{ ship.status|default:"Pending" }}</span>
+                                <span class="bg-slate-100 text-slate-600 px-2 py-0.5 text-[9px] uppercase tracking-widest border border-slate-300">{{ po.header.status }}</span>
                             {% endif %}
                         </td>
 
-                        <td class="py-2 px-4 text-center flex justify-center gap-1">
-                            <a href="{% url 'shipment_invoice' ship.id %}" target="_blank" class="bg-slate-700 text-white px-2 py-1 text-[9px] font-black uppercase rounded-sm hover:bg-slate-800 shadow-sm flex items-center gap-1">
-                                <i data-lucide="file-text" class="w-3 h-3"></i> Invoice
-                            </a>
-                            <a href="{% url 'shipment_print' ship.id %}" target="_blank" class="bg-slate-200 text-slate-800 border border-slate-300 px-2 py-1 text-[9px] font-black uppercase rounded-sm hover:bg-slate-300 shadow-sm flex items-center gap-1">
-                                <i data-lucide="printer" class="w-3 h-3"></i> Print
-                            </a>
+                        <td class="py-2.5 px-3 text-center">
+                            <button type="button" onclick="openShipmentModal('{{ po.header.po_no }}')" class="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 text-[9px] font-black uppercase tracking-widest shadow-sm transition-all transform active:scale-95">
+                                <i data-lucide="eye" class="w-3 h-3"></i> View PO
+                            </button>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="7" class="py-20 text-center text-slate-400">
-                            <i data-lucide="package-search" class="w-10 h-10 mx-auto mb-2 opacity-30"></i>
-                            <p class="font-black text-xs uppercase tracking-widest">No Shipments Found</p>
-                            <p class="text-[10px] font-bold mt-1 uppercase">Adjust your search filters or clear inputs.
-                            </p>
+                        <td colspan="7" class="py-12 text-center text-slate-400 italic font-bold uppercase text-xs">
+                            <i data-lucide="box" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+                            No inbound shipments found matching your criteria.
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-
+        
         <div class="bg-slate-50 border-t border-slate-200 p-3 flex flex-col md:flex-row justify-between items-center gap-4">
-            
             <span class="text-[9px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1">
                 <i data-lucide="layers" class="w-3 h-3"></i> 
-                Page {{ shipments.number }} of {{ shipments.paginator.num_pages }}
-                <span class="text-slate-400 mx-1">|</span> 
-                Total Shipments: {{ shipments.paginator.count }}
+                Page {{ items.number }} of {{ items.paginator.num_pages|default:1 }}
             </span>
 
             <div class="flex items-center gap-1 shadow-sm">
-                {% if shipments.has_previous %}
-                    <a href="?{{ filter_params }}&page=1" class="px-3 py-1.5 bg-white border border-slate-300 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-300 transition-colors rounded-l-sm">First</a>
-                    <a href="?{{ filter_params }}&page={{ shipments.previous_page_number }}" class="px-3 py-1.5 bg-white border-y border-r border-slate-300 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-300 transition-colors">Prev</a>
+                {% if items.has_previous %}
+                    <a href="?page={{ items.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="px-3 py-1.5 bg-white border border-slate-300 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-blue-50 transition-colors rounded-l-sm">Prev</a>
                 {% else %}
-                    <span class="px-3 py-1.5 bg-slate-100 border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 rounded-l-sm cursor-not-allowed">First</span>
-                    <span class="px-3 py-1.5 bg-slate-100 border-y border-r border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 cursor-not-allowed">Prev</span>
+                    <span class="px-3 py-1.5 bg-slate-100 border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 rounded-l-sm cursor-not-allowed">Prev</span>
                 {% endif %}
 
-                <span class="px-4 py-1.5 bg-slate-800 text-white border-y border-slate-800 text-[10px] font-black uppercase tracking-widest">{{ shipments.number }}</span>
+                <span class="px-4 py-1.5 bg-slate-800 text-white border-y border-slate-800 text-[10px] font-black uppercase tracking-widest">{{ items.number }}</span>
 
-                {% if shipments.has_next %}
-                    <a href="?{{ filter_params }}&page={{ shipments.next_page_number }}" class="px-3 py-1.5 bg-white border-y border-l border-slate-300 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-300 transition-colors">Next</a>
-                    <a href="?{{ filter_params }}&page={{ shipments.paginator.num_pages }}" class="px-3 py-1.5 bg-white border border-slate-300 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-300 transition-colors rounded-r-sm">Last</a>
+                {% if items.has_next %}
+                    <a href="?page={{ items.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="px-3 py-1.5 bg-white border border-slate-300 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-blue-50 transition-colors rounded-r-sm">Next</a>
                 {% else %}
-                    <span class="px-3 py-1.5 bg-slate-100 border-y border-l border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 cursor-not-allowed">Next</span>
-                    <span class="px-3 py-1.5 bg-slate-100 border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 rounded-r-sm cursor-not-allowed">Last</span>
+                    <span class="px-3 py-1.5 bg-slate-100 border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 rounded-r-sm cursor-not-allowed">Next</span>
                 {% endif %}
             </div>
         </div>
     </div>
-
 </div>
 
-<div id="updateModal" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex justify-center items-center p-4 text-slate-800">
-    <div class="bg-white border-t-4 border-amber-600 w-full max-w-md p-6 shadow-2xl">
-        <h2 class="font-black text-sm uppercase tracking-widest mb-4 border-b pb-2">Update Shipment Plan</h2>
-        <form method="POST" action="{% url 'shipment_update' %}" class="space-y-3">
-            {% csrf_token %}
-            <input type="hidden" name="ship_id" id="update_ship_id">
+{% for po in items %}
+<div id="modal-{{ po.header.po_no }}" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[200] flex justify-center items-center p-4">
+    <div class="bg-white border-t-8 border-blue-700 shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+        
+        <div class="px-6 py-4 border-b flex justify-between items-center bg-blue-50">
             <div>
-                <label class="text-[9px] font-black uppercase text-slate-500">New Schedule Date</label>
-                <input type="date" name="schedule_date" id="update_date" class="w-full p-2 text-xs border border-slate-300 outline-none">
+                <h2 class="text-xl md:text-2xl font-black text-blue-900 uppercase tracking-tighter flex items-center gap-3">
+                    <i data-lucide="file-text" class="w-6 h-6 text-blue-700"></i> Purchase Order: {{ po.header.po_no }}
+                </h2>
+                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">
+                    Supplier: <span class="text-blue-700">{{ po.header.supplier }}</span>
+                </p>
             </div>
-            <div>
-                <label class="text-[9px] font-black uppercase text-slate-500">Transport Type</label>
-                <input type="text" name="transport" id="update_transport" class="w-full p-2 text-xs border border-slate-300 outline-none">
+            <button type="button" onclick="closeShipmentModal('{{ po.header.po_no }}')" class="text-rose-600 hover:bg-rose-100 p-2 rounded-full transition-colors"><i data-lucide="x" class="w-6 h-6"></i></button>
+        </div>
+
+        <div class="overflow-y-auto p-6 bg-slate-100">
+            <div class="bg-white border border-slate-300 shadow-sm p-4 mb-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                    <span class="text-[9px] font-bold text-slate-400 uppercase block mb-1">Expected Date</span>
+                    <span class="text-sm font-black text-slate-800">{{ po.header.delivery_date|date:"Y-m-d"|default:"TBD" }}</span>
+                </div>
+                <div>
+                    <span class="text-[9px] font-bold text-slate-400 uppercase block mb-1">Status</span>
+                    <span class="text-xs font-black text-slate-700 uppercase">{{ po.header.status }}</span>
+                </div>
+                <div class="col-span-2">
+                    <span class="text-[9px] font-bold text-slate-400 uppercase block mb-1">Remarks</span>
+                    <span class="text-[10px] font-bold text-slate-600 italic">"{{ po.header.remarks|default:'No remarks' }}"</span>
+                </div>
             </div>
-            <div>
-                <label class="text-[9px] font-black uppercase text-slate-500">Invoice No.</label>
-                <input type="text" name="invoice_no" id="update_invoice" class="w-full p-2 text-xs border border-slate-300 outline-none">
+
+            <table class="w-full text-left border-collapse text-[10px] bg-white border border-slate-300 shadow-sm">
+                <thead class="bg-slate-800 text-white uppercase">
+                    <tr>
+                        <th class="py-2 px-3">Item Code</th>
+                        <th class="py-2 px-3">Description</th>
+                        <th class="py-2 px-3 text-center">Order Qty</th>
+                        <th class="py-2 px-3 text-right">Unit Price</th>
+                        <th class="py-2 px-3 text-right">Total</th>
+                    </tr>
+                </thead>
+                <tbody class="font-bold text-slate-700">
+                    {% for item in po.items %}
+                    <tr class="border-b border-slate-100 hover:bg-slate-50">
+                        <td class="py-2 px-3 text-blue-700">{{ item.item_code }}</td>
+                        <td class="py-2 px-3">{{ item.description|default:"-" }}</td>
+                        <td class="py-2 px-3 text-center">{{ item.quantity }} {{ item.unit|default:"PCS" }}</td>
+                        <td class="py-2 px-3 text-right">₱{{ item.unit_price|floatformat:2 }}</td>
+                        <td class="py-2 px-3 text-right text-slate-900">₱{{ item.amount|default:"0.00"|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="p-4 bg-white border-t border-slate-300 flex justify-between items-center">
+            <div class="text-xs font-black uppercase tracking-widest text-slate-500">
+                PO Grand Total: <span class="text-xl text-blue-900 border-b-2 border-blue-300 ml-2">₱{{ po.header.grand_total|floatformat:2 }}</span>
             </div>
-            <div class="flex justify-end gap-2 pt-4">
-                <button type="button" onclick="closeModals()" class="text-[10px] font-black uppercase px-4 py-2 border">Cancel</button>
-                <button type="submit" class="bg-amber-600 text-white text-[10px] font-black uppercase px-6 py-2">Save Changes</button>
+            
+            <div class="flex items-center gap-2">
+                {% if po.header.status == 'Approved' or po.header.status == 'Pending Approval' %}
+                <a href="{% url 'shipping_confirmation' po.header.po_no %}" class="bg-blue-600 text-white px-6 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-colors shadow-sm rounded-sm flex items-center gap-2">
+                    <i data-lucide="truck" class="w-4 h-4"></i> Confirm Shipment
+                </a>
+                {% endif %}
+                
+                {% if po.header.status == 'Shipped' or po.header.status == 'In Transit' %}
+                <a href="{% url 'shipment_allocation' po.header.po_no %}" class="bg-emerald-600 text-white px-6 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-colors shadow-sm rounded-sm flex items-center gap-2">
+                    <i data-lucide="clipboard-check" class="w-4 h-4"></i> Receive & Allocate
+                </a>
+                {% endif %}
+
+                {% if po.header.status == 'Received' %}
+                <a href="{% url 'shipment_print_doc' po.header.po_no %}" target="_blank" class="bg-slate-600 text-white px-6 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-slate-700 transition-colors shadow-sm rounded-sm flex items-center gap-2">
+                    <i data-lucide="printer" class="w-4 h-4"></i> Print GRN
+                </a>
+                {% endif %}
+
+                <button type="button" onclick="closeShipmentModal('{{ po.header.po_no }}')" class="bg-slate-800 text-white px-6 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-slate-700 transition-colors shadow-sm rounded-sm">Close</button>
             </div>
-        </form>
+        </div>
     </div>
 </div>
-
+{% endfor %}
 
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        if (typeof lucide !== 'undefined') {
-            lucide.createIcons();
-        }
+    document.addEventListener("DOMContentLoaded", function() {
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     });
 
-    function openUpdateModal(id) {
-        fetch(`/api/shipment-details/${id}/`)
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('update_ship_id').value = id;
-                document.getElementById('update_date').value = data.schedule_date;
-                document.getElementById('update_transport').value = data.transport === 'Not Set' ? '' : data.transport;
-                document.getElementById('update_invoice').value = data.invoice_no === 'Not Set' ? '' : data.invoice_no;
-                document.getElementById('updateModal').classList.remove('hidden');
-            });
+    function openShipmentModal(poNo) {
+        const modal = document.getElementById(`modal-${poNo}`);
+        if (modal) modal.classList.remove('hidden');
     }
-
-    function closeModals() {
-        document.getElementById('inquiryModal').classList.add('hidden');
-        document.getElementById('updateModal').classList.add('hidden');
+    
+    function closeShipmentModal(poNo) {
+        const modal = document.getElementById(`modal-${poNo}`);
+        if (modal) modal.classList.add('hidden');
     }
 </script>
 {% endblock %}

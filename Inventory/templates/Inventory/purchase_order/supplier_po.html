@@ -23,7 +23,7 @@
                     </div>
                 </div>
                 <div class="space-y-1">
-                    <label class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Global Status</label>
+                    <label class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Status</label>
                     <select name="main_status" class="w-full p-2 border border-teal-400 bg-teal-50 text-teal-900 text-xs font-black uppercase focus:outline-none shadow-sm">
                         <option value="Valid" selected>Valid</option>
                         <option value="Pending">Pending</option>
@@ -33,11 +33,11 @@
                     </select>
                 </div>
                 <div class="space-y-1">
-                    <label class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Global Del. Date</label>
+                    <label class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Delivery Date</label>
                     <input type="date" id="main_delivery_date" name="main_delivery_date" required class="w-full p-2 border border-slate-300 bg-white text-xs font-black focus:outline-none focus:border-teal-500 shadow-sm text-rose-700">
                 </div>
                 <div class="space-y-1">
-                    <label class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Global Transport</label>
+                    <label class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Transport</label>
                     <select name="main_transport" class="w-full p-2 border border-slate-300 bg-white text-xs font-black uppercase focus:outline-none focus:border-teal-500 shadow-sm">
                         <option value="Truck" selected>Truck</option><option value="Van">Van</option><option value="Cargo Ship">Cargo Ship</option><option value="Cargo plane">Cargo plane</option>
                     </select>
@@ -362,7 +362,7 @@
     function generateMainPO(btnElement) {
         const input = btnElement.previousElementSibling;
         const random = Math.floor(1000 + Math.random() * 9000);
-        input.value = `GPO-${random}`;
+        input.value = `PO-${random}`;
     }
 
     function generateSpecificPONo(btnElement) {

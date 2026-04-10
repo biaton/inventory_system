@@ -32,7 +32,7 @@
             <span class="hidden sm:inline">Shipment Inquiry</span>
         </a>
 
-        <a href="{% url 'shipping_confirmation' %}" 
+        <a href="{% url 'shipping_confirmation_base' %}" 
            class="flex-1 flex items-center justify-center px-4 py-1.5 text-[10px] md:text-xs font-black uppercase tracking-widest transition-colors 
            {% if request.resolver_match.url_name == 'shipping_confirmation' %} bg-amber-600 text-white shadow-sm border border-amber-800 {% else %} text-slate-600 hover:bg-slate-200 border border-transparent {% endif %}">
             <i data-lucide="shield-check" class="w-3 h-3 mr-2"></i>

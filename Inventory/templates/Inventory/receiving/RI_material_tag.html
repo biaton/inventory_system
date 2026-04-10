@@ -263,6 +263,7 @@
 
         // Siguraduhing may default value ang qty para hindi maging "undefined" sa input box
         const safeQty = item.qty || 1;
+        const inspStatus = item.inspection_status || 'Pending';
 
         const rowHtml = `
             <tr class="item-row hover:bg-teal-50/40 transition-colors group border-b-4 border-slate-200">
@@ -285,10 +286,11 @@
                             <div class="w-1/2">
                                 <label class="text-[8px] font-black text-slate-400 uppercase tracking-widest">Inspection</label>
                                 <select name="inspection_status[]" class="w-full p-1 border border-slate-300 text-[10px] font-bold text-slate-700 outline-none">
-                                    <option>Pending</option>
-                                    <option>Passed</option>
-                                    <option>Quarantine</option>
-                                </select>
+                                    <!-- 🚀 BAGO: Dynamic Selection Base sa Naka-save na Status -->
+                                    <option value="Pending" ${inspStatus === 'Pending' ? 'selected' : ''}>Pending</option>
+                                    <option value="Passed" ${inspStatus === 'Passed' ? 'selected' : ''}>Passed</option>
+                                    <option value="Quarantine" ${inspStatus === 'Quarantine' ? 'selected' : ''}>Quarantine</option>
+                                </select>   
                             </div>
                         </div>
                     </div>
@@ -393,7 +395,7 @@
         if (!poNo) return alert("Enter PO Number first.");
 
         try {
-            const response = await fetch(`/api/get-po-for-tag/?po_no=${poNo}`);
+            const response = await fetch(`{% url 'get_po_for_tag' %}?po_no=${poNo}`);
             const data = await response.json();
 
             if (data.success) {
@@ -409,7 +411,8 @@
                         supplier: item.supplier,
                         qty: item.qty,
                         arrival_date: item.arrival_date,
-                        revision: "-"
+                        revision: "-",  
+                        inspection_status: item.inspection_status 
                     });
                 });
                 document.getElementById('po_no_input').value = '';
@@ -417,7 +420,8 @@
                 alert(`Error: ${data.error}`);
             }
         } catch (error) {
-            alert("Failed to fetch PO details from server. Check your connection.");
+            console.error("API Fetch Error:", error);
+            alert("Failed to fetch data. Paki-check ang F12 Console o Terminal para sa error.");
         }
     }
 

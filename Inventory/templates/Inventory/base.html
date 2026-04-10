@@ -66,8 +66,18 @@
                         class="h-full flex items-center px-4 text-[11px] font-black uppercase tracking-widest transition-all relative
                         {% if request.resolver_match.url_name == 'dashboard' %} text-teal-700 bg-teal-50/50 {% else %} text-slate-500 hover:bg-slate-50 hover:text-slate-800 {% endif %}">
                         <i data-lucide="house" class="w-3.5 h-3.5 mr-1.5"></i> Dashboard
-
+                                
                         {% if request.resolver_match.url_name == 'dashboard' %}
+                        <div class="absolute bottom-0 left-0 w-full h-0.5 bg-teal-600"></div>
+                        {% endif %}
+                    </a>
+
+                    <a href="{% url 'shipment_calendar' %}"
+                        class="h-full flex items-center px-4 text-[11px] font-black uppercase tracking-widest transition-all relative
+                        {% if request.resolver_match.url_name == 'shipment_calendar' %} text-teal-700 bg-teal-50/50 {% else %} text-slate-500 hover:bg-slate-50 hover:text-slate-800 {% endif %}">
+                        <i data-lucide="calendar-range" class="w-3.5 h-3.5 mr-1.5"></i> Calendar
+                
+                        {% if request.resolver_match.url_name == 'shipment_calendar' %}
                         <div class="absolute bottom-0 left-0 w-full h-0.5 bg-teal-600"></div>
                         {% endif %}
                     </a>

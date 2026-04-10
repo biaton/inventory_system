@@ -112,7 +112,11 @@
                                     </div>
                                 </td>
                                 <td class="py-2 px-4 text-center">
-                                    <span class="px-2 py-0.5 bg-amber-100 text-amber-800 border border-amber-300 text-[9px] font-black uppercase tracking-widest">Pending</span>
+                                    <select name="inspection_{{ item.id }}" class="w-full p-1.5 border border-slate-300 bg-white text-[10px] font-black uppercase focus:outline-none focus:border-teal-500 shadow-inner status-select">
+                                        <option value="Pending" {% if item.status == 'Pending' or not item.status %}selected{% endif %} class="text-amber-600">Pending</option>
+                                        <option value="Passed" {% if item.status == 'Passed' %}selected{% endif %} class="text-emerald-600">Passed</option>
+                                        <option value="Quarantine" {% if item.status == 'Quarantine' %}selected{% endif %} class="text-rose-600">Quarantine</option>
+                                    </select>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -188,11 +192,14 @@
         rows.forEach(row => {
             const checkbox = row.querySelector('.row-checkbox');
             const qtyInput = row.querySelector('input[type="number"]');
+            const statusSelect = row.querySelector('.status-select'); // 🚀 BAGO
             
             if (!checkbox.checked) {
                 qtyInput.disabled = true; 
+                if (statusSelect) statusSelect.disabled = true; // 🚀 BAGO
             } else {
                 qtyInput.disabled = false;
+                if (statusSelect) statusSelect.disabled = false; // 🚀 BAGO
                 checkedCount++;
             }
         });

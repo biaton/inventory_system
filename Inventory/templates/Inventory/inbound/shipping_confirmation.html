@@ -3,150 +3,141 @@
 {% block inbound_content %}
 <div class="max-w-[100%] mx-auto pb-20 mt-4 text-slate-800">
 
-    <div class="border-b-2 border-slate-800 pb-2 mb-4 flex justify-between items-end">
-        <div>
-            <h1 class="text-2xl font-black text-slate-900 uppercase tracking-tighter flex items-center gap-2">
-                <i data-lucide="package-check" class="w-6 h-6 text-teal-700"></i> Shipping Confirmation
-            </h1>
-            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">
-                Warehouse Receiving & Inventory Tag Generation
-            </p>
+    {% if not po_no %}
+    <div class="bg-white border border-slate-300 shadow-sm p-8 mt-6 border-t-4 border-t-amber-600 max-w-2xl mx-auto flex flex-col items-center text-center">
+        <div class="bg-amber-100 p-4 rounded-full text-amber-700 mb-4">
+            <i data-lucide="scan-line" class="w-10 h-10"></i>
         </div>
-    </div>
-
-    <div class="bg-white border border-slate-300 shadow-sm overflow-hidden">
-        <div class="bg-slate-800 px-4 py-2 border-b border-slate-700 text-white">
-            <h2 class="font-black text-xs uppercase tracking-widest flex items-center gap-2">
-                <i data-lucide="truck" class="w-4 h-4 text-amber-400"></i> Awaiting Receipt
-            </h2>
-        </div>
+        <h2 class="text-2xl font-black text-slate-900 uppercase tracking-tighter mb-2">Scan or Enter PO Number</h2>
+        <p class="text-xs font-bold text-slate-500 mb-6">Load an approved Purchase Order to confirm its logistics and tracking details.</p>
         
-        <div class="overflow-x-auto min-h-[400px]">
-            <table class="w-full text-left border-collapse" style="font-size: 11px;">
-                <thead class="bg-slate-200 text-slate-800 uppercase tracking-widest border-b border-slate-400 font-black text-[10px]">
-                    <tr>
-                        <th class="py-2 px-4 border-r border-slate-300 w-32 text-center">Action</th>
-                        <th class="py-2 px-4 border-r border-slate-300">Shipment Ref</th>
-                        <th class="py-2 px-4 border-r border-slate-300">Item Code</th>
-                        <th class="py-2 px-4 border-r border-slate-300 text-center">Expected Qty</th>
-                        <th class="py-2 px-4 border-r border-slate-300 text-center">Schedule Date</th>
-                        <th class="py-2 px-4 text-center">Current Status</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-200">
-                    {% for ship in shipments %}
-                    <tr class="hover:bg-amber-50/30 transition-colors">
-                        <td class="py-2 px-4 border-r border-slate-200 text-center">
-                            <button onclick="openReceiveModal('{{ ship.id }}', '{{ ship.shipment_no }}', '{{ ship.item_code }}', '{{ ship.quantity }}')" 
-                                    class="bg-emerald-600 text-white px-3 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-sm hover:bg-emerald-700 shadow-sm flex items-center justify-center gap-1 w-full">
-                                <i data-lucide="download" class="w-3 h-3"></i> Receive
-                            </button>
-                        </td>
-                        <td class="py-2 px-4 border-r border-slate-200 text-xs font-black text-slate-800">{{ ship.shipment_no }}</td>
-                        <td class="py-2 px-4 border-r border-slate-200 text-xs font-bold text-slate-600 uppercase">{{ ship.item_code }}</td>
-                        <td class="py-2 px-4 border-r border-slate-200 text-center font-black text-slate-800 bg-slate-50/50">{{ ship.quantity }}</td>
-                        <td class="py-2 px-4 border-r border-slate-200 text-center text-xs font-bold text-slate-600">{{ ship.schedule_date|date:"Y-m-d" }}</td>
-                        <td class="py-2 px-4 text-center">
-                            <span class="bg-amber-100 text-amber-800 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded-sm border border-amber-200 animate-pulse">
-                                {{ ship.status }}
-                            </span>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="6" class="py-20 text-center text-slate-400">
-                            <i data-lucide="check-square" class="w-10 h-10 mx-auto mb-2 opacity-30"></i>
-                            <p class="font-black text-xs uppercase tracking-widest">All Caught Up!</p>
-                            <p class="text-[10px] font-bold mt-1 uppercase">No pending shipments to receive at the moment.</p>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<div id="receiveModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden z-50 flex items-center justify-center">
-    <div class="bg-white rounded-lg shadow-2xl w-full max-w-lg overflow-hidden border border-slate-300 transform scale-95 transition-transform duration-200" id="modalContent">
-        
-        <div class="bg-slate-800 p-4 border-b border-slate-700 flex justify-between items-center text-white">
-            <h3 class="font-black text-sm uppercase tracking-widest flex items-center gap-2">
-                <i data-lucide="box" class="w-4 h-4 text-emerald-400"></i> Process Inbound Stock
-            </h3>
-            <button onclick="closeReceiveModal()" class="text-slate-400 hover:text-white transition-colors">
-                <i data-lucide="x" class="w-5 h-5"></i>
-            </button>
-        </div>
-
-        <form method="POST" action="{% url 'shipping_confirmation' %}" class="p-5">
+        <form method="POST" action="{% url 'shipping_confirmation_base' %}" class="w-full relative">
             {% csrf_token %}
-            <input type="hidden" name="shipment_id" id="modal_shipment_id">
-            
-            <div class="bg-slate-50 border border-slate-200 p-3 mb-4 rounded-sm text-center">
-                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Shipment Ref</p>
-                <h4 id="modal_shipment_no" class="text-lg font-black text-slate-800 mt-1">---</h4>
-                <p id="modal_item_code" class="text-xs font-bold text-slate-600 uppercase">---</p>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4 mb-4">
-                <div class="space-y-1">
-                    <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Actual Received Qty <span class="text-rose-500">*</span></label>
-                    <input type="number" name="actual_qty" id="modal_expected_qty" required class="w-full p-2 text-xl font-black text-center text-emerald-700 border border-emerald-300 bg-emerald-50 focus:ring-2 focus:ring-emerald-600 outline-none rounded-sm">
-                </div>
-                
-                <div class="space-y-1">
-                    <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Assign Lot Number <span class="text-rose-500">*</span></label>
-                    <input type="text" name="lot_no" required placeholder="e.g. LOT-001" class="w-full p-2 text-sm font-black border border-slate-300 bg-white focus:ring-1 focus:ring-teal-600 outline-none rounded-sm uppercase">
-                </div>
-            </div>
-
-            <div class="space-y-1 mb-4">
-                <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Expiration Date (If Applicable)</label>
-                <input type="date" name="expiry_date" class="w-full p-2 text-xs font-bold border border-slate-300 bg-slate-50 focus:ring-1 focus:ring-teal-600 outline-none rounded-sm">
-            </div>
-
-            <div class="space-y-1 mb-6">
-                <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Receiving Remarks / Notes</label>
-                <input type="text" name="remarks" placeholder="Any damages or discrepancies?" class="w-full p-2 text-xs font-bold border border-slate-300 bg-slate-50 focus:ring-1 focus:ring-teal-600 outline-none rounded-sm">
-            </div>
-
-            <div class="flex justify-end gap-2 pt-4 border-t border-slate-200">
-                <button type="button" onclick="closeReceiveModal()" class="bg-white text-slate-600 border border-slate-300 px-6 py-2 text-[10px] font-black uppercase hover:bg-slate-50 transition-all shadow-sm">
-                    Cancel
-                </button>
-                <button type="submit" class="bg-teal-700 text-white border border-teal-900 px-6 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-teal-800 transition-all shadow-sm flex items-center gap-2">
-                    <i data-lucide="check-square" class="w-3 h-3"></i> Confirm & Generate Tag
-                </button>
-            </div>
+            <i data-lucide="search" class="absolute left-4 top-1/4 transform -translate-y-1/2 text-slate-400 w-5 h-5"></i>
+            <input type="text" name="search_po" autofocus required placeholder="e.g. PO-260408-1234" 
+                   class="w-full bg-slate-50 border-2 border-slate-300 p-4 pl-12 text-sm font-black text-slate-800 focus:border-amber-500 focus:bg-white outline-none uppercase shadow-inner">
+            <button type="submit" class="mt-4 w-full bg-slate-800 hover:bg-slate-700 text-white py-3 font-black text-[11px] uppercase tracking-widest shadow-md transition-all active:scale-95">
+                Load Purchase Order
+            </button>
         </form>
     </div>
+    {% endif %}
+
+    {% if po_no %}
+    <div class="bg-amber-50 border-l-4 border-amber-600 p-4 mb-6 shadow-sm flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <i data-lucide="shield-check" class="text-amber-700 w-6 h-6"></i>
+            <div>
+                <h2 class="text-xl font-black text-amber-900 uppercase tracking-tighter">Advance Shipping Notice (ASN)</h2>
+                <p class="text-[10px] font-bold text-amber-700 uppercase tracking-widest">Confirm logistics for <span class="font-black text-slate-900 text-xs ml-1">{{ po_no }}</span></p>
+            </div>
+        </div>
+        <a href="{% url 'shipping_confirmation_base' %}" class="bg-white border border-slate-300 px-4 py-1.5 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-100 shadow-sm flex items-center gap-2">
+            <i data-lucide="x" class="w-3 h-3"></i> Cancel
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <div class="lg:col-span-8 space-y-6">
+            <div class="bg-white border border-slate-300 shadow-sm overflow-hidden">
+                <div class="bg-slate-800 px-4 py-3 flex justify-between items-center border-b-2 border-slate-900">
+                    <h3 class="text-[11px] font-black text-white uppercase tracking-widest flex items-center gap-2">
+                        <i data-lucide="building-2" class="w-4 h-4 text-amber-400"></i> Supplier: {{ supplier_name }}
+                    </h3>
+                    <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest border border-slate-600 px-2 py-0.5 bg-slate-700">{{ first_item.ordering_status }}</span>
+                </div>
+
+                <div class="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                    <div>
+                        <span class="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">Originally Expected On</span>
+                        <span class="text-sm font-black text-slate-800">{{ first_item.delivery_date|date:"Y-m-d"|default:"Not Set" }}</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">PO Grand Total</span>
+                        <span class="text-lg font-black text-amber-700">₱{{ grand_total|floatformat:2 }}</span>
+                    </div>
+                </div>
+
+                <table class="w-full text-left text-xs border-collapse">
+                    <thead class="bg-slate-100 text-slate-500 uppercase font-black text-[9px]">
+                        <tr>
+                            <th class="py-2 px-4 border-b border-slate-200 w-32">Item Code</th>
+                            <th class="py-2 px-4 border-b border-slate-200">Description</th>
+                            <th class="py-2 px-4 text-center border-b border-slate-200 w-24">Order Qty</th>
+                            <th class="py-2 px-4 text-right border-b border-slate-200 w-32">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 font-bold">
+                        {% for item in po_items %}
+                        <tr class="hover:bg-amber-50/30 transition-colors">
+                            <td class="py-3 px-4 text-amber-700 font-black uppercase">{{ item.safe_code }}</td>
+                            <td class="py-3 px-4 text-slate-600 text-[10px]">{{ item.safe_desc }}</td>
+                            <td class="py-3 px-4 text-center text-sm font-black text-slate-800 bg-slate-50">{{ item.safe_qty }}</td>
+                            <td class="py-3 px-4 text-right text-[11px] text-slate-700">₱{{ item.computed_amount|floatformat:2 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="lg:col-span-4">
+            <div class="bg-white text-slate-800 shadow-xl border border-slate-300 border-t-4 border-t-amber-500 sticky top-20">
+                <div class="p-6">
+                    <h3 class="text-sm font-black uppercase tracking-widest mb-2 flex items-center gap-2 text-slate-800">
+                        <i data-lucide="truck" class="w-5 h-5 text-amber-600"></i> Logistics Details
+                    </h3>
+                    <p class="text-[10px] font-bold text-slate-500 uppercase mb-6 border-b border-slate-200 pb-4">
+                        Confirming this updates the status to <strong class="text-amber-600">In Transit</strong>.
+                    </p>
+
+                    <form method="POST" class="space-y-4" onsubmit="return confirm('Confirm shipping details for {{ po_no }}? This will update the system inventory tracker.')">
+                        {% csrf_token %}
+                        <input type="hidden" name="confirm_shipment" value="1">
+                        
+                        <div class="space-y-1.5">
+                            <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Freight / Courier Partner</label>
+                            <input type="text" name="courier" required placeholder="e.g. FedEx, Maersk, Local Fleet..." class="w-full bg-slate-50 border border-slate-300 p-3 text-xs font-black text-slate-800 focus:border-amber-500 focus:bg-white outline-none uppercase">
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Master Tracking No. / Bill of Lading</label>
+                            <input type="text" name="tracking_no" required placeholder="Enter Reference No..." class="w-full bg-slate-50 border border-slate-300 p-3 text-xs font-black text-slate-800 focus:border-amber-500 focus:bg-white outline-none uppercase">
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest flex justify-between">
+                                <span>Updated ETA (Optional)</span>
+                                <span class="text-amber-500">Overrides original</span>
+                            </label>
+                            <input type="date" name="eta" class="w-full bg-slate-50 border border-slate-300 p-3 text-xs font-black text-slate-800 focus:border-amber-500 focus:bg-white outline-none uppercase">
+                        </div>
+                        
+                        <div class="space-y-1.5">
+                            <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Arrival Remarks</label>
+                            <input type="text" name="remarks" placeholder="Notes for receiving team..." class="w-full bg-slate-50 border border-slate-300 p-3 text-xs font-bold text-slate-800 focus:border-amber-500 focus:bg-white outline-none">
+                        </div>
+
+                        <div class="pt-4 mt-2 border-t border-slate-200">
+                            <button type="submit" class="w-full bg-amber-600 hover:bg-amber-700 text-white py-4 font-black text-[11px] uppercase tracking-widest shadow-md flex items-center justify-center gap-2 transition-transform active:scale-95">
+                                <i data-lucide="check-circle-2" class="w-4 h-4"></i> Confirm "In Transit"
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
 </div>
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        if (typeof lucide !== 'undefined') lucide.createIcons();
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
     });
-
-    // Scripts para sa pag-open at pag-close ng Receiving Modal
-    function openReceiveModal(id, shipNo, itemCode, expectedQty) {
-        document.getElementById('receiveModal').classList.remove('hidden');
-        document.getElementById('modalContent').classList.remove('scale-95');
-        document.getElementById('modalContent').classList.add('scale-100');
-        
-        // Ipasa ang data mula sa table papunta sa form
-        document.getElementById('modal_shipment_id').value = id;
-        document.getElementById('modal_shipment_no').textContent = shipNo;
-        document.getElementById('modal_item_code').textContent = 'ITEM: ' + itemCode;
-        document.getElementById('modal_expected_qty').value = expectedQty;
-    }
-
-    function closeReceiveModal() {
-        document.getElementById('modalContent').classList.remove('scale-100');
-        document.getElementById('modalContent').classList.add('scale-95');
-        setTimeout(() => {
-            document.getElementById('receiveModal').classList.add('hidden');
-        }, 150); // Mabilis na transition animation
-    }
 </script>
 {% endblock %}

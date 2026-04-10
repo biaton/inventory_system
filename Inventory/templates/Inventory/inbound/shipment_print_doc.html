@@ -1,133 +1,130 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{{ doc_type }} - {{ shipment.invoice_no|default:shipment.shipment_no }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Goods Receipt Note - {{ po_no }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        /* CSS para maging sakto sa A4 paper pag pinrint */
-        @page { size: A4; margin: 20mm; }
-        body { background-color: #f1f5f9; font-family: 'Arial', sans-serif; }
-        .print-container { max-width: 210mm; min-height: 297mm; background: white; margin: 20px auto; padding: 40px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        body { font-family: 'Arial', sans-serif; }
+        
+        /* 🚀 PRINT SPECIFIC CSS: Para hindi isama ang mga buttons kapag nag-Ctrl+P */
         @media print {
-            body { background-color: white; }
-            .print-container { margin: 0; padding: 0; box-shadow: none; max-width: 100%; }
             .no-print { display: none !important; }
+            body { background-color: white !important; margin: 0; padding: 0; }
+            .print-container { 
+                box-shadow: none !important; 
+                border: none !important; 
+                max-width: 100% !important; 
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            @page { margin: 0.5cm; size: A4 portrait; }
         }
     </style>
 </head>
-<body class="text-slate-900">
+<body class="bg-slate-200 py-8 text-slate-800">
 
-    <!-- Action Bar (Hindi isasama pag nag-print) -->
-    <div class="bg-slate-800 text-white p-4 flex justify-between items-center no-print">
-        <p class="text-sm font-bold uppercase tracking-widest">Document Preview: {{ doc_type }}</p>
-        <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-500 px-6 py-2 font-black uppercase text-xs rounded shadow">
-            Print Document
+    <div class="no-print max-w-[21cm] mx-auto mb-4 flex justify-between items-center bg-white p-4 shadow-sm border border-slate-300 rounded-sm">
+        <a href="{% url 'shipment_inquiry' %}" class="text-slate-600 hover:text-slate-900 font-bold text-sm flex items-center gap-2 transition-colors">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Inquiry
+        </a>
+        <button onclick="window.print()" class="bg-teal-700 hover:bg-teal-800 text-white px-6 py-2 rounded-sm font-black uppercase tracking-widest text-xs flex items-center gap-2 shadow-md transition-transform active:scale-95">
+            <i data-lucide="printer" class="w-4 h-4"></i> Print Document
         </button>
     </div>
 
-    <!-- A4 Paper Container -->
-    <div class="print-container">
+    <div class="print-container bg-white max-w-[21cm] min-h-[29.7cm] mx-auto border border-slate-300 shadow-xl p-10 flex flex-col relative">
         
-        <!-- Header Section -->
         <div class="flex justify-between items-start border-b-2 border-slate-800 pb-6 mb-6">
-            <div>
-                <h1 class="text-3xl font-black uppercase tracking-tighter">{{ doc_type }}</h1>
-                <p class="text-xs font-bold text-slate-500 mt-1">Ref No: {{ shipment.invoice_no|default:shipment.shipment_no }}</p>
+            <div class="flex items-center gap-4">
+                <div class="w-16 h-16 bg-slate-100 border border-slate-300 p-1 flex items-center justify-center">
+                    <img src="{% static 'images/AIM-LOGO.jpg' %}" alt="AIM Logo" class="max-w-full max-h-full opacity-80">
+                </div>
+                <div>
+                    <h1 class="text-xl font-black uppercase tracking-tighter text-slate-900 leading-none mb-1">Asia Integrated Machine Inc.</h1>
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Inventory Control System</p>
+                </div>
             </div>
-            <div class="text-right text-xs">
-                <h2 class="font-black text-lg">YOUR COMPANY NAME</h2>
-                <p>123 Enterprise Blvd, Warehouse District</p>
-                <p>Metro Manila, Philippines 1000</p>
-                <p>Tel: (02) 8123-4567 | www.yourcompany.com</p>
+            <div class="text-right">
+                <h2 class="text-2xl font-black text-teal-700 uppercase tracking-tighter">Goods Receipt</h2>
+                <p class="text-xs font-bold text-slate-600 mt-1">Ref: GRN-{{ po_no|slice:"-4:" }}-{{ print_date|date:"U"|slice:"-4:" }}</p>
             </div>
         </div>
 
-        <!-- Details Section -->
         <div class="grid grid-cols-2 gap-8 mb-8 text-sm">
             <div>
-                <p class="font-bold text-slate-500 uppercase text-[10px] tracking-widest border-b border-slate-300 mb-2">Bill / Ship To:</p>
-                <h3 class="font-black text-lg uppercase">{{ shipment.customer.name|default:"N/A" }}</h3>
-                <p class="text-slate-600">Client Address / Branch Location</p>
-                <p class="text-slate-600">Contact Number / Email</p>
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Supplier Details</p>
+                <p class="font-bold text-slate-800 uppercase">{{ supplier_name }}</p>
+                <p class="text-xs text-slate-600 mt-1">Purchase Order: <span class="font-black text-slate-900">{{ po_no }}</span></p>
             </div>
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <p class="font-bold text-slate-500 uppercase text-[10px] tracking-widest border-b border-slate-300 mb-1">Date</p>
-                    <p class="font-bold">{{ shipment.schedule_date|date:"F d, Y" }}</p>
-                </div>
-                <div>
-                    <p class="font-bold text-slate-500 uppercase text-[10px] tracking-widest border-b border-slate-300 mb-1">PO / Order No.</p>
-                    <p class="font-bold">{{ shipment.shipment_no }}</p>
-                </div>
-                <div>
-                    <p class="font-bold text-slate-500 uppercase text-[10px] tracking-widest border-b border-slate-300 mb-1">Transport By</p>
-                    <p class="font-bold">{{ shipment.transport|default:"Not Set" }}</p>
-                </div>
-                <div>
-                    <p class="font-bold text-slate-500 uppercase text-[10px] tracking-widest border-b border-slate-300 mb-1">Status</p>
-                    <p class="font-bold uppercase">{{ shipment.status }}</p>
-                </div>
+            <div class="text-right">
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Receiving Details</p>
+                <p class="text-xs text-slate-600">Date Received: <span class="font-black text-slate-900">{{ print_date|date:"F d, Y h:i A" }}</span></p>
+                <p class="text-xs text-slate-600 mt-1">Logistics / Courier: <span class="font-black text-slate-900">{{ first_item.transport|default:"N/A" }}</span></p>
             </div>
         </div>
 
-        <!-- Items Table -->
-        <table class="w-full text-left border-collapse text-sm mb-8 border border-slate-800">
-            <thead class="bg-slate-100 border-b-2 border-slate-800 uppercase text-[10px] font-black tracking-widest">
+        <table class="w-full text-left text-xs border-collapse mb-8 flex-1">
+            <thead class="border-b-2 border-slate-800 text-[10px] uppercase font-black tracking-widest text-slate-600">
                 <tr>
-                    <th class="py-2 px-3 border-r border-slate-800 w-12 text-center">No.</th>
-                    <th class="py-2 px-3 border-r border-slate-800 w-32">Item Code</th>
-                    <th class="py-2 px-3 border-r border-slate-800">Description / Specifications</th>
-                    <th class="py-2 px-3 border-r border-slate-800 text-center w-24">Quantity</th>
-                    
-                    {% if doc_type == 'COMMERCIAL INVOICE' %}
-                    <!-- Ipinapakita lang ang presyo kapag Invoice -->
-                    <th class="py-2 px-3 border-r border-slate-800 text-right w-32">Unit Price</th>
-                    <th class="py-2 px-3 text-right w-32">Total Amount</th>
-                    {% endif %}
+                    <th class="py-2 px-2">#</th>
+                    <th class="py-2 px-2">Item Code</th>
+                    <th class="py-2 px-2">Description</th>
+                    <th class="py-2 px-2 text-center">Expected</th>
+                    <th class="py-2 px-2 text-center text-teal-700 bg-teal-50">Actual Qty</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-300">
-                {% for item in related_items %}
-                <tr>
-                    <td class="py-2 px-3 border-r border-slate-800 text-center">{{ forloop.counter }}</td>
-                    <td class="py-2 px-3 border-r border-slate-800 font-bold">{{ item.item_code }}</td>
-                    <td class="py-2 px-3 border-r border-slate-800">
-                        <p class="font-bold">{{ item.description|default:"-" }}</p>
-                        <p class="text-xs text-slate-500">{{ item.specification|default:"" }}</p>
+            <tbody class="divide-y divide-slate-200">
+                {% for item in po_items %}
+                <tr class="{% cycle 'bg-white' 'bg-slate-50' %}">
+                    <td class="py-3 px-2 font-bold text-slate-400">{{ forloop.counter }}</td>
+                    <td class="py-3 px-2 font-black uppercase text-slate-800">{{ item.safe_code }}</td>
+                    <td class="py-3 px-2 text-slate-600 text-[11px]">{{ item.safe_desc }}</td>
+                    <td class="py-3 px-2 text-center font-bold text-slate-500">{{ item.safe_qty }}</td>
+                    <td class="py-3 px-2 text-center font-black text-teal-800 bg-teal-50 border-x border-teal-100">
+                        {{ item.safe_qty }}
                     </td>
-                    <td class="py-2 px-3 border-r border-slate-800 text-center font-bold">{{ item.quantity }} PCS</td>
-                    
-                    {% if doc_type == 'COMMERCIAL INVOICE' %}
-                    <td class="py-2 px-3 border-r border-slate-800 text-right">₱ 0.00</td>
-                    <td class="py-2 px-3 text-right font-bold">₱ 0.00</td>
-                    {% endif %}
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
 
-        <!-- Signatures Section -->
-        <div class="grid grid-cols-3 gap-8 mt-20 pt-8 border-t border-slate-300 text-center text-xs">
-            <div>
-                <p class="border-b border-slate-800 pb-1 mb-2 font-bold"></p>
-                <p class="uppercase font-bold tracking-widest">Prepared By</p>
-                <p class="text-slate-500">Warehouse Personnel</p>
-            </div>
-            <div>
-                <p class="border-b border-slate-800 pb-1 mb-2 font-bold"></p>
-                <p class="uppercase font-bold tracking-widest">Driver / Transport</p>
-                <p class="text-slate-500">Sign & Date</p>
-            </div>
-            <div>
-                <p class="border-b border-slate-800 pb-1 mb-2 font-bold"></p>
-                <p class="uppercase font-bold tracking-widest">Received By</p>
-                <p class="text-slate-500">Customer Sign & Date</p>
+        <div class="mb-12">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Remarks / Conditions</p>
+            <div class="border border-slate-300 min-h-[60px] p-3 text-xs italic text-slate-600 bg-slate-50">
+                {{ first_item.remarks|default:"No specific remarks noted during system receiving." }}
             </div>
         </div>
 
-        <p class="text-center text-[10px] text-slate-400 mt-12 italic">This document is system-generated and does not require a physical signature for internal processing.</p>
+        <div class="mt-auto grid grid-cols-3 gap-8 pt-8 border-t-2 border-slate-200">
+            <div class="text-center">
+                <div class="border-b border-slate-800 h-8 mb-2"></div>
+                <p class="text-[10px] font-black text-slate-700 uppercase tracking-widest">Delivered By (Driver)</p>
+                <p class="text-[9px] text-slate-500 uppercase mt-1">Sign over printed name</p>
+            </div>
+            <div class="text-center">
+                <div class="border-b border-slate-800 h-8 mb-2"></div>
+                <p class="text-[10px] font-black text-slate-700 uppercase tracking-widest">Checked By</p>
+                <p class="text-[9px] text-slate-500 uppercase mt-1">Warehouse Staff</p>
+            </div>
+            <div class="text-center">
+                <div class="border-b border-slate-800 h-8 mb-2 font-black text-sm uppercase text-slate-800">
+                    {{ request.user.username|default:"SYSTEM ADMIN" }}
+                </div>
+                <p class="text-[10px] font-black text-slate-700 uppercase tracking-widest">System Received By</p>
+            </div>
+        </div>
+        
     </div>
 
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        });
+    </script>
 </body>
 </html>

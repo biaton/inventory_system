@@ -29,6 +29,8 @@ from django.core.cache import cache
 from django.conf import settings
 from datetime import timedelta
 from decimal import Decimal
+from datetime import date
+from datetime import datetime
 import pandas as pd
 import datetime
 import secrets
@@ -295,8 +297,38 @@ def dashboard_view(request):
         recent_pending_reqs = []
 
     # ---------------------------------------------------------
-    # 4. IPASA SA TEMPLATE
+    # NEW: INBOUND SHIPMENTS (Mga paparating na P.O.)
     # ---------------------------------------------------------
+    try:
+        # Kunin ang mga Approved/Pending na deliveries na paparating palang
+        inbound_items = PurchaseOrder.objects.filter(
+            ordering_status__in=['Approved', 'Pending Approval'],
+            delivery_date__gte=today
+        ).order_by('delivery_date')
+
+        inbound_dict = {}
+        for item in inbound_items:
+            # I-group using Batch ID o Main PO
+            bid = getattr(item, 'batch_id', item.po_no) or item.po_no
+            if bid not in inbound_dict:
+                supplier_name = item.supplier.name if hasattr(item, 'supplier') and item.supplier else 'Unknown Supplier'
+                inbound_dict[bid] = {
+                    'po_no': bid,
+                    'supplier': supplier_name,
+                    'delivery_date': item.delivery_date
+                }
+        
+        unique_inbounds = list(inbound_dict.values())
+        inbound_count = len(unique_inbounds)
+        recent_inbound = unique_inbounds[:5] # I-limit sa top 5 sa dashboard
+
+    except Exception as e:
+        print(f"INBOUND ERROR: {e}")
+        inbound_count = 0
+        recent_inbound = []
+
+
+    # Idagdag sa Context...
     context = {
         'total_inventory_value': total_inventory_value,
         'total_active_lots': total_active_lots,
@@ -304,7 +336,10 @@ def dashboard_view(request):
         'alert_count': alert_count,
         'recent_pending_reqs': recent_pending_reqs,
         'pending_req_count': pending_req_count,
+        'inbound_count': inbound_count,
+        'recent_inbound': recent_inbound,
     }
+
     
     return render(request, 'Inventory/dashboard.html', context)
 
@@ -2424,14 +2459,21 @@ def ri_receive_view(request):
                     # I-loop ang items sa loob ng bawat PO
                     for item in po_header.items.all():
                         qty_received_str = request.POST.get(f'qty_received_{item.id}')
+                        inspection_status = request.POST.get(f'inspection_{item.id}') # 🚀 BAGO: Kunin ang dropdown value
                         
                         if qty_received_str:
                             qty_received = int(qty_received_str)
                             if qty_received > 0:
-                                # Siguraduhing may qty_received field sa model mo!
+                                
                                 if hasattr(item, 'qty_received'):
                                     item.qty_received = (item.qty_received or 0) + qty_received
-                                    item.save()
+                                
+                                # 🚀 BAGO: I-save ang Inspection Status papunta sa Database
+                                if hasattr(item, 'status') and inspection_status:
+                                    item.status = inspection_status
+
+                                item.save()
+                                
                                 items_received_count += 1
                                 total_items_received_across_batch += 1
 
@@ -2842,7 +2884,8 @@ def get_po_for_tag(request):
                     'qty': getattr(item, 'qty_received', item.qty),  
                     'arrival_date': timezone.now().strftime('%Y-%m-%d'),
                     'revision': "-",
-                    'invoice': "-"
+                    'invoice': "-",
+                    'inspection_status': getattr(item, 'status', 'Pending')
                 })
             
         return JsonResponse({'success': True, 'items': data_list})
@@ -3843,123 +3886,251 @@ def inquiry_settings_view(request):
     return render(request, 'Inventory/inventory_inquiry/inquiry_settings.html', context)
 
 def shipment_import_view(request):
-    if request.method == 'POST' and request.FILES.get('excel_file'):
-        excel_file = request.FILES['excel_file']
-        
-        try:
-            df = pd.read_excel(excel_file)
-            df.columns = [str(c).strip().upper().replace(' ', '_') for c in df.columns]
-
-            success_count = 0
-            for index, row in df.iterrows():
-                ship_no = row.get('SHIPMENT_ID') if pd.notna(row.get('SHIPMENT_ID')) else row.get('SHIPMENT_NO')
+    if request.method == "POST":
+        if 'excel_file' in request.FILES:
+            excel_file = request.FILES['excel_file']
+            
+            # Defense: Check kung excel o csv
+            if not excel_file.name.endswith(('.xlsx', '.xls', '.csv')):
+                messages.error(request, "Invalid file format. Please upload an Excel (.xlsx) or CSV file.")
+                return redirect('shipment_import')
                 
-                if pd.isna(ship_no) or not str(ship_no).strip():
-                    continue 
+            try:
+                # 1. Basahin ang file gamit ang Pandas
+                if excel_file.name.endswith('.csv'):
+                    df = pd.read_csv(excel_file)
+                else:
+                    df = pd.read_excel(excel_file, engine='openpyxl')
                 
-                ship_no = str(ship_no).strip()
-                item_code = str(row.get('ITEM_CODE', '')).strip()
+                # Tanggalin ang mga empty rows para iwas error
+                df = df.dropna(how='all')
                 
-                qty_raw = row.get('QTY') if pd.notna(row.get('QTY')) else row.get('QUANTITY')
-                qty = int(qty_raw) if pd.notna(qty_raw) else 0
+                saved_count = 0
                 
-                date_raw = row.get('DELIVERY_DATE') if pd.notna(row.get('DELIVERY_DATE')) else row.get('DATE')
-                sched_date = pd.to_datetime(date_raw).date() if pd.notna(date_raw) else timezone.now().date()
-
-                inv_no = str(row.get('INVOICE_NO', '')).strip() if pd.notna(row.get('INVOICE_NO')) else None
-                trans = str(row.get('TRANSPORT', '')).strip() if pd.notna(row.get('TRANSPORT')) else None
-                dest = str(row.get('DESTINATION', 'Default Warehouse')).strip()
-
-                customer_obj = None
-                cust_raw = row.get('CUSTOMER')
-                if pd.notna(cust_raw) and str(cust_raw).strip():
-                    customer_name = str(cust_raw).strip()
-                    customer_obj, _ = Contact.objects.get_or_create(
-                        name=customer_name, 
-                        defaults={'contact_type': 'Customer'}
-                    )
-
-                ShipmentSchedule.objects.update_or_create(
-                    shipment_no=ship_no,
-                    defaults={
-                        'item_code': item_code,
-                        'destination': dest,
-                        'quantity': qty,
-                        'schedule_date': sched_date,
-                        'customer': customer_obj,       
-                        'invoice_no': inv_no,           
-                        'transport': trans,             
-                        'status': 'Pending' 
-                    }
+                # 🚀 2. THE DATABASE SAVING LOGIC
+                # Gagamit tayo ng transaction.atomic() para kung may mag-error sa gitna,
+                # ire-roll back niya lahat at hindi masisira ang database mo.
+                with transaction.atomic():
+                    for index, row in df.iterrows():
+                        
+                        # A. Hanapin o i-register ang Supplier
+                        supplier_name = str(row.get('Supplier', 'Unknown Supplier')).strip()
+                        supplier_obj, created = Contact.objects.get_or_create(
+                            name=supplier_name,
+                            defaults={'contact_type': 'Supplier'} # Assuming Contact table gamit mo
+                        )
+                        
+                        # B. Ayusin ang Delivery Date format
+                        raw_date = row.get('Delivery_Date', None)
+                        del_date = None
+                        if pd.notna(raw_date):
+                            try:
+                                del_date = pd.to_datetime(raw_date).date()
+                            except:
+                                pass
+                                
+                        # C. I-save as PurchaseOrder Item
+                        # ⚠️ PAALALA: Kung 'qty' o 'total_pcs' ang gamit mo sa models.py imbes na 'quantity',
+                        # palitan mo lang yung salitang 'quantity=' sa ibaba.
+                        PurchaseOrder.objects.create(
+                            po_no=str(row.get('PO_No', '')).strip(),
+                            supplier=supplier_obj,
+                            delivery_date=del_date,
+                            ordering_status=str(row.get('Status', 'Approved')).strip(),
+                            item_code=str(row.get('Item_Code', '')).strip(),
+                            description=str(row.get('Description', '')).strip(),
+                            
+                            # Dito kumukuha ng values sa CSV columns:
+                            quantity=row.get('Qty', 0), 
+                            unit_price=row.get('Unit_Price', 0.0),
+                            amount=float(row.get('Qty', 0)) * float(row.get('Unit_Price', 0.0))
+                        )
+                        saved_count += 1
+                
+                # System Log
+                log_system_action(
+                    user=request.user, 
+                    action='CREATE', 
+                    module='Inbound Shipment', 
+                    description=f"Imported Shipment Schedule via Excel: {excel_file.name} ({row_count} rows)", 
+                    request=request
                 )
-                success_count += 1
-
-            log_system_action(
-                user=request.user, 
-                action='CREATE', 
-                module='Shipment Schedule', 
-                description=f"Bulk imported/updated {success_count} shipment schedules via Excel.", 
-                request=request
-            )
                 
-            messages.success(request, f"Success! {success_count} shipment schedules imported/updated.")
-            
-        except Exception as e:
-            print("EXCEL IMPORT ERROR:", str(e))
-            messages.error(request, f"Import Error: Please make sure headers match exactly. System read: {str(e)}")
-            
-        return redirect('shipment_import')
+                messages.success(request, f"Success! {saved_count} items from {excel_file.name} successfully imported and scheduled.")
+                return redirect('shipment_inquiry')
+                
+            except Exception as e:
+                print(f"IMPORT ERROR: {str(e)}")
+                messages.error(request, f"Error saving to database: {str(e)}. Please make sure your column names exactly match the template.")
+                return redirect('shipment_import')
+        else:
+            messages.warning(request, "Please select a file to upload.")
+            return redirect('shipment_import')
 
+    # GET Request
     return render(request, 'Inventory/inbound/shipment_import.html')
 
 def shipment_inquiry_view(request):
-    shipments = ShipmentSchedule.objects.all().order_by('-schedule_date')
-    customers_list = Contact.objects.filter(contact_type='Customer')
+    search_query = request.GET.get('search', '').strip()
+    status_filter = request.GET.get('status', '').strip()
+    
+    # 1. Kunin lahat ng P.O. na active at paparating pa lang
+    qs = PurchaseOrder.objects.exclude(
+        ordering_status__in=['Cancelled', 'Received']
+    ).order_by('delivery_date', '-id') # Naka-sort sa pinaka-malapit na delivery date
+    
+    if search_query:
+        qs = qs.filter(
+            Q(po_no__icontains=search_query) |
+            Q(supplier__name__icontains=search_query)
+        )
+        
+    if status_filter:
+        qs = qs.filter(ordering_status=status_filter)
 
-    customer_id = request.GET.get('customer')
-    date_in = request.GET.get('date_in')
-    date_out = request.GET.get('date_out')
-    transport = request.GET.get('transport')
-    item_code = request.GET.get('item_code')
-    invoice_no = request.GET.get('invoice_no')
-    status = request.GET.get('status')
+    # 2. I-Group by PO Number (Dahil pwedeng multiple items per PO)
+    po_dict = {}
+    overall_inbound_value = 0.0
+    today = timezone.now().date()
+    
+    for item in qs:
+        po_no = item.po_no
+        
+        if po_no not in po_dict:
+            po_dict[po_no] = {
+                'header': {
+                    'po_no': po_no,
+                    'supplier': item.supplier.name if getattr(item, 'supplier', None) else 'Unknown Supplier',
+                    'order_date': getattr(item, 'order_date', None),
+                    'delivery_date': getattr(item, 'delivery_date', None),
+                    'status': getattr(item, 'ordering_status', 'Pending'),
+                    'remarks': getattr(item, 'remarks', ''),
+                    'grand_total': 0.0,
+                },
+                'items': []
+            }
+            
+        # 🚀 THE BULLETPROOF FIX: Hahanapin natin kung nasaan ang laman ng PO
+        
+        # SCENARIO A: Kung may related table ka para sa items (e.g., po.items.all())
+        if hasattr(item, 'items') and callable(getattr(item.items, 'all', None)):
+            po_lines = item.items.all()
+            for line in po_lines:
+                po_dict[po_no]['items'].append(line)
+                
+                # Dynamic Check: Hahanapin kung 'quantity' o 'qty' ang name sa models mo
+                qty = getattr(line, 'quantity', getattr(line, 'qty', 0))
+                price = getattr(line, 'unit_price', getattr(line, 'price', 0))
+                amount = getattr(line, 'amount', float(qty or 0) * float(price or 0))
+                
+                po_dict[po_no]['header']['grand_total'] += float(amount)
+                overall_inbound_value += float(amount)
+                
+        # SCENARIO B: Kung Flat Table ka (Isang table lang lahat)
+        else:
+            po_dict[po_no]['items'].append(item)
+            
+            # Dynamic Check din dito
+            qty = getattr(item, 'quantity', getattr(item, 'qty', 0))
+            price = getattr(item, 'unit_price', getattr(item, 'price', 0))
+            amount = getattr(item, 'amount', float(qty or 0) * float(price or 0))
+            
+            po_dict[po_no]['header']['grand_total'] += float(amount)
+            overall_inbound_value += float(amount)
 
-    if customer_id:
-        shipments = shipments.filter(customer_id=customer_id)
-        
-    if date_in and date_out:
-        shipments = shipments.filter(schedule_date__range=[date_in, date_out])
-    elif date_in: 
-        shipments = shipments.filter(schedule_date__gte=date_in)
-        
-    if transport:
-        shipments = shipments.filter(transport=transport)
-        
-    if item_code:
-        shipments = shipments.filter(item_code__icontains=item_code)
-        
-    if invoice_no:
-        shipments = shipments.filter(invoice_no__icontains=invoice_no)
-        
-    if status:
-        shipments = shipments.filter(status=status)
+    po_list = list(po_dict.values())
+    
+    # 3. Compute Top Level Summary Cards
+    total_shipments = len(po_list)
+    total_delayed = sum(1 for p in po_list if p['header']['delivery_date'] and p['header']['delivery_date'] < today and p['header']['status'] not in ['Shipped', 'In Transit'])
+    total_in_transit = sum(1 for p in po_list if p['header']['status'] in ['Shipped', 'In Transit'])
 
-    paginator = Paginator(shipments, 20)
+    # 4. Pagination
+    paginator = Paginator(po_list, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    # 🚀 FIX: I-preserve ang filters para sa pagination links sa Inquiry HTML mo
-    query_dict = request.GET.copy()
-    if 'page' in query_dict:
-        del query_dict['page']
-    filter_params = query_dict.urlencode()
+    context = {
+        'items': page_obj, 
+        'search_query': search_query,
+        'status_filter': status_filter,
+        'overall_inbound_value': overall_inbound_value,
+        'total_shipments': total_shipments,
+        'total_delayed': total_delayed,
+        'total_in_transit': total_in_transit,
+    }
+    
+    return render(request, 'Inventory/inbound/shipment_inquiry.html', context)
+
+# 1. VIEW PARA SA CALENDAR (Calendar View ng Inbound at Outbound Shipments)
+@login_required
+def shipment_calendar_view(request):
+    today = date.today()
+    
+    # 1. Kukunin natin lahat ng PO na HINDI PA "Received" o "Cancelled"
+    active_pos = PurchaseOrder.objects.exclude(
+        ordering_status__in=['Received', 'Cancelled']
+    ).prefetch_related('items', 'supplier')
+
+    events_data = []
+    late_deliveries = []
+
+    for po in active_pos:
+        # Kung walang delivery date, skip natin sa calendar
+        if not po.delivery_date: 
+            continue
+
+        # 2. Compute Late Days
+        days_late = (today - po.delivery_date).days
+        is_late = days_late > 0
+
+        # 3. I-compile ang mga items para sa Modal
+        item_list = []
+        for item in po.items.all():
+            item_list.append({
+                'code': item.item_code,
+                'desc': item.description or 'No Description',
+                'qty': item.qty,
+                'uom': getattr(item, 'uom', 'PCS') # Fallback to PCS if uom doesn't exist on item
+            })
+
+        # 4. Buuin ang Event Data para sa Calendar
+        events_data.append({
+            'id': po.po_no,
+            'title': f"IN: {po.po_no}",
+            'start': po.delivery_date.strftime('%Y-%m-%d'),
+            # BONUS: RED kapag late, BLUE kapag on-time!
+            'backgroundColor': '#ef4444' if is_late else '#2563eb', 
+            'borderColor': '#b91c1c' if is_late else '#1d4ed8',
+            'extendedProps': {
+                'supplier': po.supplier.name if po.supplier else 'Unknown Supplier',
+                'status': po.ordering_status,
+                'is_late': is_late,
+                'days_late': days_late,
+                'items': item_list
+            }
+        })
+
+        # 5. Ipunin ang mga Late Deliveries para sa Dropdown Table
+        if is_late:
+            late_deliveries.append({
+                'po_no': po.po_no,
+                'supplier': po.supplier.name if po.supplier else 'Unknown',
+                'expected_date': po.delivery_date,
+                'days_late': days_late,
+                'status': po.ordering_status
+            })
+
+    # Sort natin yung late deliveries para yung pinaka-late ang nasa pinakataas
+    late_deliveries.sort(key=lambda x: x['days_late'], reverse=True)
 
     context = {
-        'shipments': page_obj,
-        'customers_list': customers_list,
-        'filter_params': filter_params, # Ipasa mo ito sa Inquiry HTML mo kung gusto mong gumana nang tama ang Next page
+        'events_json': json.dumps(events_data), # Ipasa bilang JSON sa Javascript
+        'late_deliveries': late_deliveries,
+        'late_count': len(late_deliveries)
     }
-    return render(request, 'Inventory/inbound/shipment_inquiry.html', context)
+    
+    return render(request, 'Inventory/inbound/shipment_calendar.html', context)
 
 # 1. API para makuha ang details ng isang shipment (Para sa Inquiry Button)
 def api_shipment_details(request, ship_id):
@@ -3994,24 +4165,132 @@ def shipment_update(request):
         messages.success(request, f"Shipment {shipment.shipment_no} updated successfully.")
         return redirect('shipment_inquiry')
 
-def shipment_allocation_view(request, ship_id):
-    try:
-        main_shipment = ShipmentSchedule.objects.get(id=ship_id)
-        # Kukunin lahat ng kasama sa iisang invoice/PO
-        if main_shipment.invoice_no:
-            related_items = ShipmentSchedule.objects.filter(invoice_no=main_shipment.invoice_no)
-        else:
-            related_items = [main_shipment]
-            
-    except ShipmentSchedule.DoesNotExist:
-        messages.error(request, "Shipment record not found.")
+def shipment_allocation_view(request, po_no):
+    po_items = PurchaseOrder.objects.filter(po_no=po_no)
+    
+    if not po_items.exists():
+        messages.error(request, f"Purchase Order {po_no} not found.")
         return redirect('shipment_inquiry')
+        
+    first_item = po_items.first()
+    
+    actual_items = []
+    if hasattr(first_item, 'items') and callable(getattr(first_item.items, 'all', None)):
+        actual_items = list(first_item.items.all())
+    else:
+        actual_items = list(po_items)
 
+    # ==========================================
+    # KUNG I-SU-SUBMIT NA NG GUARD ANG DOCK ARRIVAL
+    # ==========================================
+    if request.method == "POST":
+        try:
+            with transaction.atomic():
+                guard_time = request.POST.get('guard_time', '')
+                dock_remarks = request.POST.get('dock_remarks', '')
+                
+                total_boxes = 0
+                item_details_log = []
+
+                # I-loop ang items
+                for item in actual_items:
+                    item_id = str(item.id)
+                    actual_qty_str = request.POST.get(f'actual_qty_{item_id}', '0')
+                    box_count_str = request.POST.get(f'box_count_{item_id}', '0')
+                    condition = request.POST.get(f'condition_{item_id}', 'GOOD')
+                    
+                    actual_qty = float(actual_qty_str) if actual_qty_str else 0.0
+                    box_count = int(box_count_str) if box_count_str else 0
+                    
+                    total_boxes += box_count
+                    item_details_log.append(f"{item.item_code}: {box_count} boxes ({condition})")
+                    
+                    # I-save sa CONFIRMED_QTY ang bilang sa dock
+                    if hasattr(item, 'confirmed_qty'):
+                        item.confirmed_qty = actual_qty
+                        item.save()
+
+                # 🚀 UPDATE PO HEADER TO 'Approved'
+                # Para pag in-scan nila sa Receiving, PASOK AGAD!
+                combined_remarks = f"Arrived at Gate @ {guard_time}. Total Handling Units: {total_boxes} Boxes. Remarks: {dock_remarks}"
+                
+                po_items.update(
+                    ordering_status='Approved', 
+                    remarks=combined_remarks
+                )
+                
+                # SYSTEM AUDIT LOG (Pang-depensa sa Audit)
+                SystemAuditLog.objects.create(
+                    user=request.user if request.user.is_authenticated else None,
+                    action='UPDATE',
+                    module='Dock Arrival',
+                    description=f"PO {po_no} approved for Receiving. Details: {', '.join(item_details_log)}"
+                )
+                
+            messages.success(request, f"Success! {total_boxes} boxes arrived at the dock. Shipment {po_no} is now Approved for Receiving.")
+            return redirect('shipment_inquiry')
+            
+        except Exception as e:
+            messages.error(request, f"System Error: {str(e)}")
+            return redirect('shipment_allocation', po_no=po_no)
+
+    # PREPARE DATA FOR HTML
+    for item in actual_items:
+        item.safe_qty = getattr(item, 'quantity', getattr(item, 'qty', getattr(item, 'total_pcs', 0)))
+        item.safe_code = getattr(item, 'item_code', None) or (item.item.item_code if hasattr(item, 'item') else 'N/A')
+        item.safe_desc = getattr(item, 'description', None) or (item.item.description if hasattr(item, 'item') else '-')
+        
     context = {
-        'shipment': main_shipment,
-        'related_items': related_items,
+        'po_no': po_no,
+        'supplier_name': first_item.supplier.name if getattr(first_item, 'supplier', None) else 'Unknown Supplier',
+        'po_items': actual_items,
+        'first_item': first_item,
+        'current_time': timezone.now().strftime('%H:%M'),
     }
+    
     return render(request, 'Inventory/inbound/shipment_allocation.html', context)
+
+def shipment_print_doc_view(request, po_no):
+    po_qs = PurchaseOrder.objects.filter(po_no=po_no)
+    
+    if not po_qs.exists():
+        messages.error(request, f"Purchase Order {po_no} not found.")
+        return redirect('shipment_inquiry')
+        
+    first_item = po_qs.first()
+    
+    # 🚀 BULLETPROOF ITEM EXTRACTION
+    actual_items = []
+    if hasattr(first_item, 'items') and callable(getattr(first_item.items, 'all', None)):
+        actual_items = list(first_item.items.all())
+    else:
+        actual_items = list(po_qs)
+
+    grand_total = 0.0
+    for item in actual_items:
+        qty = getattr(item, 'quantity', getattr(item, 'qty', getattr(item, 'total_pcs', 0)))
+        price = getattr(item, 'unit_price', getattr(item, 'price', 0))
+        amount = getattr(item, 'amount', float(qty or 0) * float(price or 0))
+        
+        grand_total += float(amount)
+        
+        item.safe_qty = qty
+        item.computed_amount = amount 
+        item.safe_code = getattr(item, 'item_code', None) or (item.item.item_code if hasattr(item, 'item') else 'N/A')
+        item.safe_desc = getattr(item, 'description', None) or (item.item.description if hasattr(item, 'item') else '-')
+        
+    supplier_name = first_item.supplier.name if getattr(first_item, 'supplier', None) else 'Unknown Supplier'
+    
+    context = {
+        'po_no': po_no,
+        'supplier_name': supplier_name,
+        'po_items': actual_items,
+        'first_item': first_item,
+        'grand_total': grand_total,
+        'print_date': timezone.now(), # Oras ngayon kung kailan pinrint
+    }
+    
+    return render(request, 'Inventory/inbound/shipment_print_doc.html', context)
 
 # 2. VIEW PARA I-SAVE ANG ALLOCATION
 def shipment_register_allocation(request, ship_id):
@@ -4053,74 +4332,98 @@ def shipment_print_view(request, ship_id):
     }
     return render(request, 'Inventory/inbound/shipment_print_doc.html', context)
 
-def shipping_confirmation_view(request):
-    # 🚀 FIX: Dinagdag natin ang 'Allocated' sa listahan para lumabas yung mga galing sa Allocation Dashboard!
-    pending_shipments = ShipmentSchedule.objects.filter(
-        status__in=['Pending', 'Shipped', 'Determined', 'In Transit', 'Allocated']
-    ).order_by('schedule_date')
+def shipping_confirmation_view(request, po_no=None):
+    # 1. SEARCH MODE
+    if request.method == "POST" and 'search_po' in request.POST:
+        search_po = request.POST.get('search_po', '').strip()
+        if search_po:
+            return redirect('shipping_confirmation', po_no=search_po)
+        else:
+            messages.warning(request, "Please enter a valid PO Number.")
+            return redirect('shipping_confirmation')
 
-    if request.method == 'POST':
-        shipment_id = request.POST.get('shipment_id')
-        actual_qty = int(request.POST.get('actual_qty', 0))
-        lot_no = request.POST.get('lot_no').strip()
-        expiry_date = request.POST.get('expiry_date')
-        remarks = request.POST.get('remarks')
+    if not po_no:
+        return render(request, 'Inventory/inbound/shipping_confirmation.html', {'po_no': None})
+
+    # ==========================================
+    # 2. CONFIRMATION MODE
+    # ==========================================
+    
+    # Kunin ang PO Header
+    po_qs = PurchaseOrder.objects.filter(po_no=po_no)
+    
+    if not po_qs.exists():
+        messages.error(request, f"Error: Purchase Order '{po_no}' not found in the database.")
+        return redirect('shipping_confirmation')
+        
+    first_item = po_qs.first()
+    
+    # 🚀 BULLETPROOF ITEM EXTRACTION (Kapareho ng Inquiry)
+    actual_items = []
+    if hasattr(first_item, 'items') and callable(getattr(first_item.items, 'all', None)):
+        actual_items = list(first_item.items.all())
+    else:
+        actual_items = list(po_qs)
+
+    # Defense: Baka na-confirm na ito dati
+    if getattr(first_item, 'ordering_status', '') in ['Shipped', 'In Transit', 'Received']:
+        messages.warning(request, f"PO {po_no} is already marked as {first_item.ordering_status}. No further confirmation needed.")
+        return redirect('shipment_inquiry')
+
+    # Kung i-su-submit na yung form
+    if request.method == "POST" and 'confirm_shipment' in request.POST:
+        courier = request.POST.get('courier', 'Unknown Courier').strip()
+        tracking_no = request.POST.get('tracking_no', 'N/A').strip()
+        eta = request.POST.get('eta', '')
+        remarks = request.POST.get('remarks', '').strip()
 
         try:
-            with transaction.atomic(): # 🚀 Ginamitan natin ng transaction block para safe
-                shipment = ShipmentSchedule.objects.get(id=shipment_id)
-
-                if MaterialTag.objects.filter(lot_no=lot_no).exists():
-                    messages.error(request, f"Error: Lot Number '{lot_no}' already exists in the inventory!")
-                    return redirect('shipping_confirmation')
-
-                # 1. GUMAWA NG BAGONG MATERIAL TAG
-                new_tag = MaterialTag.objects.create(
-                    item_code=shipment.item_code,
-                    description=f"Received from PO/Shipment {shipment.shipment_no}",
-                    lot_no=lot_no,
-                    total_pcs=actual_qty,
-                    expiration_date=expiry_date if expiry_date else None,
-                    arrival_date=timezone.now().date(),
-                    inspection_status='Pending', # Hihintayin pa i-QC bago magamit sa Assembly
-                    remarks=remarks
+            with transaction.atomic():
+                po_qs.update(
+                    ordering_status='In Transit',
+                    transport=courier,
+                    delivery_date=eta if eta else first_item.delivery_date,
+                    remarks=f"TRK: {tracking_no} | {remarks}"
                 )
-
-                # 2. 🚀 GUMAWA NG STOCK LOG PARA LUMITAW SA STOCK HISTORY!
-                po_reference = shipment.invoice_no if shipment.invoice_no else shipment.shipment_no
-                StockLog.objects.create(
-                    material_tag=new_tag,
-                    action_type='REG', # Registration / IN
-                    old_qty=0,
-                    new_qty=actual_qty,
-                    change_qty=actual_qty,
-                    user=request.user,
-                    notes=f"PO/Shipment Receipt: Ref {po_reference}"
-                )
-
-                # 3. I-update ang status ng Shipment
-                shipment.status = 'Completed'
-                shipment.save()
-
                 log_system_action(
-                    user=request.user, 
-                    action='UPDATE', 
-                    module='Shipping Confirmation', 
-                    description=f"Received Shipment {shipment.shipment_no} and generated Lot {lot_no}.", 
+                    user=request.user,
+                    action='UPDATE',
+                    module='Inbound Shipment',
+                    description=f"Confirmed shipment for PO {po_no} via {courier}. Tracking: {tracking_no}",
                     request=request
                 )
-
-                messages.success(request, f"SUCCESS! Shipment {shipment.shipment_no} received. Material Tag (Lot: {lot_no}) generated & logged in History.")
-                return redirect('shipping_confirmation')
-
-        except ShipmentSchedule.DoesNotExist:
-            messages.error(request, "Shipment record not found.")
+            messages.success(request, f"Success! Shipment for PO {po_no} has been confirmed and is now In Transit.")
+            return redirect('shipment_inquiry')
         except Exception as e:
-            messages.error(request, f"Error during confirmation: {str(e)}")
+            messages.error(request, f"System Error while confirming shipment: {str(e)}")
+            return redirect('shipping_confirmation', po_no=po_no)
 
+    # 🚀 COMPUTATION & VARIABLE ATTACHMENT
+    grand_total = 0.0
+    for item in actual_items:
+        # Kunin ang qty at price
+        qty = getattr(item, 'quantity', getattr(item, 'qty', getattr(item, 'total_pcs', 0)))
+        price = getattr(item, 'unit_price', getattr(item, 'price', 0))
+        amount = getattr(item, 'amount', float(qty or 0) * float(price or 0))
+        
+        grand_total += float(amount)
+        
+        # I-attach natin sa object as "safe_" variables para madaling tawagin sa HTML
+        item.safe_qty = qty
+        item.computed_amount = amount 
+        item.safe_code = getattr(item, 'item_code', None) or (item.item.item_code if hasattr(item, 'item') else 'N/A')
+        item.safe_desc = getattr(item, 'description', None) or (item.item.description if hasattr(item, 'item') else '-')
+        
+    supplier_name = first_item.supplier.name if getattr(first_item, 'supplier', None) else 'Unknown Supplier'
+    
     context = {
-        'shipments': pending_shipments
+        'po_no': po_no,
+        'supplier_name': supplier_name,
+        'po_items': actual_items, # Ang TOTOONG items ang ipapasa natin
+        'grand_total': grand_total,
+        'first_item': first_item,
     }
+    
     return render(request, 'Inventory/inbound/shipping_confirmation.html', context)
 
 @login_required
