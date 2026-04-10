@@ -92,6 +92,12 @@
                             class="w-full p-2 text-xs font-bold border border-slate-300 bg-white focus:ring-1 focus:ring-teal-500 outline-none rounded-sm uppercase">
                     </div>
 
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Location / Bin</label>
+                        <input type="text" name="location" value="{{ location_search }}" placeholder="Ex. RACK-A1"
+                            class="w-full p-2 text-xs font-bold border border-slate-300 bg-white focus:ring-1 focus:ring-teal-500 outline-none rounded-sm uppercase">
+                    </div>
+
                 </div>
 
                 <div class="mt-4 pt-4 border-t border-slate-200 flex flex-wrap justify-end gap-2">
@@ -122,6 +128,7 @@
                         <th class="py-2 px-3 border-r border-slate-300">Warehouse</th>
                         <th class="py-2 px-3 border-r border-slate-300">Location</th>
                         <th class="py-2 px-3 border-r border-slate-300">Lot No.</th>
+                        <th class="py-2 px-3 border-r border-slate-300 text-center">Status</th>
                         <th class="py-2 px-3 border-r border-slate-300 text-center">Rvs</th>
                         <th class="py-2 px-3 border-r border-slate-300">PO No.</th>
                         <th class="py-2 px-3 border-r border-slate-300">Invoice No.</th>
@@ -158,12 +165,25 @@
                         <td class="py-1.5 px-3 border-r border-slate-200 text-slate-600">{{ stock.location.description|default:"-" }}</td>
 
                         <td class="py-1.5 px-3 border-r border-slate-200 font-black text-slate-900">{{ stock.lot_no }}</td>
+                        <td class="py-1.5 px-3 border-r border-slate-200 text-center">
+                            {% if stock.inspection_status == 'Passed' %}
+                                <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-full text-[8px] font-black uppercase tracking-widest">Passed</span>
+                            {% elif stock.inspection_status == 'Quarantine' %}
+                                <span class="px-2 py-0.5 bg-rose-100 text-rose-800 border border-rose-300 rounded-full text-[8px] font-black uppercase tracking-widest">Quarantine</span>
+                            {% else %}
+                                <span class="px-2 py-0.5 bg-amber-100 text-amber-800 border border-amber-300 rounded-full text-[8px] font-black uppercase tracking-widest">{{ stock.inspection_status|default:"Pending" }}</span>
+                            {% endif %}
+                        </td>
                         <td class="py-1.5 px-3 border-r border-slate-200 text-center">{{ stock.revision|default:"-" }}</td>
                         <td class="py-1.5 px-3 border-r border-slate-200 text-slate-600">{{ stock.po_reference.po_no|default:"-" }}</td>
                         <td class="py-1.5 px-3 border-r border-slate-200 text-slate-600 uppercase">{{ stock.invoice_no|default:"-" }}</td>
                         <td class="py-1.5 px-3 border-r border-slate-200 text-center">{{ stock.packing_type }}</td>
                         <td class="py-1.5 px-3 border-r border-slate-200 text-slate-500">{{ stock.arrival_date|date:"Y-m-d" }}</td>
-                        <td class="py-1.5 px-3 border-r border-slate-200 font-bold text-slate-600">{{ stock.expiration_date|date:"Y-m-d"|default:"-" }}</td>
+                        <td class="py-1.5 px-3 border-r border-slate-200 font-bold 
+                            {% if stock.expiration_date and stock.expiration_date < today %}text-rose-600 bg-rose-50 font-black animate-pulse
+                            {% else %}text-slate-600{% endif %}">
+                            {{ stock.expiration_date|date:"Y-m-d"|default:"-" }}
+                        </td>
                         <td class="py-1.5 px-3 border-r border-slate-200 text-right font-black text-xs {% if stock.total_pcs <= 0 %}text-rose-600{% else %}text-slate-800{% endif %} bg-slate-50/50">{{ stock.total_pcs }}</td>
                         <td class="py-1.5 px-3 border-r border-slate-200 text-center font-bold text-slate-500">PCS</td>
                         <td class="py-1.5 px-3 border-r border-slate-200 text-center text-slate-500">{{ stock.po_reference.currency|default:"PHP" }}</td>

@@ -197,7 +197,7 @@
                                    class="w-full p-2.5 bg-slate-50 border border-slate-400 text-xs font-bold outline-none focus:ring-1 focus:ring-teal-500 shadow-inner">
                         </div>
                         
-                        <div class="space-y-1 pt-2">
+                        <div class="space-y-1 pt-2" id="accessStatusDiv">
                             <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">System Access</label>
                             <select name="is_active" class="w-full p-2.5 bg-slate-50 border border-slate-400 text-xs font-black outline-none">
                                 <option value="True" class="text-emerald-700">ACTIVE - Can login</option>
@@ -269,6 +269,7 @@
         const usernameInput = document.getElementById('usernameInput');
         const passwordInput = document.getElementById('passwordInput');
         const pwdAsterisk = document.getElementById('pwdAsterisk');
+        const accessStatusDiv = document.getElementById('accessStatusDiv'); // 🚀 BAGO
 
         modal.classList.remove('hidden');
 
@@ -282,31 +283,32 @@
             usernameInput.readOnly = false;
             usernameInput.classList.remove('bg-slate-200', 'text-slate-500');
             
-            // 🚀 BAGO: Disable password input kapag Add, dahil auto-generated na
             passwordInput.required = false;
             passwordInput.readOnly = true;
             passwordInput.classList.add('bg-slate-200', 'text-slate-500', 'cursor-not-allowed');
             passwordInput.placeholder = "Auto-generated & Emailed to User";
             pwdAsterisk.style.display = 'none';
             
-            form.elements['is_active'].value = 'True';
+            // 🚀 BAGO: Itago ang System Access kapag nagre-register
+            if (accessStatusDiv) accessStatusDiv.classList.add('hidden');
         } 
         else if (action === 'edit') {
             title.innerHTML = '<i data-lucide="user-cog" class="w-5 h-5 text-amber-500"></i> Edit User Profile';
             actionInput.value = 'edit';
             submitBtn.innerHTML = '<i data-lucide="save" class="w-3 h-3"></i> Update Profile';
 
-            // Lock username
             usernameInput.value = username;
             usernameInput.readOnly = true;
             usernameInput.classList.add('bg-slate-200', 'text-slate-500');
             
-            // 🚀 BAGO: Pwedeng i-override ng Admin ang password kapag Edit Mode
             passwordInput.required = false;
             passwordInput.readOnly = false;
             passwordInput.classList.remove('bg-slate-200', 'text-slate-500', 'cursor-not-allowed');
             passwordInput.placeholder = "Leave blank to keep old password...";
             pwdAsterisk.style.display = 'none';
+
+            // 🚀 BAGO: Ipakita ulit ang System Access kapag nag-e-edit
+            if (accessStatusDiv) accessStatusDiv.classList.remove('hidden');
 
             form.elements['email'].value = email;
             form.elements['role'].value = role;

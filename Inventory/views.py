@@ -212,30 +212,69 @@ def dashboard_view(request):
     # ---------------------------------------------------------
     today = timezone.now().date()
     thirty_days = today + timedelta(days=30)
-
-    # Kunin ang mga Low Stock (halimbawa: 100 pcs pababa)
-    low_stock_items = active_tags.filter(total_pcs__lte=100).order_by('total_pcs')[:5]
-    
-    # Kunin ang mga Expiring within 30 days
-    expiring_items = active_tags.filter(expiration_date__lte=thirty_days, expiration_date__gte=today).order_by('expiration_date')[:5]
-
-    # Pagsasamahin natin sa isang listahan para madaling i-display sa HTML
     alerts = []
-    for item in low_stock_items:
-        alerts.append({
-            'item_code': item.item_code,
-            'detail': f"{item.total_pcs} PCS remaining",
-            'type': 'Low Stock'
-        })
-    for item in expiring_items:
+
+    # --- A. LOW STOCK LOGIC (Global Total per Item) ---
+    # I-group natin lahat ng active tags by item_code at i-sum ang total pcs
+    item_stocks = MaterialTag.objects.values('item_code').annotate(
+        total_stock=Sum('total_pcs')
+    )
+    
+    # Kunin natin ang mga Min Stock na sinet sa Item Master
+    master_items = {
+        item['item_code']: item['min_stock'] 
+        for item in Item.objects.values('item_code', 'min_stock')
+    }
+
+    # Fallback threshold kung hindi nila nalagyan sa Item Master
+    sys_settings = SystemSetting.objects.first()
+    default_threshold = sys_settings.low_stock_threshold if sys_settings else 50
+
+    low_stock_count = 0
+    low_stock_alerts_temp = []
+
+    for stock in item_stocks:
+        code = stock['item_code']
+        total_qty = stock['total_stock'] or 0
+        
+        # Gamitin ang specific Min Stock ng item, kung 0, gamitin ang default
+        item_threshold = master_items.get(code, 0)
+        threshold_to_use = item_threshold if item_threshold > 0 else default_threshold
+
+        # I-check kung mas mababa sa threshold ang GLOBAL TOTAL
+        if total_qty <= threshold_to_use:
+            low_stock_count += 1
+            low_stock_alerts_temp.append({
+                'item_code': code,
+                'detail': f"Total: {total_qty} (Min: {threshold_to_use})",
+                'type': 'Low Stock',
+                'qty': total_qty # Gagamitin lang pang-sort
+            })
+
+    # Sort natin para yung pinaka-kaunti ang nasa taas, tapos kunin lang ang top 5
+    low_stock_alerts_temp.sort(key=lambda x: x['qty'])
+    alerts.extend(low_stock_alerts_temp[:5])
+
+
+    # --- B. EXPIRING LOGIC (Per Lot/Tag) ---
+    # Tama lang na per Tag ito dahil per kahon ang expiry date
+    expiring_items = active_tags.filter(
+        expiration_date__lte=thirty_days, 
+        expiration_date__gte=today
+    ).order_by('expiration_date')
+    
+    expiring_count = expiring_items.count()
+
+    for item in expiring_items[:5]:
         days_left = (item.expiration_date - today).days if item.expiration_date else 0
         alerts.append({
             'item_code': item.item_code,
-            'detail': f"Expires in {days_left} days",
+            'detail': f"Lot: {item.lot_no} | Exp: {days_left} days",
             'type': 'Expiring'
         })
     
-    alert_count = active_tags.filter(total_pcs__lte=100).count() + active_tags.filter(expiration_date__lte=thirty_days, expiration_date__gte=today).count()
+    # --- C. TOTAL ALERT COUNT ---
+    alert_count = low_stock_count + expiring_count
 
     # ---------------------------------------------------------
     # 3. PENDING TASKS / RELEASES (UPDATED PARA SA CUSTOMER ORDERS)
@@ -372,7 +411,7 @@ def user_master_view(request):
         if action == 'add':
             username = request.POST.get('username').strip()
             email = request.POST.get('email').strip()
-            is_active = request.POST.get('is_active') == 'True'
+            is_active = True # 🚀 FIX: Automatic ACTIVE kapag bagong register!
             role = request.POST.get('role')
             company_name = request.POST.get('company_name').strip()
             contact_number = request.POST.get('contact_number').strip()
@@ -569,7 +608,7 @@ def register_user_view(request):
 
 def item_master_view(request):
     # ==========================================
-    # 1. POST: ADD / EDIT / DELETE ITEM
+    # 1. POST: ADD / EDIT / DELETE / IMPORT
     # ==========================================
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -582,33 +621,28 @@ def item_master_view(request):
             unit_price = request.POST.get('unit_price', 0.00)
             min_stock = int(request.POST.get('min_stock', 0) or 0)
             default_zone = request.POST.get('default_zone', '').strip().upper()
-            
-            # 🚀 BAGO: Kunin ang Opening Stock
             initial_stock = int(request.POST.get('initial_stock', 0) or 0)
 
             if Item.objects.filter(item_code=item_code).exists():
                 messages.error(request, f"Error: Item Code '{item_code}' already exists!")
             else:
-                with transaction.atomic(): # 🚀 Gamitin ang transaction para safe
+                with transaction.atomic():
                     Item.objects.create(
                         item_code=item_code, description=description,
                         category=category, uom=uom, unit_price=unit_price,
                         min_stock=min_stock, default_zone=default_zone
                     )
                     
-                    # 🚀 BAGO: Kung may Opening Stock, gawan ng Material Tag at Stock Log!
                     if initial_stock > 0:
-                        # Kunin ang location instance kung may nilagay na zone
                         loc_instance = LocationMaster.objects.filter(location_code=default_zone).first() if default_zone else None
-                        
                         tag = MaterialTag.objects.create(
                             item_code=item_code,
                             description=description,
-                            lot_no=f"OB-{timezone.now().strftime('%y%m%d')}", # OB = Opening Balance
+                            lot_no=f"OB-{timezone.now().strftime('%y%m%d')}", 
                             total_pcs=initial_stock,
                             packing_type=uom,
                             arrival_date=timezone.now().date(),
-                            inspection_status='Passed', # Auto-passed na para magamit agad
+                            inspection_status='Passed', 
                             location=loc_instance,
                             remarks="System Initial Opening Balance"
                         )
@@ -619,20 +653,18 @@ def item_master_view(request):
                             old_qty=0,
                             new_qty=initial_stock,
                             change_qty=initial_stock,
-                            user=request.user,
+                            user=request.user if request.user.is_authenticated else None,
                             notes="Initial System Data Entry"
                         )
                     
-                log_system_action(request.user, 'CREATE', 'Item Master', f"Registered item: {item_code}", request)
+                # log_system_action(request.user, 'CREATE', 'Item Master', f"Registered item: {item_code}", request)
                 messages.success(request, f"Success! Item '{item_code}' has been registered.")
 
         elif action == 'edit':
             item_id = request.POST.get('item_id')
             item_code = request.POST.get('item_code', '').strip().upper()
-            
             try:
                 item = Item.objects.get(id=item_id)
-                # Check for duplicate code if they changed it
                 if Item.objects.filter(item_code=item_code).exclude(id=item_id).exists():
                     messages.error(request, f"Error: Item Code '{item_code}' is already in use.")
                 else:
@@ -644,8 +676,6 @@ def item_master_view(request):
                     item.min_stock = int(request.POST.get('min_stock', 0) or 0)
                     item.default_zone = request.POST.get('default_zone', '').strip().upper()
                     item.save()
-                    
-                    log_system_action(request.user, 'UPDATE', 'Item Master', f"Updated item: {item_code}", request)
                     messages.success(request, f"Success! Item '{item_code}' updated.")
             except Exception as e:
                 messages.error(request, f"Error updating item: {str(e)}")
@@ -659,12 +689,93 @@ def item_master_view(request):
                 messages.success(request, f"Successfully removed {code} from the system.")
             except Exception as e:
                 messages.error(request, f"Error deleting item: {str(e)}")
+                
+        # 🚀 BAGO: IMPORT EXCEL LOGIC
+        elif action == 'import_excel':
+            excel_file = request.FILES.get('excel_file')
+            if not excel_file:
+                messages.error(request, "No file uploaded.")
+                return redirect('item_master')
+
+            try:
+                # Basahin ang excel kahit may konting dumi (Pandas handles this well)
+                df = pd.read_excel(excel_file)
+                
+                # Strip spaces sa column headers para hindi mag-error kung may whitespace
+                df.columns = df.columns.str.strip()
+                
+                # Required columns checking
+                required_cols = ['Item Code', 'Description', 'Category', 'UOM', 'Unit Price', 'Min Stock', 'Zone']
+                if not all(col in df.columns for col in required_cols):
+                    messages.error(request, f"Invalid Excel Format! Please download and use the provided template.")
+                    return redirect('item_master')
+
+                success_count = 0
+                updated_count = 0
+                
+                with transaction.atomic():
+                    for index, row in df.iterrows():
+                        # Skip blank Item Codes
+                        if pd.isna(row['Item Code']):
+                            continue
+                            
+                        i_code = str(row['Item Code']).strip().upper()
+                        i_desc = str(row['Description']).strip() if pd.notna(row['Description']) else "NO DESCRIPTION"
+                        i_cat = str(row['Category']).strip().upper() if pd.notna(row['Category']) else "RAW"
+                        i_uom = str(row['UOM']).strip().upper() if pd.notna(row['UOM']) else "PCS"
+                        
+                        try:
+                            i_price = float(row['Unit Price']) if pd.notna(row['Unit Price']) else 0.00
+                        except ValueError:
+                            i_price = 0.00
+                            
+                        try:
+                            i_min = int(row['Min Stock']) if pd.notna(row['Min Stock']) else 0
+                        except ValueError:
+                            i_min = 0
+                            
+                        i_zone = str(row['Zone']).strip().upper() if pd.notna(row['Zone']) else ""
+
+                        # Gamitin natin ang update_or_create para mag-overwrite kung may existing, at mag-create kung wala
+                        obj, created = Item.objects.update_or_create(
+                            item_code=i_code,
+                            defaults={
+                                'description': i_desc,
+                                'category': i_cat,
+                                'uom': i_uom,
+                                'unit_price': i_price,
+                                'min_stock': i_min,
+                                'default_zone': i_zone
+                            }
+                        )
+                        
+                        if created:
+                            success_count += 1
+                        else:
+                            updated_count += 1
+
+                messages.success(request, f"Import Success! Registered {success_count} new items, Updated {updated_count} existing items.")
+            except Exception as e:
+                messages.error(request, f"Failed to import Excel file. Error: {str(e)}")
 
         return redirect('item_master')
 
     # ==========================================
-    # 2. GET: LOAD PAGE AND SEARCH
+    # 2. GET: LOAD PAGE AND SEARCH / EXPORT TEMPLATE
     # ==========================================
+    
+    # 🚀 BAGO: DOWNLOAD TEMPLATE LOGIC
+    if request.GET.get('download_template') == 'true':
+        df = pd.DataFrame(columns=['Item Code', 'Description', 'Category', 'UOM', 'Unit Price', 'Min Stock', 'Zone'])
+        # Add sample row
+        df.loc[0] = ['SAMPLE-001', 'Sample 10MM Bolt', 'RAW', 'PCS', 15.50, 100, 'RACK-A']
+        
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename="WMS_ItemMaster_Template.xlsx"'
+        with pd.ExcelWriter(response, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Template')
+        return response
+
     search_query = request.GET.get('q', '')
     items = Item.objects.all().order_by('-created_at')
 
@@ -684,13 +795,10 @@ def item_master_view(request):
             item_code=item.item_code, 
             total_pcs__gt=0
         ).aggregate(total=Sum('total_pcs'))['total'] or 0
-        
-        # Gumawa tayo ng virtual field na 'current_stock'
         item.current_stock = stock_sum
 
-    # 🚀 BAGO: Kunin ang mga Zones mula sa LocationMaster para sa Dropdown sa Modal
-    zones = LocationMaster.objects.values_list('zone', flat=True).distinct()
-    zone_list = [z for z in zones if z] # Tanggalin ang mga blank zones
+    zones = LocationMaster.objects.values_list('zone', flat=True).distinct() if hasattr(LocationMaster, 'objects') else []
+    zone_list = [z for z in zones if z] 
 
     context = {
         'items': page_obj,
@@ -3602,6 +3710,7 @@ def stock_inquiry_view(request):
     item_code = request.GET.get('item_code', '').strip()
     description = request.GET.get('description', '').strip()
     lot_no = request.GET.get('lot_no', '').strip()
+    location_search = request.GET.get('location', '').strip()
 
     if inquiry_type == 'current':  
         stocks = stocks.filter(total_pcs__gt=0) 
@@ -3616,6 +3725,12 @@ def stock_inquiry_view(request):
         stocks = stocks.filter(description__icontains=description)
     if lot_no:
         stocks = stocks.filter(lot_no__icontains=lot_no)
+    if location_search:
+        from django.db.models import Q
+        stocks = stocks.filter(
+            Q(location__location_code__icontains=location_search) | 
+            Q(location__zone__icontains=location_search)
+        )
 
     total_active_tags = stocks.filter(total_pcs__gt=0).count()
     total_qty_stock = stocks.filter(total_pcs__gt=0).aggregate(total=Sum('total_pcs'))['total'] or 0
@@ -3636,6 +3751,7 @@ def stock_inquiry_view(request):
                 'Warehouse': s.location.zone if s.location else 'Main Warehouse',
                 'Location': s.location.location_code if s.location else '',
                 'Lot No.': s.lot_no,
+                'Status': s.inspection_status,
                 'PO No.': s.po_reference.po_no if s.po_reference else '',
                 'Invoice No.': s.invoice_no if s.invoice_no else '',
                 'Revision': s.revision if s.revision else '',
@@ -3678,6 +3794,8 @@ def stock_inquiry_view(request):
         'item_code': item_code,
         'description': description,
         'lot_no': lot_no,
+        'location_search': location_search, 
+        'today': timezone.now().date(),
     }
     # 🚀 FIX: Itinuro sa inventory_inquiry folder
     return render(request, 'Inventory/inventory_inquiry/stock_inquiry.html', context)
@@ -3685,11 +3803,14 @@ def stock_inquiry_view(request):
 def stock_io_view(request, tag_id):
     stock = get_object_or_404(MaterialTag, id=tag_id)
     history_logs = stock.logs.all().order_by('-timestamp')
+    total_in = sum(log.change_qty for log in history_logs if log.change_qty > 0)
+    total_out = sum(abs(log.change_qty) for log in history_logs if log.change_qty < 0)
     context = {
         'stock': stock,
         'history_logs': history_logs,
+        'total_in': total_in,
+        'total_out': total_out,
     }
-    # 🚀 FIX: Itinuro sa inventory_inquiry folder
     return render(request, 'Inventory/inventory_inquiry/stock_io_history.html', context)
 
 def api_update_item_price(request):
@@ -3710,16 +3831,42 @@ def api_update_item_price(request):
 def stock_item_inquiry_view(request):
     search_query = request.GET.get('q', '').strip()
     
+    # 🚀 BAGO: Dito na natin ginrupo gamit ang PAREHONG Item Code at Description!
+    # Magkakasunod din sila sa table (order_by) para napakalinaw sa mata.
     inventory = MaterialTag.objects.values('item_code', 'description').annotate(
         total_stock=Sum('total_pcs'),
         lot_count=Count('id')
-    ).order_by('item_code')
+    ).order_by('item_code', 'description')
 
     if search_query:
         inventory = inventory.filter(
             Q(item_code__icontains=search_query) | 
             Q(description__icontains=search_query)
         )
+
+    # 🚀 EXPORT TO EXCEL NG GLOBAL SUMMARY
+    if request.GET.get('export_excel') == 'true':
+        data = []
+        for item in inventory:
+            data.append({
+                'Item Code': item['item_code'],
+                'Description': item['description'],
+                'Total Number of Lots': item['lot_count'],
+                'Total Available Stock': item['total_stock'] or 0,
+            })
+        
+        df = pd.DataFrame(data)
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename="Global_Inventory_Summary.xlsx"'
+        
+        with pd.ExcelWriter(response, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Global Summary')
+            worksheet = writer.sheets['Global Summary']
+            for column_cells in worksheet.columns:
+                length = max(len(str(cell.value)) for cell in column_cells)
+                worksheet.column_dimensions[column_cells[0].column_letter].width = length + 2
+                
+        return response
 
     sys_settings = SystemSetting.objects.first()
     actual_threshold = sys_settings.low_stock_threshold if sys_settings else 50
@@ -3735,44 +3882,7 @@ def stock_item_inquiry_view(request):
             'low_stock_threshold': actual_threshold 
         }
     }
-    # 🚀 FIX: Itinuro sa inventory_inquiry folder
-    return render(request, 'Inventory/inventory_inquiry/stock_item_inquiry.html', context)
-
-def stock_item_inquiry_view(request):
-    # 1. Kunin ang search query kung meron man
-    search_query = request.GET.get('q', '').strip()
     
-    # 2. I-Group ang database by Item Code at i-total ang quantity
-    inventory = MaterialTag.objects.values('item_code', 'description').annotate(
-        total_stock=Sum('total_pcs'),
-        lot_count=Count('id')
-    ).order_by('item_code')
-
-    # 3. Kung may tinype sa search bar, i-filter natin
-    if search_query:
-        inventory = inventory.filter(
-            Q(item_code__icontains=search_query) | 
-            Q(description__icontains=search_query)
-        )
-
-    # 🚀 FIX: Kunin ang TOTOONG settings mula sa database
-    sys_settings = SystemSetting.objects.first()
-    # Default sa 50 kung walang laman ang database
-    actual_threshold = sys_settings.low_stock_threshold if sys_settings else 50
-
-    # 4. Pagination (20 items per page)
-    paginator = Paginator(inventory, 20)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
-    context = {
-        'items': page_obj,
-        'search_query': search_query,
-        'settings': {
-            'low_stock_threshold': actual_threshold 
-        }
-    }
-    # Tiyakin na tama ang pangalan ng HTML file mo dito
     return render(request, 'Inventory/inventory_inquiry/stock_item_inquiry.html', context)
 
 def stock_history_view(request):
@@ -4579,9 +4689,9 @@ def return_slip_view(request):
 def analytics_view(request):
     try:
         settings = SystemSetting.objects.first()
-        threshold = settings.low_stock_threshold if settings else 50
+        default_threshold = settings.low_stock_threshold if settings else 50
     except Exception:
-        threshold = 50
+        default_threshold = 50
 
     total_skus = Item.objects.count()
     try:
@@ -4599,57 +4709,90 @@ def analytics_view(request):
 
     active_tags = MaterialTag.objects.filter(total_pcs__gt=0)
     total_inventory_value = Decimal('0.00')
-    
     for tag in active_tags:
         price = item_prices.get(tag.item_code, Decimal('0.00'))
         total_inventory_value += Decimal(str(tag.total_pcs)) * price
 
-    # 2. STOCK HEALTH
+    # 🚀 2. STOCK HEALTH
     inventory_grouped = MaterialTag.objects.values('item_code', 'description').annotate(
         total_stock=Sum('total_pcs')
     )
-    low_stock_items = [item for item in inventory_grouped if item['total_stock'] < threshold]
-    critical_count = len(low_stock_items)
-    healthy_count = len([item for item in inventory_grouped if item['total_stock'] >= threshold])
+    master_mins = {item['item_code']: item['min_stock'] for item in Item.objects.values('item_code', 'min_stock')}
 
-    # 🚀 3. INVENTORY FLOW (LAST 7 DAYS) - PARA SA LINE CHART
+    low_stock_items = []
+    critical_count = 0
+    healthy_count = 0
+
+    for item in inventory_grouped:
+        code = item['item_code']
+        qty = item['total_stock'] or 0
+        i_min = master_mins.get(code, 0)
+        threshold_to_use = i_min if i_min > 0 else default_threshold
+
+        if qty <= threshold_to_use:
+            low_stock_items.append({
+                'item_code': code,
+                'description': item['description'],
+                'total_stock': qty
+            })
+            critical_count += 1
+        else:
+            healthy_count += 1
+
+    low_stock_items = sorted(low_stock_items, key=lambda k: k['total_stock'])[:5]
+
+    # 🚀 3. INVENTORY FLOW (LAST 7 DAYS)
     today = timezone.now().date()
     last_7_days = [today - timedelta(days=i) for i in range(6, -1, -1)]
     
     flow_dates = [d.strftime('%b %d') for d in last_7_days]
     flow_in = []
     flow_out = []
+    flow_net = []
 
     for d in last_7_days:
         day_in = StockLog.objects.filter(timestamp__date=d, action_type__in=['IN', 'REG']).aggregate(Sum('change_qty'))['change_qty__sum'] or 0
         day_out_raw = StockLog.objects.filter(timestamp__date=d, action_type='OUT').aggregate(Sum('change_qty'))['change_qty__sum'] or 0
+        
+        abs_out = abs(day_out_raw)
+        
         flow_in.append(day_in)
-        flow_out.append(abs(day_out_raw)) # Gawing positive para sa chart
+        flow_out.append(abs_out)
+        flow_net.append(day_in - abs_out)
 
     # 4. RECENT ACTIVITY FEED
     recent_logs = StockLog.objects.select_related('user', 'material_tag').order_by('-timestamp')[:6]
 
-    # 🚀 5. PER WAREHOUSE UTILIZATION - PARA SA HORIZONTAL BAR CHART
+    # 🚀 5. PER WAREHOUSE UTILIZATION
     warehouses = LocationMaster.objects.values('warehouse').annotate(
         total_cap=Sum('capacity')
-    ).exclude(warehouse__exact='')
+    ).exclude(warehouse__exact='').exclude(warehouse__isnull=True)
+
+    used_per_wh = MaterialTag.objects.filter(location__isnull=False, total_pcs__gt=0).values('location__warehouse').annotate(
+        used_qty=Sum('total_pcs')
+    )
+    used_dict = {item['location__warehouse']: item['used_qty'] for item in used_per_wh}
 
     wh_labels = []
     wh_util_data = []
+    wh_used_data = [] 
+    wh_free_data = []
 
     for wh in warehouses:
-        wh_name = wh['warehouse']
-        t_cap = wh['total_cap'] or 1 # Iwas divide-by-zero
+        wh_name = str(wh['warehouse']).strip()
+        if not wh_name: continue
         
-        # Ilan ang laman ng specific warehouse na ito?
-        used = MaterialTag.objects.filter(location__warehouse=wh_name).aggregate(Sum('total_pcs'))['total_pcs__sum'] or 0
-        
-        # Compute percentage (Ila-lock sa 100% max para hindi masira ang chart kung may overstock)
-        used_capped = min(used, t_cap)
-        pct = round((used_capped / t_cap) * 100, 1)
+        t_cap = float(wh['total_cap'] or 1) 
+        used = float(used_dict.get(wh_name, 0))
+        free = max(t_cap - used, 0) # Computed free space
 
-        wh_labels.append(wh_name)
-        wh_util_data.append(pct)
+        pct = round((used / t_cap) * 100, 1)
+        pct_capped = min(pct, 100) 
+
+        wh_labels.append(wh_name.upper())
+        wh_util_data.append(pct_capped)
+        wh_used_data.append(used)
+        wh_free_data.append(free)
 
     # 6. FAST MOVING ITEMS
     fast_movers = StockLog.objects.filter(action_type='OUT').values(
@@ -4665,26 +4808,24 @@ def analytics_view(request):
             'total_out': abs(item['total_out']) 
         })
 
-    # 7. CONTEXT
     context = {
         'total_skus': total_skus,
         'pending_shipments': pending_shipments,
         'total_pcs': total_pcs,
         'total_inventory_value': total_inventory_value,
         'critical_count': critical_count,
-        'low_stock_items': low_stock_items[:5], 
+        'low_stock_items': low_stock_items, 
         'recent_logs': recent_logs,
         'chart_health_data': json.dumps([healthy_count, critical_count]), 
-        
-        # Bagong Chart Data:
         'flow_dates': json.dumps(flow_dates),
         'flow_in': json.dumps(flow_in),
         'flow_out': json.dumps(flow_out),
+        'flow_net': json.dumps(flow_net),
         'wh_labels': json.dumps(wh_labels),
         'wh_util_data': json.dumps(wh_util_data),
-        
+        'wh_used_data': json.dumps(wh_used_data),
+        'wh_free_data': json.dumps(wh_free_data),
         'top_items': top_items,
-        'threshold': threshold
     }
     
     return render(request, 'Inventory/analytics_board.html', context)
@@ -5283,9 +5424,24 @@ def alert_new_po_created(po):
 
 @login_required
 def email_master_view(request):
-    # Kukunin lahat ng naka-setup na rules sa database
+    search_query = request.GET.get('q', '').strip()
+    
+    # Kunin lahat ng naka-setup na rules sa database
     routes = EmailRoute.objects.all().order_by('event_name')
-    return render(request, 'Inventory/master/email_master.html', {'routes': routes})
+
+    # 🚀 BAGO: Search Logic (Hahanapin sa Event Name o sa mismong naka-save na Emails)
+    if search_query:
+        routes = routes.filter(
+            Q(event_name__icontains=search_query) |
+            Q(target_emails__icontains=search_query)
+        )
+
+    context = {
+        'routes': routes,
+        'search_query': search_query
+    }
+    
+    return render(request, 'Inventory/master/email_master.html', context)
 
 @login_required
 def update_email_route(request):
@@ -5578,36 +5734,50 @@ def alert_po_status_update(po, manager_user):
         print(f"Error sending PO status email: {str(e)}")
 
 def scan_and_alert_low_stock():
+    print("\n--- RUNNING LOW STOCK DEBUG (WMS STANDARD) ---") 
+    
+    # 1. Kunin ang Default Threshold sa System Settings
+    sys_settings = SystemSetting.objects.first()
+    default_threshold = sys_settings.low_stock_threshold if sys_settings else 50
+    
+    # 2. Kunin lahat ng GLOBAL stock totals sa ISANG QUERY LANG (No lag!)
+    tag_stocks = MaterialTag.objects.values('item_code').annotate(
+        total_stock=Sum('total_pcs')
+    )
+    
+    # I-convert sa dictionary para mabilis hanapin: {'ITEM-A': 100, 'ITEM-B': 20}
+    stock_dict = {
+        str(tag['item_code']).strip().upper(): (tag['total_stock'] or 0) 
+        for tag in tag_stocks if tag['item_code']
+    }
+
     all_items = Item.objects.all()
     low_stock_items = []
     
-    print("\n--- RUNNING LOW STOCK DEBUG ---") # Para makita natin sa terminal
-    
     for item in all_items:
-        safe_item_code = str(item.item_code).strip()
+        safe_item_code = str(item.item_code).strip().upper()
         
-        # 🚀 FIX: Gagamit tayo ng .annotate(clean_code=Trim('item_code')) 
-        # para linisin ang invisible spaces sa mismong Database bago mag-hanap!
-        total_stock = MaterialTag.objects.annotate(
-            clean_code=Trim('item_code')
-        ).filter(
-            clean_code__iexact=safe_item_code
-        ).aggregate(Sum('total_pcs'))['total_pcs__sum'] or 0
+        # 3. Kunin ang total stock from dictionary, kung wala sa warehouse = 0
+        total_stock = stock_dict.get(safe_item_code, 0)
         
-        # Ipi-print natin sa terminal para makita mo yung totoong bilang per item
-        print(f"Checking {safe_item_code}: Found {total_stock} PCS")
+        # 4. WMS LOGIC: Gamitin ang min_stock ng item. Kung wala, use system default.
+        item_min_stock = getattr(item, 'min_stock', 0)
+        threshold_to_use = item_min_stock if item_min_stock > 0 else default_threshold
         
-        if total_stock < 50:
+        print(f"Checking {safe_item_code}: Found {total_stock} PCS (Min: {threshold_to_use})")
+        
+        # 5. I-check kung ang GLOBAL TOTAL ay mas mababa o pantay sa threshold
+        if total_stock <= threshold_to_use:
             low_stock_items.append({
                 'item_code': safe_item_code,
                 'description': item.description,
                 'current_stock': total_stock,
-                'total_stock': total_stock,
-                'threshold': 50
+                'threshold': threshold_to_use
             })
             
     print("-------------------------------\n")
             
+    # 6. Mag-send ng Email kung may nakitang Low Stock
     if low_stock_items:
         try:
             route = EmailRoute.objects.get(event_name='LOW_STOCK', is_active=True)
@@ -5623,13 +5793,14 @@ def scan_and_alert_low_stock():
                 send_mail(
                     subject=f"⚠️ WMS ALERT: {len(low_stock_items)} Low Stock Items Detected",
                     message="Low stock items detected. Please check system.",
-                    from_email=settings.DEFAULT_FROM_EMAIL, # Siguraduhing tama itong settings variable mo
+                    from_email=settings.DEFAULT_FROM_EMAIL, 
                     recipient_list=target_emails,
                     html_message=html_msg,
                     fail_silently=False
                 )
+                print(f"✅ Alert Email sent to {target_emails}")
         except Exception as e:
-            print(f"Error sending Low Stock email: {str(e)}")
+            print(f"❌ Error sending Low Stock email: {str(e)}")
             
     return len(low_stock_items)
 
