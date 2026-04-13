@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
 from django.views.generic import RedirectView 
 
 urlpatterns = [
@@ -8,3 +9,9 @@ urlpatterns = [
     path('', include('Inventory.urls')), 
     path('', RedirectView.as_view(pattern_name='login', permanent=False), name='root'),
 ]
+
+if settings.DEBUG:
+    import debug_toolbar
+    urlpatterns += [
+        path('__debug__/', include(debug_toolbar.urls)),
+    ]

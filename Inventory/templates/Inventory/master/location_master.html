@@ -57,20 +57,22 @@
                                 <span class="text-slate-600">{{ loc.current_items }} PCS</span>
                                 <span class="text-slate-400">MAX: {{ loc.capacity }} PCS</span>
                             </div>
+
+                            {% with util=loc.utilization|default:0 %}
                             <div class="w-full bg-slate-200 h-2.5 rounded-sm overflow-hidden flex border border-slate-300">
-                                {% if loc.capacity > 0 %}
-                                    <div class="h-full transition-all 
-                                        {% if loc.utilization >= 100 %}bg-rose-500
-                                        {% elif loc.utilization >= 80 %}bg-amber-400
-                                        {% else %}bg-emerald-500{% endif %}" 
-                                        style="width: {% if loc.utilization > 100 %}100{% else %}{{ loc.utilization }}{% endif %}%;">
-                                    </div>
-                                {% else %}
-                                    <div class="w-full h-full bg-slate-300 pattern-diagonal-lines pattern-slate-400 pattern-bg-slate-200 pattern-size-2"></div>
-                                {% endif %}
+                                <div class="h-full transition-all 
+                                    {% if util >= 100 %}bg-rose-500
+                                    {% elif util >= 80 %}bg-amber-400
+                                    {% else %}bg-emerald-500{% endif %}" 
+                                    style="--util-width: {{ util|floatformat:0 }}%; width: var(--util-width);">
+                                </div>
                             </div>
+                            {% endwith %}
+
                             <div class="text-right mt-0.5">
-                                <span class="text-[8px] font-black {% if loc.utilization >= 100 %}text-rose-600{% else %}text-slate-400{% endif %}">{{ loc.utilization|floatformat:1 }}% UTILIZED</span>
+                                <span class="text-[8px] font-black {% if loc.utilization >= 100 %}text-rose-600{% else %}text-slate-400{% endif %}">
+                                    {{ loc.utilization|floatformat:1 }}% UTILIZED
+                                </span>
                             </div>
                         </td>
 
@@ -95,8 +97,16 @@
                         
                         <td class="py-2 px-4 text-center">
                             <div class="flex justify-center gap-1">
-                                <button type="button" onclick="openLocationModal('edit', '{{ loc.id }}', '{{ loc.location_code|escapejs }}', '{{ loc.warehouse|default:''|escapejs }}', '{{ loc.zone|default:''|escapejs }}', '{{ loc.zone_type|default:''|escapejs }}', '{{ loc.capacity }}', '{{ loc.description|default:''|escapejs }}')" 
-                                        class="bg-slate-100 hover:bg-amber-500 text-slate-500 hover:text-white p-1.5 border border-slate-300 transition-colors shadow-sm rounded-sm" title="Edit Location">
+                                <button type="button" 
+                                        class="edit-location-btn bg-slate-100 hover:bg-amber-500 text-slate-500 hover:text-white p-1.5 border border-slate-300 transition-colors shadow-sm rounded-sm" 
+                                        title="Edit Location"
+                                        data-id="{{ loc.id }}"
+                                        data-code="{{ loc.location_code|escapejs }}"
+                                        data-wh="{{ loc.warehouse|default:''|escapejs }}"
+                                        data-zone="{{ loc.zone|default:''|escapejs }}"
+                                        data-type="{{ loc.zone_type|default:''|escapejs }}"
+                                        data-cap="{{ loc.capacity }}"
+                                        data-desc="{{ loc.description|default:''|escapejs }}">
                                     <i data-lucide="edit" class="w-3.5 h-3.5"></i>
                                 </button>
                                 
@@ -202,6 +212,23 @@
         if (typeof lucide !== 'undefined') {
             lucide.createIcons();
         }
+
+        // Event listener para sa lahat ng Edit buttons
+        document.querySelectorAll('.edit-location-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const data = this.dataset; // Kinukuha lahat ng data-* attributes
+                openLocationModal(
+                    'edit', 
+                    data.id, 
+                    data.code, 
+                    data.wh, 
+                    data.zone, 
+                    data.type, 
+                    data.cap, 
+                    data.desc
+                );
+            });
+        });
     });
 
     function openLocationModal(action, id='', code='', wh='', zone='', type='', cap='', desc='') {
@@ -218,7 +245,7 @@
             title.innerHTML = '<i data-lucide="map-pin" class="w-5 h-5"></i> Register New Storage Slot';
             actionInput.value = 'add';
             form.reset();
-            hiddenContainer.innerHTML = ''; // Tanggalin ang ID input
+            hiddenContainer.innerHTML = '';
             submitBtn.innerHTML = '<i data-lucide="save" class="w-3 h-3"></i> Save Location';
         } 
         else if (action === 'edit') {
@@ -226,15 +253,12 @@
             actionInput.value = 'edit';
             submitBtn.innerHTML = '<i data-lucide="save" class="w-3 h-3"></i> Update Location';
 
-            // I-fill ang form gamit ang data ng table row
             form.elements['location_code'].value = code;
             form.elements['warehouse'].value = wh;
             form.elements['zone'].value = zone;
             form.elements['zone_type'].value = type;
             form.elements['capacity'].value = cap;
             form.elements['description'].value = desc;
-
-            // Idagdag ang hidden ID para alam ng views.py kung ano i-u-update
             hiddenContainer.innerHTML = `<input type="hidden" name="loc_id" value="${id}">`;
         }
         lucide.createIcons();

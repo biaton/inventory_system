@@ -73,8 +73,20 @@
 
                         <td class="p-3 text-center align-middle">
                             <div class="flex justify-center gap-1">
-                                <button type="button" onclick="openCustomerModal('edit', '{{ customer.id }}', '{{ customer.contact_code|default:''|escapejs }}', '{{ customer.name|escapejs }}', '{{ customer.contact_person|default:''|escapejs }}', '{{ customer.email|default:''|escapejs }}', '{{ customer.phone|default:''|escapejs }}', '{{ customer.address|default:''|escapejs }}', '{{ customer.route_code|default:''|escapejs }}', '{{ customer.preferred_transport|default:''|escapejs }}', '{{ customer.is_active }}')" 
-                                        class="p-1.5 bg-slate-100 border border-slate-200 text-slate-600 hover:bg-amber-500 hover:text-white transition-colors rounded-sm shadow-sm" title="Edit Customer">
+                                <button type="button" 
+                                    onclick="openCustomerModal('edit', 
+                                        '{{ customer.id }}', 
+                                        '{{ customer.contact_code|escapejs }}', 
+                                        '{{ customer.name|escapejs }}', 
+                                        '{{ customer.contact_person|escapejs }}', 
+                                        '{{ customer.email|escapejs }}', 
+                                        '{{ customer.phone|escapejs }}', 
+                                        '{{ customer.address|escapejs }}', 
+                                        '{{ customer.route_code|escapejs }}', 
+                                        '{{ customer.preferred_transport|escapejs }}', 
+                                        '{{ customer.is_active }}')" 
+                                    class="p-1.5 bg-slate-100 border border-slate-200 text-slate-600 hover:bg-amber-500 hover:text-white transition-colors rounded-sm shadow-sm" 
+                                    title="Edit Customer">
                                     <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
                                 </button>
                                 

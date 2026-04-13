@@ -58,8 +58,10 @@
                     </td>
                     <td class="p-4 text-center">
                         <button type="button" 
-                                onclick="openAlertModal('{{ u.id }}', '{{ u.username }}', [{% for sub in u.email_subscriptions.all %}{{ sub.id }}{% if not forloop.last %},{% endif %}{% endfor %}])"
-                                class="bg-white text-slate-800 border-2 border-slate-800 px-4 py-2 hover:bg-slate-800 hover:text-white transition-all text-[10px] font-black uppercase flex items-center gap-2 mx-auto shadow-sm active:scale-95">
+                                class="manage-alerts-btn bg-white text-slate-800 border-2 border-slate-800 px-4 py-2 hover:bg-slate-800 hover:text-white transition-all text-[10px] font-black uppercase flex items-center gap-2 mx-auto shadow-sm active:scale-95"
+                                data-id="{{ u.id }}"
+                                data-username="{{ u.username }}"
+                                data-subs="[{% for sub in u.email_subscriptions.all %}{{ sub.id }}{% if not forloop.last %},{% endif %}{% endfor %}]">
                             <i data-lucide="settings-2" class="w-3.5 h-3.5"></i> Manage Alerts
                         </button>
                     </td>
@@ -140,6 +142,15 @@
         if (typeof lucide !== 'undefined') {
             lucide.createIcons();
         }
+    });
+
+    document.querySelectorAll('.manage-alerts-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const userId = this.getAttribute('data-id');
+            const username = this.getAttribute('data-username');
+            const subs = JSON.parse(this.getAttribute('data-subs'));
+            openAlertModal(userId, username, subs);
+        });
     });
 
     function openAlertModal(userId, username, activeSubscriptionIds) {
