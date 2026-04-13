@@ -357,9 +357,9 @@ class Profile(models.Model):
         return f"{self.user.username} - {self.get_role_display()}"
 
 class EmailRoute(models.Model):
-    # Dito natin ililista yung mga klaseng notifications na meron ang system mo
+    # (Yung EVENT_CHOICES mo, same lang, walang babaguhin dito)
     EVENT_CHOICES = [
-        ('TEST_ALERT', 'System Test & Diagnostics'), # Ito ang gagamitin natin pang-test
+        ('TEST_ALERT', 'System Test & Diagnostics'),
         ('LOW_STOCK', 'Low Stock / Critical Level Alert'),
         ('PO_APPROVAL', 'Purchase Order Approval Request'),
         ('NEW_USER', 'New User Registration Alert'),
@@ -377,9 +377,12 @@ class EmailRoute(models.Model):
     
     event_name = models.CharField(max_length=50, choices=EVENT_CHOICES, unique=True, verbose_name="Notification Event")
     
-    target_emails = models.TextField(
+    # 🚀 BAGO: Ito na yung papalit sa target_emails
+    target_users = models.ManyToManyField(
+        User, 
         blank=True, 
-        help_text="Type email addresses separated by commas. (e.g. boss@gmail.com, staff@yahoo.com)"
+        related_name='email_subscriptions',
+        help_text="Select users who should receive this notification."
     )
     
     is_active = models.BooleanField(default=True, help_text="Uncheck this to temporarily disable sending emails for this event.")
@@ -387,12 +390,10 @@ class EmailRoute(models.Model):
     def __str__(self):
         return f"{self.get_event_name_display()} Routing"
 
-    # Maliit na logic para automatic niyang linisin yung mga extra spaces sa tinype mong emails
+    # 🚀 BAGO: Kukunin niya yung email ng bawat user na naka-check sa system natin
     def get_email_list(self):
-        if not self.target_emails:
-            return []
-        # Hahatiin niya yung text gamit ang comma, tapos tatanggalin ang spaces
-        return [email.strip() for email in self.target_emails.split(',') if email.strip()]
+        # I-exclude natin yung mga users na walang naka-set na email para iwas error sa sending
+        return list(self.target_users.exclude(email__exact='').values_list('email', flat=True))
 
 def send_shipping_notification(order_no, customer_email, courier_name, tracking_number):
     if not customer_email:

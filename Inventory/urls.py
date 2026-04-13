@@ -161,7 +161,8 @@ urlpatterns = [
     #email route management
     path('item/<int:item_id>/stock-out/', views.stock_out_item, name='stock_out_item'),
     path('master/email/', views.email_master_view, name='email_master'),
-    path('master/email/update/', views.update_email_route, name='update_email_route'),
+    #path('master/email/update/', views.update_email_route, name='update_email_route'),
+    path('update-user-subscriptions/', views.update_user_subscriptions, name='update_user_subscriptions'),
     path('system/scan-expiry/', views.trigger_expiry_scan, name='trigger_expiry_scan'),
     
     path('system-audit/', views.system_audit_logs_view, name='system_audit_logs'),

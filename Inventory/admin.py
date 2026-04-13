@@ -112,6 +112,17 @@ class SystemSettingAdmin(admin.ModelAdmin):
 
 @admin.register(EmailRoute)
 class EmailRouteAdmin(admin.ModelAdmin):
-    list_display = ('event_name', 'target_emails', 'is_active')
-    search_fields = ('event_name', 'target_emails')
-    list_editable = ('is_active',)
+    # Pinalitan natin yung 'target_emails' ng custom function natin na 'get_target_users'
+    list_display = ('event_name', 'get_target_users', 'is_active')
+    
+    # 🚀 BAGO: Pampaganda ng UI sa Django Admin para madali mag-select ng users
+    filter_horizontal = ('target_users',) 
+
+    # Function para pagsama-samahin yung pangalan ng mga naka-assign na users
+    def get_target_users(self, obj):
+        users = obj.target_users.all()
+        if users:
+            return ", ".join([user.username for user in users])
+        return "No Users Assigned"
+    
+    get_target_users.short_description = 'Target Users'

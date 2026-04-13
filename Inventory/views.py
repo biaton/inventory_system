@@ -197,6 +197,7 @@ def edit_profile(request):
         
     return render(request, 'Inventory/profile/edit_profile.html')
 
+@login_required
 def change_password_view(request):
     if not request.user.is_authenticated:
         return redirect('login') 
@@ -455,7 +456,7 @@ def read_notification_view(request, notif_id):
     return redirect('dashboard')
 
 # 1. ANG VIEW PARA SA TABLE (Master List)
-@login_required(login_url='login')
+@login_required
 @require_module_access('USER_MASTER')
 def user_master_view(request):
     # Auto-create profile kung wala pa
@@ -872,6 +873,7 @@ def item_master_view(request):
     return render(request, 'Inventory/master/item_master.html', context)
 
 # 2. THE REGISTER NEW ITEM VIEW
+@login_required
 def register_item_view(request):
     if request.method == 'POST':
         item_code = request.POST.get('item_code', '').strip().upper()
@@ -899,6 +901,7 @@ def register_item_view(request):
     return render(request, 'Inventory/master/register_item.html')
 
 # 3. THE EXPORT TO EXCEL VIEW
+@login_required
 def export_items_view(request):
     # BINAGO: Pinalitan natin ng 'Item' model para tugma sa register_item_view mo
     items = Item.objects.all().values('item_code', 'description', 'category', 'uom', 'unit_price')
@@ -919,6 +922,7 @@ def export_items_view(request):
     
     return response
 
+@login_required
 def export_users_csv(request):
     # Setup the response headers para sa file download
     response = HttpResponse(content_type='text/csv')
@@ -947,6 +951,7 @@ def export_users_csv(request):
     return response
 
 # 3. TOGGLE ACCOUNT STATUS logic (Fully Functional)
+@login_required
 def toggle_user_status(request, user_id):
     if request.method == "POST":
         target_user = get_object_or_404(User, id=user_id)
@@ -4165,6 +4170,7 @@ def inquiry_settings_view(request):
     # 🚀 FIX: Itinuro sa inventory_inquiry folder
     return render(request, 'Inventory/inventory_inquiry/inquiry_settings.html', context)
 
+@login_required
 def shipment_import_view(request):
     if request.method == "POST":
         if 'excel_file' in request.FILES:
@@ -4250,6 +4256,7 @@ def shipment_import_view(request):
     # GET Request
     return render(request, 'Inventory/inbound/shipment_import.html')
 
+@login_required
 def shipment_inquiry_view(request):
     search_query = request.GET.get('search', '').strip()
     status_filter = request.GET.get('status', '').strip()
@@ -4413,6 +4420,7 @@ def shipment_calendar_view(request):
     return render(request, 'Inventory/inbound/shipment_calendar.html', context)
 
 # 1. API para makuha ang details ng isang shipment (Para sa Inquiry Button)
+@login_required
 def api_shipment_details(request, ship_id):
     try:
         shipment = ShipmentSchedule.objects.get(id=ship_id)
@@ -4432,6 +4440,7 @@ def api_shipment_details(request, ship_id):
         return JsonResponse({'error': str(e)}, status=400)
 
 # 2. Function para sa pag-update ng Shipment (Para sa Update Button)
+@login_required
 def shipment_update(request):
     if request.method == 'POST':
         ship_id = request.POST.get('ship_id')
@@ -4445,6 +4454,7 @@ def shipment_update(request):
         messages.success(request, f"Shipment {shipment.shipment_no} updated successfully.")
         return redirect('shipment_inquiry')
 
+@login_required
 def shipment_allocation_view(request, po_no):
     po_items = PurchaseOrder.objects.filter(po_no=po_no)
     
@@ -4530,6 +4540,7 @@ def shipment_allocation_view(request, po_no):
     
     return render(request, 'Inventory/inbound/shipment_allocation.html', context)
 
+@login_required
 def shipment_print_doc_view(request, po_no):
     po_qs = PurchaseOrder.objects.filter(po_no=po_no)
     
@@ -4573,6 +4584,7 @@ def shipment_print_doc_view(request, po_no):
     return render(request, 'Inventory/inbound/shipment_print_doc.html', context)
 
 # 2. VIEW PARA I-SAVE ANG ALLOCATION
+@login_required
 def shipment_register_allocation(request, ship_id):
     if request.method == 'POST':
         main_shipment = ShipmentSchedule.objects.get(id=ship_id)
@@ -4590,6 +4602,7 @@ def shipment_register_allocation(request, ship_id):
         messages.success(request, "Allocation successfully registered!")
         return redirect('shipment_inquiry')
 
+@login_required
 def shipment_invoice_view(request, ship_id):
     main_shipment = ShipmentSchedule.objects.get(id=ship_id)
     related_items = ShipmentSchedule.objects.filter(invoice_no=main_shipment.invoice_no) if main_shipment.invoice_no else [main_shipment]
@@ -4601,6 +4614,7 @@ def shipment_invoice_view(request, ship_id):
     }
     return render(request, 'Inventory/inbound/shipment_print_doc.html', context)
 
+@login_required
 def shipment_print_view(request, ship_id):
     main_shipment = ShipmentSchedule.objects.get(id=ship_id)
     related_items = ShipmentSchedule.objects.filter(invoice_no=main_shipment.invoice_no) if main_shipment.invoice_no else [main_shipment]
@@ -4612,6 +4626,7 @@ def shipment_print_view(request, ship_id):
     }
     return render(request, 'Inventory/inbound/shipment_print_doc.html', context)
 
+@login_required
 def shipping_confirmation_view(request, po_no=None):
     # 1. SEARCH MODE
     if request.method == "POST" and 'search_po' in request.POST:
@@ -5617,49 +5632,48 @@ def alert_new_po_created(po):
 def email_master_view(request):
     search_query = request.GET.get('q', '').strip()
     
-    # Kunin lahat ng naka-setup na rules sa database
-    routes = EmailRoute.objects.all().order_by('event_name')
-
-    # 🚀 BAGO: Search Logic (Hahanapin sa Event Name o sa mismong naka-save na Emails)
+    # Kunin lahat ng active users
+    users = User.objects.filter(is_active=True).order_by('username')
+    
     if search_query:
-        routes = routes.filter(
-            Q(event_name__icontains=search_query) |
-            Q(target_emails__icontains=search_query)
+        users = users.filter(
+            Q(username__icontains=search_query) | 
+            Q(email__icontains=search_query)
         )
 
+    # Kunin lahat ng possible events para sa modal checkboxes
+    all_routes = EmailRoute.objects.all().order_by('event_name')
+
     context = {
-        'routes': routes,
+        'users': users,
+        'all_routes': all_routes,
         'search_query': search_query
     }
-    
     return render(request, 'Inventory/master/email_master.html', context)
 
 @login_required
-def update_email_route(request):
+def update_user_subscriptions(request):
     if request.method == "POST":
-        route_id = request.POST.get('route_id')
-        new_emails = request.POST.get('target_emails')
-        # Checkbox logic: kung naka-check, 'on' ang value nito
-        is_active = request.POST.get('is_active') == 'on' 
-
+        user_id = request.POST.get('user_id')
+        # Listahan ng mga Route IDs na pinili (naka-check)
+        selected_route_ids = request.POST.getlist('selected_routes')
+        
         try:
-            route = EmailRoute.objects.get(id=route_id)
-            route.target_emails = new_emails
-            route.is_active = is_active
-            route.save()
+            target_user = User.objects.get(id=user_id)
+            
+            # Linisin muna lahat ng subscription ng user na ito para fresh start
+            all_routes = EmailRoute.objects.all()
+            for route in all_routes:
+                route.target_users.remove(target_user)
+            
+            # Idagdag ang user sa mga piniling routes
+            for route_id in selected_route_ids:
+                route = EmailRoute.objects.get(id=route_id)
+                route.target_users.add(target_user)
 
-            status_text = "Enabled" if is_active else "Disabled"
-            log_system_action(
-                user=request.user, 
-                action='UPDATE', 
-                module='System Settings', 
-                description=f"Updated Email Route for '{route.event_name}': {status_text} | Emails: {new_emails}", 
-                request=request
-            )
-
-            messages.success(request, f"Success! Notification settings for '{route.get_event_name_display()}' updated.")
+            messages.success(request, f"Alert settings updated for {target_user.username}!")
         except Exception as e:
-            messages.error(request, f"Error updating email route: {str(e)}")
+            messages.error(request, f"Error: {str(e)}")
             
     return redirect('email_master')
 
