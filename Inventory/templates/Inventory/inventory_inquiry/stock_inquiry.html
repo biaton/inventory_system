@@ -3,7 +3,7 @@
 {% block inquiry_content %}
 <div class="max-w-[100%] mx-auto pb-20 mt-4 text-slate-800">
 
-    <!-- 🚀 BAGO: KPI Cards -->
+    <!-- KPI Cards (Walang binago) -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         <div class="bg-white border border-slate-300 p-4 shadow-sm relative overflow-hidden group">
             <div class="absolute left-0 top-0 w-1 h-full bg-teal-600 transition-all group-hover:w-1.5"></div>
@@ -56,7 +56,6 @@
 
         <div class="p-4 bg-slate-50 border-b border-slate-300">
             <form method="GET" action="{% url 'stock_inquiry' %}">
-                <!-- 🚀 NILINIS NA FILTERS -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                     
                     <div class="space-y-1">
@@ -114,7 +113,6 @@
             </form>
         </div>
 
-        <!-- YUNG BUONG TABLE MO (WALANG BINAGO SA LAMAN) -->
         <div class="overflow-x-auto min-h-[400px]">
             <table class="w-full text-left border-collapse whitespace-nowrap" style="font-size: 10px;">
                 <thead class="bg-slate-200 text-slate-800 uppercase tracking-widest border-b border-slate-400 font-bold text-[9px]">
@@ -127,18 +125,18 @@
                         <th class="py-2 px-3 border-r border-slate-300">Place Code</th>
                         <th class="py-2 px-3 border-r border-slate-300">Warehouse</th>
                         <th class="py-2 px-3 border-r border-slate-300">Location</th>
-                        <th class="py-2 px-3 border-r border-slate-300">Lot No.</th>
+                        <th class="py-2 px-3 border-r border-slate-300 bg-amber-50" title="Click to Edit">Lot No.</th>
                         <th class="py-2 px-3 border-r border-slate-300 text-center">Status</th>
-                        <th class="py-2 px-3 border-r border-slate-300 text-center">Rvs</th>
+                        <th class="py-2 px-3 border-r border-slate-300 text-center bg-amber-50" title="Click to Edit">Rvs</th>
                         <th class="py-2 px-3 border-r border-slate-300">PO No.</th>
-                        <th class="py-2 px-3 border-r border-slate-300">Invoice No.</th>
+                        <th class="py-2 px-3 border-r border-slate-300 bg-amber-50" title="Click to Edit">Invoice No.</th>
                         <th class="py-2 px-3 border-r border-slate-300 text-center">Package Unit</th>
                         <th class="py-2 px-3 border-r border-slate-300">Receipt Date</th>
-                        <th class="py-2 px-3 border-r border-slate-300 text-rose-500">Expiry Date</th>
+                        <th class="py-2 px-3 border-r border-slate-300 bg-amber-50" title="Click to Edit">Expiry Date</th>
                         <th class="py-2 px-3 border-r border-slate-300 text-right bg-slate-50">Qty</th>
                         <th class="py-2 px-3 border-r border-slate-300 text-center">Unit</th>
                         <th class="py-2 px-3 border-r border-slate-300">Currency</th>
-                        <th class="py-2 px-3 text-right">Unit Price</th>
+                        <th class="py-2 px-3 text-right bg-emerald-50">Unit Price ✎</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-200">
@@ -164,7 +162,13 @@
                         <td class="py-1.5 px-3 border-r border-slate-200 text-slate-600">{{ stock.location.zone|default:"Main Warehouse" }}</td>
                         <td class="py-1.5 px-3 border-r border-slate-200 text-slate-600">{{ stock.location.description|default:"-" }}</td>
 
-                        <td class="py-1.5 px-3 border-r border-slate-200 font-black text-slate-900">{{ stock.lot_no }}</td>
+                        <!-- 🚀 EDITABLE: LOT NO -->
+                        <td class="py-1 px-2 border-r border-slate-200">
+                            <input type="text" value="{{ stock.lot_no }}" 
+                                   onchange="updateTagDetail('{{ stock.id }}', 'lot_no', this.value, this)"
+                                   class="max-w-[100px] p-1 text-[10px] font-black text-slate-900 uppercase bg-transparent border border-transparent hover:border-slate-300 hover:bg-white focus:bg-amber-50 focus:border-amber-400 outline-none transition-all rounded-sm cursor-text">
+                        </td>
+
                         <td class="py-1.5 px-3 border-r border-slate-200 text-center">
                             {% if stock.inspection_status == 'Passed' %}
                                 <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-full text-[8px] font-black uppercase tracking-widest">Passed</span>
@@ -174,31 +178,51 @@
                                 <span class="px-2 py-0.5 bg-amber-100 text-amber-800 border border-amber-300 rounded-full text-[8px] font-black uppercase tracking-widest">{{ stock.inspection_status|default:"Pending" }}</span>
                             {% endif %}
                         </td>
-                        <td class="py-1.5 px-3 border-r border-slate-200 text-center">{{ stock.revision|default:"-" }}</td>
+
+                        <!-- 🚀 EDITABLE: REVISION (RVS) -->
+                        <td class="py-1 px-2 border-r border-slate-200 text-center">
+                            <input type="text" value="{{ stock.revision|default:'' }}" placeholder="-"
+                                   onchange="updateTagDetail('{{ stock.id }}', 'revision', this.value, this)"
+                                   class="max-w-[80px] text-center p-1 text-[10px] font-bold text-slate-700 uppercase bg-transparent border border-transparent hover:border-slate-300 hover:bg-white focus:bg-amber-50 focus:border-amber-400 outline-none transition-all rounded-sm cursor-text">
+                        </td>
+
                         <td class="py-1.5 px-3 border-r border-slate-200 text-slate-600">{{ stock.po_reference.po_no|default:"-" }}</td>
-                        <td class="py-1.5 px-3 border-r border-slate-200 text-slate-600 uppercase">{{ stock.invoice_no|default:"-" }}</td>
+
+                        <!-- 🚀 EDITABLE: INVOICE NO -->
+                        <td class="py-1 px-2 border-r border-slate-200">
+                            <input type="text" value="{{ stock.invoice_no|default:'' }}" placeholder="-"
+                                   onchange="updateTagDetail('{{ stock.id }}', 'invoice_no', this.value, this)"
+                                   class="w-full min-w-[80px] text-center p-1 text-[10px] font-bold text-slate-600 uppercase bg-transparent border border-transparent hover:border-slate-300 hover:bg-white focus:bg-amber-50 focus:border-amber-400 outline-none transition-all rounded-sm cursor-text">
+                        </td>
+
                         <td class="py-1.5 px-3 border-r border-slate-200 text-center">{{ stock.packing_type }}</td>
                         <td class="py-1.5 px-3 border-r border-slate-200 text-slate-500">{{ stock.arrival_date|date:"Y-m-d" }}</td>
-                        <td class="py-1.5 px-3 border-r border-slate-200 font-bold 
-                            {% if stock.expiration_date and stock.expiration_date < today %}text-rose-600 bg-rose-50 font-black animate-pulse
-                            {% else %}text-slate-600{% endif %}">
-                            {{ stock.expiration_date|date:"Y-m-d"|default:"-" }}
+                        
+                        <!-- 🚀 EDITABLE: EXPIRY DATE -->
+                        <td class="py-1 px-2 border-r border-slate-200">
+                            <input type="date" value="{{ stock.expiration_date|date:'Y-m-d' }}" 
+                                   onchange="updateTagDetail('{{ stock.id }}', 'expiration_date', this.value, this)"
+                                   class="w-full min-w-[100px] p-1 text-[10px] font-bold bg-transparent border border-transparent hover:border-slate-300 hover:bg-white focus:bg-amber-50 focus:border-amber-400 outline-none transition-all rounded-sm cursor-text
+                                   {% if stock.expiration_date and stock.expiration_date < today %}text-rose-600 font-black animate-pulse{% else %}text-slate-600{% endif %}">
                         </td>
+
                         <td class="py-1.5 px-3 border-r border-slate-200 text-right font-black text-xs {% if stock.total_pcs <= 0 %}text-rose-600{% else %}text-slate-800{% endif %} bg-slate-50/50">{{ stock.total_pcs }}</td>
                         <td class="py-1.5 px-3 border-r border-slate-200 text-center font-bold text-slate-500">PCS</td>
                         <td class="py-1.5 px-3 border-r border-slate-200 text-center text-slate-500">{{ stock.po_reference.currency|default:"PHP" }}</td>
+                        
+                        <!-- ITEM MASTER UNIT PRICE (Existing) -->
                         <td class="py-1.5 px-3 text-right font-black text-teal-800">
-                            <div class="flex items-center justify-end border border-slate-300 bg-white rounded-sm overflow-hidden shadow-sm w-24 ml-auto transition-colors">
-                                <span class="px-1.5 text-[9px] font-black text-black border-r border-slate-200 bg-emerald-400">₱</span>
+                            <div class="flex items-center justify-end border border-transparent hover:border-slate-300 bg-transparent hover:bg-white rounded-sm overflow-hidden w-24 ml-auto transition-all focus-within:border-teal-500 focus-within:bg-white focus-within:shadow-sm">
+                                <span class="px-1.5 text-[9px] font-black text-slate-400">₱</span>
                                 <input type="number" step="0.01" value="{{ stock.unit_price|floatformat:2 }}" 
                                         onchange="updateUnitPrice('{{ stock.item_code }}', this.value, this)"
-                                        class="w-full p-1 text-[10px] font-black text-right outline-none text-teal-800 focus:bg-emerald-50 transition-colors">
+                                        class="w-full p-1 text-[10px] font-black text-right outline-none text-teal-800 bg-transparent focus:bg-emerald-50 transition-colors">
                             </div>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="19" class="py-20 text-center text-slate-400">
+                        <td colspan="20" class="py-20 text-center text-slate-400">
                             <i data-lucide="search-x" class="w-10 h-10 mx-auto mb-2 opacity-30"></i>
                             <p class="uppercase font-black text-xs tracking-widest">No matching stock found</p>
                             <p class="text-[10px] font-bold mt-1">Adjust your filters or clear the search fields.</p>
@@ -209,7 +233,6 @@
             </table>
         </div>
 
-        <!-- Pagination Footer (WALANG BINAGO SA LAMAN) -->
         <div class="bg-slate-50 border-t border-slate-200 p-3 flex flex-col md:flex-row justify-between items-center gap-4">
             <span class="text-[9px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1">
                 <i data-lucide="layers" class="w-3 h-3"></i> 
@@ -217,7 +240,7 @@
                 <span class="text-slate-400 mx-1">|</span> 
                 Total Stocks: {{ page_obj.paginator.count }}
             </span>
-
+            <!-- (Pagination Navigation na nakatago sa luob ng div na ito ay hindi ko na iniba) -->
             <div class="flex items-center gap-1 shadow-sm">
                 {% if page_obj.has_previous %}
                     <a href="?page=1{% if inquiry_type %}&inquiry_type={{ inquiry_type }}{% endif %}{% if item_code %}&item_code={{ item_code }}{% endif %}{% if lot_no %}&lot_no={{ lot_no }}{% endif %}{% if company %}&company={{ company }}{% endif %}" class="px-3 py-1.5 bg-white border border-slate-300 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-300 transition-colors rounded-l-sm">First</a>
@@ -246,27 +269,20 @@
         if (typeof lucide !== 'undefined') lucide.createIcons();
     });
 
+    // Existing: Update Item Master Price
     async function updateUnitPrice(itemCode, newPrice, inputElement) {
-        if (!confirm(`Update Unit Price of ${itemCode} to ₱${newPrice}?`)) {
-            return; 
-        }
+        if (!confirm(`Update Unit Price of ${itemCode} to ₱${newPrice}?`)) return; 
 
         const formData = new FormData();
         formData.append('item_code', itemCode);
         formData.append('unit_price', newPrice);
-    
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}';
-        formData.append('csrfmiddlewaretoken', csrfToken);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
         inputElement.classList.add('bg-amber-100', 'animate-pulse');
 
         try {
-            const response = await fetch('/api/update-item-price/', {
-                method: 'POST',
-                body: formData
-            });
+            const response = await fetch('/api/update-item-price/', { method: 'POST', body: formData });
             const data = await response.json();
-        
             if (data.success) {
                 inputElement.classList.remove('bg-amber-100', 'animate-pulse');
                 inputElement.classList.add('bg-emerald-200');
@@ -276,7 +292,44 @@
                 inputElement.classList.remove('bg-amber-100', 'animate-pulse');
             }
         } catch (error) {
-            alert("Connection error! Could not update price.");
+            alert("Connection error!");
+            inputElement.classList.remove('bg-amber-100', 'animate-pulse');
+        }
+    }
+
+    // 🚀 BAGO: Update Material Tag Details
+    async function updateTagDetail(tagId, field, value, inputElement) {
+        // Quick visual feedback na nag-save siya
+        const originalValue = inputElement.value;
+        const fieldName = field.replace('_', ' ').toUpperCase();
+        
+        if (!confirm(`Save new ${fieldName} for TAG-${String(tagId).padStart(5, '0')}?`)) {
+            inputElement.value = originalValue; // Ibalik sa dati kung nag-cancel
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('tag_id', tagId);
+        formData.append('field', field);
+        formData.append('value', value);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+        inputElement.classList.add('bg-amber-100', 'animate-pulse');
+
+        try {
+            const response = await fetch('/api/update-tag-details/', { method: 'POST', body: formData });
+            const data = await response.json();
+        
+            if (data.success) {
+                inputElement.classList.remove('bg-amber-100', 'animate-pulse');
+                inputElement.classList.add('bg-emerald-200');
+                setTimeout(() => inputElement.classList.remove('bg-emerald-200', 'bg-emerald-50'), 1000);
+            } else {
+                alert("Error: " + data.error);
+                inputElement.classList.remove('bg-amber-100', 'animate-pulse');
+            }
+        } catch (error) {
+            alert("Connection error! Could not update.");
             inputElement.classList.remove('bg-amber-100', 'animate-pulse');
         }
     }

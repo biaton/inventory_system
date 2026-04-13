@@ -64,6 +64,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'Inventory.context_processors.notification_processor',
+                'Inventory.context_processors.rbac_modules',
             ],
         },
     },

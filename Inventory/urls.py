@@ -19,6 +19,7 @@ urlpatterns = [
 
     # analytics
     path('analytics/', views.analytics_view, name='analytics_board'),
+    path('master/access/', views.user_access_view, name='user_access'),
     
     # 1. USER & CUSTOMER MASTER
     # Siguraduhin na 'user_master' ang name para tugma sa master_base.html
@@ -122,6 +123,7 @@ urlpatterns = [
     
     # API
     path('api/update-item-price/', views.api_update_item_price, name='api_update_item_price'),
+    path('api/update-tag-details/', views.api_update_tag_details, name='api_update_tag_details'),
 
     # INBOUND & RECEIVING MODULE
     path('inbound/shipment-import/', views.shipment_import_view, name='shipment_import'),

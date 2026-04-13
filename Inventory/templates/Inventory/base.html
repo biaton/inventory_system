@@ -43,9 +43,10 @@
     <div class="h-1.5 w-full bg-gradient-to-r from-slate-800 via-teal-700 to-emerald-600 z-[101] relative"></div>
 
     <nav class="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-[100]">
-        <div class="max-w-[98%] mx-auto px-2 sm:px-4">
+        <div class="max-w-[98%] mx-auto px-2 sm:px-4 relative">
             <div class="flex justify-between h-14 items-center">
 
+                <!-- LOGO & BRAND -->
                 <div class="flex items-center space-x-3">
                     <div class="w-10 h-10 flex items-center justify-center p-0.5">
                         <img src="{% static 'images/AIM-LOGO.jpg' %}" alt="AIM Logo"
@@ -53,14 +54,17 @@
                     </div>
                     <div class="flex flex-col justify-center border-l-2 border-slate-200 pl-3">
                         <span
-                            class="text-sm font-black text-slate-900 tracking-tight uppercase leading-none mb-0.5">Asia
-                            Integrated Machine Inc.</span>
+                            class="text-[11px] sm:text-sm font-black text-slate-900 tracking-tight uppercase leading-none mb-0.5">
+                            <span class="hidden sm:inline">Asia Integrated Machine Inc.</span>
+                            <span class="sm:hidden">AIM Inc.</span> <!-- Pinaikli sa mobile para hindi masikip -->
+                        </span>
                         <span
-                            class="text-[9px] font-bold text-teal-700 tracking-[0.2em] uppercase leading-none">Inventory
-                            Control System</span>
+                            class="text-[8px] sm:text-[9px] font-bold text-teal-700 tracking-[0.2em] uppercase leading-none">Inventory
+                            Control</span>
                     </div>
                 </div>
 
+                <!-- DESKTOP NAVIGATION -->
                 <div class="hidden md:flex items-center gap-1 h-full">
                     <a href="{% url 'dashboard' %}"
                         class="h-full flex items-center px-4 text-[11px] font-black uppercase tracking-widest transition-all relative
@@ -83,7 +87,8 @@
                     </a>
                 </div>
 
-                <div class="flex items-center space-x-5 relative">
+                <!-- ICONS & MOBILE TOGGLE -->
+                <div class="flex items-center space-x-3 sm:space-x-5 relative">
 
                     <div class="relative">
                         <button id="notif-btn"
@@ -101,7 +106,7 @@
                         </button>
 
                         <div id="notif-dropdown"
-                            class="hidden absolute right-0 mt-3 w-80 bg-white border border-slate-200 shadow-xl rounded-sm z-[150] overflow-hidden transform origin-top-right transition-all">
+                            class="hidden absolute right-0 mt-3 w-72 sm:w-80 bg-white border border-slate-200 shadow-xl rounded-sm z-[150] overflow-hidden transform origin-top-right transition-all">
                             <div
                                 class="bg-slate-800 text-white px-4 py-2.5 flex justify-between items-center border-b border-slate-700">
                                 <h3 class="text-[10px] font-black uppercase tracking-widest">System Alerts</h3>
@@ -133,7 +138,7 @@
                         </div>
                     </div>
 
-                    <div class="relative flex items-center gap-2 pl-4 border-l border-slate-200 cursor-pointer group" id="user-menu-btn">
+                    <div class="relative flex items-center gap-2 pl-3 sm:pl-4 border-l border-slate-200 cursor-pointer group" id="user-menu-btn">
                         <div class="hidden sm:flex flex-col text-right">
                             <span class="text-[10px] font-black text-slate-700 uppercase leading-none group-hover:text-teal-700 transition-colors">
                                 {{ request.user.username|default:"Admin Account" }}
@@ -171,8 +176,27 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- 🚀 BAGO: MOBILE HAMBURGER MENU BUTTON -->
+                    <button id="mobile-menu-btn" class="md:hidden text-slate-500 hover:text-teal-600 focus:outline-none pl-2 ml-1 border-l border-slate-200">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
+
                 </div>
             </div>
+
+            <!-- 🚀 BAGO: MOBILE NAVIGATION PANEL -->
+            <div id="mobile-menu" class="hidden md:hidden absolute left-0 top-full w-full bg-white border-b border-slate-200 shadow-lg z-[140]">
+                <div class="flex flex-col p-2 space-y-1">
+                    <a href="{% url 'dashboard' %}" class="flex items-center gap-3 px-4 py-3 rounded-sm text-xs font-black uppercase tracking-widest {% if request.resolver_match.url_name == 'dashboard' %} bg-teal-50 text-teal-700 {% else %} text-slate-600 hover:bg-slate-50 {% endif %}">
+                        <i data-lucide="house" class="w-4 h-4"></i> Dashboard
+                    </a>
+                    <a href="{% url 'shipment_calendar' %}" class="flex items-center gap-3 px-4 py-3 rounded-sm text-xs font-black uppercase tracking-widest {% if request.resolver_match.url_name == 'shipment_calendar' %} bg-teal-50 text-teal-700 {% else %} text-slate-600 hover:bg-slate-50 {% endif %}">
+                        <i data-lucide="calendar-range" class="w-4 h-4"></i> Calendar
+                    </a>
+                </div>
+            </div>
+
         </div>
     </nav>
 
@@ -261,6 +285,12 @@
                 if (notifDropdown && !notifDropdown.classList.contains('hidden')) {
                     notifDropdown.classList.add('hidden');
                 }
+                
+                // 🚀 I-close din ang mobile menu
+                const mobileMenu = document.getElementById('mobile-menu');
+                if (mobileMenu && !mobileMenu.classList.contains('hidden')) {
+                    mobileMenu.classList.add('hidden');
+                }
             });
 
             // Kung pumindot sa ibang part ng screen, i-close ang user dropdown
@@ -283,6 +313,12 @@
                 notifBtn.addEventListener('click', function (e) {
                     e.stopPropagation();
                     notifDropdown.classList.toggle('hidden');
+                    
+                    // 🚀 I-close din ang mobile menu
+                    const mobileMenu = document.getElementById('mobile-menu');
+                    if (mobileMenu && !mobileMenu.classList.contains('hidden')) {
+                        mobileMenu.classList.add('hidden');
+                    }
                 });
 
                 document.addEventListener('click', function (e) {
@@ -291,8 +327,29 @@
                     }
                 });
             }
+            
+            // 🚀 3. MOBILE MENU LOGIC
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+            
+            if (mobileMenuBtn && mobileMenu) {
+                mobileMenuBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    mobileMenu.classList.toggle('hidden');
+                    
+                    // Isara ang iba
+                    if (notifDropdown) notifDropdown.classList.add('hidden');
+                    if (userDropdown) userDropdown.classList.add('hidden');
+                });
+                
+                document.addEventListener('click', function(e) {
+                    if (!mobileMenu.contains(e.target) && e.target !== mobileMenuBtn) {
+                        mobileMenu.classList.add('hidden');
+                    }
+                });
+            }
 
-            // 3. Auto-dismiss Toast Notifications (5 Seconds)
+            // 4. Auto-dismiss Toast Notifications (5 Seconds)
             setTimeout(() => {
                 const toasts = document.querySelectorAll('.toast-message');
                 toasts.forEach(toast => {
@@ -303,7 +360,7 @@
             }, 5000); 
         });
 
-        // 4. Manual Dismiss ng Toast
+        // 5. Manual Dismiss ng Toast
         function dismissToast(buttonElement) {
             const toast = buttonElement.closest('.toast-message');
             toast.style.transform = 'translateX(100%)';

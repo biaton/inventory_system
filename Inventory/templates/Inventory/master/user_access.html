@@ -1,0 +1,209 @@
+{% extends "Inventory/master/master_base.html" %}
+
+{% block master_content %}
+<div class="max-w-[100%] mx-auto pb-20 mt-4 text-slate-800">
+
+    <div class="mb-4 flex flex-col md:flex-row md:justify-between md:items-end border-b-2 border-indigo-800 pb-2 gap-4">
+        <div>
+            <h2 class="text-xl font-black text-indigo-900 uppercase tracking-tighter flex items-center gap-2">
+                <i data-lucide="shield-check" class="w-6 h-6 text-indigo-700"></i> Role-Based Access Control (ACL)
+            </h2>
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Manage module permissions per user account</p>
+        </div>
+    </div>
+
+    <div class="bg-slate-100 border border-slate-300 py-2 px-3 mb-4 flex flex-wrap justify-between items-center gap-2 shadow-sm">
+        <form method="GET" action="" class="flex-1 min-w-[300px] flex gap-2 m-0">
+            <div class="relative flex-1 max-w-md">
+                <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                <input type="text" name="q" value="{{ search_query }}" placeholder="Search Username or Email..." 
+                       class="w-full pl-9 pr-3 py-1.5 bg-white border border-slate-400 text-xs font-bold text-slate-800 uppercase tracking-widest focus:ring-1 focus:ring-indigo-500 outline-none shadow-inner">
+            </div>
+            {% if search_query %}
+                <a href="." class="bg-slate-200 text-slate-600 border border-slate-400 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-slate-300 flex items-center justify-center">Clear</a>
+            {% endif %}
+            <button type="submit" class="bg-slate-800 text-white border border-slate-900 px-6 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all">Search</button>
+        </form>
+    </div>
+
+    <div class="bg-white border border-slate-300 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto min-h-[400px]">
+            <table class="w-full text-left border-collapse" style="font-size: 11px;">
+                <thead class="bg-slate-800 text-white uppercase tracking-widest border-b border-slate-900 font-black text-[10px]">
+                    <tr>
+                        <th class="py-2.5 px-4 border-r border-slate-700 w-64 text-indigo-400">User Account</th>
+                        <th class="py-2.5 px-4 border-r border-slate-700">Granted Modules</th>
+                        <th class="py-2.5 px-4 text-center w-28">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200">
+                    {% for user_obj in users_list %}
+                    <tr class="hover:bg-slate-50 transition-colors group">
+                        
+                        <td class="py-3 px-4 border-r border-slate-200">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded bg-indigo-50 border border-indigo-200 flex items-center justify-center font-black text-xs text-indigo-700 shadow-sm">
+                                    {{ user_obj.username|slice:":1"|upper }}
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="font-black text-slate-900 tracking-tight">{{ user_obj.username }}</span>
+                                    <span class="text-[9px] font-bold text-slate-500 lowercase">{{ user_obj.email|default:"no-email" }}</span>
+                                    
+                                    {% if user_obj.is_superuser or user_obj.access_rights.is_super_admin %}
+                                        <span class="mt-1 flex items-center gap-1 text-[9px] font-black text-rose-600 uppercase tracking-widest">
+                                            <i data-lucide="zap" class="w-3 h-3"></i> Super Admin
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+
+                        <td class="py-3 px-4 border-r border-slate-200">
+                            {% if user_obj.is_superuser or user_obj.access_rights.is_super_admin %}
+                                <span class="text-[10px] font-bold text-slate-500 italic">Has full access to all system modules.</span>
+                            {% elif user_obj.access_rights and user_obj.access_rights.allowed_modules.exists %}
+                                <div class="flex flex-wrap gap-1.5">
+                                    {% for mod in user_obj.access_rights.allowed_modules.all %}
+                                        <span class="px-2 py-1 bg-slate-100 border border-slate-300 text-slate-700 text-[9px] font-black uppercase tracking-widest rounded-sm shadow-sm">{{ mod.name }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <span class="text-[10px] font-bold text-rose-500 italic">No modules granted. User cannot view anything.</span>
+                            {% endif %}
+                        </td>
+
+                        <td class="py-3 px-4 text-center">
+                            <div class="flex justify-center gap-1">
+                                <button type="button" 
+                                        onclick="openAccessModal('{{ user_obj.id }}', '{{ user_obj.username }}', '{{ user_obj.access_rights.is_super_admin }}', '{% for m in user_obj.access_rights.allowed_modules.all %}{{ m.code }}{% if not forloop.last %},{% endif %}{% endfor %}')" 
+                                        class="bg-slate-200 hover:bg-indigo-600 text-slate-600 hover:text-white p-1.5 border border-slate-300 hover:border-indigo-700 transition-colors shadow-sm rounded-sm" title="Manage Permissions">
+                                    <i data-lucide="settings-2" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="py-16 text-center text-slate-400">
+                            <i data-lucide="users-x" class="w-10 h-10 mx-auto mb-2 opacity-30"></i>
+                            <p class="font-black text-xs uppercase tracking-widest">No Users Found</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="accessModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-center items-center p-4">
+        <div class="bg-white border-t-4 border-indigo-600 shadow-2xl w-full max-w-2xl flex flex-col overflow-hidden">
+            
+            <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+                <div>
+                    <h3 id="modalTitle" class="font-black text-indigo-900 uppercase tracking-widest flex items-center gap-2">
+                        <i data-lucide="key" class="w-5 h-5 text-indigo-700"></i> Configure Permissions
+                    </h3>
+                    <p class="text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-widest">User: <span id="modalUsername" class="font-black text-indigo-700"></span></p>
+                </div>
+                <button type="button" onclick="closeAccessModal()" class="text-rose-600 hover:bg-rose-100 p-1.5 rounded transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <form method="POST" action="">
+                {% csrf_token %}
+                <input type="hidden" name="user_id" id="hiddenUserId">
+                
+                <div class="p-5 bg-white space-y-5 max-h-[70vh] overflow-y-auto">
+
+                    <div class="bg-rose-50 border border-rose-200 p-3 rounded-sm flex items-center gap-3">
+                        <input type="checkbox" name="is_super_admin" id="superAdminCheck" class="w-5 h-5 accent-rose-600 cursor-pointer" onchange="toggleModuleCheckboxes()">
+                        <div>
+                            <label for="superAdminCheck" class="text-xs font-black text-rose-800 uppercase tracking-widest cursor-pointer">Grant Super Admin Access</label>
+                            <p class="text-[9px] font-bold text-rose-600">Overrides all selections. User will have unrestricted access to all WMS modules.</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-3 border-b border-slate-200 pb-1">Select Authorized Modules</label>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="moduleCheckboxes">
+                            {% for mod in modules %}
+                            <label class="flex items-start gap-2 p-2 border border-slate-200 rounded-sm hover:bg-slate-50 cursor-pointer transition-colors module-label">
+                                <input type="checkbox" name="modules" value="{{ mod.code }}" class="module-cb w-4 h-4 mt-0.5 accent-indigo-600 cursor-pointer">
+                                <div>
+                                    <p class="text-[10px] font-black text-slate-800 uppercase tracking-widest">{{ mod.name }}</p>
+                                </div>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                </div>
+                
+                <div class="p-4 bg-slate-100 border-t border-slate-300 flex justify-end gap-2 shadow-inner">
+                    <button type="button" onclick="closeAccessModal()" class="px-6 py-2 bg-white border border-slate-300 text-slate-600 text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-colors shadow-sm rounded-sm">Cancel</button>
+                    <button type="submit" class="px-8 py-2 bg-indigo-700 border border-indigo-900 text-white text-[10px] font-black uppercase tracking-widest hover:bg-indigo-800 transition-colors flex items-center gap-2 shadow-sm rounded-sm">
+                        <i data-lucide="save" class="w-3 h-3"></i> Save Access Rights
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    });
+
+    function toggleModuleCheckboxes() {
+        const isSuper = document.getElementById('superAdminCheck').checked;
+        const checkboxes = document.querySelectorAll('.module-cb');
+        const labels = document.querySelectorAll('.module-label');
+
+        checkboxes.forEach(cb => {
+            cb.disabled = isSuper;
+            if (isSuper) cb.checked = true;
+        });
+
+        labels.forEach(lbl => {
+            if (isSuper) {
+                lbl.classList.add('opacity-50', 'bg-slate-100');
+            } else {
+                lbl.classList.remove('opacity-50', 'bg-slate-100');
+            }
+        });
+    }
+
+    function openAccessModal(userId, username, isSuper, moduleString) {
+        document.getElementById('accessModal').classList.remove('hidden');
+        document.getElementById('hiddenUserId').value = userId;
+        document.getElementById('modalUsername').innerText = username;
+        
+        const superCheck = document.getElementById('superAdminCheck');
+        superCheck.checked = (isSuper === 'True');
+        
+        // Reset checkboxes
+        const checkboxes = document.querySelectorAll('.module-cb');
+        checkboxes.forEach(cb => cb.checked = false);
+
+        // Check modules based on string
+        if (moduleString && isSuper !== 'True') {
+            const allowedCodes = moduleString.split(',').map(s => s.trim());
+            checkboxes.forEach(cb => {
+                if (allowedCodes.includes(cb.value)) {
+                    cb.checked = true;
+                }
+            });
+        }
+
+        toggleModuleCheckboxes();
+    }
+
+    function closeAccessModal() {
+        document.getElementById('accessModal').classList.add('hidden');
+    }
+</script>
+{% endblock %}

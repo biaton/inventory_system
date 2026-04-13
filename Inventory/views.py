@@ -24,6 +24,9 @@ from .decorators import allowed_roles
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.conf import settings as django_settings
 from django.contrib.auth.signals import user_login_failed
+from django.core.exceptions import PermissionDenied
+from .decorators import require_module_access
+from functools import wraps
 from django.dispatch import receiver
 from django.core.cache import cache
 from django.conf import settings
@@ -76,8 +79,64 @@ from .models import (
     SystemNotification,
     MachineAsset,
     MachineComponent,
+    UserAccess,
+    SystemModule,
+    SystemModule, 
+    UserAccess, 
+    User,
 )
 
+@login_required
+def user_access_view(request):
+    # Auto-populate modules kung walang laman
+    if not SystemModule.objects.exists():
+        for code, name in SystemModule.MODULE_CHOICES:
+            SystemModule.objects.get_or_create(code=code, defaults={'name': name})
+
+    if request.method == 'POST':
+        user_id = request.POST.get('user_id')
+        is_super_admin = request.POST.get('is_super_admin') == 'on'
+        module_codes = request.POST.getlist('modules') 
+
+        try:
+            with transaction.atomic():
+                target_user = User.objects.get(id=user_id)
+                access, created = UserAccess.objects.get_or_create(user=target_user)
+                
+                access.is_super_admin = is_super_admin
+                access.updated_by = request.user
+                access.save()
+                
+                access.allowed_modules.clear()
+                if not is_super_admin and module_codes:
+                    modules = SystemModule.objects.filter(code__in=module_codes)
+                    access.allowed_modules.add(*modules)
+                    
+                messages.success(request, f"Access rights updated for {target_user.username}.")
+        except Exception as e:
+            messages.error(request, f"Error saving access: {str(e)}")
+        
+        return redirect('user_access')
+
+    # GET Request: Kunin lahat ng Registered Users
+    search_query = request.GET.get('q', '').strip()
+    users_list = User.objects.select_related('access_rights').all().order_by('-date_joined')
+    
+    if search_query:
+        users_list = users_list.filter(
+            Q(username__icontains=search_query) | Q(email__icontains=search_query)
+        )
+
+    modules = SystemModule.objects.filter(is_active=True).order_by('name')
+
+    context = {
+        'users_list': users_list,
+        'modules': modules,
+        'search_query': search_query
+    }
+    return render(request, 'Inventory/master/user_access.html', context)
+
+    
 # 1. ANG CUSTOM LOGIN VIEW
 def custom_login_view(request):
     if request.user.is_authenticated:
@@ -397,6 +456,7 @@ def read_notification_view(request, notif_id):
 
 # 1. ANG VIEW PARA SA TABLE (Master List)
 @login_required(login_url='login')
+@require_module_access('USER_MASTER')
 def user_master_view(request):
     # Auto-create profile kung wala pa
     for old_user in User.objects.filter(profile__isnull=True):
@@ -606,6 +666,8 @@ def register_user_view(request):
 
     return render(request, 'Inventory/master/register_user.html')
 
+@login_required
+@require_module_access('SYS_CONFIG')
 def item_master_view(request):
     # ==========================================
     # 1. POST: ADD / EDIT / DELETE / IMPORT
@@ -940,6 +1002,8 @@ def edit_user(request, user_id):
     # Kapag GET request (binuksan lang ang page), i-re-render natin yung form na may laman
     return render(request, 'Inventory/master/edit_user.html', {'profile': profile})
 
+@login_required
+@require_module_access('SYS_CONFIG')
 def settings_master_view(request):
     # Ito ang magiging main hub menu
     return render(request, 'Inventory/master/settings_master.html')
@@ -989,7 +1053,8 @@ def delete_item(request, pk):
 
 
 # --- SUPPLIER MASTER VIEW ---
-
+@login_required
+@require_module_access('SYS_CONFIG')
 def supplier_master(request):
     # ==========================================
     # 1. POST: ADD / EDIT / DELETE SUPPLIER
@@ -1164,6 +1229,8 @@ def register_customer_view(request):
 
     return render(request, 'Inventory/master/register_customer.html')
 
+@login_required
+@require_module_access('SYS_CONFIG')
 @login_required(login_url='login')
 def customer_master_view(request):
     # ==========================================
@@ -1253,6 +1320,8 @@ def customer_master_view(request):
     })
 
 # --- CUSTOMER ORDER VIEWS ---
+@login_required
+@require_module_access('CUSTOMER_ORDER')
 def order_input_manual_view(request):
     if request.method == "POST":
         # 1. Kunin ang MAIN HEADER (Global info)
@@ -1348,7 +1417,8 @@ def order_input_manual_view(request):
         'delivery_addresses': delivery_addresses 
     })
 
-
+@login_required
+@require_module_access('CUSTOMER_ORDER')
 def order_input_excel_view(request):
     excel_data = []
     
@@ -1459,6 +1529,8 @@ def order_input_excel_view(request):
         'delivery_addresses': delivery_addresses
     })
 
+@login_required
+@require_module_access('CUSTOMER_ORDER')
 def po_confirmation_view(request):
     # Kukunin natin yung 'batch_customer_orders' sa session
     batch_orders = request.session.get('batch_customer_orders')
@@ -1564,6 +1636,8 @@ def po_confirmation_view(request):
         'main_po_no': main_po_no, # 🚀 BAGO: Ipapasa sa HTML
     })
 
+@login_required
+@require_module_access('CUSTOMER_ORDER')
 def order_correction_view(request):
     context = {}
 
@@ -1662,6 +1736,8 @@ def order_correction_view(request):
 
     return render(request, 'Inventory/customer_order/Order_Correction.html', context)
 
+@login_required
+@require_module_access('CUSTOMER_ORDER')
 def order_inquiry_view(request):
     search_query = request.GET.get('search', '').strip()
     
@@ -1755,6 +1831,8 @@ def order_inquiry_view(request):
     }
     return render(request, 'Inventory/customer_order/Order_Inquiry.html', context)
 
+@login_required
+@require_module_access('CUSTOMER_ORDER')
 def order_dispatch_view(request, batch_id):
     # 🚀 FIX: Yung 'batch_id' na pinapasa ng URL natin ngayon ay ang 'main_po_no' na talaga!
     main_po_no = batch_id 
@@ -1839,6 +1917,8 @@ def order_dispatch_view(request, batch_id):
     }
     return render(request, 'Inventory/customer_order/order_dispatch.html', context)
 
+@login_required
+@require_module_access('CUSTOMER_ORDER')
 def mark_delivered_view(request, order_no):
     # Hanapin ang order na 'Shipped' na
     items = CustomerOrder.objects.filter(order_no=order_no, order_status='Shipped')
@@ -1864,6 +1944,8 @@ def mark_delivered_view(request, order_no):
     return redirect('order_inquiry')
 
 # Purchase Order Views 
+@login_required
+@require_module_access('PURCHASE_ORDER')
 def make_po_view(request):
     if request.method == "POST":
         # 1. Kunin ang MAIN HEADER (Global info)
@@ -1974,6 +2056,7 @@ def make_po_view(request):
         'items': items_list,
     })
 
+@login_required
 def api_search_item_master(request):
     """ Server-side search para sa Item Masterlist (Gagamitin sa PO Modals) """
     query = request.GET.get('q', '').strip()
@@ -2001,6 +2084,8 @@ def api_search_item_master(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
+@login_required
+@require_module_access('PURCHASE_ORDER')
 def print_po_view(request):
     po_no = request.GET.get('po_no')
     
@@ -2097,6 +2182,8 @@ def api_get_item_details(request):
         print(f"🔥 ERROR SA LOOB: {e}")
         return JsonResponse({'success': False, 'error': str(e)})
 
+@login_required
+@require_module_access('PURCHASE_ORDER')
 def po_confirm_purchase_view(request):
     # ==========================================
     # 1. KUNG PININDOT ANG "SAVE TO DATABASE" (POST)
@@ -2231,7 +2318,9 @@ def po_confirm_purchase_view(request):
     }
     
     return render(request, 'Inventory/purchase_order/PO_Confirmation.html', context)
-    
+
+@login_required
+@require_module_access('PURCHASE_ORDER')    
 def approve_po_view(request):
     if request.method == "POST":
         batch_id = request.POST.get('batch_id')
@@ -2321,6 +2410,8 @@ def approve_po_view(request):
     
     return render(request, 'Inventory/purchase_order/PO_Approve.html', context)
     
+@login_required
+@require_module_access('PURCHASE_ORDER')
 def po_inquiry_view(request):
     # 1. Kunin ang lahat ng PO at i-prefetch ang items
     po_qs = PurchaseOrder.objects.prefetch_related(
@@ -2399,6 +2490,8 @@ def po_inquiry_view(request):
     
     return render(request, 'Inventory/purchase_order/PO_Inquiry.html', context)
 
+@login_required
+@require_module_access('PURCHASE_ORDER')
 def po_correction_view(request):
     context = {}
 
@@ -2494,6 +2587,8 @@ def po_correction_view(request):
     return render(request, 'Inventory/purchase_order/PO_Correction.html', context)
 
 # Receiving / Inspection 
+@login_required
+@require_module_access('RECEIVING')
 def ri_receive_view(request):
     context = {'searched': False}
 
@@ -2611,6 +2706,8 @@ def ri_receive_view(request):
 
     return render(request, 'Inventory/receiving/RI_receive.html', context)
 
+@login_required
+@require_module_access('RECEIVING')
 def ri_delivery_request_view(request):
     if request.method == 'POST':
         try:
@@ -2717,6 +2814,7 @@ def ri_delivery_request_view(request):
     }
     return render(request, 'Inventory/receiving/RI_delivery_request.html', context)
 
+@login_required
 def movement_slip_print_view(request, req_no):
     try:
         # 1. Kunin ang Main Header ng Request
@@ -2743,7 +2841,7 @@ def movement_slip_print_view(request, req_no):
         messages.error(request, f"Error generating movement slip: {str(e)}")
         return redirect('delivery_request')
 
-# 1. API para sa Stock Search (Tatawagin ng JavaScript)
+@login_required
 def search_items(request):
     """
     Search view para sa Modal Stock Search.
@@ -2780,6 +2878,8 @@ def search_items(request):
         return JsonResponse({'success': False, 'error': str(e)})
         
 # 2. Logic para sa Excel Import
+@login_required
+@require_module_access('RECEIVING')
 def import_delivery_excel(request):
     # 1. Check kung POST at kung may file na 'excel_file' na dumating
     if request.method == 'POST' and request.FILES.get('excel_file'):
@@ -2807,6 +2907,8 @@ def import_delivery_excel(request):
             
     return JsonResponse({'success': False, 'error': 'No file was uploaded.'})
 
+@login_required
+@require_module_access('RECEIVING')
 def ri_material_tag_view(request):
     if request.method == 'POST':
         po_nos = request.POST.getlist('po_no[]')
@@ -2933,6 +3035,7 @@ def get_item_details(request):
         print(f"🔥 ERROR SA LOOB: {e}")
         return JsonResponse({'success': False, 'error': str(e)})
 
+@login_required
 def get_po_details(request):
     po_no = request.GET.get('po_no', '').strip()
     
@@ -2957,6 +3060,7 @@ def get_po_details(request):
             
     return JsonResponse({'success': False, 'error': 'Purchase Order not found or has no items.'})
 
+@login_required
 def get_po_for_tag(request):
     """ Hahanapin nito ang EXACT PO number na ita-type mo sa Material Tag page """
     po_no_query = request.GET.get('po_no', '').strip()
@@ -3001,6 +3105,7 @@ def get_po_for_tag(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
+@login_required
 def material_tag_print_view(request):
     ids_str = request.GET.get('ids', '')
     print_pages = [] # 🚀 Dito natin iipunin ang mga pages na ipi-print
@@ -3025,6 +3130,8 @@ def material_tag_print_view(request):
     
     return render(request, 'Inventory/receiving/material_tag_print.html', {'print_pages': print_pages})
 
+@login_required
+@require_module_access('RECEIVING')
 def ri_storage_view(request):
     # 🚀 FIX: Gamitin natin ang LocationMaster imbes na yung lumang Location model
     if not LocationMaster.objects.exists():
@@ -3041,6 +3148,7 @@ def ri_storage_view(request):
     
     return render(request, 'Inventory/receiving/RI_storage.html', {'locations': locations})
 
+@login_required
 def get_location_stock(request):
     """Kumukuha ng lahat ng items sa loob ng isang specific Location."""
     loc_id = request.GET.get('loc_id')
@@ -3062,6 +3170,7 @@ def get_location_stock(request):
     
     return JsonResponse({'success': True, 'stock': data})
 
+@login_required
 def process_storage_transfer(request):
     if request.method == 'POST':
         lot_no = request.POST.get('lot_no', '').strip().upper()
@@ -3111,6 +3220,7 @@ def process_storage_transfer(request):
             
     return JsonResponse({'success': False, 'error': 'Invalid Request.'})
 
+@login_required
 def get_picking_list(request):
     """ Ito ang tinatawag ng Javascript kapag nag-scan ka ng Request No. """
     req_no = request.GET.get('req_no', '').strip()
@@ -3144,6 +3254,7 @@ def get_picking_list(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
+@login_required
 def api_get_material_tag(request):
     lot_no = request.GET.get('lot_no', '').strip().upper()
     
@@ -3181,6 +3292,7 @@ def api_get_material_tag(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
+@login_required
 def api_update_tag_status(request):
     if request.method == 'POST':
         lot_no = request.POST.get('lot_no', '').strip().upper()
@@ -3219,6 +3331,8 @@ def api_update_tag_status(request):
 # ==========================================
 # 2. MAIN VIEW: NAGLO-LOAD NG PAGE & NAGSE-SAVE
 # ==========================================
+@login_required
+@require_module_access('RECEIVING')
 def ri_picking_view(request):
     if request.method == "POST":
         req_no = request.POST.get('scan_request_no_hidden')
@@ -3338,6 +3452,8 @@ def ri_picking_view(request):
     locations = LocationMaster.objects.all().order_by('zone', 'location_code')
     return render(request, 'Inventory/receiving/RI_picking.html', {'locations': locations})
 
+@login_required
+@require_module_access('RECEIVING')
 def picking_list_print_view(request, req_no):
     try:
         header = get_object_or_404(DeliveryRequest, request_no=req_no)
@@ -3361,6 +3477,7 @@ def picking_list_print_view(request, req_no):
         messages.error(request, f"Error generating picking list: {str(e)}")
         return redirect('ri_picking')
 
+@login_required
 def get_picking_list(request):
     """Kinukuha ang Request items at ang current stock level nila."""
     req_no = request.GET.get('req_no', '').strip()
@@ -3419,6 +3536,8 @@ def get_picking_list(request):
         'items': items_data
     })
 
+@login_required
+@require_module_access('RECEIVING')
 def process_picking_scan(request):
     """Pinoproseso ang pag-scan ng Material Tag at pagbawas sa stock."""
     if request.method == 'POST':
@@ -3463,7 +3582,8 @@ def process_picking_scan(request):
             
     return JsonResponse({'success': False, 'error': 'Invalid request'})
 
-
+@login_required
+@require_module_access('INV_PROCESSING')
 def stock_move_view(request):
     if request.method == 'POST':
         tag_id = request.POST.get('tag_id')
@@ -3526,6 +3646,7 @@ def stock_move_view(request):
     
     return render(request, 'Inventory/processing/stock_move.html', {'locations': locations})
 
+@login_required
 def get_tag_info(request):
     """
     Ito ang sumasalo ng scan mula sa Stock Move, Stock Out, at Stock Correction.
@@ -3564,6 +3685,8 @@ def get_tag_info(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': f'Server Error: {str(e)}'})
 
+@login_required
+@require_module_access('INV_PROCESSING')
 def stock_correction_view(request):
     if request.method == 'POST':
         tag_id = request.POST.get('tag_id')
@@ -3638,6 +3761,8 @@ def stock_correction_view(request):
 
     return render(request, 'Inventory/processing/stock_correction.html', {'locations': locations})
 
+@login_required
+@require_module_access('INV_PROCESSING')
 def stock_out_view(request):
     if request.method == 'POST':
         tag_id = request.POST.get('tag_id')
@@ -3702,6 +3827,8 @@ def stock_out_view(request):
     # 🚀 FIX: Tinuturo na ito sa bagong "processing" folder
     return render(request, 'Inventory/processing/stock_out.html')
 
+@login_required
+@require_module_access('INV_INQUIRY')
 def stock_inquiry_view(request):
     stocks = MaterialTag.objects.select_related('po_reference', 'po_reference__supplier', 'location').all().order_by('-arrival_date')
 
@@ -3800,6 +3927,8 @@ def stock_inquiry_view(request):
     # 🚀 FIX: Itinuro sa inventory_inquiry folder
     return render(request, 'Inventory/inventory_inquiry/stock_inquiry.html', context)
 
+@login_required
+@require_module_access('INV_INQUIRY')
 def stock_io_view(request, tag_id):
     stock = get_object_or_404(MaterialTag, id=tag_id)
     history_logs = stock.logs.all().order_by('-timestamp')
@@ -3813,6 +3942,8 @@ def stock_io_view(request, tag_id):
     }
     return render(request, 'Inventory/inventory_inquiry/stock_io_history.html', context)
 
+@login_required
+@require_module_access('INV_INQUIRY')
 def api_update_item_price(request):
     if request.method == 'POST':
         item_code = request.POST.get('item_code', '').strip()
@@ -3828,6 +3959,39 @@ def api_update_item_price(request):
             return JsonResponse({'success': False, 'error': str(e)})
     return JsonResponse({'success': False, 'error': 'Invalid Request'})
 
+@login_required
+@require_module_access('INV_INQUIRY')
+def api_update_tag_details(request):
+    if request.method == 'POST':
+        tag_id = request.POST.get('tag_id')
+        field = request.POST.get('field')
+        value = request.POST.get('value', '').strip()
+
+        try:
+            tag = MaterialTag.objects.get(id=tag_id)
+            
+            if field == 'lot_no':
+                tag.lot_no = value
+            elif field == 'revision':
+                tag.revision = value
+            elif field == 'invoice_no':
+                tag.invoice_no = value
+            elif field == 'expiration_date':
+                # Kung blangko ang pinasa, ibig sabihin tinanggal ang date
+                tag.expiration_date = value if value else None
+                
+            tag.save()
+            return JsonResponse({'success': True})
+            
+        except MaterialTag.DoesNotExist:
+            return JsonResponse({'success': False, 'error': f'Tag ID {tag_id} not found.'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+            
+    return JsonResponse({'success': False, 'error': 'Invalid Request'})
+
+@login_required
+@require_module_access('INV_INQUIRY')
 def stock_item_inquiry_view(request):
     search_query = request.GET.get('q', '').strip()
     
@@ -3885,6 +4049,8 @@ def stock_item_inquiry_view(request):
     
     return render(request, 'Inventory/inventory_inquiry/stock_item_inquiry.html', context)
 
+@login_required
+@require_module_access('INV_INQUIRY')
 def stock_history_view(request):
     logs = StockLog.objects.select_related('material_tag', 'user').all().order_by('-timestamp')
 
@@ -3921,6 +4087,8 @@ def stock_history_view(request):
     # 🚀 FIX: Itinuro sa inventory_inquiry folder
     return render(request, 'Inventory/inventory_inquiry/stock_history.html', context)
 
+@login_required
+@require_module_access('INV_INQUIRY')
 def request_inquiry_view(request):
     requests_data = DeliveryRequest.objects.annotate(
         item_count=Count('items'),
@@ -3954,6 +4122,8 @@ def request_inquiry_view(request):
     # 🚀 FIX: Itinuro sa inventory_inquiry folder
     return render(request, 'Inventory/inventory_inquiry/request_inquiry.html', context)
 
+@login_required
+@require_module_access('INV_INQUIRY')
 def inquiry_settings_view(request):
     system_settings, created = SystemSetting.objects.get_or_create(id=1)
 
@@ -4537,6 +4707,7 @@ def shipping_confirmation_view(request, po_no=None):
     return render(request, 'Inventory/inbound/shipping_confirmation.html', context)
 
 @login_required
+@require_module_access('INV_REQUEST')
 def new_request_view(request):
     if request.method == 'POST':
         department = request.POST.get('department')
@@ -4594,6 +4765,7 @@ def new_request_view(request):
 
 # 3. MY REQUESTS VIEW
 @login_required
+@require_module_access('INV_REQUEST')
 def my_requests_view(request):
     try:
         # Kukunin ang 50 latest requests at bibilangin kung ilang items ang nasa loob
@@ -4639,6 +4811,7 @@ def api_request_details(request, req_id):
 
 # 5. RETURN SLIP VIEW
 @login_required
+@require_module_access('INV_REQUEST')
 def return_slip_view(request):
     if request.method == 'POST':
         # (Nandito yung logic mo para sa Return Slip na ginawa natin kanina)
@@ -4686,6 +4859,7 @@ def return_slip_view(request):
 
 
 @login_required
+@require_module_access('SYSTEM_ANALYTICS')
 def analytics_view(request):
     try:
         settings = SystemSetting.objects.first()
@@ -4830,6 +5004,7 @@ def analytics_view(request):
     
     return render(request, 'Inventory/analytics_board.html', context)
 
+@login_required
 def receive_item_view(request):
     if request.method == 'POST':
         item_code = request.POST.get('item_code')
@@ -4863,6 +5038,8 @@ def receive_item_view(request):
         'items': ItemMaster.objects.all()
     })
 
+@login_required
+@require_module_access('SYS_CONFIG')
 def location_master_view(request):
     # ==========================================
     # 1. POST: ADD / DELETE LOCATION
@@ -4993,6 +5170,8 @@ def print_tag_view(request, tag_id):
     return render(request, 'Inventory/print_tag.html', {'tag': tag})
 
 # 3. I-UPDATE ANG RECEIVING VIEW MO KANINA
+@login_required
+@require_module_access('SYS_CONFIG')
 def receive_item_scan_view(request):
     if request.method == 'POST':
         item_code = request.POST.get('item_code')
@@ -5066,6 +5245,8 @@ def stock_out_item(request, item_id):
     # Kung GET request, ipapakita yung form
     return render(request, 'Inventory/stock_out.html', {'item': item})
 
+@login_required
+@require_module_access('SYS_CONFIG')
 def system_audit_logs_view(request):
     log_list = SystemAuditLog.objects.all().select_related('user').order_by('-timestamp')
     paginator = Paginator(log_list, 15) 
@@ -5097,6 +5278,8 @@ def mark_all_read_view(request):
     # Ibabalik ka niya kung saang page ka man nanggaling nung pinindot mo 'to
     return redirect(request.META.get('HTTP_REFERER', 'dashboard'))
 
+@login_required
+@require_module_access('ASSET_WIP')
 def assembly_dashboard_view(request):
     # ==========================================
     # 1. POST: CREATE NEW MACHINE / ASSET
@@ -5165,6 +5348,8 @@ def assembly_dashboard_view(request):
     }
     return render(request, 'Inventory/assembly/assembly_dashboard.html', context)
 
+@login_required
+@require_module_access('ASSET_WIP')
 def machine_detail_view(request, machine_id):
     machine = get_object_or_404(MachineAsset, id=machine_id)
 
@@ -5206,7 +5391,8 @@ def machine_detail_view(request, machine_id):
     }
     return render(request, 'Inventory/assembly/machine_detail.html', context)
 
-
+@login_required
+@require_module_access('ASSET_WIP')
 def api_assembly_action(request):
     if request.method == 'POST':
         machine_id = request.POST.get('machine_id')
@@ -5278,6 +5464,7 @@ def api_assembly_action(request):
 
         return redirect('machine_detail', machine_id=machine_id)
 
+@login_required
 def api_assembly_complete(request):
     """ View para tapusin ang assembly at gawing 'Available' ang makina """
     if request.method == 'POST':
@@ -5300,11 +5487,14 @@ def api_assembly_complete(request):
         return redirect('machine_detail', machine_id=machine_id)
 
 # 2. IDAGDAG ITO SA PINAKABABA NG views.py
+@login_required
 def print_assembly_label(request, log_id):
     """ View na maglalabas ng format para sa Thermal Barcode Printer """
     log = get_object_or_404(MachineComponent, id=log_id)
     return render(request, 'Inventory/assembly/assembly_print_label.html', {'log': log})
 
+@login_required
+@require_module_access('ASSET_WIP')
 def machine_create_view(request):
     """ View na taga-salos ng Form Submission para sa bagong Makina """
     if request.method == 'POST':
@@ -5423,6 +5613,7 @@ def alert_new_po_created(po):
         print(f"Error sending PO email: {str(e)}")
 
 @login_required
+@require_module_access('SYS_CONFIG')
 def email_master_view(request):
     search_query = request.GET.get('q', '').strip()
     

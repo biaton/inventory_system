@@ -526,3 +526,41 @@ class MachineComponent(models.Model):
 
     def __str__(self):
         return f"{self.action} {self.qty}x {self.material_tag.item_code} on {self.machine.machine_code}"
+
+class SystemModule(models.Model):
+    """
+    Ito ang listahan ng lahat ng pahina/modules sa system mo.
+    """
+    MODULE_CHOICES = [
+        ('CUSTOMER_ORDER', 'Customer Order'),
+        ('PURCHASE_ORDER', 'Purchase Order'),
+        ('RECEIVING', 'Receiving & Inspection'),
+        ('INV_REQUEST', 'Inventory Request'),
+        ('INV_PROCESSING', 'Inventory Processing'),
+        ('INV_INQUIRY', 'Inventory Inquiry'),
+        ('ASSET_WIP', 'Asset & WIP Management'),
+        ('USER_MASTER', 'User Master'),
+        ('SYSTEM_ANALYTICS', 'System Analytics'),
+        ('SYS_CONFIG', 'System Configuration'),
+    ]
+
+    code = models.CharField(max_length=50, choices=MODULE_CHOICES, unique=True)
+    name = models.CharField(max_length=100) # Hal. "Customer Order"
+    description = models.CharField(max_length=255, blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.name
+
+class UserAccess(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='access_rights')
+    allowed_modules = models.ManyToManyField('SystemModule', blank=True, related_name='authorized_users')
+    
+    is_super_admin = models.BooleanField(default=False)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='granted_accesses')
+
+    def __str__(self):
+        return self.user.username
