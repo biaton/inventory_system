@@ -169,6 +169,10 @@ DEFAULT_FROM_EMAIL = '"Asia Integrated Machine Inc." <jhost161@gmail.com>'
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
