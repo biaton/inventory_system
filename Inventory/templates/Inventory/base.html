@@ -38,9 +38,9 @@
     </style>
 </head>
 
-<body class="bg-slate-50 min-h-screen flex flex-col selection:bg-teal-200 selection:text-teal-900">
+<body class="bg-slate-50 min-h-screen flex flex-col selection:bg-sky-200 selection:text-sky-900">
 
-    <div class="h-1.5 w-full bg-gradient-to-r from-slate-800 via-teal-700 to-emerald-600 z-[101] relative"></div>
+    <div class="h-1.5 w-full bg-gradient-to-r from-slate-800 via-sky-700 to-cyan-600 z-[101] relative"></div>
 
     <nav class="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-[100]">
         <div class="max-w-[98%] mx-auto px-2 sm:px-4 relative">
@@ -59,7 +59,7 @@
                             <span class="sm:hidden">AIM Inc.</span> <!-- Pinaikli sa mobile para hindi masikip -->
                         </span>
                         <span
-                            class="text-[8px] sm:text-[9px] font-bold text-teal-700 tracking-[0.2em] uppercase leading-none">Inventory
+                            class="text-[8px] sm:text-[9px] font-bold text-sky-700 tracking-[0.2em] uppercase leading-none">Inventory
                             Control</span>
                     </div>
                 </div>
@@ -68,21 +68,21 @@
                 <div class="hidden md:flex items-center gap-1 h-full">
                     <a href="{% url 'dashboard' %}"
                         class="h-full flex items-center px-4 text-[11px] font-black uppercase tracking-widest transition-all relative
-                        {% if request.resolver_match.url_name == 'dashboard' %} text-teal-700 bg-teal-50/50 {% else %} text-slate-500 hover:bg-slate-50 hover:text-slate-800 {% endif %}">
+                        {% if request.resolver_match.url_name == 'dashboard' %} text-sky-700 bg-sky-50/50 {% else %} text-slate-500 hover:bg-slate-50 hover:text-slate-800 {% endif %}">
                         <i data-lucide="house" class="w-3.5 h-3.5 mr-1.5"></i> Dashboard
                                 
                         {% if request.resolver_match.url_name == 'dashboard' %}
-                        <div class="absolute bottom-0 left-0 w-full h-0.5 bg-teal-600"></div>
+                        <div class="absolute bottom-0 left-0 w-full h-0.5 bg-sky-600"></div>
                         {% endif %}
                     </a>
 
                     <a href="{% url 'shipment_calendar' %}"
                         class="h-full flex items-center px-4 text-[11px] font-black uppercase tracking-widest transition-all relative
-                        {% if request.resolver_match.url_name == 'shipment_calendar' %} text-teal-700 bg-teal-50/50 {% else %} text-slate-500 hover:bg-slate-50 hover:text-slate-800 {% endif %}">
+                        {% if request.resolver_match.url_name == 'shipment_calendar' %} text-sky-700 bg-sky-50/50 {% else %} text-slate-500 hover:bg-slate-50 hover:text-slate-800 {% endif %}">
                         <i data-lucide="calendar-range" class="w-3.5 h-3.5 mr-1.5"></i> Calendar
                 
                         {% if request.resolver_match.url_name == 'shipment_calendar' %}
-                        <div class="absolute bottom-0 left-0 w-full h-0.5 bg-teal-600"></div>
+                        <div class="absolute bottom-0 left-0 w-full h-0.5 bg-sky-600"></div>
                         {% endif %}
                     </a>
                 </div>
@@ -92,7 +92,7 @@
 
                     <div class="relative">
                         <button id="notif-btn"
-                            class="text-slate-400 hover:text-teal-600 transition-colors relative focus:outline-none mt-1">
+                            class="text-slate-400 hover:text-sky-600 transition-colors relative focus:outline-none mt-1">
                             <i data-lucide="bell" class="w-5 h-5"></i>
 
                             {% if unread_notif_count > 0 %}
@@ -117,7 +117,7 @@
                             <div class="max-h-72 overflow-y-auto divide-y divide-slate-100">
                                 {% for notif in latest_notifs %}
                                 <a href="{% url 'read_notification' notif.id %}"
-                                    class="block px-4 py-3 hover:bg-slate-50 transition-colors {% if not notif.is_read %}bg-teal-50/40 border-l-2 border-teal-500{% else %}border-l-2 border-transparent{% endif %}">
+                                    class="block px-4 py-3 hover:bg-slate-50 transition-colors {% if not notif.is_read %}bg-sky-50/40 border-l-2 border-sky-500{% else %}border-l-2 border-transparent{% endif %}">
                                     <p class="text-xs font-black text-slate-800 mb-0.5 uppercase tracking-tight">{{ notif.title }}</p>
                                     <p class="text-[10px] font-bold text-slate-500 leading-tight">{{ notif.message }}
                                     </p>
@@ -131,7 +131,7 @@
                                         all caught up!</p>
                                 </div>
                                 {% endfor %}
-                                <a href="{% url 'all_notifications' %}" class="block bg-slate-100 text-center py-2 text-[9px] font-black text-teal-700 uppercase tracking-widest hover:bg-slate-200 transition-colors border-t border-slate-200">
+                                <a href="{% url 'all_notifications' %}" class="block bg-slate-100 text-center py-2 text-[9px] font-black text-sky-700 uppercase tracking-widest hover:bg-slate-200 transition-colors border-t border-slate-200">
                                     View All Activity
                                 </a>
                             </div>
@@ -140,13 +140,13 @@
 
                     <div class="relative flex items-center gap-2 pl-3 sm:pl-4 border-l border-slate-200 cursor-pointer group" id="user-menu-btn">
                         <div class="hidden sm:flex flex-col text-right">
-                            <span class="text-[10px] font-black text-slate-700 uppercase leading-none group-hover:text-teal-700 transition-colors">
+                            <span class="text-[10px] font-black text-slate-700 uppercase leading-none group-hover:text-sky-700 transition-colors">
                                 {{ request.user.username|default:"Admin Account" }}
                             </span>
                             <span class="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Active Session</span>
                         </div>
     
-                        <div class="w-7 h-7 bg-slate-800 rounded flex items-center justify-center group-hover:bg-teal-700 transition-colors shadow-sm">
+                        <div class="w-7 h-7 bg-slate-800 rounded flex items-center justify-center group-hover:bg-sky-700 transition-colors shadow-sm">
                             <i data-lucide="user" class="w-3.5 h-3.5 text-white"></i>
                         </div>
 
@@ -157,11 +157,11 @@
                             </div>
 
                             <div class="flex flex-col py-1">
-                                <a href="{% url 'view_profile' %}" class="px-4 py-2 text-[11px] font-bold text-slate-600 hover:bg-slate-50 hover:text-teal-700 transition-colors flex items-center gap-2">
+                                <a href="{% url 'view_profile' %}" class="px-4 py-2 text-[11px] font-bold text-slate-600 hover:bg-slate-50 hover:text-sky-700 transition-colors flex items-center gap-2">
                                     <i data-lucide="user-circle" class="w-3.5 h-3.5"></i> View Profile
                                 </a>
 
-                                <a href="{% url 'edit_profile' %}" class="px-4 py-2 text-[11px] font-bold text-slate-600 hover:bg-slate-50 hover:text-teal-700 transition-colors flex items-center gap-2">
+                                <a href="{% url 'edit_profile' %}" class="px-4 py-2 text-[11px] font-bold text-slate-600 hover:bg-slate-50 hover:text-sky-700 transition-colors flex items-center gap-2">
                                     <i data-lucide="settings" class="w-3.5 h-3.5"></i> Edit Profile
                                 </a>
 
@@ -178,7 +178,7 @@
                     </div>
 
                     <!-- 🚀 BAGO: MOBILE HAMBURGER MENU BUTTON -->
-                    <button id="mobile-menu-btn" class="md:hidden text-slate-500 hover:text-teal-600 focus:outline-none pl-2 ml-1 border-l border-slate-200">
+                    <button id="mobile-menu-btn" class="md:hidden text-slate-500 hover:text-sky-600 focus:outline-none pl-2 ml-1 border-l border-slate-200">
                         <i data-lucide="menu" class="w-6 h-6"></i>
                     </button>
 
@@ -188,10 +188,10 @@
             <!-- 🚀 BAGO: MOBILE NAVIGATION PANEL -->
             <div id="mobile-menu" class="hidden md:hidden absolute left-0 top-full w-full bg-white border-b border-slate-200 shadow-lg z-[140]">
                 <div class="flex flex-col p-2 space-y-1">
-                    <a href="{% url 'dashboard' %}" class="flex items-center gap-3 px-4 py-3 rounded-sm text-xs font-black uppercase tracking-widest {% if request.resolver_match.url_name == 'dashboard' %} bg-teal-50 text-teal-700 {% else %} text-slate-600 hover:bg-slate-50 {% endif %}">
+                    <a href="{% url 'dashboard' %}" class="flex items-center gap-3 px-4 py-3 rounded-sm text-xs font-black uppercase tracking-widest {% if request.resolver_match.url_name == 'dashboard' %} bg-sky-50 text-sky-700 {% else %} text-slate-600 hover:bg-slate-50 {% endif %}">
                         <i data-lucide="house" class="w-4 h-4"></i> Dashboard
                     </a>
-                    <a href="{% url 'shipment_calendar' %}" class="flex items-center gap-3 px-4 py-3 rounded-sm text-xs font-black uppercase tracking-widest {% if request.resolver_match.url_name == 'shipment_calendar' %} bg-teal-50 text-teal-700 {% else %} text-slate-600 hover:bg-slate-50 {% endif %}">
+                    <a href="{% url 'shipment_calendar' %}" class="flex items-center gap-3 px-4 py-3 rounded-sm text-xs font-black uppercase tracking-widest {% if request.resolver_match.url_name == 'shipment_calendar' %} bg-sky-50 text-sky-700 {% else %} text-slate-600 hover:bg-slate-50 {% endif %}">
                         <i data-lucide="calendar-range" class="w-4 h-4"></i> Calendar
                     </a>
                 </div>

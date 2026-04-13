@@ -2,13 +2,12 @@ from django.core.exceptions import PermissionDenied
 from functools import wraps
 from .models import UserAccess
 from django.http import HttpResponse
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render # 🚀 BAGO: Nagdagdag tayo ng 'render' dito
 from django.contrib import messages
-from functools import wraps # 🚀 DAGDAG ITO
 
 def allowed_roles(allowed_roles=[]):
     def decorator(view_func):
-        @wraps(view_func) # 🚀 DAGDAG ITO (Sobrang importante nito sa Django)
+        @wraps(view_func)
         def wrapper_func(request, *args, **kwargs):
             
             # 🚀 SAFETY CHECK: Kung hindi siya naka-login, sipain papuntang login page!
@@ -26,9 +25,8 @@ def allowed_roles(allowed_roles=[]):
                 # Kung pasok, ituloy ang pagbukas ng page
                 return view_func(request, *args, **kwargs)
             else:
-                # Kung hindi pasok, i-kick pabalik sa dashboard at bigyan ng error
-                messages.error(request, "Access Denied: Wala kang permission para buksan ang pahinang ito.")
-                return redirect('dashboard') # Siguraduhing may 'dashboard' ka sa urls.py mo
+                # 🚀 BAGO: Imbes na redirect at message, ibabato natin ang Access Denied UI
+                return render(request, 'Inventory/errors/access_denied.html', status=403)
                 
         return wrapper_func
     return decorator
@@ -38,7 +36,8 @@ def require_module_access(module_code):
         @wraps(view_func)
         def _wrapped_view(request, *args, **kwargs):
             if not request.user.is_authenticated:
-                raise PermissionDenied("Access Denied: Please login first.")
+                # Pwede mo rin itong gawing redirect to login depende sa trip mo
+                return render(request, 'Inventory/errors/access_denied.html', status=403)
 
             # Superusers (Django Admin) pass automatically
             if request.user.is_superuser:
@@ -54,10 +53,12 @@ def require_module_access(module_code):
                 if access.allowed_modules.filter(code=module_code).exists():
                     return view_func(request, *args, **kwargs)
                 else:
-                    raise PermissionDenied(f"Access Denied: You do not have permission for module ({module_code}).")
+                    # 🚀 BAGO: Ibabato ang UI kapag walang checkmark ang module
+                    return render(request, 'Inventory/errors/access_denied.html', status=403)
             
             except Exception:
-                raise PermissionDenied("Access Denied: No access rights configured for your account.")
+                # 🚀 BAGO: Ibabato ang UI kapag wala pang setup ang user account
+                return render(request, 'Inventory/errors/access_denied.html', status=403)
         
         return _wrapped_view
     return decorator
@@ -67,16 +68,20 @@ def rbac_modules(request):
     Automatic nitong iche-check ang access ng user kada bukas ng page 
     at ipapasa sa HTML bilang 'user_modules'.
     """
-    if request.user.is_authenticated and request.user.email:
+    if request.user.is_authenticated:
         try:
-            access = UserAccess.objects.get(email__iexact=request.user.email)
+            # 🚀 UPDATE: Ginamit na natin ang per-user relationship (access_rights) 
+            # imbes na mag-filter pa gamit ang email para mas accurate at walang bug.
+            access = request.user.access_rights
+            
             if access.is_super_admin:
                 return {'is_super_admin': True, 'user_modules': ['ALL_ACCESS']}
             
             # Kunin ang mga module codes na may checkmark
             modules = list(access.allowed_modules.values_list('code', flat=True))
             return {'is_super_admin': False, 'user_modules': modules}
-        except UserAccess.DoesNotExist:
+        
+        except Exception:
             pass
             
     return {'is_super_admin': False, 'user_modules': []}
