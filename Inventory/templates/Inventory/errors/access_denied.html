@@ -1,13 +1,26 @@
-{% extends "Inventory/base.html" %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access Denied | Asia Integrated Machine Inc.</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-black min-h-screen flex flex-col items-center justify-center px-4 py-12 font-sans antialiased selection:bg-rose-500 selection:text-white">
 
-{% block title %}Access Denied | Inventory System{% endblock %}
+    <div class="flex flex-col items-center mb-10 text-center">
+        <img src="{% static 'images/asia-no-bg.png' %}" alt="AIM Logo" class="h-20 md:h-24 w-auto mb-5 drop-shadow-2xl hover:scale-105 transition-transform duration-300 bg-white rounded-small p-1.5">
+        <h1 class="text-3xl md:text-4xl font-black tracking-tighter uppercase leading-none text-sky-500">
+            Asia Integrated Machine Inc.
+        </h1>
+    </div>
 
-{% block content %}
-<div class="min-h-[80vh] w-full flex items-center justify-center px-4 py-12">
-    <div class="bg-white border-t-4 border-rose-600 w-full max-w-lg shadow-2xl rounded-sm p-10 text-center relative overflow-hidden transition-all duration-300 hover:shadow-rose-100">
+    <div class="bg-white border-t-4 border-rose-600 w-full max-w-lg shadow-[0_0_40px_rgba(225,29,72,0.15)] rounded-lg p-10 text-center relative overflow-hidden transition-all duration-300">
         
-        <div class="absolute -top-12 -right-12 text-rose-50 opacity-40 pointer-events-none">
-            <i data-lucide="shield-off" class="w-56 h-56"></i>
+        <div class="absolute top-36 item-center left-1/2 transform -translate-x-1/2 text-rose-50 opacity-40 pointer-events-none">
+            <img src="{% static 'images/asia-no-bg.png' %}" class="w-70 h-70"></img>
         </div>
 
         <div class="relative z-10 flex flex-col items-center">
@@ -15,19 +28,22 @@
                 <i data-lucide="lock-keyhole" class="w-14 h-14 text-rose-600 animate-pulse"></i>
             </div>
 
-            <h1 class="text-5xl font-black text-slate-800 uppercase tracking-tighter mb-2">
+            <h2 class="text-5xl font-black text-slate-800 uppercase tracking-tighter mb-2">
                 Access <span class="text-rose-600">Denied</span>
-            </h1>
+            </h2>
             
-            <div class="bg-slate-900 px-4 py-1.5 rounded-sm mb-8">
-                <span class="text-[10px] font-black text-white uppercase tracking-[0.2em] flex items-center gap-2">
-                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+            <div class="bg-slate-900 px-4 py-1.5 rounded-sm mb-8 shadow-md">
+                <span class="text-[10px] font-black text-white uppercase tracking-[0.2em] flex items-center justify-center gap-2 relative">
+                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500 absolute left-0 animate-ping"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500 z-10"></span>
                     403 Forbidden Response
                 </span>
             </div>
 
             <div class="space-y-4 mb-10">
-                <p class="text-xs font-black text-slate-400 uppercase tracking-widest">User: <span class="text-teal-600">{{ request.user.username }}</span></p>
+                <p class="text-xs font-black text-slate-400 uppercase tracking-widest">
+                    User: <span class="text-teal-600 border-b border-teal-600 pb-0.5">{{ request.user.username|default:"Guest" }}</span>
+                </p>
                 <p class="text-sm font-bold text-slate-600 leading-relaxed max-w-xs mx-auto">
                     Oops! Wala kang permission na i-access ang module na ito. 
                     Mangyari pong makipag-ugnayan sa Administrator kung kailangan mo ng access rights.
@@ -36,24 +52,24 @@
 
             <div class="flex flex-col sm:flex-row gap-4 w-full justify-center">
                 <button onclick="window.history.back()" 
-                        class="bg-white border-2 border-slate-800 text-slate-800 px-8 py-3 hover:bg-slate-800 hover:text-white transition-all text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 rounded-sm active:scale-95">
+                        class="bg-white border-2 border-slate-800 text-slate-800 px-8 py-3 hover:bg-slate-800 hover:text-white transition-all duration-300 text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 rounded-sm active:scale-95">
                     <i data-lucide="chevron-left" class="w-4 h-4"></i> Bumalik
                 </button>
                 
                 <a href="{% url 'dashboard' %}" 
-                   class="bg-slate-800 text-white px-8 py-3 border-2 border-slate-800 hover:bg-teal-700 hover:border-teal-700 transition-all text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 rounded-sm shadow-md active:scale-95">
+                   class="bg-slate-800 text-white px-8 py-3 border-2 border-slate-800 hover:bg-sky-600 hover:border-sky-600 transition-all duration-300 text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 rounded-sm shadow-md active:scale-95">
                     <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard
                 </a>
             </div>
         </div>
     </div>
-</div>
 
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        if (typeof lucide !== 'undefined') {
-            lucide.createIcons();
-        }
-    });
-</script>
-{% endblock %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+    </script>
+</body>
+</html>
