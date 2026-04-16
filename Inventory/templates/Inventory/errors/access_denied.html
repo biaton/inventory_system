@@ -8,10 +8,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="bg-black min-h-screen flex flex-col items-center justify-center px-4 py-12 font-sans antialiased selection:bg-rose-500 selection:text-white">
+<body class="bg-slate-900 min-h-screen flex flex-col items-center justify-center px-4 py-12 font-sans antialiased selection:bg-rose-500 selection:text-white">
 
     <div class="flex flex-col items-center mb-10 text-center">
-        <img src="{% static 'images/asia-no-bg.png' %}" alt="AIM Logo" class="h-20 md:h-24 w-auto mb-5 drop-shadow-2xl hover:scale-105 transition-transform duration-300 bg-white rounded-small p-1.5">
+        <img src="{% static 'images/asia-no-bg.png' %}" alt="AIM Logo" class="h-20 md:h-24 w-auto mb-5 drop-shadow-2xl hover:scale-105 transition-transform duration-300 bg-white rounded-small p-2">
         <h1 class="text-3xl md:text-4xl font-black tracking-tighter uppercase leading-none text-sky-500">
             Asia Integrated Machine Inc.
         </h1>
@@ -19,7 +19,7 @@
 
     <div class="bg-white border-t-4 border-rose-600 w-full max-w-lg shadow-[0_0_40px_rgba(225,29,72,0.15)] rounded-lg p-10 text-center relative overflow-hidden transition-all duration-300">
         
-        <div class="absolute top-36 item-center left-1/2 transform -translate-x-1/2 text-rose-50 opacity-40 pointer-events-none">
+        <div class="absolute top-36 item-center left-1/2 transform -translate-x-1/2 text-rose-50 opacity-60 pointer-events-none">
             <img src="{% static 'images/asia-no-bg.png' %}" class="w-70 h-70"></img>
         </div>
 
@@ -41,8 +41,8 @@
             </div>
 
             <div class="space-y-4 mb-10">
-                <p class="text-xs font-black text-slate-400 uppercase tracking-widest">
-                    User: <span class="text-teal-600 border-b border-teal-600 pb-0.5">{{ request.user.username|default:"Guest" }}</span>
+                <p class="text-xs font-black text-slate-800 uppercase tracking-widest">
+                    User: <span class="text-teal-600 border-b border-teal-400 pb-0.5">{{ request.user.username|default:"Guest" }}</span>
                 </p>
                 <p class="text-sm font-bold text-slate-600 leading-relaxed max-w-xs mx-auto">
                     Oops! Wala kang permission na i-access ang module na ito. 
