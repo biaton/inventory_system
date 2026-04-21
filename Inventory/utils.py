@@ -119,32 +119,35 @@ def send_qc_rejection_alert(material_tag):
 
 def log_system_action(user, action, module, description, request=None):
     """
-    Shortcut para mag-save ng Audit Log.
+    Saves an Audit Log with IP tracking.
     """
     ip = None
     if request:
-        # Kunin ang IP address ng user para sa security tracking
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
         if x_forwarded_for:
             ip = x_forwarded_for.split(',')[0]
         else:
             ip = request.META.get('REMOTE_ADDR')
 
+    # Siguraduhin na ang 'action' ay naka-UPPERCASE para tumugma sa HTML logic natin
     SystemAuditLog.objects.create(
-        user=user if user.is_authenticated else None,
-        action=action,
-        module=module,
+        user=user if user and user.is_authenticated else None,
+        action=action.upper(), 
+        module=module.upper(),
         description=description,
         ip_address=ip
     )
 
-def send_in_app_notification(user, title, message, link=None):
-    """ Shortcut para mag-send ng bell notification sa isang specific user """
+def send_in_app_notification(user, title, message, level='INFO', link=None):
+    """ 
+    Sends notification with level support (INFO, SUCCESS, WARNING, ERROR)
+    """
     if user and user.is_active:
         SystemNotification.objects.create(
             user=user,
             title=title,
             message=message,
+            level=level.upper(), # 'level' ang mag-trigger ng kulay sa UI natin
             link=link
         )
 

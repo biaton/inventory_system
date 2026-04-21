@@ -46,7 +46,7 @@
 
             <div class="relative z-10 flex items-center gap-4">
                 <div class="w-16 h-16 md:w-20 md:h-20 bg-gray-100 flex items-center justify-center p-1.5 shadow-md rounded-sm border-2 border-white">
-                    {% load static %}<img src="{% static 'images/asia-no-bg.png' %}" alt="AIM Logo" class="w-full h-full object-contain">
+                    <img src="{% static 'images/asia-no-bg.png' %}" alt="AIM Logo" class="w-full h-full object-contain">
                 </div>
         
                 <div class="flex flex-col justify-center">
@@ -60,8 +60,15 @@
             </div>
 
             <div class="relative z-10 mt-5 md:mt-0 text-left md:text-right border-l-2 md:border-l-0 border-slate-700 pl-4 md:pl-0">
-                <div class="flex items-center justify-end gap-3 md:gap-5"> <div class="relative">
-                    
+                <div class="flex items-center justify-end gap-3 md:gap-5"> 
+
+                    <div class="relative">
+                        <a href="{% url 'view_profile' %}" class="text-slate-300 hover:text-sky-400 transition-colors relative focus:outline-none mt-1 flex items-center justify-center" title="Shipment Calendar">
+                            <i data-lucide="square-user-round" class="w-5 h-5"></i>
+                        </a>
+                    </div>
+
+                    <div class="relative">
                         <a href="{% url 'shipment_calendar' %}" class="text-slate-300 hover:text-sky-400 transition-colors relative focus:outline-none mt-1 flex items-center justify-center" title="Shipment Calendar">
                             <i data-lucide="calendar-range" class="w-5 h-5"></i>
                         </a>
@@ -87,9 +94,13 @@
                             <span class="relative inline-flex rounded-full w-2 h-2 bg-emerald-500"></span>
                         </div>
                         <div class="flex flex-col text-left">
-                            <p class="text-[8px] font-bold text-slate-500 uppercase tracking-widest leading-none mb-1">Active Session</p>
+                            <p class="text-[8px] font-bold text-emerald-500 uppercase tracking-widest leading-none mb-1">Active Session</p>
                             <p class="text-[10px] font-black text-slate-200 uppercase tracking-widest leading-none">
-                                {{ user.username|default:"SYSTEM ADMIN" }}
+                                {% if request.user.first_name or request.user.last_name %}
+                                    {{ request.user.first_name }} {{ request.user.last_name }}
+                                {% else %}
+                                    {{ request.user.email }}
+                                {% endif %} 
                             </p>
                         </div>
                     </div>
@@ -101,27 +112,55 @@
         <div class="p-4 md:p-5 bg-slate-50 flex-1">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
                 
-                <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-md shadow-md flex flex-col justify-between p-4 h-[140px] relative overflow-hidden border border-slate-700">
-                    <i data-lucide="philippine-peso" class="absolute -right-4 -bottom-4 w-24 h-24 text-slate-700 opacity-30 transform -rotate-12"></i>
+                <div class="bg-gradient-to-br from-[#1e293b] to-[#0f172a] rounded-md shadow-2xl flex flex-col justify-between p-4 h-[145px] relative overflow-hidden border border-slate-700/50 group">
+    
+                    <i data-lucide="philippine-peso" class="absolute -right-6 -bottom-6 w-28 h-28 text-sky-500/5 opacity-[0.03] transform -rotate-12 transition-transform group-hover:rotate-0 duration-700"></i>
 
                     <div class="relative z-10 flex justify-between items-start">
                         <div>
-                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-0.5">Total Inventory Value</p>
-                            <h3 class="text-2xl font-black text-white tracking-tighter leading-none">₱ {{ total_inventory_value|floatformat:"2" }}</h3>
+                            <div class="flex items-center gap-1.5 mb-1">
+                                <p class="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Total Inventory Value</p>
+                            </div>
+                            <h3 class="text-2xl font-black text-white tracking-tighter leading-none flex items-baseline gap-1">
+                                <span class="text-sm font-bold text-sky-500/80 uppercase">PHP</span> 
+                                {{ total_inventory_value|floatformat:"2" }}
+                            </h3>
                         </div>
-                        <div class="bg-sky-500/20 border border-sky-500/50 p-1.5 rounded text-sky-400">
-                            <i data-lucide="landmark" class="w-4 h-4"></i>
+                        <div class="bg-slate-800/50 border border-slate-700 p-2 rounded-sm shadow-inner group-hover:border-sky-500/50 transition-colors">
+                            <i data-lucide="landmark" class="w-4 h-4 text-sky-500"></i>
                         </div>
                     </div>
 
-                    <div class="relative z-10 border-t border-slate-700/80 pt-2.5 mt-auto flex justify-between items-end">
-                        <div>
-                            <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Active Material Lots</p>
-                            <p class="text-sm font-black text-sky-400 leading-none flex items-center gap-1">
-                                <i data-lucide="shelving-unit" class="w-3 h-3"></i> {{total_active_lots }} Lots
-                            </p>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-[7px] bg-sky-500/10 text-sky-400 border border-sky-500/20 px-2 py-0.5 rounded-full uppercase font-black tracking-widest">
+                                System Active
+                            </span>
+                            <div class="h-px flex-1 bg-gradient-to-r from-slate-700 to-transparent"></div>
                         </div>
-                        <span class="text-[7px] bg-slate-800 text-slate-300 border border-slate-600 px-2 py-0.5 rounded-sm uppercase tracking-widest font-bold">Live Items</span>
+                    
+                        <div class="flex justify-between items-end">
+                            <div class="flex flex-col">
+                                <p class="text-[11px] font-black text-sky-400 leading-none flex items-center gap-1.5 uppercase italic">
+                                    <i data-lucide="calendar-days" class="w-3 h-3"></i> 
+                                    <span id="live-date">{% now "F j, Y" %}</span>
+                                </p>
+                                <p class="text-[10px] font-bold text-slate-300 leading-none flex items-center gap-1.5 mt-1 mono">
+                                    <i data-lucide="clock" class="w-3 h-3 text-teal-500"></i> 
+                                    <span id="live-clock">00:00:00</span> <span class="text-[8px] text-slate-500 uppercase">UTC+08</span>
+                                </p>
+                            </div>
+                        
+                            <div class="bg-slate-900/80 backdrop-blur-md border border-slate-700 p-2 rounded-sm flex items-center gap-3">
+                                <div class="text-right">
+                                    <p class="text-[7px] font-black text-slate-500 uppercase tracking-tighter">Active Lots</p>
+                                    <p class="text-[11px] font-black text-teal-400 leading-none">{{ total_active_lots }}</p>
+                                </div>
+                                <div class="bg-teal-500/20 p-1 rounded-sm">
+                                    <i data-lucide="layers" class="w-3 h-3 text-teal-500"></i>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -239,7 +278,7 @@
 
             <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2.5 w-full">
                 <a href="{% url 'order_manual' %}"
-                    class="group relative bg-white border border-slate-300 p-3 hover:border-blue-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
+                    class="group relative bg-blue-50 border border-blue-300 p-3 hover:border-blue-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
                     <div class="absolute top-0 left-0 w-1 h-full bg-blue-600 transition-all group-hover:w-1.5"></div>
                     <i data-lucide="ShoppingCart"
                         class="w-7 h-7 text-slate-500 group-hover:text-blue-600 transition-colors mb-auto"></i>
@@ -248,7 +287,7 @@
                 </a>
 
                 <a href="{% url 'make_po' %}"
-                    class="group relative bg-white border border-slate-300 p-3 hover:border-indigo-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
+                    class="group relative bg-indigo-50 border border-indigo-300 p-3 hover:border-indigo-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
                     <div class="absolute top-0 left-0 w-1 h-full bg-indigo-600 transition-all group-hover:w-1.5"></div>
                     <i data-lucide="FileText"
                         class="w-7 h-7 text-slate-500 group-hover:text-indigo-600 transition-colors mb-auto"></i>
@@ -257,7 +296,7 @@
                 </a>
 
                 <a href="{% url 'receive_item' %}"
-                    class="group relative bg-white border border-slate-300 p-3 hover:border-emerald-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
+                    class="group relative bg-emerald-50 border border-emerald-300 p-3 hover:border-emerald-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
                     <div class="absolute top-0 left-0 w-1 h-full bg-emerald-600 transition-all group-hover:w-1.5"></div>
                     <i data-lucide="ClipboardCheck"
                         class="w-7 h-7 text-slate-500 group-hover:text-emerald-600 transition-colors mb-auto"></i>
@@ -267,43 +306,43 @@
                 </a>
 
                 <a href="{% url 'new_request' %}"
-                    class="group relative bg-white border border-slate-300 p-3 hover:border-amber-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
-                    <div class="absolute top-0 left-0 w-1 h-full bg-amber-500 transition-all group-hover:w-1.5"></div>
+                    class="group relative bg-orange-50 border border-orange-300 p-3 hover:border-orange-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-orange-600 transition-all group-hover:w-1.5"></div>
                     <i data-lucide="PackagePlus"
-                        class="w-7 h-7 text-slate-500 group-hover:text-amber-500 transition-colors mb-auto"></i>
+                        class="w-7 h-7 text-slate-500 group-hover:text-orange-600 transition-colors mb-auto"></i>
                     <span
-                        class="text-[13px] md:text-[13px] font-black text-slate-700 uppercase tracking-tight group-hover:text-amber-600 leading-tight">Inventory<br />Request</span>
+                        class="text-[13px] md:text-[13px] font-black text-slate-700 uppercase tracking-tight group-hover:text-orange-700 leading-tight">Inventory<br />Request</span>
                 </a>
 
                 <a href="{% url 'stock_move' %}"
-                    class="group relative bg-white border border-slate-300 p-3 hover:border-cyan-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
-                    <div class="absolute top-0 left-0 w-1 h-full bg-cyan-600 transition-all group-hover:w-1.5"></div>
-                    <i data-lucide="Settings"
-                        class="w-7 h-7 text-slate-500 group-hover:text-cyan-600 transition-colors mb-auto"></i>
+                    class="group relative bg-teal-50 border border-teal-300 p-3 hover:border-teal-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-teal-600 transition-all group-hover:w-1.5"></div>
+                    <i data-lucide="refresh-cw"
+                        class="w-7 h-7 text-slate-500 group-hover:text-teal-600 transition-colors mb-auto"></i>
                     <span
-                        class="text-[13px] md:text-[13px] font-black text-slate-700 uppercase tracking-tight group-hover:text-cyan-700 leading-tight">Inventory<br />Processing</span>
+                        class="text-[13px] md:text-[13px] font-black text-slate-700 uppercase tracking-tight group-hover:text-teal-700 leading-tight">Inventory<br />Processing</span>
                 </a>
 
                 <a href="{% url 'stock_inquiry' %}"
-                    class="group relative bg-white border border-slate-300 p-3 hover:border-purple-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
-                    <div class="absolute top-0 left-0 w-1 h-full bg-purple-600 transition-all group-hover:w-1.5"></div>
+                    class="group relative bg-sky-50 border border-sky-300 p-3 hover:border-sky-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-sky-600 transition-all group-hover:w-1.5"></div>
                     <i data-lucide="search"
-                        class="w-7 h-7 text-slate-500 group-hover:text-purple-600 transition-colors mb-auto"></i>
+                        class="w-7 h-7 text-slate-500 group-hover:text-sky-600 transition-colors mb-auto"></i>
                     <span
-                        class="text-[13px] md:text-[13px] font-black text-slate-700 uppercase tracking-tight group-hover:text-purple-700 leading-tight">Inventory<br />Inquiry</span>
+                        class="text-[13px] md:text-[13px] font-black text-slate-700 uppercase tracking-tight group-hover:text-sky-700 leading-tight">Inventory<br />Inquiry</span>
                 </a>
 
                 <a href="{% url 'assembly_dashboard' %}"
-                    class="group relative bg-white border border-slate-300 p-3 hover:border-orange-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
-                    <div class="absolute top-0 left-0 w-1 h-full bg-orange-600 transition-all group-hover:w-1.5"></div>
+                    class="group relative bg-amber-50 border border-amber-300 p-3 hover:border-amber-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-amber-600 transition-all group-hover:w-1.5"></div>
                     <i data-lucide="workflow"
-                        class="w-7 h-7 text-slate-500 group-hover:text-orange-600 transition-colors mb-auto"></i>
+                        class="w-7 h-7 text-slate-500 group-hover:text-amber-600 transition-colors mb-auto"></i>
                     <span
-                        class="text-[13px] md:text-[13px] font-black text-slate-700 uppercase tracking-tight group-hover:text-orange-600 leading-tight">Asset &<br />WIP Management</span>
+                        class="text-[13px] md:text-[13px] font-black text-slate-700 uppercase tracking-tight group-hover:text-amber-700 leading-tight">Asset &<br />WIP Management</span>
                 </a>
 
                 <a href="{% url 'user_master' %}"
-                    class="group relative bg-white border border-slate-300 p-3 hover:border-slate-800 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
+                    class="group relative bg-slate-50 border border-slate-800 p-3 hover:border-slate-800 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
                     <div class="absolute top-0 left-0 w-1 h-full bg-slate-700 transition-all group-hover:w-1.5"></div>
                     <i data-lucide="book-user"
                         class="w-7 h-7 text-slate-500 group-hover:text-slate-800 transition-colors mb-auto"></i>
@@ -312,7 +351,7 @@
                 </a>
 
                 <a href="{% url 'analytics_board' %}"
-                    class="group relative bg-white border border-slate-300 p-3 hover:border-rose-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
+                    class="group relative bg-rose-50 border border-rose-300 p-3 hover:border-rose-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
                     <div class="absolute top-0 left-0 w-1 h-full bg-rose-600 transition-all group-hover:w-1.5"></div>
                     <i data-lucide="chart-spline"
                         class="w-7 h-7 text-slate-500 group-hover:text-rose-600 transition-colors mb-auto"></i>
@@ -321,7 +360,7 @@
                 </a>
 
                 <a href="{% url 'settings_master' %}"
-                    class="group relative bg-white border border-slate-300 p-3 hover:border-slate-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
+                    class="group relative bg-slate-100 border border-slate-400 p-3 hover:border-slate-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
                     <div class="absolute top-0 left-0 w-1 h-full bg-slate-500 transition-all group-hover:w-1.5"></div>
                     <i data-lucide="triangle-alert"
                         class="w-7 h-7 text-slate-500 group-hover:text-slate-500 transition-colors mb-auto"></i>
@@ -346,10 +385,9 @@
         </div>
     </div>
 
-    <div
-        class="fixed bottom-2 right-2 text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] pointer-events-none">
-        Asia Integrated Machine Inc. | Inventory Control | 2026
-    </div>
+    <div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-fit px-4 py-1 bg-slate-50/50 border border-slate-300 text-[7px] sm:text-[8px] font-black text-sky-600 uppercase tracking-[0.2em] pointer-events-none whitespace-nowrap">
+    Asia Integrated Machine Inc. | Inventory Control System | 2026
+</div>
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
@@ -371,6 +409,33 @@
                 });
             }
         });
+
+        function updateLiveTime() {
+            const now = new Date();
+
+            // Format para sa Oras (HH:MM:SS)
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const timeString = `${hours}:${minutes}:${seconds}`;
+
+            // Format para sa Petsa (Optional: para mag-update din paglampas ng 12 midnight)
+            const options = { month: 'long', day: 'numeric', year: 'numeric' };
+            const dateString = now.toLocaleDateString('en-US', options);
+
+            // I-inject sa HTML
+            const clockElement = document.getElementById('live-clock');
+            const dateElement = document.getElementById('live-date');
+
+            if (clockElement) clockElement.textContent = timeString;
+            if (dateElement) dateElement.textContent = dateString;
+        }
+
+        // Patakbuhin ang function bawat 1 segundo (1000ms)
+        setInterval(updateLiveTime, 1000);
+
+        // Tawagin agad pag-load ng page para hindi "00:00:00" ang makita sa simula
+        updateLiveTime();
     </script>
 </body>
 

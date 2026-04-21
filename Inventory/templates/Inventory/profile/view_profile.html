@@ -5,56 +5,156 @@
 {% block content %}
 <div class="max-w-4xl mx-auto mt-6 pb-12">
     
-    <div class="border-b-2 border-slate-800 pb-2 mb-6 flex justify-between items-end">
-        <div>
-            <h1 class="text-xl font-black text-slate-900 uppercase tracking-tighter flex items-center gap-2">
-                <i data-lucide="user-circle" class="w-6 h-6 text-teal-700"></i> Account Overview
-            </h1>
-            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">System User Credentials</p>
-        </div>
-        <a href="{% url 'edit_profile' %}" class="bg-slate-800 text-white px-5 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-teal-700 transition-colors shadow-sm flex items-center gap-2">
-            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Edit Details
-        </a>
-    </div>
-
-    <div class="bg-white border border-slate-300 shadow-sm flex flex-col md:flex-row">
-        <div class="bg-slate-50 border-r border-slate-200 p-8 flex flex-col items-center justify-center min-w-[250px]">
-            <div class="w-24 h-24 bg-slate-800 rounded-full flex items-center justify-center shadow-inner mb-4">
-                <span class="text-4xl font-black text-white uppercase">{{ request.user.username|make_list|first }}</span>
+    <form method="POST" enctype="multipart/form-data" action="{% url 'view_profile' %}" id="profileForm">
+        {% csrf_token %}
+        
+        <div class="border-b-2 border-slate-800 pb-2 mb-6 flex justify-between items-end">
+            <div>
+                <h1 class="text-xl font-black text-slate-900 uppercase tracking-tighter flex items-center gap-2">
+                    <i data-lucide="user-circle" class="w-6 h-6 text-teal-700"></i> Account Overview
+                </h1>
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">System User Credentials</p>
             </div>
-            <h2 class="text-lg font-black text-slate-800 uppercase">{{ request.user.username }}</h2>
-            <p class="text-[10px] font-bold text-emerald-600 uppercase tracking-widest flex items-center gap-1 mt-1">
-                <i data-lucide="shield-check" class="w-3 h-3"></i> 
-                {% if request.user.is_superuser %} System Admin {% else %} Standard User {% endif %}
-            </p>
-        </div>
-
-        <div class="p-8 flex-1">
-            <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-200 pb-2 mb-4">Personal Information</h3>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-4">
-                <div>
-                    <label class="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">First Name</label>
-                    <p class="text-sm font-black text-slate-800 uppercase">{{ request.user.first_name|default:"---" }}</p>
+            <div id="viewButtons">
+                <button type="button" onclick="toggleEditMode()" class="bg-slate-800 text-white px-5 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-teal-700 transition-colors shadow-sm flex items-center gap-2">
+                    <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Edit Details
+                </button>
+            </div>
+            <div id="editButtons" class="hidden flex gap-2">
+                <button type="button" onclick="toggleEditMode()" class="bg-slate-200 text-slate-800 px-5 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-slate-300 transition-colors shadow-sm flex items-center gap-2">
+                    <i data-lucide="x" class="w-3.5 h-3.5"></i> Discard
+                </button>
+                <button type="submit" class="bg-teal-700 text-white px-5 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-teal-800 transition-colors shadow-sm flex items-center gap-2">
+                    <i data-lucide="save" class="w-3.5 h-3.5"></i> Submit Changes
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-white border border-slate-300 shadow-sm flex flex-col md:flex-row">
+            
+            <div class="bg-slate-50 border-r border-slate-200 p-8 flex flex-col items-center justify-center min-w-[250px]">
+                <div class="w-24 h-24 bg-slate-800 rounded-full flex items-center justify-center shadow-inner mb-4 relative group">
+                    <span class="text-4xl font-black text-white uppercase">
+                        {% if request.user.first_name %}
+                            {{ request.user.first_name|slice:":1" }}
+                        {% else %}
+                            {{ request.user.email|slice:":1" }}
+                        {% endif %}
+                    </span>
+                    <div class="absolute inset-0 bg-black/50 rounded-full hidden items-center justify-center cursor-pointer edit-mode-elem">
+                        <i data-lucide="camera" class="w-6 h-6 text-white"></i>
+                    </div>
                 </div>
-                <div>
-                    <label class="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Last Name</label>
-                    <p class="text-sm font-black text-slate-800 uppercase">{{ request.user.last_name|default:"---" }}</p>
-                </div>
-                <div class="md:col-span-2">
-                    <label class="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Email Address</label>
-                    <p class="text-sm font-bold text-slate-800">{{ request.user.email|default:"No email registered" }}</p>
-                </div>
-                <div class="md:col-span-2 pt-4 border-t border-slate-100">
-                    <label class="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Account Created</label>
-                    <p class="text-xs font-bold text-slate-600 uppercase">{{ request.user.date_joined|date:"F j, Y, g:i a" }}</p>
+
+                <h2 class="text-lg font-black text-slate-800 uppercase text-center leading-tight">
+                    {% if request.user.first_name or request.user.last_name %}
+                        {{ request.user.first_name }} {{ request.user.last_name }}
+                    {% else %}
+                        {{ request.user.email }}
+                    {% endif %}
+                </h2>
+
+                <p class="text-[10px] font-bold text-emerald-600 uppercase tracking-widest flex items-center gap-1 mt-1">
+                    <i data-lucide="shield-check" class="w-3 h-3"></i> 
+                    {% if request.user.is_superuser %} 
+                        System Admin 
+                    {% else %} 
+                        {{ user.profile.get_role_display|default:"Standard User" }} 
+                    {% endif %}
+                </p>
+            </div>
+
+            <div class="p-8 flex-1">
+                <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-200 pb-2 mb-4">Personal & Professional Information</h3>
+    
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-4">
+                    
+                    <div>
+                        <label class="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">First Name</label>
+                        <p class="text-sm font-black text-slate-800 uppercase view-mode-elem">{{ request.user.first_name|default:"---" }}</p>
+                        <input type="text" name="first_name" value="{{ request.user.first_name }}" class="hidden w-full bg-white border border-slate-300 text-slate-900 text-xs font-bold px-3 py-2 rounded-sm focus:ring-1 focus:ring-teal-500 focus:border-teal-500 uppercase edit-mode-elem">
+                    </div>
+        
+                    <div>
+                        <label class="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Last Name</label>
+                        <p class="text-sm font-black text-slate-800 uppercase view-mode-elem">{{ request.user.last_name|default:"---" }}</p>
+                        <input type="text" name="last_name" value="{{ request.user.last_name }}" class="hidden w-full bg-white border border-slate-300 text-slate-900 text-xs font-bold px-3 py-2 rounded-sm focus:ring-1 focus:ring-teal-500 focus:border-teal-500 uppercase edit-mode-elem">
+                    </div>
+
+                    <div>
+                        <label class="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Email Address</label>
+                        <p class="text-sm font-bold text-slate-800 view-mode-elem">{{ request.user.email|default:"---" }}</p>
+                        <input type="email" name="email" value="{{ request.user.email }}" class="hidden w-full bg-white border border-slate-300 text-slate-900 text-xs font-bold px-3 py-2 rounded-sm focus:ring-1 focus:ring-teal-500 focus:border-teal-500 edit-mode-elem">
+                    </div>
+
+                    <div>
+                        <label class="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Contact No.</label>
+                        <p class="text-sm font-bold text-slate-800 view-mode-elem">{{ profile.contact_number|default:"---" }}</p>
+                        <input type="text" name="contact_number" value="{{ profile.contact_number|default:'' }}" class="hidden w-full bg-white border border-slate-300 text-slate-900 text-xs font-bold px-3 py-2 rounded-sm focus:ring-1 focus:ring-teal-500 focus:border-teal-500 uppercase edit-mode-elem">
+                    </div>
+
+                    <div>
+                        <label class="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Company</label>
+                        <p class="text-sm font-black text-slate-800 uppercase view-mode-elem">{{ profile.company_name|default:"---" }}</p>
+    
+                        <div class="hidden edit-mode-elem items-center gap-2 bg-slate-100 border border-slate-200 px-3 py-2 rounded-sm cursor-not-allowed">
+                            <i data-lucide="lock" class="w-3 h-3 text-slate-400"></i>
+                            <span class="text-xs font-bold text-slate-500 uppercase">{{ profile.company_name|default:"---" }}</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Role / Position</label>
+                        <p class="text-sm font-black text-slate-800 uppercase view-mode-elem">{{ profile.get_role_display|default:"---" }}</p>
+    
+                        <div class="hidden edit-mode-elem items-center gap-2 bg-slate-100 border border-slate-200 px-3 py-2 rounded-sm cursor-not-allowed">
+                            <i data-lucide="lock" class="w-3 h-3 text-slate-400"></i>
+                            <span class="text-xs font-bold text-slate-500 uppercase">{{ profile.get_role_display|default:"---" }}</span>
+                        </div>
+                    </div>
+
+                    <div class="md:col-span-2 pt-4 border-t border-slate-100 mt-2">
+                        <label class="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Account Created</label>
+                        <p class="text-xs font-bold text-slate-500 uppercase">{{ request.user.date_joined|date:"F j, Y, g:i a" }}</p>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    </form>
 </div>
 
 <script>
     document.addEventListener("DOMContentLoaded", function() { if (typeof lucide !== 'undefined') lucide.createIcons(); });
+
+    function toggleEditMode() {
+        const viewElems = document.querySelectorAll('.view-mode-elem');
+        const editElems = document.querySelectorAll('.edit-mode-elem');
+        const viewBtns = document.getElementById('viewButtons');
+        const editBtns = document.getElementById('editButtons');
+
+        // Toggle visibility ng mga text vs inputs
+        viewElems.forEach(el => el.classList.toggle('hidden'));
+        
+        editElems.forEach(el => {
+            if (el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+                if (el.tagName === 'INPUT') el.classList.add('block');
+                if (el.tagName === 'DIV') el.classList.add('flex'); // para sa picture overlay
+            } else {
+                el.classList.add('hidden');
+                el.classList.remove('block', 'flex');
+            }
+        });
+
+        // Toggle Buttons (Edit -> Submit/Discard)
+        viewBtns.classList.toggle('hidden');
+        editBtns.classList.toggle('hidden');
+        if (!editBtns.classList.contains('hidden')) {
+            editBtns.classList.add('flex');
+        } else {
+            editBtns.classList.remove('flex');
+        }
+    }
 </script>
 {% endblock %}

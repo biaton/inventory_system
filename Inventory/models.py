@@ -462,6 +462,7 @@ class SystemNotification(models.Model):
     message = models.TextField()
     link = models.CharField(max_length=255, blank=True, null=True) # URL kung saan pupunta kapag kinlick
     is_read = models.BooleanField(default=False)
+    level = models.CharField(max_length=20, default='info')
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

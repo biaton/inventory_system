@@ -111,6 +111,21 @@ def user_access_view(request):
                 if not is_super_admin and module_codes:
                     modules = SystemModule.objects.filter(code__in=module_codes)
                     access.allowed_modules.add(*modules)
+                
+                log_system_action(
+                    request.user, 'UPDATE', 'USER_ACCESS', 
+                    f"Updated access rights for {target_user.username}. SuperAdmin: {is_super_admin}", 
+                    request
+                )
+
+                # --- NOTIFICATION (To the target user) ---
+                send_in_app_notification(
+                    target_user, 
+                    "Permissions Updated", 
+                    f"Your system access rights have been updated by {request.user.username}.", 
+                    level='WARNING', # Warning level para mapansin agad
+                    link='/profile/'
+                )
                     
                 messages.success(request, f"Access rights updated for {target_user.username}.")
         except Exception as e:
@@ -156,8 +171,13 @@ def custom_login_view(request):
             if user is not None:
                 if user.is_active:
                     login(request, user)
+
+                    log_system_action(user, 'LOGIN', 'AUTHENTICATION', f"User {user.username} logged in successfully.", request)
+
                     return redirect('dashboard')
                 else:
+                    # --- AUDIT LOG (Failed attempt - Suspended) ---
+                    log_system_action(user_obj, 'LOGIN_FAIL', 'AUTHENTICATION', "Attempted login on a suspended account.", request)
                     messages.error(request, "Your account has been suspended. Contact Admin.")
             else:
                 messages.error(request, "Invalid email or password. Please make sure there are no spaces.")
@@ -168,16 +188,63 @@ def custom_login_view(request):
 
 # 2. ANG CUSTOM LOGOUT VIEW
 def custom_logout_view(request):
-#   if request.user.is_authenticated:
-#       log_system_action(request.user, 'SYSTEM', 'Authentication', f"User {request.user.username} logged out.", request)
+    if request.user.is_authenticated:
+        # --- AUDIT LOG ---
+        log_system_action(request.user, 'LOGOUT', 'AUTHENTICATION', f"User {request.user.username} logged out.", request)
 
     logout(request) # Ito ang magbubura ng session
     return redirect('login') # Babalik siya sa custom login page natin
 
 @login_required
 def view_profile(request):
-    """ Pahina para makita ang detalye ng nakalog-in na user """
-    return render(request, 'Inventory/profile/view_profile.html')
+    user = request.user
+    # 🚀 FIX: Gamitin ang get_or_create para walang "Profile matching query does not exist" na error
+    profile, created = Profile.objects.get_or_create(user=user)
+
+    # Listahan ng mga companies para sa dropdown
+    COMPANY_CHOICES = [
+        'Asia Integrated Machine Inc.',
+        'AIM Service Logistics',
+        'Global Warehouse Solutions',
+        'Tech Inventory Corp.'
+    ]
+
+    if request.method == 'POST':
+        # 1. Update Basic User Info (First Name, Last Name, Email)
+        user.first_name = request.POST.get('first_name', '').strip()
+        user.last_name = request.POST.get('last_name', '').strip()
+        user.email = request.POST.get('email', '').strip()
+        user.save()
+
+        # 2. Update Profile Model (Ginamit ang tamang field names mo)
+        profile.contact_number = request.POST.get('contact_number', '').strip()
+        profile.company_name = request.POST.get('company_name', '').strip()
+        
+        # NOTE: Kung ayaw mong mapalitan ng user ang sarili nilang role, 
+        # pwede mong i-comment out itong line na ito.
+        profile.role = request.POST.get('role', profile.role) 
+        
+        profile.save()
+
+        # 3. 🚀 AUDIT LOGGING
+        log_system_action(
+            user=user, 
+            action='UPDATE', 
+            module='User Profile', 
+            description=f"User '{user.username}' updated their profile and company details.", 
+            request=request
+        )
+
+        # 4. 🚀 NOTIFICATION
+        messages.success(request, "Success! Your profile information has been updated.")
+        return redirect('view_profile')
+
+    context = {
+        'profile': profile,
+        'role_choices': Profile.ROLE_CHOICES,
+        'company_choices': COMPANY_CHOICES,
+    }
+    return render(request, 'Inventory/profile/view_profile.html', context)
 
 @login_required
 def edit_profile(request):
@@ -190,6 +257,15 @@ def edit_profile(request):
         user.last_name = request.POST.get('last_name', '').strip()
         user.email = request.POST.get('email', '').strip()
         user.save()
+
+        # --- AUDIT LOG ---
+        log_system_action(request.user, 'UPDATE', 'USER_PROFILE', "Updated personal profile details.", request)
+
+        # --- NOTIFICATION (Security Confirmation) ---
+        send_in_app_notification(
+            request.user, "Profile Updated", "Your account profile details were successfully updated.", 
+            level='SUCCESS'
+        )
         
         # Tatawagin yung floating Toast Notification natin
         messages.success(request, "Account details updated successfully!")
@@ -237,9 +313,16 @@ def change_password_view(request):
         # 4. I-save ang bagong password
         request.user.set_password(new_password)
         request.user.save()
-        
-        # Para hindi ma-log out ang user pagkatapos mag-change password
         update_session_auth_hash(request, request.user)
+
+        # --- AUDIT LOG ---
+        log_system_action(request.user, 'SECURITY', 'PASSWORD_CHANGE', "Changed account password.", request)
+
+        # --- NOTIFICATION ---
+        send_in_app_notification(
+            request.user, "Security Alert", "Your password was recently changed. If you didn't do this, contact admin.", 
+            level='ERROR' # Error level para maging kulay Pula/Rose
+        )
         
         messages.success(request, "Success! Your password has been updated securely.")
         return redirect('settings_master') 
@@ -463,6 +546,13 @@ def user_master_view(request):
     for old_user in User.objects.filter(profile__isnull=True):
         Profile.objects.create(user=old_user, role='ADMIN' if old_user.is_superuser else 'WH_STAFF')
 
+    COMPANY_CHOICES = [
+        'Asia Integrated Machine Inc.',
+        'AIM Service Logistics',
+        'Global Warehouse Solutions',
+        'Tech Inventory Corp.'
+    ]
+
     # ==========================================
     # 1. POST: ADD / EDIT / TOGGLE USER
     # ==========================================
@@ -470,16 +560,23 @@ def user_master_view(request):
         action = request.POST.get('action')
 
         if action == 'add':
-            username = request.POST.get('username').strip()
-            email = request.POST.get('email').strip()
-            is_active = True # 🚀 FIX: Automatic ACTIVE kapag bagong register!
+            email = request.POST.get('email', '').strip()
+    
+            if not email:
+                messages.error(request, "Email is required.")
+                return redirect('user_master')
+
+            username = email
+            
+            first_name = request.POST.get('first_name', '').strip() # BAGO
+            last_name = request.POST.get('last_name', '').strip()   # BAGO
+            is_active = True 
             role = request.POST.get('role')
             company_name = request.POST.get('company_name').strip()
             contact_number = request.POST.get('contact_number').strip()
 
-            if User.objects.filter(username=username).exists():
-                messages.error(request, "Error: Username is already taken!")
-            elif User.objects.filter(email__iexact=email).exists():
+            # Check kung may kapangalan na sa system
+            if User.objects.filter(email__iexact=email).exists():
                 messages.error(request, "Error: Email is already registered to another user!")
             else:
                 try:
@@ -490,9 +587,11 @@ def user_master_view(request):
 
                         # 🚀 FIX 3: Gumamit ng create_user() para official password hashing
                         new_user = User.objects.create_user(
-                            username=username, 
+                            username=email, 
                             email=email, 
-                            password=temp_password
+                            password=temp_password,
+                            first_name=first_name,
+                            last_name=last_name
                         )
                         new_user.is_active = is_active
                         new_user.save()
@@ -502,6 +601,8 @@ def user_master_view(request):
                         profile.company_name = company_name
                         profile.contact_number = contact_number
                         profile.save()
+
+                        log_system_action(request.user, 'CREATE', 'USER_MASTER', f"Created new user account: {username} ({role})", request)
 
                         # HTML EMAIL SENDING
                         html_content = render_to_string('Inventory/emails/user_welcome_email.html', {
@@ -528,7 +629,9 @@ def user_master_view(request):
         elif action == 'edit':
             user_id = request.POST.get('user_id')
             email = request.POST.get('email').strip()
-            password = request.POST.get('password') # Pwedeng blanko
+            password = request.POST.get('password') 
+            first_name = request.POST.get('first_name', '').strip()
+            last_name = request.POST.get('last_name', '').strip()
             
             try:
                 target_user = User.objects.get(id=user_id)
@@ -539,6 +642,8 @@ def user_master_view(request):
                 else:
                     with transaction.atomic():
                         target_user.email = email
+                        target_user.first_name = first_name 
+                        target_user.last_name = last_name  
                         target_user.is_active = request.POST.get('is_active') == 'True'
                         if password: # Kung nag-type ng bagong password
                             target_user.set_password(password)
@@ -549,6 +654,8 @@ def user_master_view(request):
                         profile.company_name = request.POST.get('company_name').strip()
                         profile.contact_number = request.POST.get('contact_number').strip()
                         profile.save()
+
+                        log_system_action(request.user, 'UPDATE', 'USER_MASTER', f"Modified user details for {target_user.username}.", request)
 
                     messages.success(request, f"User profile for {target_user.username} updated successfully!")
             except Exception as e:
@@ -564,6 +671,17 @@ def user_master_view(request):
                 else:
                     target_user.is_active = not target_user.is_active
                     target_user.save()
+
+                    status_text = "activated" if target_user.is_active else "deactivated"
+                    # --- AUDIT LOG ---
+                    log_system_action(request.user, 'TOGGLE', 'USER_MASTER', f"User {target_user.username} has been {status_text}.", request)
+            
+                    # --- NOTIFICATION (To the affected user) ---
+                    send_in_app_notification(
+                        target_user, "Account Status Changed", f"Your account has been {status_text} by an administrator.", 
+                        level='WARNING'
+                    )
+
                     status = "activated" if target_user.is_active else "deactivated"
                     messages.success(request, f"Account for {target_user.username} has been {status}.")
             except Exception as e:
@@ -580,14 +698,16 @@ def user_master_view(request):
     if search_query:
         profiles = profiles.filter(
             Q(user__username__icontains=search_query) | 
-            Q(user__email__icontains=search_query) | 
+            Q(user__first_name__icontains=search_query) | 
+            Q(user__last_name__icontains=search_query) | 
             Q(company_name__icontains=search_query) | 
             Q(role__icontains=search_query)
         )
 
     return render(request, 'Inventory/master/user_master.html', { 
         'profiles': profiles,
-        'search_query': search_query
+        'search_query': search_query,
+        'company_choices': COMPANY_CHOICES
     })
 
 @login_required(login_url='login')
@@ -719,6 +839,12 @@ def item_master_view(request):
                             user=request.user if request.user.is_authenticated else None,
                             notes="Initial System Data Entry"
                         )
+
+                        log_system_action(
+                            request.user, 'CREATE', 'Item Master', 
+                            f"Added new item: {item_code} with {initial_stock} opening balance", 
+                            request
+                        )
                     
                 # log_system_action(request.user, 'CREATE', 'Item Master', f"Registered item: {item_code}", request)
                 messages.success(request, f"Success! Item '{item_code}' has been registered.")
@@ -739,6 +865,13 @@ def item_master_view(request):
                     item.min_stock = int(request.POST.get('min_stock', 0) or 0)
                     item.default_zone = request.POST.get('default_zone', '').strip().upper()
                     item.save()
+
+                    log_system_action(
+                        request.user, 'UPDATE', 'Item Master', 
+                        f"Updated details for item: {item_code}", 
+                        request
+                    )
+
                     messages.success(request, f"Success! Item '{item_code}' updated.")
             except Exception as e:
                 messages.error(request, f"Error updating item: {str(e)}")
@@ -749,6 +882,13 @@ def item_master_view(request):
                 item = Item.objects.get(id=item_id)
                 code = item.item_code
                 item.delete()
+
+                log_system_action(
+                    request.user, 'DELETE', 'Item Master', 
+                    f"Permanently removed item: {code} from the system", 
+                    request
+                )
+                
                 messages.success(request, f"Successfully removed {code} from the system.")
             except Exception as e:
                 messages.error(request, f"Error deleting item: {str(e)}")
@@ -816,6 +956,12 @@ def item_master_view(request):
                             success_count += 1
                         else:
                             updated_count += 1
+
+                        log_system_action(
+                            request.user, 'IMPORT', 'Item Master', 
+                            f"Excel Bulk Import: {success_count} new items, {updated_count} updated.", 
+                            request
+                        )
 
                 messages.success(request, f"Import Success! Registered {success_count} new items, Updated {updated_count} existing items.")
             except Exception as e:
@@ -1249,20 +1395,25 @@ def customer_master_view(request):
             if Contact.objects.filter(name=name, contact_type='Customer').exists():
                 messages.error(request, f"Error: Customer '{name}' already exists.")
             else:
-                Contact.objects.create(
-                    name=name,
-                    contact_type='Customer',
-                    contact_code=request.POST.get('contact_code', '').strip().upper(),
-                    contact_person=request.POST.get('contact_person', '').strip().upper(),
-                    email=request.POST.get('email', '').strip(),
-                    phone=request.POST.get('phone', '').strip(),
-                    address=request.POST.get('address', '').strip().upper(),
-                    route_code=request.POST.get('route_code', '').strip().upper(),
-                    preferred_transport=request.POST.get('preferred_transport', '').strip().upper(),
-                    is_active=request.POST.get('is_active') == 'on'
-                )
-                # log_system_action(request.user, 'CREATE', 'Customer Master', f"Added client: {name}", request)
-                messages.success(request, f"Successfully registered customer: {name}")
+                try:
+                    new_customer = Contact.objects.create(
+                        name=name,
+                        contact_type='Customer',
+                        contact_code=request.POST.get('contact_code', '').strip().upper(),
+                        contact_person=request.POST.get('contact_person', '').strip().upper(),
+                        email=request.POST.get('email', '').strip(),
+                        phone=request.POST.get('phone', '').strip(),
+                        address=request.POST.get('address', '').strip().upper(),
+                        route_code=request.POST.get('route_code', '').strip().upper(),
+                        preferred_transport=request.POST.get('preferred_transport', '').strip().upper(),
+                        is_active=request.POST.get('is_active') == 'on'
+                    )
+                    
+                    # 🚀 AUDIT LOG & NOTIFICATION
+                    log_system_action(request.user, 'CREATE', 'Customer Master', f"Added new customer: {name}", request)
+                    messages.success(request, f"Success! Customer '{name}' has been registered.")
+                except Exception as e:
+                    messages.error(request, f"Failed to add customer: {str(e)}")
 
         elif action == 'edit':
             cust_id = request.POST.get('customer_id')
@@ -1284,7 +1435,7 @@ def customer_master_view(request):
                     cust.is_active = request.POST.get('is_active') == 'on'
                     cust.save()
                     
-                    # log_system_action(request.user, 'UPDATE', 'Customer Master', f"Updated client: {name}", request)
+                    log_system_action(request.user, 'UPDATE', 'Customer Master', f"Updated details for client: {name}", request)
                     messages.success(request, f"Customer '{name}' updated successfully!")
             except Exception as e:
                 messages.error(request, f"Error updating customer: {str(e)}")
@@ -1295,6 +1446,9 @@ def customer_master_view(request):
                 cust = Contact.objects.get(id=cust_id)
                 name = cust.name
                 cust.delete()
+
+                log_system_action(request.user, 'DELETE', 'Customer Master', f"Removed customer: {name}", request)
+
                 messages.success(request, f"Successfully deleted customer {name}.")
             except Exception as e:
                 messages.error(request, f"Error deleting customer: {str(e)}")
@@ -1537,7 +1691,6 @@ def order_input_excel_view(request):
 @login_required
 @require_module_access('CUSTOMER_ORDER')
 def po_confirmation_view(request):
-    # Kukunin natin yung 'batch_customer_orders' sa session
     batch_orders = request.session.get('batch_customer_orders')
 
     if not batch_orders:
@@ -1549,15 +1702,14 @@ def po_confirmation_view(request):
             with transaction.atomic():
                 current_batch_id = f"BATCH-{uuid.uuid4().hex[:6].upper()}"
                 total_orders_saved = 0
+                summary_log = [] # Para sa description ng audit log
                 
-                # I-loop ang bawat Order sa Batch
                 for order_data in batch_orders:
                     header = order_data.get('header')
                     items = order_data.get('items')
                     
-                    if not items: continue # Wag i-save kung walang items
+                    if not items: continue 
                     
-                    # 1. Kunin o Gumawa ng Customer Profile
                     customer_obj, created = Contact.objects.get_or_create(
                         name=header.get('customer'),
                         defaults={
@@ -1567,21 +1719,15 @@ def po_confirmation_view(request):
                         }
                     )
 
-                    if not created:
-                        if header.get('contact_person'): customer_obj.contact_person = header.get('contact_person')
-                        if header.get('delivery_address'): customer_obj.address = header.get('delivery_address')
-                        customer_obj.save()
-
-                    # 2. Burahin ang luma kung ito ay correction
+                    # LOGIC: Audit Trail for Corrections
                     if header.get('is_correction'):
                         CustomerOrder.objects.filter(order_no=header.get('order_no')).delete()
+                        log_msg = f"Re-posted Order {header.get('order_no')}"
+                    else:
+                        log_msg = f"Created Order {header.get('order_no')}"
 
-                    # 3. I-save ang bawat item bilang CustomerOrder
-                    grand_total = 0.0
                     for item in items:
                         amount = float(item.get('amount', 0.00))
-                        grand_total += amount
-                        
                         CustomerOrder.objects.create(
                             batch_id=current_batch_id,
                             order_no=header.get('order_no'),
@@ -1593,52 +1739,44 @@ def po_confirmation_view(request):
                             quantity=item.get('qty', 0),
                             unit_price=item.get('price', 0.00),
                             amount=amount,
-                            transport=header.get('transport', 'Motorcycle'),
+                            transport=header.get('transport', 'Truck'),
                             order_status=header.get('status', 'Pending'),
                             remarks=header.get('remarks', ''),
                             contact_person=header.get('contact_person', ''),
                             delivery_address=header.get('delivery_address', '')
                         )
-                        
+                    
                     total_orders_saved += 1
-                    
-                    # 4. System Logs & Email
-                    action_type = 'UPDATE' if header.get('is_correction') else 'CREATE'
-                    # log_system_action(...)
-                    
-                    customer_email = getattr(customer_obj, 'email', None) 
-                    send_email_flag = request.POST.get('send_email') 
-                    
-                    if send_email_flag == 'on' and customer_email:
-                        pass
-                        # send_order_acknowledgement(...)
+                    summary_log.append(header.get('order_no'))
 
-                # 5. Linisin ang session
+                # 🚀 AUDIT LOG: I-save ang activity sa System Logs
+                log_system_action(
+                    user=request.user, 
+                    action='CREATE', 
+                    module='Customer Order', 
+                    description=f"Saved Batch {current_batch_id} with {total_orders_saved} orders: {', '.join(summary_log)}", 
+                    request=request
+                )
+
                 del request.session['batch_customer_orders']
                 
-                messages.success(request, f"Success! {total_orders_saved} Customer Order(s) posted to Database.")
+                # 🚀 NOTIFICATION: Lalabas na green alert sa UI
+                messages.success(request, f"Success! {total_orders_saved} Customer Order(s) posted to Database with Batch ID: {current_batch_id}")
                 return redirect('order_manual') 
                 
         except Exception as e:
-            print(f"BOMBA SA DATABASE (CONFIRM ORDER): {e}")
-            messages.error(request, f"Error saving order: {e}")
+            messages.error(request, f"System Error while saving: {str(e)}")
             return redirect('po_confirmation')
 
-    # ==========================================
-    # GET Request / Page Load
-    # ==========================================
-    
-    # 🚀 BAGO: Kukunin natin ang Main PO No galing sa unang order
+    # GET Request Logic remains the same...
     main_po_no = "N/A"
-    if batch_orders and len(batch_orders) > 0:
-        first_order_no = batch_orders[0].get('header', {}).get('order_no', '')
-        # Halimbawa: "MPO-260401-1234-1" -> "MPO-260401-1234"
-        if '-' in first_order_no:
-            main_po_no = "-".join(first_order_no.split('-')[:-1])
+    if batch_orders:
+        first_no = batch_orders[0].get('header', {}).get('order_no', '')
+        main_po_no = "-".join(first_no.split('-')[:-1]) if '-' in first_no else first_no
 
     return render(request, 'Inventory/customer_order/PO_Confirmation.html', {
         'batch_orders': batch_orders,
-        'main_po_no': main_po_no, # 🚀 BAGO: Ipapasa sa HTML
+        'main_po_no': main_po_no,
     })
 
 @login_required
@@ -1660,8 +1798,13 @@ def order_correction_view(request):
 
         try:
             with transaction.atomic():
-                current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                audit_log = f"\n[CORRECTED on {current_time}] Reason: {correction_reason}"
+                log_system_action(
+                    user=request.user, 
+                    action='UPDATE', 
+                    module='Customer Order', 
+                    description=f"Corrected Batch/Order {batch_ref}. Reason: {correction_reason}", 
+                    request=request
+                )
 
                 for i in range(len(item_ids)):
                     item = CustomerOrder.objects.get(id=item_ids[i])
@@ -1670,6 +1813,7 @@ def order_correction_view(request):
                     item.amount = amounts[i]
                     
                     item.order_status = 'Pending'
+                    current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
                     item.remarks = str(item.remarks or "") + audit_log
                     item.save() 
 
@@ -2344,26 +2488,32 @@ def approve_po_view(request):
                 
                 # I-update lahat ng P.O. sa ilalim ng batch na ito
                 pos_to_update.update(ordering_status=new_status)
-                
-                if action == 'approve':
-                    # 🚀 BAGO: Ipadala ang Email Notification
-                    if creator and creator.email:
-                        try:
-                            send_po_approved_notification(
-                                batch_id=batch_id,
-                                po_count=po_count,
-                                creator_email=creator.email,
-                                creator_name=creator.username,
-                                approver_name=request.user.username
-                            )
-                        except Exception as e:
-                            print(f"PO Approval Email Error: {e}")
-                    else:
-                        print("User has no registered email. Skipped sending notification.")
 
-                    messages.success(request, f"Success! Batch {batch_id} has been APPROVED.")
+                log_system_action(
+                    user=request.user,
+                    action=action.upper(),
+                    module='Purchase Order Approval',
+                    description=f"Batch {batch_id} was {new_status} by {request.user.username}.",
+                    request=request
+                )
+                
+                if action == 'approve'and creator and creator.email:
+                    try:
+                        send_po_approved_notification(
+                            batch_id=batch_id,
+                            po_count=po_count,
+                            creator_email=creator.email,
+                            creator_name=creator.username,
+                            approver_name=request.user.username
+                        )
+                    except Exception as e:
+                        print(f"PO Approval Email Error: {e}")
                 else:
-                    messages.error(request, f"Batch {batch_id} has been REJECTED.")
+                    print("User has no registered email. Skipped sending notification.")
+
+                messages.success(request, f"Success! Batch {batch_id} has been APPROVED.")
+            else:
+                 messages.error(request, f"Batch {batch_id} has been REJECTED.")
                 
         return redirect('approve_po')
 
@@ -2658,6 +2808,14 @@ def ri_receive_view(request):
                 )
                 
                 total_items_received_across_batch = 0
+
+                log_system_action(
+                    user=request.user,
+                    action='RECEIVE',
+                    module='Receiving',
+                    description=f"Received {total_items_received_across_batch} items for Ref: {search_ref}.",
+                    request=request
+                )
 
                 # I-loop ang bawat Purchase Order na natagpuan
                 for po_header in po_qs:
@@ -2978,7 +3136,7 @@ def ri_material_tag_view(request):
                     user=request.user, 
                     action='CREATE', 
                     module='Material Tagging', 
-                    description=f"Manually registered {len(new_tag_ids)} Material Tags.", 
+                    description=f"Registered {len(new_tag_ids)} tags. Reference: {po_nos[0] if po_nos else 'N/A'}", 
                     request=request
                 )
                 messages.success(request, f"Successfully registered {len(new_tag_ids)} tags!")
@@ -3155,7 +3313,6 @@ def ri_storage_view(request):
 
 @login_required
 def get_location_stock(request):
-    """Kumukuha ng lahat ng items sa loob ng isang specific Location."""
     loc_id = request.GET.get('loc_id')
     if not loc_id:
         return JsonResponse({'success': False, 'error': 'No location provided.'})
@@ -3200,8 +3357,15 @@ def process_storage_transfer(request):
             if old_loc == new_loc:
                 return JsonResponse({'success': False, 'error': f'Batch is already stored in {loc_code}.'})
 
-            # 🚀 FIX: I-loop lahat ng boxes sa Batch at i-update isa-isa
-            boxes_count = tags.count()
+            boxes_count = tags.count() # Bilangin muna bago gamitin sa description
+            log_system_action(
+                user=request.user,
+                action='MOVE',
+                module='Storage/Put-away',
+                description=f"Transferred Lot {lot_no} ({boxes_count} boxes) from {old_loc_name} to {new_loc_name}.",
+                request=request
+            )
+            
             for tag in tags:
                 tag.location = new_loc
                 tag.save()
@@ -3627,7 +3791,7 @@ def stock_move_view(request):
                     user=request.user, 
                     action='UPDATE', 
                     module='Inventory Movement', 
-                    description=f"Moved Lot {tag.lot_no} from {old_loc} to {new_location.location_code}.", 
+                    description=f"Quick Move: Lot {tag.lot_no} moved from {old_loc} to {new_location.location_code}.",
                     request=request
                 )
 
@@ -3653,10 +3817,6 @@ def stock_move_view(request):
 
 @login_required
 def get_tag_info(request):
-    """
-    Ito ang sumasalo ng scan mula sa Stock Move, Stock Out, at Stock Correction.
-    Nagbabalik ito ng JSON data papunta sa Javascript ng frontend.
-    """
     lot_no_query = request.GET.get('lot_no', '').strip()
 
     if not lot_no_query:
@@ -3740,25 +3900,25 @@ def stock_correction_view(request):
 
                 log_system_action(
                     user=request.user, 
-                    action='UPDATE', 
+                    action='CORRECTION', 
                     module='Inventory Control', 
-                    description=f"Corrected Lot {tag.lot_no}. QTY: {old_qty}->{new_qty}. LOC: {old_loc}->{new_loc_str}. Reason: {reason}", 
+                    description=f"Manual Correction: {tag.lot_no}. QTY: {old_qty}->{new_qty}. LOC: {old_loc}->{new_loc_str}. Reason: {reason}", 
                     request=request
                 )
 
                 # Optional: Kung may alert functions ka, make sure imported sila
                 try:
                     alert_stock_correction(tag, old_qty, new_qty, reason, request.user)
-                except NameError:
-                    pass # Ignore kung wala pa yung function na to
+                except NameError as e:
+                    print(f"Correction Alert Error: {e}")
 
                 messages.success(request, f"Correction Saved! {tag.lot_no} updated. QTY: {old_qty} -> {new_qty} | LOC: {old_loc} -> {new_loc_str}.")
                 return redirect('stock_correction')
                 
         except MaterialTag.DoesNotExist:
-             messages.error(request, "Error: Material Tag not found in database.")
+            messages.error(request, "Error: Material Tag not found in database.")
         except Exception as e:
-             messages.error(request, f"Error processing Stock Correction: {str(e)}")
+            messages.error(request, f"Error processing Stock Correction: {str(e)}")
              
         return redirect('stock_correction')
 
@@ -3805,11 +3965,17 @@ def stock_out_view(request):
 
                     log_system_action(
                         user=request.user, 
-                        action='UPDATE', 
+                        action='STOCK_OUT', 
                         module='Inventory Issuance', 
-                        description=f"Stock Out: Deducted {deduct_val} PCS from Lot {tag.lot_no}. Remarks: {remarks}", 
+                        description=f"Issued {deduct_val} PCS from Lot {tag.lot_no}. Remaining: {tag.total_pcs}. Remarks: {remarks}", 
                         request=request
                     )
+
+                    if tag.total_pcs <= 10: # Example threshold
+                        try:
+                            send_low_stock_notification(tag)
+                        except Exception as e:
+                            print(f"Low Stock Alert Error: {e}")
                     
                     # Optional: Check low stock alert
                     try:
@@ -3957,6 +4123,15 @@ def api_update_item_price(request):
             item = Item.objects.get(item_code=item_code)
             item.unit_price = float(new_price)
             item.save()
+
+            log_system_action(
+                user=request.user, 
+                action='PRICE_CHANGE', 
+                module='Inventory Masterlist', 
+                description=f"Updated price for {item_code} to {new_price}.", 
+                request=request
+            )
+
             return JsonResponse({'success': True})
         except Item.DoesNotExist:
             return JsonResponse({'success': False, 'error': f'Item {item_code} not found in Masterlist.'})
@@ -3986,6 +4161,15 @@ def api_update_tag_details(request):
                 tag.expiration_date = value if value else None
                 
             tag.save()
+
+            log_system_action(
+                user=request.user, 
+                action='UPDATE', 
+                module='Inventory Inquiry', 
+                description=f"Manual Tag Update: Lot {tag.lot_no}. Field '{field}' changed to '{value}'.", 
+                request=request
+            )
+
             return JsonResponse({'success': True})
             
         except MaterialTag.DoesNotExist:
@@ -4603,30 +4787,6 @@ def shipment_register_allocation(request, ship_id):
         return redirect('shipment_inquiry')
 
 @login_required
-def shipment_invoice_view(request, ship_id):
-    main_shipment = ShipmentSchedule.objects.get(id=ship_id)
-    related_items = ShipmentSchedule.objects.filter(invoice_no=main_shipment.invoice_no) if main_shipment.invoice_no else [main_shipment]
-    
-    context = {
-        'shipment': main_shipment,
-        'related_items': related_items,
-        'doc_type': 'COMMERCIAL INVOICE'
-    }
-    return render(request, 'Inventory/inbound/shipment_print_doc.html', context)
-
-@login_required
-def shipment_print_view(request, ship_id):
-    main_shipment = ShipmentSchedule.objects.get(id=ship_id)
-    related_items = ShipmentSchedule.objects.filter(invoice_no=main_shipment.invoice_no) if main_shipment.invoice_no else [main_shipment]
-    
-    context = {
-        'shipment': main_shipment,
-        'related_items': related_items,
-        'doc_type': 'DELIVERY RECEIPT / PACKING SLIP' # Walang presyo dapat ito
-    }
-    return render(request, 'Inventory/inbound/shipment_print_doc.html', context)
-
-@login_required
 def shipping_confirmation_view(request, po_no=None):
     # 1. SEARCH MODE
     if request.method == "POST" and 'search_po' in request.POST:
@@ -4761,6 +4921,14 @@ def new_request_view(request):
                             remarks=item_remarks[i] if i < len(item_remarks) else ''
                         )
 
+                log_system_action(
+                    user=request.user, 
+                    action='CREATE', 
+                    module='Inventory Request', 
+                    description=f"New Requisition created: {new_req.request_no} for {department}. Purpose: {purpose}", 
+                    request=request
+                )
+
                 # Send email notification
                 try:
                     send_new_material_request_alert(new_req)
@@ -4860,6 +5028,19 @@ def return_slip_view(request):
                                 notes=f"RETURNED from {department} (Ref: {ref_request_no}). Reason: {reason}",
                                 user=request.user
                             )
+
+                            log_system_action(
+                                user=request.user, 
+                                action='RETURN', 
+                                module='Inventory Request', 
+                                description=f"Processed Return Slip for Ref: {ref_request_no}. Items returned from {department}.", 
+                                request=request
+                            )
+                            try:
+                                send_return_notification(ref_request_no, department, request.user)
+                            except NameError:
+                                pass
+
                         except MaterialTag.DoesNotExist:
                             pass 
                 messages.success(request, f"Return Slip submitted successfully for Ref: {ref_request_no}")
@@ -5117,9 +5298,15 @@ def location_master_view(request):
             loc_id = request.POST.get('loc_id')
             try:
                 loc = LocationMaster.objects.get(id=loc_id)
-                loc_code = loc.location_code
-                loc.delete()
-                messages.success(request, f"Successfully deleted location {loc_code}.")
+                has_items = MaterialTag.objects.filter(location=loc, total_pcs__gt=0).exists()
+        
+                if has_items:
+                    messages.error(request, f"Cannot delete {loc.location_code}. There are still items stored in this location!")
+                else:
+                    loc_code = loc.location_code
+                    loc.delete()
+                    log_system_action(request.user, 'DELETE', 'Location Master', f"Deleted location {loc_code}", request)
+                    messages.success(request, f"Successfully deleted location {loc_code}.")
             except Exception as e:
                 messages.error(request, f"Error deleting location: {str(e)}")
 
@@ -5263,12 +5450,36 @@ def stock_out_item(request, item_id):
 @login_required
 @require_module_access('SYS_CONFIG')
 def system_audit_logs_view(request):
+    # Kuhanin ang inputs galing sa form
+    search_query = request.GET.get('search', '')
+    action_filter = request.GET.get('action', '')
+
     log_list = SystemAuditLog.objects.all().select_related('user').order_by('-timestamp')
+
+    # Kung may nilagay sa search box (Hahanapin sa Username, Action, Module, o Description)
+    if search_query:
+        log_list = log_list.filter(
+            Q(user__username__icontains=search_query) |
+            Q(action__icontains=search_query) |
+            Q(module__icontains=search_query) |
+            Q(description__icontains=search_query)
+        )
+    
+    # Kung may pinili sa Dropdown Filter
+    if action_filter:
+        log_list = log_list.filter(action__iexact=action_filter)
+
     paginator = Paginator(log_list, 15) 
     page_number = request.GET.get('page')
     logs = paginator.get_page(page_number)
     
-    return render(request, 'Inventory/master/System_Audit_Logs.html', {'logs': logs})
+    context = {
+        'logs': logs,
+        'search_query': search_query,
+        'action_filter': action_filter,
+    }
+    
+    return render(request, 'Inventory/master/System_Audit_Logs.html', context)
 
 @login_required
 def all_notifications_view(request):
@@ -5312,6 +5523,14 @@ def assembly_dashboard_view(request):
                 name=name,
                 description=description,
                 status='Building' 
+            )
+            
+            log_system_action(
+                user=request.user, 
+                action='CREATE', 
+                module='Asset Assembly', 
+                description=f"Registered new machine asset: {machine_code}", 
+                request=request
             )
             messages.success(request, f"Success: Asset '{machine_code}' created. Ready for assembly.")
         
@@ -5463,6 +5682,14 @@ def api_assembly_action(request):
                     remarks=final_remarks
                 )
 
+                log_system_action(
+                    user=request.user, 
+                    action=action.upper(), 
+                    module='Asset Assembly', 
+                    description=f"{action} {qty}x of {tag.item_code} to Machine {machine.machine_code}", 
+                    request=request
+                )
+
                 if action == 'Dismantle':
                     machine.status = 'Partial'
                 elif action == 'Assemble':
@@ -5489,6 +5716,14 @@ def api_assembly_complete(request):
         # Papalitan ang status niya to Available
         machine.status = 'Available'
         machine.save()
+
+        log_system_action(
+            user=request.user, 
+            action='UPDATE', 
+            module='Asset Assembly', 
+            description=f"Assembly COMPLETED for {machine.machine_code}. Asset is now Available.", 
+            request=request
+        )
         
         # 🚀 TAWAGIN ANG EMAIL TRIGGER DITO
         try:

@@ -60,10 +60,16 @@
                                     {% if profile.role == 'ADMIN' or profile.role == 'SYSTEM_ADMIN' %} border-purple-300 text-purple-700 bg-purple-50 
                                     {% elif profile.role == 'CUSTOMER' %} border-emerald-300 text-emerald-700 bg-emerald-50 
                                     {% endif %}">
-                                    {{ profile.user.username|slice:":1"|upper }}
+                                    {{ profile.user.first_name|default:profile.user.username|slice:":1"|upper }}
                                 </div>
                                 <div class="flex flex-col">
-                                    <span class="text-xs font-black text-slate-800 tracking-tight">{{ profile.user.username }}</span>
+                                    <span class="text-xs font-black text-slate-800 tracking-tight uppercase">
+                                        {% if profile.user.first_name or profile.user.last_name %}
+                                            {{ profile.user.first_name }} {{ profile.user.last_name }}
+                                        {% else %}
+                                            {{ profile.user.username }}
+                                        {% endif %}
+                                    </span>
                                     <span class="text-[9px] font-bold text-indigo-600 truncate max-w-[180px] lowercase">{{ profile.user.email|default:"no-email@system.com" }}</span>
                                 </div>
                             </div>
@@ -114,8 +120,9 @@
 
                         <td class="py-2 px-4 text-center">
                             <div class="flex justify-center gap-1">
-                                <button type="button" onclick="openUserModal('edit', '{{ profile.user.id }}', '{{ profile.user.username|escapejs }}', '{{ profile.user.email|escapejs }}', '{{ profile.role }}', '{{ profile.company_name|default:''|escapejs }}', '{{ profile.contact_number|default:''|escapejs }}', '{{ profile.user.is_active }}')" 
-                                        class="bg-slate-200 hover:bg-amber-500 text-slate-600 hover:text-white p-1.5 border border-slate-300 hover:border-amber-600 transition-colors rounded-sm shadow-sm" title="Edit Profile">
+                                <button type="button" 
+                                        onclick="openUserModal('edit', '{{ profile.user.id }}', '{{ profile.user.email|escapejs }}', '{{ profile.role }}', '{{ profile.company_name|default:''|escapejs }}', '{{ profile.contact_number|default:''|escapejs }}', '{{ profile.user.is_active }}', '{{ profile.user.first_name|default:''|escapejs }}', '{{ profile.user.last_name|default:''|escapejs }}')" 
+                                        class="bg-slate-200 hover:bg-amber-500 text-slate-600 hover:text-white p-1.5 border border-slate-300 hover:border-amber-600 transition-colors rounded-sm shadow-sm">
                                     <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
                                 </button>
                                 
@@ -153,7 +160,7 @@
     </div>
 
     <div id="userModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-center items-center p-4">
-        <div class="bg-white border-t-4 border-teal-600 shadow-2xl w-full max-w-3xl flex flex-col overflow-hidden">
+        <div class="bg-white border-t-4 border-teal-600 shadow-2xl w-full max-w-3xl flex flex-col overflow-hidden rounded-sm">
             
             <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
                 <div>
@@ -178,16 +185,23 @@
                         <h3 class="text-[11px] font-black text-slate-800 uppercase tracking-widest border-b border-slate-200 pb-2 flex items-center gap-2">
                             <i data-lucide="shield-check" class="w-3.5 h-3.5 text-slate-500"></i> Account Credentials
                         </h3>
-                        
-                        <div class="space-y-1">
-                            <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Username <span class="text-rose-500">*</span></label>
-                            <input type="text" name="username" id="usernameInput" required placeholder="User login ID..."
-                                   class="w-full p-2.5 bg-slate-50 border border-slate-400 text-xs font-black outline-none focus:ring-1 focus:ring-teal-500 shadow-inner">
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="space-y-1">
+                                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">First Name</label>
+                                <input type="text" name="first_name" id="firstNameInput" placeholder="First Name..."
+                                       class="w-full p-2.5 bg-slate-50 border border-slate-400 text-xs font-black outline-none focus:ring-1 focus:ring-teal-500 uppercase">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Last Name</label>
+                                <input type="text" name="last_name" id="lastNameInput" placeholder="Last Name..."
+                                       class="w-full p-2.5 bg-slate-50 border border-slate-400 text-xs font-black outline-none focus:ring-1 focus:ring-teal-500 uppercase">
+                            </div>
                         </div>
 
                         <div class="space-y-1">
                             <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Email Address (For Login) <span class="text-rose-500">*</span></label>
-                            <input type="email" name="email" required placeholder="user@company.com"
+                            <input type="email" name="email" id="emailInput" required placeholder="user@company.com"
                                    class="w-full p-2.5 bg-slate-50 border border-slate-400 text-xs font-bold outline-none focus:ring-1 focus:ring-teal-500 shadow-inner lowercase">
                         </div>
 
@@ -199,7 +213,7 @@
                         
                         <div class="space-y-1 pt-2" id="accessStatusDiv">
                             <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">System Access</label>
-                            <select name="is_active" class="w-full p-2.5 bg-slate-50 border border-slate-400 text-xs font-black outline-none">
+                            <select name="is_active" id="isActiveInput" class="w-full p-2.5 bg-slate-50 border border-slate-400 text-xs font-black outline-none">
                                 <option value="True" class="text-emerald-700">ACTIVE - Can login</option>
                                 <option value="False" class="text-rose-700">SUSPENDED - Locked out</option>
                             </select>
@@ -213,7 +227,7 @@
 
                         <div class="space-y-1">
                             <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Account Role</label>
-                            <select name="role" class="w-full p-2.5 bg-slate-50 border border-slate-400 text-xs font-black outline-none uppercase">
+                            <select name="role" id="roleInput" class="w-full p-2.5 bg-slate-50 border border-slate-400 text-xs font-black outline-none uppercase focus:ring-1 focus:ring-teal-500">
                                 <option value="WH_STAFF">Warehouse Staff</option>
                                 <option value="INV_MANAGER">Inventory Manager</option>
                                 <option value="SUPPLY_CHAIN">Supply Chain</option>
@@ -228,13 +242,17 @@
 
                         <div class="space-y-1">
                             <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Company / Department</label>
-                            <input type="text" name="company_name" placeholder="e.g. Sales Dept, Client Name..."
-                                   class="w-full p-2.5 bg-slate-50 border border-slate-400 text-xs font-bold uppercase outline-none focus:ring-1 focus:ring-teal-500 shadow-inner">
+                            <select name="company_name" id="companyInput" class="w-full p-2.5 bg-slate-50 border border-slate-400 text-xs font-black outline-none uppercase focus:ring-1 focus:ring-teal-500">
+                                <option value="">-- SELECT COMPANY --</option>
+                                {% for comp in company_choices %}
+                                    <option value="{{ comp }}">{{ comp }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
 
                         <div class="space-y-1">
                             <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Contact Number</label>
-                            <input type="text" name="contact_number" placeholder="e.g. +639847123456"
+                            <input type="text" name="contact_number" id="contactInput" placeholder="e.g. +639847123456"
                                    class="w-full p-2.5 bg-slate-50 border border-slate-400 text-xs font-bold uppercase outline-none focus:ring-1 focus:ring-teal-500 shadow-inner">
                         </div>
                     </div>
@@ -259,17 +277,26 @@
         }
     });
 
-    function openUserModal(action, id='', username='', email='', role='WH_STAFF', company='', contact='', isActive='True') {
+    // FIXED: Added firstName and lastName to the parameters so they don't cause ReferenceErrors
+    function openUserModal(action, id='', email='', role='WH_STAFF', company='', contact='', isActive='True', firstName='', lastName='') {
         const modal = document.getElementById('userModal');
         const form = document.getElementById('userForm');
         const title = document.getElementById('modalTitle');
         const actionInput = document.getElementById('formAction');
         const hiddenContainer = document.getElementById('hiddenUserIdContainer');
         const submitBtn = document.getElementById('submitUserBtn');
-        const usernameInput = document.getElementById('usernameInput');
+    
+        // Inputs
         const passwordInput = document.getElementById('passwordInput');
         const pwdAsterisk = document.getElementById('pwdAsterisk');
-        const accessStatusDiv = document.getElementById('accessStatusDiv'); // 🚀 BAGO
+        const accessStatusDiv = document.getElementById('accessStatusDiv'); 
+        const emailInput = document.getElementById('emailInput');
+        const roleInput = document.getElementById('roleInput'); // Siguraduhin na nakuha mo ito
+        const companyInput = document.getElementById('companyInput');
+        const contactInput = document.getElementById('contactInput');
+        const isActiveInput = document.getElementById('isActiveInput');
+        const firstNameInput = document.getElementById('firstNameInput');
+        const lastNameInput = document.getElementById('lastNameInput');
 
         modal.classList.remove('hidden');
 
@@ -279,17 +306,16 @@
             form.reset();
             hiddenContainer.innerHTML = ''; 
             submitBtn.innerHTML = '<i data-lucide="save" class="w-3 h-3"></i> Create Account';
-            
-            usernameInput.readOnly = false;
-            usernameInput.classList.remove('bg-slate-200', 'text-slate-500');
-            
+
+            emailInput.readOnly = false;
+            emailInput.classList.remove('bg-slate-200');
+        
             passwordInput.required = false;
             passwordInput.readOnly = true;
-            passwordInput.classList.add('bg-slate-200', 'text-slate-500', 'cursor-not-allowed');
-            passwordInput.placeholder = "Auto-generated & Emailed to User";
-            pwdAsterisk.style.display = 'none';
-            
-            // 🚀 BAGO: Itago ang System Access kapag nagre-register
+            passwordInput.classList.add('bg-slate-200', 'cursor-not-allowed');
+            passwordInput.placeholder = "Auto-generated & Emailed";
+            if(pwdAsterisk) pwdAsterisk.style.display = 'none';
+        
             if (accessStatusDiv) accessStatusDiv.classList.add('hidden');
         } 
         else if (action === 'edit') {
@@ -297,25 +323,24 @@
             actionInput.value = 'edit';
             submitBtn.innerHTML = '<i data-lucide="save" class="w-3 h-3"></i> Update Profile';
 
-            usernameInput.value = username;
-            usernameInput.readOnly = true;
-            usernameInput.classList.add('bg-slate-200', 'text-slate-500');
-            
+            emailInput.value = email;
+            emailInput.readOnly = true; // Security: Usually don't change login email once set
+            emailInput.classList.add('bg-slate-200');
+
+            if(firstNameInput) firstNameInput.value = firstName;
+            if(lastNameInput) lastNameInput.value = lastName;
+            if(roleInput) roleInput.value = role;
+            if(companyInput) companyInput.value = company;
+            if(contactInput) contactInput.value = contact;
+            if(isActiveInput) isActiveInput.value = isActive;
+
             passwordInput.required = false;
             passwordInput.readOnly = false;
-            passwordInput.classList.remove('bg-slate-200', 'text-slate-500', 'cursor-not-allowed');
-            passwordInput.placeholder = "Leave blank to keep old password...";
-            pwdAsterisk.style.display = 'none';
+            passwordInput.classList.remove('bg-slate-200', 'cursor-not-allowed');
+            passwordInput.placeholder = "Leave blank to keep old...";
+            if(pwdAsterisk) pwdAsterisk.style.display = 'none';
 
-            // 🚀 BAGO: Ipakita ulit ang System Access kapag nag-e-edit
             if (accessStatusDiv) accessStatusDiv.classList.remove('hidden');
-
-            form.elements['email'].value = email;
-            form.elements['role'].value = role;
-            form.elements['company_name'].value = company;
-            form.elements['contact_number'].value = contact;
-            form.elements['is_active'].value = isActive === 'True' ? 'True' : 'False';
-
             hiddenContainer.innerHTML = `<input type="hidden" name="user_id" value="${id}">`;
         }
         lucide.createIcons();

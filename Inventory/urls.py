@@ -134,8 +134,6 @@ urlpatterns = [
     path('api/shipment-details/<int:ship_id>/', views.api_shipment_details, name='api_shipment_details'),
     path('inbound/shipment-allocation/<str:po_no>/', views.shipment_allocation_view, name='shipment_allocation'),
     path('inbound/shipment-allocate/register/<int:ship_id>/', views.shipment_register_allocation, name='shipment_register_allocation'),
-    path('inbound/shipment-invoice/<int:ship_id>/', views.shipment_invoice_view, name='shipment_invoice'),
-    path('inbound/shipment-print/<int:ship_id>/', views.shipment_print_view, name='shipment_print'),
 
     path('shipment-calendar/', views.shipment_calendar_view, name='shipment_calendar'),
     path('inbound/print-grn/<str:po_no>/', views.shipment_print_doc_view, name='shipment_print_doc'),
