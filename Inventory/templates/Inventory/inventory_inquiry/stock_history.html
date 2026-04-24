@@ -1,32 +1,32 @@
 {% extends "Inventory/inventory_inquiry/inquiry_base.html" %}
 
 {% block inquiry_content %}
-<div class="max-w-[100%] mx-auto pb-20 mt-4 text-slate-800">
+<div class="max-w-[100%] mx-auto pb-20 mt-4 text-slate-800 dark:text-slate-200 transition-colors duration-300">
 
-    <div class="bg-white border border-slate-300 shadow-sm mb-4">
-        <div class="bg-slate-800 px-4 py-2 flex justify-between items-center text-white border-b border-slate-700">
+    <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm mb-4 transition-colors duration-300">
+        <div class="bg-slate-800 dark:bg-slate-950 px-4 py-2 flex justify-between items-center text-white border-b border-slate-700 dark:border-slate-800 transition-colors">
             <h2 class="font-black text-sm uppercase tracking-widest flex items-center">
-                <i data-lucide="history" class="w-4 h-4 mr-2 text-amber-400"></i> Global Stock Movement History
+                <i data-lucide="history" class="w-4 h-4 mr-2 text-amber-400 dark:text-amber-500"></i> Global Stock Movement History
             </h2>
-            <span class="text-[9px] font-black uppercase tracking-[0.2em] text-amber-400">Audit Trail Active</span>
+            <span class="text-[9px] font-black uppercase tracking-[0.2em] text-amber-400 dark:text-amber-500">Audit Trail Active</span>
         </div>
 
-        <div class="p-4 bg-slate-50">
+        <div class="p-4 bg-slate-50 dark:bg-slate-900/50 transition-colors border-b border-slate-300 dark:border-slate-800">
             <form method="GET" action="{% url 'stock_history' %}">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                     
                     <div class="space-y-1">
-                        <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Date From</label>
-                        <input type="date" name="date_from" value="{{ request.GET.date_from }}" class="w-full p-2 text-xs font-bold border border-slate-300 bg-white focus:ring-1 focus:ring-amber-500 outline-none rounded-sm text-slate-700">
+                        <label class="text-[9px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-widest transition-colors">Date From</label>
+                        <input type="date" name="date_from" value="{{ request.GET.date_from }}" class="w-full p-2 text-xs font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 focus:ring-1 focus:ring-amber-500 dark:focus:ring-amber-600 outline-none rounded-sm text-slate-700 dark:text-slate-200 transition-colors">
                     </div>
                     <div class="space-y-1">
-                        <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Date To</label>
-                        <input type="date" name="date_to" value="{{ request.GET.date_to }}" class="w-full p-2 text-xs font-bold border border-slate-300 bg-white focus:ring-1 focus:ring-amber-500 outline-none rounded-sm text-slate-700">
+                        <label class="text-[9px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-widest transition-colors">Date To</label>
+                        <input type="date" name="date_to" value="{{ request.GET.date_to }}" class="w-full p-2 text-xs font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 focus:ring-1 focus:ring-amber-500 dark:focus:ring-amber-600 outline-none rounded-sm text-slate-700 dark:text-slate-200 transition-colors">
                     </div>
 
                     <div class="space-y-1">
-                        <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Action Type</label>
-                        <select name="action_type" class="w-full p-2 text-xs font-bold border border-slate-300 bg-white focus:ring-1 focus:ring-amber-500 outline-none rounded-sm">
+                        <label class="text-[9px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-widest transition-colors">Action Type</label>
+                        <select name="action_type" class="w-full p-2 text-xs font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-amber-500 dark:focus:ring-amber-600 outline-none rounded-sm transition-colors">
                             <option value="">-- All Actions --</option>
                             <option value="REG" {% if request.GET.action_type == 'REG' %}selected{% endif %}>Registration (In)</option>
                             <option value="OUT" {% if request.GET.action_type == 'OUT' %}selected{% endif %}>Stock Out</option>
@@ -36,21 +36,21 @@
                     </div>
 
                     <div class="space-y-1">
-                        <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Item Code</label>
-                        <input type="text" name="item_code" value="{{ request.GET.item_code }}" placeholder="e.g. RAW-001" class="w-full p-2 text-xs font-bold border border-slate-300 bg-white focus:ring-1 focus:ring-amber-500 outline-none rounded-sm uppercase tracking-widest">
+                        <label class="text-[9px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-widest transition-colors">Item Code</label>
+                        <input type="text" name="item_code" value="{{ request.GET.item_code }}" placeholder="e.g. RAW-001" class="w-full p-2 text-xs font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-amber-500 dark:focus:ring-amber-600 outline-none rounded-sm uppercase tracking-widest transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-600">
                     </div>
 
                     <div class="space-y-1">
-                        <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Lot No.</label>
-                        <input type="text" name="lot_no" value="{{ request.GET.lot_no }}" placeholder="e.g. LOT-123" class="w-full p-2 text-xs font-bold border border-slate-300 bg-white focus:ring-1 focus:ring-amber-500 outline-none rounded-sm uppercase tracking-widest">
+                        <label class="text-[9px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-widest transition-colors">Lot No.</label>
+                        <input type="text" name="lot_no" value="{{ request.GET.lot_no }}" placeholder="e.g. LOT-123" class="w-full p-2 text-xs font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-amber-500 dark:focus:ring-amber-600 outline-none rounded-sm uppercase tracking-widest transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-600">
                     </div>
                 </div>
 
-                <div class="mt-4 pt-4 border-t border-slate-200 flex justify-end gap-2">
-                    <a href="{% url 'stock_history' %}" class="bg-white text-slate-600 border border-slate-300 px-6 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm flex items-center gap-1.5">
+                <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-2 transition-colors">
+                    <a href="{% url 'stock_history' %}" class="bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-600 px-6 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm flex items-center gap-1.5">
                         <i data-lucide="rotate-ccw" class="w-3 h-3"></i> Clear
                     </a>
-                    <button type="submit" class="bg-amber-600 text-white border border-amber-800 px-10 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-amber-700 transition-all shadow-sm flex items-center gap-2">
+                    <button type="submit" class="bg-amber-600 dark:bg-amber-700 text-white border border-amber-800 dark:border-amber-900 px-10 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-amber-700 dark:hover:bg-amber-600 transition-all shadow-sm flex items-center gap-2">
                         <i data-lucide="search" class="w-3 h-3"></i> Filter Logs
                     </button>
                 </div>
@@ -58,56 +58,56 @@
         </div>
     </div>
 
-    <div class="bg-white border border-slate-300 shadow-sm flex flex-col">
-        <div class="overflow-x-auto min-h-[400px]">
+    <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm flex flex-col transition-colors duration-300">
+        <div class="overflow-x-auto min-h-[400px] transition-colors duration-300">
             <table class="w-full text-left border-collapse whitespace-nowrap" style="font-size: 11px;">
-                <thead class="bg-slate-200 text-slate-800 uppercase tracking-widest border-b border-slate-400 font-bold text-[10px]">
+                <thead class="bg-slate-200 dark:bg-slate-950 text-slate-800 dark:text-slate-300 uppercase tracking-widest border-b border-slate-400 dark:border-slate-800 font-bold text-[10px] transition-colors">
                     <tr>
-                        <th class="py-2 px-4 border-r border-slate-300 w-40">Date & Time</th>
-                        <th class="py-2 px-4 border-r border-slate-300 text-center w-32">Action</th>
-                        <th class="py-2 px-4 border-r border-slate-300">Item Code</th>
-                        <th class="py-2 px-4 border-r border-slate-300">Lot No.</th>
-                        <th class="py-2 px-4 border-r border-slate-300 text-right w-24">Prev. Qty</th>
-                        <th class="py-2 px-4 border-r border-slate-300 text-right w-24">Change</th>
-                        <th class="py-2 px-4 border-r border-slate-300 text-right w-24 bg-slate-100">New Bal.</th>
-                        <th class="py-2 px-4 border-r border-slate-300 text-center w-32">Transacted By</th>
+                        <th class="py-2 px-4 border-r border-slate-300 dark:border-slate-700 w-40">Date & Time</th>
+                        <th class="py-2 px-4 border-r border-slate-300 dark:border-slate-700 text-center w-32">Action</th>
+                        <th class="py-2 px-4 border-r border-slate-300 dark:border-slate-700">Item Code</th>
+                        <th class="py-2 px-4 border-r border-slate-300 dark:border-slate-700">Lot No.</th>
+                        <th class="py-2 px-4 border-r border-slate-300 dark:border-slate-700 text-right w-24">Prev. Qty</th>
+                        <th class="py-2 px-4 border-r border-slate-300 dark:border-slate-700 text-right w-24">Change</th>
+                        <th class="py-2 px-4 border-r border-slate-300 dark:border-slate-700 text-right w-24 bg-slate-100 dark:bg-slate-900/50 transition-colors">New Bal.</th>
+                        <th class="py-2 px-4 border-r border-slate-300 dark:border-slate-700 text-center w-32">Transacted By</th>
                         <th class="py-2 px-4">Remarks / Notes</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-200">
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-800 transition-colors">
                     {% for log in logs %}
-                    <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="py-2 px-4 border-r border-slate-200 font-bold text-slate-600">{{ log.timestamp|date:"Y-m-d h:i A" }}</td>
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                        <td class="py-2 px-4 border-r border-slate-200 dark:border-slate-800 font-bold text-slate-600 dark:text-slate-400 transition-colors">{{ log.timestamp|date:"Y-m-d h:i A" }}</td>
                         
-                        <td class="py-2 px-4 border-r border-slate-200 text-center">
+                        <td class="py-2 px-4 border-r border-slate-200 dark:border-slate-800 text-center transition-colors">
                             {% if log.action_type == 'REG' or log.action_type == 'IN' %}
-                                <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 text-[9px] font-black uppercase rounded-sm border border-emerald-200">Registration</span>
+                                <span class="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-400 px-2 py-0.5 text-[9px] font-black uppercase rounded-sm border border-emerald-200 dark:border-emerald-800 transition-colors">Registration</span>
                             {% elif log.action_type == 'OUT' %}
-                                <span class="bg-rose-100 text-rose-800 px-2 py-0.5 text-[9px] font-black uppercase rounded-sm border border-rose-200">Stock Out</span>
+                                <span class="bg-rose-100 dark:bg-rose-900/30 text-rose-800 dark:text-rose-400 px-2 py-0.5 text-[9px] font-black uppercase rounded-sm border border-rose-200 dark:border-rose-800 transition-colors">Stock Out</span>
                             {% elif log.action_type == 'MOVE' %}
-                                <span class="bg-blue-100 text-blue-800 px-2 py-0.5 text-[9px] font-black uppercase rounded-sm border border-blue-200">Transfer</span>
+                                <span class="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 px-2 py-0.5 text-[9px] font-black uppercase rounded-sm border border-blue-200 dark:border-blue-800 transition-colors">Transfer</span>
                             {% else %}
-                                <span class="bg-amber-100 text-amber-800 px-2 py-0.5 text-[9px] font-black uppercase rounded-sm border border-amber-200">Correction</span>
+                                <span class="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-400 px-2 py-0.5 text-[9px] font-black uppercase rounded-sm border border-amber-200 dark:border-amber-800 transition-colors">Correction</span>
                             {% endif %}
                         </td>
                         
-                        <td class="py-2 px-4 border-r border-slate-200 font-black text-teal-800 uppercase">{{ log.material_tag.item_code }}</td>
-                        <td class="py-2 px-4 border-r border-slate-200 font-bold text-slate-800">{{ log.material_tag.lot_no }}</td>
+                        <td class="py-2 px-4 border-r border-slate-200 dark:border-slate-800 font-black text-teal-800 dark:text-teal-400 uppercase transition-colors">{{ log.material_tag.item_code }}</td>
+                        <td class="py-2 px-4 border-r border-slate-200 dark:border-slate-800 font-bold text-slate-800 dark:text-slate-300 transition-colors">{{ log.material_tag.lot_no }}</td>
                         
-                        <td class="py-2 px-4 border-r border-slate-200 text-right font-bold text-slate-500">{{ log.old_qty|floatformat:0 }}</td>
+                        <td class="py-2 px-4 border-r border-slate-200 dark:border-slate-800 text-right font-bold text-slate-500 dark:text-slate-400 transition-colors">{{ log.old_qty|floatformat:0 }}</td>
                         
-                        <td class="py-2 px-4 border-r border-slate-200 text-right font-black {% if log.action_type == 'OUT' %}text-rose-600{% else %}text-emerald-600{% endif %}">
+                        <td class="py-2 px-4 border-r border-slate-200 dark:border-slate-800 text-right font-black {% if log.action_type == 'OUT' %}text-rose-600 dark:text-rose-500{% else %}text-emerald-600 dark:text-emerald-500{% endif %} transition-colors">
                             {% if log.action_type == 'OUT' %}-{% else %}+{% endif %}{{ log.change_qty|floatformat:0 }}
                         </td>
                         
-                        <td class="py-2 px-4 border-r border-slate-200 text-right font-black text-slate-800 bg-slate-50/50">{{ log.new_qty|floatformat:0 }}</td>
+                        <td class="py-2 px-4 border-r border-slate-200 dark:border-slate-800 text-right font-black text-slate-800 dark:text-slate-200 bg-slate-50/50 dark:bg-slate-900/50 transition-colors">{{ log.new_qty|floatformat:0 }}</td>
                         
-                        <td class="py-2 px-4 border-r border-slate-200 text-center font-bold text-slate-600 uppercase">{{ log.user.username|default:"SYSTEM" }}</td>
-                        <td class="py-2 px-4 text-xs text-slate-600 truncate max-w-[200px]" title="{{ log.notes }}">{{ log.notes|default:"-" }}</td>
+                        <td class="py-2 px-4 border-r border-slate-200 dark:border-slate-800 text-center font-bold text-slate-600 dark:text-slate-400 uppercase transition-colors">{{ log.user.username|default:"SYSTEM" }}</td>
+                        <td class="py-2 px-4 text-xs text-slate-600 dark:text-slate-400 truncate max-w-[200px] transition-colors" title="{{ log.notes }}">{{ log.notes|default:"-" }}</td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="9" class="py-20 text-center text-slate-400">
+                        <td colspan="9" class="py-20 text-center text-slate-400 dark:text-slate-600 transition-colors">
                             <i data-lucide="calendar-x" class="w-10 h-10 mx-auto mb-3 opacity-30"></i>
                             <p class="font-black text-xs uppercase tracking-widest">No Transaction History Found</p>
                             <p class="text-[10px] font-bold mt-1">Try adjusting your date range or filters.</p>
@@ -118,14 +118,14 @@
             </table>
         </div>
 
-        <div class="bg-slate-100 border-t border-slate-300 py-2 px-4 flex justify-between items-center text-[9px] font-black text-slate-500 uppercase tracking-widest">
+        <div class="bg-slate-100 dark:bg-slate-950 border-t border-slate-300 dark:border-slate-800 py-2 px-4 flex justify-between items-center text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors duration-300">
             <p>Showing Page {{ logs.number }} of {{ logs.paginator.num_pages }}</p>
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-4 transition-colors">
                 {% if logs.has_previous %}
-                    <a href="?{{ filter_params }}&page={{ logs.previous_page_number }}" class="hover:text-amber-600 transition-colors">Prev</a>
+                    <a href="?{{ filter_params }}&page={{ logs.previous_page_number }}" class="hover:text-amber-600 dark:hover:text-amber-500 transition-colors">Prev</a>
                 {% endif %}
                 {% if logs.has_next %}
-                    <a href="?{{ filter_params }}&page={{ logs.next_page_number }}" class="hover:text-amber-600 transition-colors">Next</a>
+                    <a href="?{{ filter_params }}&page={{ logs.next_page_number }}" class="hover:text-amber-600 dark:hover:text-amber-500 transition-colors">Next</a>
                 {% endif %}
             </div>
         </div>

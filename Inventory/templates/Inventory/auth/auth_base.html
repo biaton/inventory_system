@@ -1,0 +1,141 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %} | AIM Inc.</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Configure Tailwind
+        tailwind.config = {
+            darkMode: 'class',
+        }
+        
+        // CHECK LOCAL STORAGE IMMEDIATELY PARA WALANG FLICKER
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* ERP Style Grid Background */
+        .bg-grid-pattern {
+            background-image: linear-gradient(to right, #334155 1px, transparent 1px),
+                linear-gradient(to bottom, #334155 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-200 dark:bg-slate-950 min-h-screen flex items-center justify-center p-4 transition-colors duration-300">
+
+    <button onclick="toggleDarkMode()" class="fixed top-4 right-4 p-3 rounded-full bg-slate-800 dark:bg-white text-white dark:text-slate-900 shadow-xl opacity-50 hover:opacity-100 transition-opacity z-50">
+        <i data-lucide="moon" id="themeIcon" class="w-5 h-5"></i>
+    </button>
+
+    <div class="max-w-4xl w-full bg-white dark:bg-slate-900 border border-slate-400 dark:border-slate-700 shadow-xl flex flex-col md:flex-row min-h-[500px] transition-colors duration-300">
+        
+        <div class="md:w-5/12 bg-slate-900 border-r border-slate-800 dark:border-slate-700 p-8 text-white flex flex-col justify-between relative overflow-hidden bg-grid-pattern">
+
+            <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-slate-800 via-sky-700 to-cyan-600 z-20"></div>
+
+            <div class="absolute inset-0 bg-slate-900/80 pointer-events-none"></div>
+
+            <div class="relative z-10 mt-2">
+                <div class="flex items-center gap-4 mb-8 border-b border-slate-800 dark:border-slate-700 pb-6">
+
+                    <div class="w-20 h-24 bg-white dark:bg-slate-800 flex items-center justify-center p-1.5 shadow-md rounded-sm border-2 border-slate-700 dark:border-slate-600 transition-colors duration-300">
+                        <img src="{% static 'images/asia-no-bg.png' %}" alt="AIM Logo" class="w-full h-full object-contain">
+                    </div>
+
+                    <div>
+                        <h1 class="text-2xl md:text-3xl font-black tracking-tighter uppercase leading-none text-slate-100 mb-1">
+                            Asia Integrated
+                        </h1>
+                        <span class="text-[13px] md:text-[15px] font-black text-sky-500 uppercase tracking-[0.2em]">Machine Inc.</span>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div>
+                        <p class="text-[10px] font-bold text-sky-500 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                            <i data-lucide="warehouse" class="w-3.5 h-3.5"></i> System Module
+                        </p>
+                        <p class="text-sm font-black text-slate-200 uppercase tracking-widest border-l-2 border-sky-600 pl-3">
+                            Warehouse Inventory Management System
+                        </p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-sky-500 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                            <i data-lucide="id-card" class="w-3.5 h-3.5"></i> Details
+                        </p>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest border-l-2 border-sky-700 pl-3">
+                            128 Lopez-Rizal St. Brgy. Highway Hills, Mandaluyong, Philippines, 1550 <br> (02) 532 5875
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="relative z-10 mt-12 md:mt-0 pt-6">
+                <div class="bg-slate-950/50 border border-slate-800 p-3 rounded-sm mb-5 shadow-inner">
+                    <div class="flex items-center gap-2 text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">
+                        <span class="relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                        Secure Gateway Active
+                    </div>
+                    <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest pl-4">
+                        Authentication Required
+                    </p>
+                </div>
+
+                <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest leading-relaxed">
+                    &copy; 2026 ASIA Integrated Machine Inc.<br>All Rights Reserved.
+                </p>
+            </div>
+        </div>
+
+        <div class="md:w-7/12 p-8 md:p-12 flex flex-col justify-center bg-white dark:bg-slate-900 transition-colors duration-300">
+            {% block auth_content %}{% endblock %}
+        </div>
+
+    </div>
+
+    <script>
+        // Init Lucide Icons
+        lucide.createIcons();
+
+        // I-set ang tamang icon sa button pagka-load ng page
+        document.addEventListener('DOMContentLoaded', () => {
+            const themeIcon = document.getElementById('themeIcon');
+            if (localStorage.getItem('theme') === 'dark') {
+                themeIcon.setAttribute('data-lucide', 'sun');
+            } else {
+                themeIcon.setAttribute('data-lucide', 'moon');
+            }
+            lucide.createIcons();
+        });
+
+        // Dark Mode Toggle Logic
+        function toggleDarkMode() {
+            const htmlClass = document.documentElement.classList;
+            const themeIcon = document.getElementById('themeIcon');
+            
+            if (htmlClass.contains('dark')) {
+                htmlClass.remove('dark');
+                localStorage.setItem('theme', 'light');
+                themeIcon.setAttribute('data-lucide', 'moon');
+            } else {
+                htmlClass.add('dark');
+                localStorage.setItem('theme', 'dark');
+                themeIcon.setAttribute('data-lucide', 'sun');
+            }
+            lucide.createIcons();
+        }
+    </script>
+</body>
+</html>

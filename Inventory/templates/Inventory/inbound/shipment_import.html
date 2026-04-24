@@ -1,67 +1,67 @@
 {% extends "Inventory/inbound/inbound_base.html" %}
 
 {% block inbound_content %}
-<div class="max-w-[100%] mx-auto pb-20 mt-4 text-slate-800">
+<div class="max-w-[100%] mx-auto pb-20 mt-4 text-slate-800 dark:text-slate-200 transition-colors duration-300">
 
-    <div class="bg-emerald-50 border-l-4 border-emerald-600 p-4 mb-6 shadow-sm flex items-center justify-between">
+    <div class="bg-emerald-50 dark:bg-emerald-900/20 border-l-4 border-emerald-600 dark:border-emerald-500 p-4 mb-6 shadow-sm flex items-center justify-between transition-colors">
         <div class="flex items-center gap-3">
-            <i data-lucide="file-spreadsheet" class="text-emerald-700 w-6 h-6"></i>
+            <i data-lucide="file-spreadsheet" class="text-emerald-700 dark:text-emerald-400 w-6 h-6 transition-colors"></i>
             <div>
-                <h2 class="text-xl font-black text-emerald-900 uppercase tracking-tighter">Mass Schedule Import</h2>
-                <p class="text-[10px] font-bold text-emerald-700 uppercase tracking-widest">Upload supplier or freight forwarder schedules via Excel/CSV.</p>
+                <h2 class="text-xl font-black text-emerald-900 dark:text-emerald-300 uppercase tracking-tighter transition-colors">Mass Schedule Import</h2>
+                <p class="text-[10px] font-bold text-emerald-700 dark:text-emerald-500 uppercase tracking-widest transition-colors">Upload supplier or freight forwarder schedules via Excel/CSV.</p>
             </div>
         </div>
-        <a href="#" class="bg-white border border-slate-300 px-4 py-1.5 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-100 shadow-sm flex items-center gap-2 transition-colors">
-            <i data-lucide="download" class="w-3 h-3 text-emerald-600"></i> Download Template
+        <a href="#" class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 px-4 py-1.5 text-[10px] font-black uppercase text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-sm flex items-center gap-2 transition-colors">
+            <i data-lucide="download" class="w-3 h-3 text-emerald-600 dark:text-emerald-400 transition-colors"></i> Download Template
         </a>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         <div class="lg:col-span-7">
-            <div class="bg-white border border-slate-300 shadow-sm p-6 border-t-4 border-t-emerald-600 h-full flex flex-col">
+            <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm p-6 border-t-4 border-t-emerald-600 dark:border-t-emerald-500 h-full flex flex-col transition-colors duration-300">
                 
-                <h3 class="text-sm font-black uppercase tracking-widest mb-2 flex items-center gap-2 text-slate-800">
-                    <i data-lucide="upload-cloud" class="w-5 h-5 text-emerald-600"></i> Upload Document
+                <h3 class="text-sm font-black uppercase tracking-widest mb-2 flex items-center gap-2 text-slate-800 dark:text-slate-100 transition-colors">
+                    <i data-lucide="upload-cloud" class="w-5 h-5 text-emerald-600 dark:text-emerald-400 transition-colors"></i> Upload Document
                 </h3>
-                <p class="text-[10px] font-bold text-slate-500 uppercase mb-6 border-b border-slate-200 pb-4">
-                    Supported formats: <strong class="text-emerald-600">.XLSX, .XLS, .CSV</strong>
+                <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-6 border-b border-slate-200 dark:border-slate-700 pb-4 transition-colors">
+                    Supported formats: <strong class="text-emerald-600 dark:text-emerald-400 transition-colors">.XLSX, .XLS, .CSV</strong>
                 </p>
 
                 <form method="POST" action="{% url 'shipment_import' %}" enctype="multipart/form-data" class="flex-1 flex flex-col">
                     {% csrf_token %}
                     
                     <div class="flex-1 w-full flex items-center justify-center">
-                        <label for="excel-upload" class="w-full h-64 flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-sm bg-slate-50 hover:bg-emerald-50 hover:border-emerald-400 transition-all cursor-pointer group relative overflow-hidden">
+                        <label for="excel-upload" class="w-full h-64 flex flex-col items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-sm bg-slate-50 dark:bg-slate-950 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:border-emerald-400 dark:hover:border-emerald-500 transition-all cursor-pointer group relative overflow-hidden">
                             
-                            <div class="flex flex-col items-center justify-center pt-5 pb-6 text-center z-10">
-                                <div class="bg-white p-4 rounded-full shadow-sm border border-slate-200 mb-4 group-hover:scale-110 transition-transform">
-                                    <i data-lucide="file-up" class="w-8 h-8 text-emerald-500"></i>
+                            <div class="flex flex-col items-center justify-center pt-5 pb-6 text-center z-10 transition-colors">
+                                <div class="bg-white dark:bg-slate-800 p-4 rounded-full shadow-sm border border-slate-200 dark:border-slate-700 mb-4 group-hover:scale-110 transition-transform">
+                                    <i data-lucide="file-up" class="w-8 h-8 text-emerald-500 dark:text-emerald-400 transition-colors"></i>
                                 </div>
-                                <p class="mb-2 text-sm font-black text-slate-700 uppercase tracking-tight">
-                                    <span class="text-emerald-600">Click to browse</span> or drag and drop
+                                <p class="mb-2 text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-tight transition-colors">
+                                    <span class="text-emerald-600 dark:text-emerald-400 transition-colors">Click to browse</span> or drag and drop
                                 </p>
-                                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Excel or CSV file only (Max 10MB)</p>
+                                <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Excel or CSV file only (Max 10MB)</p>
                             </div>
                             
                             <input id="excel-upload" type="file" name="excel_file" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" class="hidden" onchange="showFileName(this)" />
                             
-                            <i data-lucide="table-properties" class="absolute -right-10 -bottom-10 w-48 h-48 text-slate-200 opacity-20 transform -rotate-12 pointer-events-none"></i>
+                            <i data-lucide="table-properties" class="absolute -right-10 -bottom-10 w-48 h-48 text-slate-200 dark:text-slate-800 opacity-20 transform -rotate-12 pointer-events-none transition-colors"></i>
                         </label>
                     </div>
 
-                    <div id="file-name-display" class="hidden mt-4 bg-emerald-50 border border-emerald-200 p-3 flex justify-between items-center rounded-sm">
+                    <div id="file-name-display" class="hidden mt-4 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 p-3 flex justify-between items-center rounded-sm transition-colors">
                         <div class="flex items-center gap-3 overflow-hidden">
-                            <i data-lucide="file-check-2" class="w-5 h-5 text-emerald-600 flex-shrink-0"></i>
-                            <span id="file-name-text" class="text-xs font-black text-emerald-900 truncate">filename.xlsx</span>
+                            <i data-lucide="file-check-2" class="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0 transition-colors"></i>
+                            <span id="file-name-text" class="text-xs font-black text-emerald-900 dark:text-emerald-300 truncate transition-colors">filename.xlsx</span>
                         </div>
-                        <button type="button" onclick="clearFile()" class="text-rose-500 hover:text-rose-700 flex-shrink-0 px-2">
+                        <button type="button" onclick="clearFile()" class="text-rose-500 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 flex-shrink-0 px-2 transition-colors">
                             <i data-lucide="x" class="w-4 h-4"></i>
                         </button>
                     </div>
 
-                    <div class="pt-6 mt-6 border-t border-slate-200">
-                        <button type="submit" id="submit-btn" disabled class="w-full bg-slate-300 text-slate-500 py-4 font-black text-[11px] uppercase tracking-widest shadow-sm flex items-center justify-center gap-2 transition-all disabled:cursor-not-allowed">
+                    <div class="pt-6 mt-6 border-t border-slate-200 dark:border-slate-700 transition-colors">
+                        <button type="submit" id="submit-btn" disabled class="w-full bg-slate-300 dark:bg-slate-800 text-slate-500 dark:text-slate-500 py-4 font-black text-[11px] uppercase tracking-widest shadow-sm flex items-center justify-center gap-2 transition-all disabled:cursor-not-allowed">
                             <i data-lucide="database-zap" class="w-4 h-4"></i> Process & Import Schedule
                         </button>
                     </div>
@@ -71,50 +71,50 @@
         </div>
 
         <div class="lg:col-span-5 space-y-6">
-            <div class="bg-slate-800 text-white shadow-xl border border-slate-900">
+            <div class="bg-slate-800 dark:bg-slate-950 text-white shadow-xl border border-slate-900 dark:border-slate-800 transition-colors duration-300">
                 <div class="p-6">
-                    <h3 class="text-sm font-black uppercase tracking-widest mb-2 flex items-center gap-2 text-emerald-400">
+                    <h3 class="text-sm font-black uppercase tracking-widest mb-2 flex items-center gap-2 text-emerald-400 dark:text-emerald-500 transition-colors">
                         <i data-lucide="info" class="w-5 h-5"></i> Expected File Format
                     </h3>
-                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-6 border-b border-slate-700 pb-4">
+                    <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase mb-6 border-b border-slate-700 dark:border-slate-800 pb-4 transition-colors">
                         Please ensure your Excel file columns match exactly as shown below. Row 1 must be the header.
                     </p>
 
-                    <div class="overflow-x-auto bg-slate-900 rounded-sm border border-slate-700">
+                    <div class="overflow-x-auto bg-slate-900 dark:bg-slate-900 rounded-sm border border-slate-700 dark:border-slate-800 transition-colors">
                         <table class="w-full text-left text-xs border-collapse">
-                            <thead class="bg-slate-950 text-slate-300 uppercase font-black text-[8px]">
+                            <thead class="bg-slate-950 dark:bg-slate-950 text-slate-300 dark:text-slate-400 uppercase font-black text-[8px] transition-colors">
                                 <tr>
-                                    <th class="py-2 px-3 border-r border-slate-800">PO_No</th>
-                                    <th class="py-2 px-3 border-r border-slate-800">Supplier</th>
-                                    <th class="py-2 px-3 border-r border-slate-800">Delivery_Date</th>
-                                    <th class="py-2 px-3 text-emerald-400">Status</th>
+                                    <th class="py-2 px-3 border-r border-slate-800 dark:border-slate-800">PO_No</th>
+                                    <th class="py-2 px-3 border-r border-slate-800 dark:border-slate-800">Supplier</th>
+                                    <th class="py-2 px-3 border-r border-slate-800 dark:border-slate-800">Delivery_Date</th>
+                                    <th class="py-2 px-3 text-emerald-400 dark:text-emerald-500">Status</th>
                                 </tr>
                             </thead>
-                            <tbody class="font-mono text-[10px] text-slate-400">
-                                <tr class="border-b border-slate-800 hover:bg-slate-800">
-                                    <td class="py-2 px-3 border-r border-slate-800 text-slate-200">PO-2601-001</td>
-                                    <td class="py-2 px-3 border-r border-slate-800">Yamamura</td>
-                                    <td class="py-2 px-3 border-r border-slate-800 text-amber-200">2026-04-15</td>
-                                    <td class="py-2 px-3 text-emerald-300">Approved</td>
+                            <tbody class="font-mono text-[10px] text-slate-400 dark:text-slate-500 transition-colors">
+                                <tr class="border-b border-slate-800 dark:border-slate-800 hover:bg-slate-800 dark:hover:bg-slate-800 transition-colors">
+                                    <td class="py-2 px-3 border-r border-slate-800 dark:border-slate-800 text-slate-200 dark:text-slate-300 transition-colors">PO-2601-001</td>
+                                    <td class="py-2 px-3 border-r border-slate-800 dark:border-slate-800 transition-colors">Yamamura</td>
+                                    <td class="py-2 px-3 border-r border-slate-800 dark:border-slate-800 text-amber-200 dark:text-amber-300 transition-colors">2026-04-15</td>
+                                    <td class="py-2 px-3 text-emerald-300 dark:text-emerald-400 transition-colors">Approved</td>
                                 </tr>
-                                <tr class="border-b border-slate-800 hover:bg-slate-800">
-                                    <td class="py-2 px-3 border-r border-slate-800 text-slate-200">PO-2601-002</td>
-                                    <td class="py-2 px-3 border-r border-slate-800">SMC Corp</td>
-                                    <td class="py-2 px-3 border-r border-slate-800 text-amber-200">2026-04-18</td>
-                                    <td class="py-2 px-3 text-emerald-300">Shipped</td>
+                                <tr class="border-b border-slate-800 dark:border-slate-800 hover:bg-slate-800 dark:hover:bg-slate-800 transition-colors">
+                                    <td class="py-2 px-3 border-r border-slate-800 dark:border-slate-800 text-slate-200 dark:text-slate-300 transition-colors">PO-2601-002</td>
+                                    <td class="py-2 px-3 border-r border-slate-800 dark:border-slate-800 transition-colors">SMC Corp</td>
+                                    <td class="py-2 px-3 border-r border-slate-800 dark:border-slate-800 text-amber-200 dark:text-amber-300 transition-colors">2026-04-18</td>
+                                    <td class="py-2 px-3 text-emerald-300 dark:text-emerald-400 transition-colors">Shipped</td>
                                 </tr>
-                                <tr class="hover:bg-slate-800">
-                                    <td class="py-2 px-3 border-r border-slate-800 text-slate-200">PO-2601-003</td>
-                                    <td class="py-2 px-3 border-r border-slate-800">Maersk</td>
-                                    <td class="py-2 px-3 border-r border-slate-800 text-amber-200">2026-04-20</td>
-                                    <td class="py-2 px-3 text-emerald-300">Pending</td>
+                                <tr class="hover:bg-slate-800 dark:hover:bg-slate-800 transition-colors">
+                                    <td class="py-2 px-3 border-r border-slate-800 dark:border-slate-800 text-slate-200 dark:text-slate-300 transition-colors">PO-2601-003</td>
+                                    <td class="py-2 px-3 border-r border-slate-800 dark:border-slate-800 transition-colors">Maersk</td>
+                                    <td class="py-2 px-3 border-r border-slate-800 dark:border-slate-800 text-amber-200 dark:text-amber-300 transition-colors">2026-04-20</td>
+                                    <td class="py-2 px-3 text-emerald-300 dark:text-emerald-400 transition-colors">Pending</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
 
-                    <div class="mt-6 bg-rose-500/10 border border-rose-500/30 p-3 rounded-sm">
-                        <p class="text-[9px] font-black text-rose-400 uppercase tracking-widest flex gap-2">
+                    <div class="mt-6 bg-rose-500/10 dark:bg-rose-900/20 border border-rose-500/30 dark:border-rose-800 p-3 rounded-sm transition-colors">
+                        <p class="text-[9px] font-black text-rose-400 dark:text-rose-500 uppercase tracking-widest flex gap-2 transition-colors">
                             <i data-lucide="alert-circle" class="w-3 h-3 flex-shrink-0 mt-0.5"></i>
                             Dates must be formatted as YYYY-MM-DD. Incorrect formats will be rejected.
                         </p>
@@ -143,8 +143,8 @@
             
             // Enable and style button
             submitBtn.disabled = false;
-            submitBtn.classList.remove('bg-slate-300', 'text-slate-500');
-            submitBtn.classList.add('bg-emerald-700', 'hover:bg-emerald-800', 'text-white', 'active:scale-95');
+            submitBtn.classList.remove('bg-slate-300', 'text-slate-500', 'dark:bg-slate-800');
+            submitBtn.classList.add('bg-emerald-700', 'hover:bg-emerald-800', 'text-white', 'active:scale-95', 'dark:bg-emerald-600', 'dark:hover:bg-emerald-700');
         }
     }
 
@@ -158,8 +158,8 @@
         
         // Disable and revert button style
         submitBtn.disabled = true;
-        submitBtn.classList.add('bg-slate-300', 'text-slate-500');
-        submitBtn.classList.remove('bg-emerald-700', 'hover:bg-emerald-800', 'text-white', 'active:scale-95');
+        submitBtn.classList.add('bg-slate-300', 'text-slate-500', 'dark:bg-slate-800');
+        submitBtn.classList.remove('bg-emerald-700', 'hover:bg-emerald-800', 'text-white', 'active:scale-95', 'dark:bg-emerald-600', 'dark:hover:bg-emerald-700');
     }
 </script>
 {% endblock %}

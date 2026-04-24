@@ -1,0 +1,1171 @@
+{% extends "Inventory/base.html" %}
+
+{% block title %}Label Designer - Asia Integrated Machine Inc.{% endblock %}
+
+{% block content %}
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<style>
+    .designer-bg {
+        background-size: 20px 20px;
+        background-image: linear-gradient(to right, #cbd5e1 1px, transparent 1px), linear-gradient(to bottom, #cbd5e1 1px, transparent 1px);
+    }
+    html.dark .designer-bg {
+        background-image: linear-gradient(to right, #334155 1px, transparent 1px), linear-gradient(to bottom, #334155 1px, transparent 1px);
+    }
+    .draggable-item {
+        position: absolute;
+        cursor: grab;
+        user-select: none;
+        white-space: nowrap;
+        border: 0px solid transparent;
+        padding: 0px;
+        transform-origin: center center;
+    }
+    .draggable-item:active { cursor: grabbing; }
+    .is-selected {
+        outline: 2px dashed #0ea5e9 !important;
+        outline-offset: 4px;
+        z-index: 50;
+    }
+    .settings-scroll::-webkit-scrollbar { width: 4px; }
+    .settings-scroll::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
+    html.dark .settings-scroll::-webkit-scrollbar-thumb { background: #475569; }
+    .is-locked {
+        cursor: not-allowed !important;
+    }
+    .is-locked.is-selected {
+        outline: 2px dashed #f43f5e !important; /* Subtle na kulay red/rose na dashed */
+        outline-offset: 4px;
+    }
+</style>
+
+<div class="w-full px-2 sm:px-4 mt-4 text-slate-800 dark:text-slate-200 font-sans transition-colors duration-300 h-[calc(100vh-80px)] flex flex-col">
+    
+    <div class="border-b-2 border-slate-800 dark:border-slate-700 pb-2 mb-4 flex flex-col md:flex-row md:items-end md:justify-between transition-colors flex-shrink-0">
+        <div>
+            <h1 class="text-2xl font-black text-slate-900 dark:text-slate-100 uppercase tracking-tighter flex items-center gap-2 transition-colors">
+                <i data-lucide="printer" class="w-6 h-6 text-sky-600 dark:text-sky-500"></i> Label Designer Pro  
+            </h1>
+            <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-widest">Create professional labels with advanced customization</p>
+        </div>
+        <div class="flex gap-2 mt-3 md:mt-0">
+            <button onclick="printCustomLabel()" class="bg-sky-600 hover:bg-sky-700 text-white px-6 py-2 text-[10px] font-black uppercase tracking-widest transition-transform active:scale-95 shadow-md flex items-center justify-center gap-2 rounded-sm border border-sky-800">
+                <i data-lucide="printer" class="w-3 h-3"></i> Print
+            </button>
+            <button onclick="exportLabelToImage()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-transform active:scale-95 shadow-md flex items-center justify-center gap-2 rounded-sm border border-emerald-800">
+                <i data-lucide="download" class="w-3 h-3"></i> Export
+            </button>
+            <button onclick="openAuditLogs()" class="bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-transform active:scale-95 shadow-md flex items-center justify-center gap-2 rounded-sm border border-slate-800">
+                <i data-lucide="history" class="w-3 h-3"></i> Logs
+            </button>
+        </div>
+    </div>
+
+    <div class="flex flex-col lg:flex-row gap-4 flex-1 overflow-hidden pb-4">
+        
+        <div class="w-full lg:w-80 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm flex flex-col h-full transition-colors overflow-hidden rounded-sm">
+            <div class="bg-slate-800 dark:bg-slate-950 px-4 py-3 flex justify-between items-center border-b border-slate-900 dark:border-slate-800 transition-colors flex-shrink-0">
+                <h3 class="text-[11px] font-black text-white uppercase tracking-widest flex items-center gap-2">
+                    <i data-lucide="settings" class="w-4 h-4 text-sky-400"></i> Properties
+                </h3>
+            </div>
+
+            <div class="p-3 space-y-2 overflow-y-auto settings-scroll flex-1">
+                
+                <details class="group bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-sm">
+                    <summary class="cursor-pointer p-3 font-black text-[10px] uppercase tracking-widest text-slate-700 dark:text-slate-300 flex justify-between items-center list-none">
+                        <div class="flex items-center gap-2"><i data-lucide="layout-template" class="w-3.5 h-3.5 text-rose-500"></i> Template & Paper</div>
+                        <i data-lucide="chevron-down" class="w-4 h-4 transition-transform group-open:rotate-180"></i>
+                    </summary>
+                    <div class="p-3 border-t border-slate-200 dark:border-slate-800 space-y-3">
+                        <div class="space-y-1">
+                            <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Label Type / Purpose</label>
+                            <select id="labelTypeSelector" onchange="applyLabelType()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-2 text-xs font-bold text-slate-800 dark:text-slate-200 focus:border-sky-500 outline-none transition-colors">
+                                <option value="item">Item / SKU Label</option>
+                                <option value="lpn">Receiving / LPN (Pallet ID)</option>
+                                <option value="putaway">Putaway Label</option>
+                                <option value="bin">Bin / Location Tag</option>
+                                <option value="case">Carton / Case Label</option>
+                                <option value="shipping">Shipping Label (Outbound)</option>
+                                <option value="asset">Asset Tag</option>
+                                <option value="qa">QA / Inspection Hold Label</option>
+                                <option value="crossdock">Cross-Dock Label</option>
+                            </select>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Paper Size (Width x Height)</label>
+                            <select id="paperSizeSelector" onchange="applyPaperSize()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-2 text-xs font-bold text-slate-800 dark:text-slate-200 focus:border-sky-500 outline-none transition-colors">
+                                <option value="200x100">2" x 1" (50.8 x 25.4mm) - Small Item</option>
+                                <option value="300x100">3" x 1" (76.2 x 25.4mm) - Standard Item</option>
+                                <option value="300x200">3" x 2" (76.2 x 50.8mm) - Small Bin/Asset</option>
+                                <option value="400x200">4" x 2" (101.6 x 50.8mm) - Standard Bin</option>
+                                <option value="400x300" selected>4" x 3" (101.6 x 76.2mm) - Standard Case</option>
+                                <option value="400x400">4" x 4" (101.6 x 101.6mm) - Pallet / LPN</option>
+                                <option value="400x600">4" x 6" (101.6 x 152.4mm) - Standard Shipping</option>
+                                <option value="400x800">4" x 8" (101.6 x 203.2mm) - Large Shipping</option>
+                                <option value="600x400">6" x 4" (152.4 x 101.6mm) - Large Pallet (Landscape)</option>
+                            </select>
+                        </div>
+
+                        <div class="pt-2 border-t border-slate-200 dark:border-slate-800 mt-2">
+                            <div class="flex items-center gap-2">
+                                <input type="checkbox" id="enableSnap" checked class="w-4 h-4 text-rose-600 rounded cursor-pointer">
+                                <label for="enableSnap" class="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase cursor-pointer">Snap to Grid (10px)</label>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+
+                <details class="group bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-sm">
+                    <summary class="cursor-pointer p-3 font-black text-[10px] uppercase tracking-widest text-slate-700 dark:text-slate-300 flex justify-between items-center list-none">
+                        <div class="flex items-center gap-2"><i data-lucide="printer" class="w-3.5 h-3.5 text-sky-500"></i> Printer Settings</div>
+                        <i data-lucide="chevron-down" class="w-4 h-4 transition-transform group-open:rotate-180"></i>
+                    </summary>
+                    <div class="p-3 border-t border-slate-200 dark:border-slate-800 space-y-3">
+                        <div class="space-y-1">
+                            <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Printer Model</label>
+                            <select id="printerModel" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-2 text-xs font-bold text-slate-800 dark:text-slate-200 focus:border-sky-500 outline-none transition-colors">
+                                <option value="BLP-410">BLP-410 Thermal Printer</option>
+                                <option value="Zebra ZD421">Zebra ZD421</option>
+                            </select>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Paper Type</label>
+                            <select id="paperType" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-2 text-xs font-bold text-slate-800 dark:text-slate-200 focus:border-sky-500 outline-none transition-colors">
+                                <option value="gap">Gap Paper</option>
+                                <option value="continuous">Continuous Receipt</option>
+                                <option value="blackmark">Black Mark Paper</option>
+                            </select>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Export Format</label>
+                            <select id="exportFormat" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-2 text-xs font-bold text-slate-800 dark:text-slate-200 focus:border-sky-500 outline-none transition-colors">
+                                <option value="png">PNG Image</option>
+                                <option value="bmp">BMP Image (BLP-410 Compatible)</option>
+                                <option value="pdf">PDF Document</option>
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="space-y-1">
+                                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Resolution</label>
+                                <select id="printerDpi" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-2 text-xs font-bold text-slate-800 dark:text-slate-200 focus:border-sky-500 outline-none transition-colors">
+                                    <option value="203">203 DPI</option>
+                                    <option value="300">300 DPI</option>
+                                    <option value="600">600 DPI</option>
+                                </select>
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Rotation</label>
+                                <select id="printerRotation" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-2 text-xs font-bold text-slate-800 dark:text-slate-200 focus:border-sky-500 outline-none transition-colors">
+                                    <option value="0">0°</option>
+                                    <option value="90">90°</option>
+                                    <option value="180">180°</option>
+                                    <option value="270">270°</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+
+                <details class="group bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-sm" open>
+                    <summary class="cursor-pointer p-3 font-black text-[10px] uppercase tracking-widest text-slate-700 dark:text-slate-300 flex justify-between items-center list-none">
+                        <div class="flex items-center gap-2"><i data-lucide="database" class="w-3.5 h-3.5 text-indigo-500"></i> Content Data</div>
+                        <i data-lucide="chevron-down" class="w-4 h-4 transition-transform group-open:rotate-180"></i>
+                    </summary>
+                    <div class="p-3 border-t border-slate-200 dark:border-slate-800 space-y-3">
+                        <div class="space-y-1 pb-2 border-b border-slate-200 dark:border-slate-700">
+                            <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Load Product Data</label>
+                            <select onchange="loadProductData(this.value)" class="w-full bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800 p-2 text-xs font-bold text-indigo-800 dark:text-indigo-200 focus:border-indigo-500 outline-none transition-colors">
+                                <option value="">Select a product...</option>
+                                <option value="MOTOR">Servo Motor 24V - ITM-260408-A</option>
+                                <option value="SENSOR">Optical Sensor - ITM-889900-B</option>
+                            </select>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Company Name</label>
+                            <input type="text" id="inputCompany" value="AIM INC. WMS" oninput="updateLiveLabel()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-2 text-xs font-black text-slate-900 dark:text-slate-100 focus:border-sky-500 outline-none uppercase transition-colors">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Label Title / Header</label>
+                            <input type="text" id="inputTitle" value="Servo Motor 24V DC" oninput="updateLiveLabel()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-2 text-xs font-bold text-slate-800 dark:text-slate-200 focus:border-sky-500 outline-none transition-colors">
+                        </div>
+                        
+                        <div class="pt-3 border-t border-slate-200 dark:border-slate-700">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Custom Fields</label>
+                                <button type="button" onclick="addCustomField()" class="text-[9px] bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-400 px-2 py-1 rounded font-black hover:bg-sky-200 dark:hover:bg-sky-800 transition-colors">+ Add</button>
+                            </div>
+                            <div id="custom-fields-container" class="space-y-2 max-h-32 overflow-y-auto settings-scroll pr-1"></div>
+                        </div>
+
+                        <div class="pt-3 border-t border-slate-200 dark:border-slate-700">
+                            <div class="flex items-center gap-2 mb-3">
+                                <input type="checkbox" id="enableSequence" onchange="toggleSequence()" class="w-4 h-4 rounded text-sky-600 focus:ring-sky-500">
+                                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Batch Printing (e.g., 1/5)</label>
+                            </div>
+                            
+                            <div id="sequence-settings" class="hidden bg-sky-50 dark:bg-sky-900/10 p-3 rounded border border-sky-100 dark:border-sky-900/30 space-y-2">
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label class="block text-[9px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">Current</label>
+                                        <input type="number" id="seqCurrent" value="1" oninput="updateLiveLabel()" class="w-full p-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded outline-none focus:border-sky-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[9px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">Total</label>
+                                        <input type="number" id="seqTotal" value="5" oninput="updateLiveLabel()" class="w-full p-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded outline-none focus:border-sky-500">
+                                    </div>
+                                </div>
+                                <div class="text-[10px] font-black text-sky-700 dark:text-sky-400 text-center bg-white dark:bg-slate-900 py-1 mt-1 border border-sky-200 dark:border-sky-800 rounded">
+                                    Preview: <span id="seqPreviewText">1/5</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-3 border-t border-slate-200 dark:border-slate-700 mt-3">
+                            <label class="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase flex items-center gap-1">
+                                <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-500"></i> Bulk Import (CSV)
+                            </label>
+                            <p class="text-[8px] font-bold text-slate-500 mb-1">Format: Title, Barcode, Company</p>
+                            <input type="file" id="csvFile" accept=".csv" class="w-full text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-1 rounded cursor-pointer">
+                        </div>
+                    </div>
+                </details>
+
+                <details class="group bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-sm">
+                    <summary class="cursor-pointer p-3 font-black text-[10px] uppercase tracking-widest text-slate-700 dark:text-slate-300 flex justify-between items-center list-none">
+                        <div class="flex items-center gap-2"><i data-lucide="barcode" class="w-3.5 h-3.5 text-teal-500"></i> Barcode Format</div>
+                        <i data-lucide="chevron-down" class="w-4 h-4 transition-transform group-open:rotate-180"></i>
+                    </summary>
+                    <div class="p-3 border-t border-slate-200 dark:border-slate-800 space-y-3">
+                        <div class="space-y-1">
+                            <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Barcode Value</label>
+                            <input type="text" id="inputCode" value="ITM-260408-A" oninput="updateLiveLabel()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-2 text-xs font-black text-slate-900 dark:text-slate-100 focus:border-teal-500 outline-none uppercase transition-colors text-teal-700 dark:text-teal-400">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Barcode Type</label>
+                            <select id="inputFormat" onchange="updateLiveLabel()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-2 text-xs font-bold text-slate-800 dark:text-slate-200 focus:border-teal-500 outline-none uppercase transition-colors">
+                                <option value="CODE128">Code 128</option>
+                                <option value="CODE39">Code 39</option>
+                                <option value="ITF14">ITF-14</option>
+                                <option value="EAN13">EAN-13</option>
+                                <option value="UPC">UPC-A</option>
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 pt-1">
+                            <div class="space-y-1">
+                                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Bar Width</label>
+                                <input type="number" id="barcodeWidth" value="1.5" step="0.5" min="1" max="4" oninput="updateLiveLabel()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 outline-none focus:border-teal-500 transition-colors">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Height (px)</label>
+                                <input type="number" id="barcodeHeight" value="50" min="20" max="150" oninput="updateLiveLabel()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 outline-none focus:border-teal-500 transition-colors">
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 mt-2 pt-2 border-t border-slate-200 dark:border-slate-700">
+                            <input type="checkbox" id="showBarcodeText" checked onchange="updateLiveLabel()" class="w-4 h-4 text-teal-600 rounded cursor-pointer dark:bg-slate-800 dark:border-slate-600">
+                            <label for="showBarcodeText" class="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase cursor-pointer">Show Barcode Text</label>
+                        </div>
+                    </div>
+                </details>
+                
+                <details class="group bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-sm">
+                    <summary class="cursor-pointer p-2.5 font-black text-[10px] uppercase tracking-widest text-slate-700 dark:text-slate-300 flex justify-between items-center list-none">
+                        <span class="flex items-center gap-2"><i data-lucide="qr-code" class="w-3.5 h-3.5 text-purple-500"></i> QR Code Settings</span>
+                        <i data-lucide="chevron-down" class="w-4 h-4 transition-transform group-open:rotate-180"></i>
+                    </summary>
+                    <div class="p-3 border-t border-slate-200 dark:border-slate-800 space-y-3">
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="enableQR" onchange="updateLiveLabel()" class="w-4 h-4 text-purple-600 rounded focus:ring-purple-500 outline-none">
+                            <label class="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase cursor-pointer" for="enableQR">Enable QR Code</label>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[9px] font-bold text-slate-500 uppercase">QR Data Input</label>
+                            <input type="text" id="qrDataInput" oninput="updateLiveLabel()" placeholder="Required to show QR..." class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-2 text-xs font-bold outline-none focus:border-purple-500 transition-colors">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="space-y-1">
+                                <label class="text-[9px] font-bold text-slate-500 uppercase">Width (px)</label>
+                                <input type="number" id="qrWidth" value="60" min="20" oninput="updateLiveLabel()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-1.5 text-xs font-bold outline-none focus:border-purple-500">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[9px] font-bold text-slate-500 uppercase">Height (px)</label>
+                                <input type="number" id="qrHeight" value="60" min="20" oninput="updateLiveLabel()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-1.5 text-xs font-bold outline-none focus:border-purple-500">
+                            </div>
+                        </div>
+                    </div>
+                </details>
+
+                <details class="group bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-sm">
+                    <summary class="cursor-pointer p-2.5 font-black text-[10px] uppercase tracking-widest text-slate-700 dark:text-slate-300 flex justify-between items-center list-none">
+                        <span class="flex items-center gap-2"><i data-lucide="image" class="w-3.5 h-3.5 text-orange-500"></i> Product Photo / Logo</span>
+                        <i data-lucide="chevron-down" class="w-4 h-4 transition-transform group-open:rotate-180"></i>
+                    </summary>
+                    <div class="p-3 border-t border-slate-200 dark:border-slate-800 space-y-3">
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="enableImage" onchange="updateLiveLabel()" class="w-4 h-4 text-orange-600 rounded cursor-pointer">
+                            <label class="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase cursor-pointer" for="enableImage">Enable Image</label>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[9px] font-bold text-slate-500 uppercase">Upload File</label>
+                            <input type="file" id="imageUpload" accept="image/*" onchange="handleImageUpload(event)" class="w-full bg-white dark:bg-slate-900 text-xs border border-slate-300 dark:border-slate-700 p-1 rounded cursor-pointer">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="space-y-1">
+                                <label class="text-[9px] font-bold text-slate-500 uppercase">Width (px)</label>
+                                <input type="number" id="imgWidthInput" value="64" min="10" oninput="updateImageSize()" class="w-full border border-slate-300 dark:border-slate-700 p-1 text-xs font-bold bg-white dark:bg-slate-900 outline-none focus:border-orange-500">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[9px] font-bold text-slate-500 uppercase">Height (px)</label>
+                                <input type="number" id="imgHeightInput" value="64" min="10" oninput="updateImageSize()" class="w-full border border-slate-300 dark:border-slate-700 p-1 text-xs font-bold bg-white dark:bg-slate-900 outline-none focus:border-orange-500">
+                            </div>
+                        </div>
+                        <button onclick="removeImage()" id="removeImgBtn" class="w-full text-[9px] bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 py-1.5 border border-rose-200 dark:border-rose-800 rounded font-bold hidden uppercase tracking-wider">Remove Image</button>
+                    </div>
+                </details>
+
+                <details class="group bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-sm">
+                    <summary class="cursor-pointer p-3 font-black text-[10px] uppercase tracking-widest text-slate-700 dark:text-slate-300 flex justify-between items-center list-none">
+                        <div class="flex items-center gap-2"><i data-lucide="paintbrush" class="w-3.5 h-3.5 text-amber-500"></i> Element Styling</div>
+                        <i data-lucide="chevron-down" class="w-4 h-4 transition-transform group-open:rotate-180"></i>
+                    </summary>
+                    <div class="p-3 border-t border-slate-200 dark:border-slate-800 space-y-3 relative">
+                        
+                        <div class="text-[8px] font-bold text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-900/20 p-1.5 rounded-sm border border-amber-200 dark:border-amber-800/50 mb-2">
+                            <i data-lucide="mouse-pointer-click" class="w-3 h-3 inline"></i> Click an element on canvas to style it.
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Font Family</label>
+                            <select id="styleFontFamily" onchange="applyStyling()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-1.5 text-xs font-bold focus:border-amber-500 outline-none transition-colors">
+                                <option value="Arial, sans-serif">Arial (Standard)</option>
+                                <option value="Helvetica, sans-serif">Helvetica</option>
+                                <option value="Verdana, sans-serif">Verdana</option>
+                                <option value="Tahoma, sans-serif">Tahoma</option>
+                                <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+                                <option value="Georgia, serif">Georgia</option>
+                                <option value="'Courier New', monospace">Courier New (Monospace)</option>
+                                <option value="'Times New Roman', serif">Times New Roman</option>
+                                <option value="'Inter', sans-serif">Inter</option>
+                                <option value="Impact, sans-serif">Impact</option>
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="space-y-1">
+                                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Size (px)</label>
+                                <input type="number" id="styleFontSize" oninput="applyStyling()" value="12" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-1.5 text-xs font-bold focus:border-amber-500 outline-none transition-colors">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Weight</label>
+                                <select id="styleFontWeight" onchange="applyStyling()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-1.5 text-xs font-bold focus:border-amber-500 outline-none transition-colors">
+                                    <option value="normal">Normal</option>
+                                    <option value="bold">Bold (700)</option>
+                                    <option value="900">Black (900)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-2">
+                            <div class="space-y-1">
+                                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Style</label>
+                                <select id="styleFontStyle" onchange="applyStyling()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-1.5 text-[10px] font-bold focus:border-amber-500 outline-none transition-colors">
+                                    <option value="normal">Normal</option>
+                                    <option value="italic">Italic</option>
+                                </select>
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Casing</label>
+                                <select id="styleTextTransform" onchange="applyStyling()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-1.5 text-[10px] font-bold focus:border-amber-500 outline-none transition-colors">
+                                    <option value="none">Aa</option>
+                                    <option value="uppercase">AA</option>
+                                    <option value="lowercase">aa</option>
+                                </select>
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Align</label>
+                                <select id="styleTextAlign" onchange="applyStyling()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-1.5 text-[10px] font-bold focus:border-amber-500 outline-none transition-colors">
+                                    <option value="left">Left</option>
+                                    <option value="center">Center</option>
+                                    <option value="right">Right</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="space-y-1">
+                                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Spacing (px)</label>
+                                <input type="number" id="styleLetterSpacing" step="0.5" value="0" oninput="applyStyling()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-1.5 text-xs font-bold focus:border-amber-500 outline-none transition-colors">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Decoration</label>
+                                <select id="styleTextDeco" onchange="applyStyling()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-1.5 text-[10px] font-bold focus:border-amber-500 outline-none transition-colors">
+                                    <option value="none">None</option>
+                                    <option value="underline">Underline</option>
+                                 <option value="line-through">Strike</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <hr class="border-slate-200 dark:border-slate-700 my-2">
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="space-y-1">
+                                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Text Color</label>
+                                <div class="flex items-center gap-1">
+                                    <input type="color" id="styleColor" oninput="applyStyling()" value="#000000" class="w-full h-8 border border-slate-300 dark:border-slate-700 p-0 cursor-pointer rounded-sm">
+                                </div>
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Bg Color</label>
+                                <div class="flex items-center gap-1">
+                                    <input type="color" id="styleBgColor" oninput="applyStyling()" value="#ffffff" class="w-full h-8 border border-slate-300 dark:border-slate-700 p-0 cursor-pointer rounded-sm">
+                                    <button type="button" onclick="document.getElementById('styleBgColor').value='#ffffff'; applyStyling('clearBg');" class="text-[10px] bg-slate-200 dark:bg-slate-700 p-1.5 rounded">Clear</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="border-slate-200 dark:border-slate-700 my-2">
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="space-y-1">
+                                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Border (px)</label>
+                                <input type="number" id="styleBorderWidth" min="0" value="0" oninput="applyStyling()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-1.5 text-xs font-bold focus:border-amber-500 outline-none transition-colors">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Border Style</label>
+                                <select id="styleBorderStyle" onchange="applyStyling()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-1.5 text-xs font-bold focus:border-amber-500 outline-none transition-colors">
+                                    <option value="solid">Solid</option>
+                                    <option value="dashed">Dashed</option>
+                                    <option value="dotted">Dotted</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="space-y-1">
+                                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Border Color</label>
+                                <input type="color" id="styleBorderColor" onchange="applyStyling()" value="#000000" class="w-full h-8 border border-slate-300 dark:border-slate-700 p-0 cursor-pointer rounded-sm">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Padding (px)</label>
+                                <input type="number" id="stylePadding" min="0" value="0" oninput="applyStyling()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-1.5 text-xs font-bold focus:border-amber-500 outline-none transition-colors">
+                            </div>
+                        </div>
+
+                        <hr class="border-slate-200 dark:border-slate-700 my-2">
+
+                        <div class="space-y-1">
+                            <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Element Rotation</label>
+                            <select id="styleRotation" onchange="applyStyling()" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 p-1.5 text-xs font-black focus:border-amber-500 outline-none transition-colors text-amber-700 dark:text-amber-500">
+                                <option value="0">0° (Horizontal)</option>
+                                <option value="90">90° (Vertical Down)</option>
+                                <option value="180">180° (Upside Down)</option>
+                                <option value="270">270° (Vertical Up)</option>
+                            </select>
+                        </div>
+
+                        <hr class="border-slate-200 dark:border-slate-700 my-2">
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="space-y-1">
+                                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Corner Radius (px)</label>
+                                <input type="number" id="styleBorderRadius" min="0" value="0" oninput="applyStyling()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-1.5 text-xs font-bold outline-none transition-colors">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Layer Order</label>
+                                <div class="flex gap-1">
+                                    <button type="button" onclick="changeZIndex(1)" class="flex-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 p-1.5 text-xs font-bold rounded border border-amber-200 dark:border-amber-800">Front</button>
+                                    <button type="button" onclick="changeZIndex(-1)" class="flex-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 p-1.5 text-xs font-bold rounded border border-amber-200 dark:border-amber-800">Back</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="border-slate-200 dark:border-slate-700 my-2">
+
+                        <label class="flex items-center justify-between bg-slate-100 dark:bg-slate-800 p-2.5 rounded border border-slate-300 dark:border-slate-700 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                            <span class="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest flex items-center gap-2">
+                                <i data-lucide="lock" class="w-3.5 h-3.5 text-rose-500"></i> Lock Element
+                            </span>
+                            <input type="checkbox" id="styleLock" onchange="toggleLock()" class="w-4 h-4 text-rose-600 rounded cursor-pointer">
+                        </label>
+                    </div>
+                </details>
+            </div>
+        </div>
+
+        <div class="flex-1 bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 shadow-inner flex justify-center items-start pt-10 pb-20 overflow-auto transition-colors designer-bg cursor-crosshair rounded-sm relative" id="designer-board">
+            
+            <div class="absolute top-4 right-4 text-[10px] font-black text-slate-400 uppercase tracking-widest bg-white/80 dark:bg-slate-900/80 px-3 py-1 rounded backdrop-blur-sm border border-slate-200 dark:border-slate-700 shadow-sm z-10 flex items-center gap-2">
+                <i data-lucide="eye" class="w-3 h-3 text-sky-500"></i> Preview <span id="dimensions-hint" class="ml-2 text-slate-500">400 x 300 px</span>
+            </div>
+
+            <div id="paper-canvas" class="bg-white shadow-[0_10px_40px_rgba(0,0,0,0.2)] relative overflow-hidden ring-1 ring-slate-300 dark:ring-slate-500 text-black border-black" style="border-width: 1px; padding: 10px; width: 400px; height: 300px; overflow: hidden;">
+                
+                <div id="el-company" class="draggable-item text-[14px] tracking-widest text-slate-900" style="top: 15px; left: 15px; color: #000000; font-family: Arial, sans-serif; font-weight: 900; transform: rotate(0deg);" data-rotation="0">
+                    AIM INC. WMS
+                </div>
+                
+                <div id="el-title" class="draggable-item text-[16px] text-slate-900" style="top: 40px; left: 15px; color: #000000; font-family: Arial, sans-serif; font-weight: 700; transform: rotate(0deg);" data-rotation="0">
+                    Servo Motor 24V DC
+                </div>
+
+                <div id="el-custom-fields" class="draggable-item flex flex-col gap-1 text-[10px]" style="top: 65px; left: 15px; color: #475569; font-family: Arial, sans-serif; font-weight: normal; transform: rotate(0deg);" data-rotation="0"></div>
+
+                <div id="el-barcode-wrapper" class="draggable-item flex flex-col items-center" style="top: 110px; left: 15px; transform: rotate(0deg);" data-rotation="0">
+                    <svg id="live-barcode"></svg>
+                    <span id="el-code-text" class="text-xs tracking-widest mt-0.5" style="color: #000000; font-family: Arial, sans-serif; font-weight: normal;">ITM-260408-A</span>
+                </div>
+
+                <div id="el-qrcode-wrapper" class="draggable-item hidden flex-col items-center" style="top: 15px; left: 220px; transform: rotate(0deg);" data-rotation="0">
+                    <div id="live-qrcode"></div>
+                </div>
+
+                <div id="el-image-wrapper" class="draggable-item hidden flex-col items-center" style="top: 80px; left: 200px; transform: rotate(0deg);" data-rotation="0">
+                    <img id="live-image" src="" alt="Product Logo" class="w-16 h-16 object-contain pointer-events-none">
+                </div>
+
+                <div id="el-sequence" class="draggable-item hidden text-[14px]" style="bottom: 15px; right: 15px; color: #000000; font-family: Arial, sans-serif; font-weight: 900; transform: rotate(0deg);" data-rotation="0">
+                    1/5
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div id="auditLogModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+    <div class="bg-white dark:bg-slate-900 w-full max-w-3xl rounded shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col max-h-[80vh] transform scale-95 transition-transform duration-300" id="auditLogModalContent">
+        
+        <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
+            <h3 class="font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest text-[11px] flex items-center gap-2">
+                <i data-lucide="history" class="w-4 h-4 text-sky-500"></i> Print & Export Audit Logs
+            </h3>
+            <button onclick="closeAuditLogs()" class="text-slate-400 hover:text-rose-500 transition-colors outline-none">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <div class="flex-1 overflow-auto p-0">
+            <table class="w-full text-left text-[10px] text-slate-600 dark:text-slate-400">
+                <thead class="bg-slate-100 dark:bg-slate-800 text-slate-500 uppercase font-bold sticky top-0 z-10 shadow-sm">
+                    <tr>
+                        <th class="px-4 py-3 whitespace-nowrap">Timestamp</th>
+                        <th class="px-4 py-3 whitespace-nowrap">Action</th>
+                        <th class="px-4 py-3 whitespace-nowrap">Label Format</th>
+                        <th class="px-4 py-3 whitespace-nowrap">Barcode / ID</th>
+                        <th class="px-4 py-3 whitespace-nowrap">Qty</th>
+                    </tr>
+                </thead>
+                <tbody id="auditLogTableBody" class="divide-y divide-slate-200 dark:divide-slate-700/50">
+                    </tbody>
+            </table>
+        </div>
+        
+    </div>
+</div>
+
+<script>
+    // --- STATE MANAGEMENT ---
+    let activeElement = null;
+    let isDragging = false;
+    let startX, startY, initialLeft, initialTop;
+    let customFields = [{ label: 'Weight:', value: '1.2kg' }, { label: 'Zone:', value: 'A-01' }];
+    let qrCodeInstance = null;
+
+    document.addEventListener("DOMContentLoaded", function() {
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        renderCustomFieldInputs(); 
+        updateLiveLabel(); 
+        setupDragAndDrop();
+    });
+
+    // --- TEMPLATE & PAPER ---
+    function applyLabelType() {
+        const val = document.getElementById('labelTypeSelector').value;
+        const title = document.getElementById('inputTitle');
+        const code = document.getElementById('inputCode');
+        
+        if(val === 'item') { 
+            title.value = "Servo Motor 24V DC"; code.value = "ITM-260408-A";
+            customFields = [{ label: 'Weight:', value: '1.2kg' }, { label: 'Zone:', value: 'A-01' }]; 
+        } else if(val === 'shipping') { 
+            title.value = "SHIP TO: John Doe"; code.value = "TRK-9988776655";
+            customFields = [{ label: 'Address:', value: '123 Main St.' }, { label: 'City:', value: 'Manila' }]; 
+            document.getElementById('paperSizeSelector').value="400x600"; applyPaperSize(); 
+        } else if(val === 'bin') { 
+            title.value = "RACK A - SHELF 01"; code.value = "BIN-A-01-01";
+            customFields = [{ label: 'Capacity:', value: '500kg' }]; 
+            document.getElementById('paperSizeSelector').value="400x200"; applyPaperSize(); 
+        } else if(val === 'lpn') {
+            title.value = "PALLET LPN"; code.value = "LPN-2026-0423-001";
+            customFields = [{ label: 'Supplier:', value: 'Yamamura' }, { label: 'Qty:', value: '100 Boxes' }];
+            document.getElementById('paperSizeSelector').value="400x400"; applyPaperSize(); 
+        } else if(val === 'qa') { 
+            title.value = "QA HOLD"; code.value = "HLD-445566";
+            customFields = [{ label: 'Reason:', value: 'Pending Insp.' }]; 
+        } else if(val === 'case') { 
+            title.value = "MASTER CARTON"; code.value = "BOX-556677";
+            customFields = [{ label: 'Items Inside:', value: '24 pcs' }]; 
+        } else if(val === 'asset') { 
+            title.value = "COMPANY ASSET"; code.value = "AST-999000";
+            customFields = [{ label: 'Assigned:', value: 'Warehouse 1' }]; 
+        }
+        renderCustomFieldInputs();
+        updateLiveLabel();
+    }
+
+    function applyPaperSize() {
+        const val = document.getElementById('paperSizeSelector').value;
+        const [w, h] = val.split('x');
+        const paper = document.getElementById('paper-canvas');
+        paper.style.width = w + 'px'; paper.style.height = h + 'px';
+        document.getElementById('dimensions-hint').innerText = `${w} x ${h} px`;
+    }
+
+    // --- CONTENT DATA ---
+    function loadProductData(val) {
+        if(val === 'MOTOR') {
+            document.getElementById('inputTitle').value = 'Servo Motor 24V';
+            document.getElementById('inputCode').value = 'ITM-260408-A';
+            customFields = [{ label: 'Brand:', value: 'Siemens' }, { label: 'Specs:', value: '24V / 5A' }];
+        } else if(val === 'SENSOR') {
+            document.getElementById('inputTitle').value = 'Optical Sensor';
+            document.getElementById('inputCode').value = 'ITM-889900-B';
+            customFields = [{ label: 'Brand:', value: 'Omron' }, { label: 'Range:', value: '2.5 Meters' }];
+        } else if(val === 'PUMP') {
+            document.getElementById('inputTitle').value = 'Hydraulic Pump';
+            document.getElementById('inputCode').value = 'ITM-112233-C';
+            customFields = [{ label: 'Pressure:', value: '300 PSI' }, { label: 'Flow:', value: '50L/min' }];
+        } else if(val === 'VALVE') {
+            document.getElementById('inputTitle').value = 'Control Valve';
+            document.getElementById('inputCode').value = 'ITM-445566-D';
+            customFields = [{ label: 'Type:', value: 'Pneumatic' }];
+        } else if(val === 'CONTROLLER') {
+            document.getElementById('inputTitle').value = 'PLC Controller';
+            document.getElementById('inputCode').value = 'ITM-778899-E';
+            customFields = [{ label: 'I/O:', value: '16 In / 16 Out' }, { label: 'Comm:', value: 'Ethernet/IP' }];
+        } else if(val === 'BELT') {
+            document.getElementById('inputTitle').value = 'Conveyor Belt 5m';
+            document.getElementById('inputCode').value = 'ITM-990011-F';
+            customFields = [{ label: 'Material:', value: 'PU' }, { label: 'Width:', value: '400mm' }];
+        }
+        renderCustomFieldInputs();
+        updateLiveLabel();
+    }
+
+    function renderCustomFieldInputs() {
+        const container = document.getElementById('custom-fields-container');
+        container.innerHTML = '';
+        customFields.forEach((field, index) => {
+            const div = document.createElement('div');
+            div.className = 'flex gap-1 items-center';
+            div.innerHTML = `
+                <input type="text" value="${field.label}" onchange="updateCustomField(${index}, 'label', this.value)" class="w-1/3 p-1.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-[10px] rounded focus:border-sky-500 outline-none">
+                <input type="text" value="${field.value}" onchange="updateCustomField(${index}, 'value', this.value)" class="flex-1 p-1.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-[10px] rounded focus:border-sky-500 outline-none">
+                <button onclick="removeCustomField(${index})" class="text-rose-600 font-bold px-1">×</button>
+            `;
+            container.appendChild(div);
+        });
+        updateLiveLabel(); 
+    }
+    function addCustomField() { customFields.push({ label: '', value: '' }); renderCustomFieldInputs(); }
+    function updateCustomField(index, key, val) { customFields[index][key] = val; updateLiveLabel(); }
+    function removeCustomField(index) { customFields.splice(index, 1); renderCustomFieldInputs(); }
+
+    function toggleSequence() {
+        const isEnabled = document.getElementById('enableSequence').checked;
+        const seqSet = document.getElementById('sequence-settings');
+        const seqEl = document.getElementById('el-sequence');
+        if (isEnabled) {
+            seqSet.classList.remove('hidden'); seqSet.classList.add('grid');
+            seqEl.classList.remove('hidden');
+        } else {
+            seqSet.classList.add('hidden'); seqSet.classList.remove('grid');
+            seqEl.classList.add('hidden');
+        }
+        updateLiveLabel();
+    }
+
+    // --- PRODUCT PHOTO LOGIC ---
+    function handleImageUpload(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                document.getElementById('live-image').src = evt.target.result;
+                document.getElementById('enableImage').checked = true;
+                document.getElementById('removeImgBtn').classList.remove('hidden');
+                updateLiveLabel();
+            }
+            reader.readAsDataURL(file);
+        }
+    }
+    function removeImage() {
+        document.getElementById('imageUpload').value = "";
+        // Keep a default placeholder in src so if they re-enable without uploading, something shows.
+        document.getElementById('live-image').src = "https://placehold.co/150x150?text=Logo";
+        document.getElementById('enableImage').checked = false;
+        document.getElementById('removeImgBtn').classList.add('hidden');
+        updateLiveLabel();
+    }
+
+    // Dedicated resize for the image so it works even if the image isn't currently clicked
+    function updateImageSize() {
+        const img = document.getElementById('live-image');
+        const w = document.getElementById('imgWidthInput').value;
+        const h = document.getElementById('imgHeightInput').value;
+        img.style.width = w + 'px';
+        img.style.height = h + 'px';
+    }
+
+    // --- MAIN RENDER ENGINE ---
+    function updateLiveLabel() {
+        const code = document.getElementById('inputCode').value || 'EMPTY';
+        const enableQR = document.getElementById('enableQR').checked;
+        const qrData = document.getElementById('qrDataInput').value.trim();
+        
+        const enableImg = document.getElementById('enableImage').checked;
+        const imgWrapper = document.getElementById('el-image-wrapper');
+        const imgEl = document.getElementById('live-image');
+
+        document.getElementById('el-company').innerText = document.getElementById('inputCompany').value;
+        document.getElementById('el-title').innerText = document.getElementById('inputTitle').value;
+        
+        const cfCont = document.getElementById('el-custom-fields');
+        cfCont.innerHTML = '';
+        customFields.forEach(f => { if(f.label || f.value) cfCont.innerHTML += `<div class="flex gap-1"><span class="font-black">${f.label}</span> <span>${f.value}</span></div>`; });
+
+        document.getElementById('el-sequence').innerText = `${document.getElementById('seqCurrent').value}/${document.getElementById('seqTotal').value}`;
+
+        const codeText = document.getElementById('el-code-text');
+        codeText.innerText = code;
+        codeText.style.display = document.getElementById('showBarcodeText').checked ? 'block' : 'none';
+        
+        const bColor = codeText.style.color || "#000000";
+
+        // Barcode
+        try {
+            JsBarcode("#live-barcode", code, {
+                format: document.getElementById('inputFormat').value,
+                width: parseFloat(document.getElementById('barcodeWidth').value) || 1.5,
+                height: parseInt(document.getElementById('barcodeHeight').value) || 50,
+                displayValue: false, margin: 0, background: "transparent", lineColor: bColor
+            });
+        } catch(e) {}
+
+        // QR
+        const qrWrapper = document.getElementById('el-qrcode-wrapper');
+        const qrDiv = document.getElementById('live-qrcode');
+        if (enableQR && qrData !== "") {
+            qrWrapper.classList.remove('hidden'); qrWrapper.classList.add('flex');
+            qrDiv.innerHTML = ""; 
+            new QRCode(qrDiv, { 
+                text: qrData, 
+                width: parseInt(document.getElementById('qrWidth').value) || 60, 
+                height: parseInt(document.getElementById('qrHeight').value) || 60, 
+                colorDark: bColor, 
+                colorLight: "transparent",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+        } else { 
+            qrWrapper.classList.add('hidden'); 
+            qrWrapper.classList.remove('flex'); 
+        }
+
+        // Image Visibility
+        if (enableImg) {
+            // If image source is empty or default local path, set to placeholder
+            if (!imgEl.getAttribute('src') || imgEl.getAttribute('src') === '') {
+                imgEl.src = "https://placehold.co/150x150?text=Logo";
+            }
+            imgWrapper.classList.remove('hidden'); 
+            imgWrapper.classList.add('flex');
+        } else { 
+            imgWrapper.classList.add('hidden'); 
+            imgWrapper.classList.remove('flex'); 
+        }
+    }
+
+    // --- STYLING LOGIC ---
+    function toggleLock() {
+        if (!activeElement) return;
+        const isLocked = document.getElementById('styleLock').checked;
+        activeElement.setAttribute('data-locked', isLocked ? "true" : "false");
+        
+        // Gamitin ang malinis na CSS classes imbes na inline styles
+        if (isLocked) {
+            activeElement.classList.add('is-locked');
+            activeElement.style.outline = ""; // Tanggalin ang lumang pangit na red line
+        } else {
+            activeElement.classList.remove('is-locked');
+            activeElement.style.outline = "";
+        }
+    }
+
+    function changeZIndex(direction) {
+        if (!activeElement) return;
+        let currentZ = parseInt(window.getComputedStyle(activeElement).zIndex) || 1;
+        currentZ += direction;
+        if(currentZ < 0) currentZ = 0;
+        activeElement.style.zIndex = currentZ;
+    }
+
+    function applyStyling(action) {
+        if (!activeElement) return;
+        
+        // Background Color Logic
+        if (action === 'clearBg') {
+            activeElement.style.backgroundColor = 'transparent';
+        } else {
+            activeElement.style.backgroundColor = document.getElementById('styleBgColor').value;
+        }
+
+        // Kunin ang alignment value
+        const alignVal = document.getElementById('styleTextAlign').value;
+
+        if(activeElement.id === 'el-image-wrapper') {
+            const fSize = document.getElementById('styleFontSize').value;
+            const img = document.getElementById('live-image');
+            img.style.width = (fSize * 4) + 'px'; 
+            img.style.height = (fSize * 4) + 'px';
+            document.getElementById('imgWidthInput').value = fSize * 4;
+            document.getElementById('imgHeightInput').value = fSize * 4;
+        } else {
+            // [NILINIS NA BERSYON]
+            activeElement.style.fontFamily = document.getElementById('styleFontFamily').value;
+            activeElement.style.fontSize = document.getElementById('styleFontSize').value + 'px';
+            activeElement.style.fontWeight = document.getElementById('styleFontWeight').value;
+            activeElement.style.color = document.getElementById('styleColor').value;
+            
+            activeElement.style.fontStyle = document.getElementById('styleFontStyle').value;
+            activeElement.style.textDecoration = document.getElementById('styleTextDeco').value;
+            activeElement.style.letterSpacing = document.getElementById('styleLetterSpacing').value + 'px';
+            
+            activeElement.style.textTransform = document.getElementById('styleTextTransform').value;
+        }
+
+        // [BAGONG ADD] Alignment Logic: 
+        // Gumagana ito sa standard text (textAlign) AT sa grouped items tulad ng Custom Fields (alignItems)
+        activeElement.style.textAlign = alignVal;
+        if (activeElement.classList.contains('flex-col')) {
+            if (alignVal === 'left') activeElement.style.alignItems = 'flex-start';
+            else if (alignVal === 'right') activeElement.style.alignItems = 'flex-end';
+            else activeElement.style.alignItems = 'center'; 
+        }
+
+        activeElement.style.borderWidth = document.getElementById('styleBorderWidth').value + 'px';
+        activeElement.style.padding = document.getElementById('stylePadding').value + 'px';
+        activeElement.style.borderColor = document.getElementById('styleBorderColor').value;
+        activeElement.style.borderStyle = document.getElementById('styleBorderStyle') ? document.getElementById('styleBorderStyle').value : "solid";
+        activeElement.style.borderRadius = document.getElementById('styleBorderRadius').value + 'px';
+
+        const rot = document.getElementById('styleRotation').value;
+        activeElement.style.transform = `rotate(${rot}deg)`;
+        activeElement.setAttribute('data-rotation', rot);
+
+        if (['el-barcode-wrapper','el-qrcode-wrapper'].includes(activeElement.id)) updateLiveLabel();
+    }
+
+    function rgbToHex(rgb) {
+        const result = rgb.match(/\d+/g);
+        if(!result) return "#000000";
+        return "#" + ((1 << 24) + (parseInt(result[0]) << 16) + (parseInt(result[1]) << 8) + parseInt(result[2])).toString(16).slice(1);
+    }
+
+    // --- DRAG, DROP, AND NUDGE ENGINE ---
+    function setupDragAndDrop() {
+        const board = document.getElementById('designer-board');
+        document.querySelectorAll('.draggable-item').forEach(el => {
+            el.addEventListener('mousedown', function(e) {
+                isDragging = true; activeElement = el;
+                document.querySelectorAll('.draggable-item').forEach(d => d.classList.remove('is-selected'));
+                el.classList.add('is-selected');
+
+                const style = window.getComputedStyle(el);
+
+                if(el.id === 'el-image-wrapper') {
+                    const img = document.getElementById('live-image');
+                    document.getElementById('imgWidthInput').value = img.offsetWidth;
+                    document.getElementById('imgHeightInput').value = img.offsetHeight;
+                    document.getElementById('styleFontSize').value = Math.round(img.offsetWidth / 4);
+                } else {
+                    document.getElementById('styleFontSize').value = Math.round(style.fontSize.replace('px', ''));
+                    let fwSelect = "normal";
+                    if(style.fontWeight === "700" || style.fontWeight === "bold") fwSelect = "bold";
+                    if(style.fontWeight === "900" || style.fontWeight === "black") fwSelect = "900";
+                    document.getElementById('styleFontWeight').value = fwSelect;
+                    document.getElementById('styleColor').value = rgbToHex(style.color);
+                    
+                    // [BAGONG ADD] Basahin ang Style, Spacing, at Decoration kapag na-click ang element
+                    document.getElementById('styleFontStyle').value = style.fontStyle === "italic" ? "italic" : "normal";
+                    document.getElementById('styleLetterSpacing').value = parseFloat(style.letterSpacing) || 0;
+                    
+                    let deco = "none";
+                    if(style.textDecorationLine && style.textDecorationLine.includes("underline")) deco = "underline";
+                    if(style.textDecorationLine && style.textDecorationLine.includes("line-through")) deco = "line-through";
+                    document.getElementById('styleTextDeco').value = deco;
+
+                    // [BAGONG ADD] Basahin ang Text Transform
+                    document.getElementById('styleTextTransform').value = style.textTransform !== "none" ? style.textTransform : "none";
+                    
+                    // [BAGONG ADD] Basahin ang current alignment
+                    let align = style.textAlign || "left";
+                    if (el.classList.contains('flex-col')) {
+                        if (style.alignItems === 'flex-start' || style.alignItems === 'start') align = 'left';
+                        else if (style.alignItems === 'flex-end' || style.alignItems === 'end') align = 'right';
+                        else if (style.alignItems === 'center') align = 'center';
+                    }
+                    if (align === 'start') align = 'left';
+                    document.getElementById('styleTextAlign').value = align;
+                    
+                    const fontStr = style.fontFamily.toLowerCase();
+                    const fs = document.getElementById('styleFontFamily');
+                    if(fontStr.includes("courier")) fs.value = "'Courier New', monospace";
+                    else if(fontStr.includes("times")) fs.value = "'Times New Roman', serif";
+                    else if(fontStr.includes("inter")) fs.value = "'Inter', sans-serif";
+                    else if(fontStr.includes("impact")) fs.value = "Impact, serif";
+                    else if(fontStr.includes("helvetica")) fs.value = "Helvetica, sans-serif";
+                    else if(fontStr.includes("verdana")) fs.value = "Verdana, sans-serif";
+                    else if(fontStr.includes("tahoma")) fs.value = "Tahoma, sans-serif";
+                    else if(fontStr.includes("trebuchet")) fs.value = "'Trebuchet MS', sans-serif";
+                    else if(fontStr.includes("georgia")) fs.value = "Georgia, serif";
+                    else fs.value = "Arial, sans-serif";
+                }
+
+                document.getElementById('styleBorderWidth').value = parseInt(style.borderWidth) || 0;
+                document.getElementById('stylePadding').value = parseInt(style.padding) || 0;
+                document.getElementById('styleRotation').value = el.getAttribute('data-rotation') || "0";
+                document.getElementById('styleBorderRadius').value = parseInt(style.borderRadius) || 0;
+
+                const isLocked = el.getAttribute('data-locked') === "true";
+                document.getElementById('styleLock').checked = isLocked;
+                if(isLocked) el.classList.add('is-locked');
+                
+                let bgColor = style.backgroundColor;
+                if(bgColor === "rgba(0, 0, 0, 0)" || bgColor === "transparent") {
+                    document.getElementById('styleBgColor').value = "#ffffff";
+                } else {
+                    document.getElementById('styleBgColor').value = rgbToHex(bgColor);
+                }
+
+                startX = e.clientX; startY = e.clientY;
+                initialLeft = parseInt(style.left, 10) || 0;
+                initialTop = parseInt(style.top, 10) || 0;
+                e.stopPropagation();
+            });
+        });
+
+        document.addEventListener('mousemove', e => {
+            if (!isDragging || !activeElement) return;
+            if (activeElement.getAttribute('data-locked') === "true") return; // WAG IGALAW KUNG LOCKED
+
+            let snapEnabled = document.getElementById('enableSnap').checked;
+            let grid = 10; // 10px snap grid
+
+            let newLeft = initialLeft + (e.clientX - startX);
+            let newTop = initialTop + (e.clientY - startY);
+
+            if (snapEnabled) {
+                newLeft = Math.round(newLeft / grid) * grid;
+                newTop = Math.round(newTop / grid) * grid;
+            }
+
+            activeElement.style.left = newLeft + 'px';
+            activeElement.style.top = newTop + 'px';
+        });
+
+        document.addEventListener('mouseup', () => isDragging = false);
+        board.addEventListener('mousedown', (e) => { 
+            if(e.target === board || e.target.id === 'paper-canvas') {
+                document.querySelectorAll('.draggable-item').forEach(d => d.classList.remove('is-selected')); activeElement = null; 
+            }
+        });
+
+        document.addEventListener('keydown', e => {
+            if (activeElement.getAttribute('data-locked') === "true") return;
+
+            if (!activeElement || ['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+
+            if(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                e.preventDefault();
+            }
+
+            let step = e.shiftKey ? 10 : 1;
+            let top = parseInt(activeElement.style.top, 10) || activeElement.offsetTop || 0; 
+            let left = parseInt(activeElement.style.left, 10) || activeElement.offsetLeft || 0;
+
+            if (e.key === 'ArrowUp') activeElement.style.top = (top - step) + 'px';
+            if (e.key === 'ArrowDown') activeElement.style.top = (top + step) + 'px';
+            if (e.key === 'ArrowLeft') activeElement.style.left = (left - step) + 'px';
+            if (e.key === 'ArrowRight') activeElement.style.left = (left + step) + 'px';
+        });
+    }
+
+    // --- PRINT & EXPORT ---
+    async function printCustomLabel() {
+        document.querySelectorAll('.draggable-item').forEach(d => {
+            d.classList.remove('is-selected');
+            d.style.outline = "none"; // Tanggalin ang red border ng mga naka-lock sa print
+        });
+        
+        const paper = document.getElementById('paper-canvas');
+        const wPx = parseInt(paper.style.width);
+        const hPx = parseInt(paper.style.height);
+        const widthIn = (wPx / 100) + 'in';
+        const heightIn = (hPx / 100) + 'in';
+        
+        let pages = '';
+        const csvFile = document.getElementById('csvFile') ? document.getElementById('csvFile').files[0] : null;
+
+        if (csvFile) {
+            // ================= BULK IMPORT LOGIC =================
+            const text = await csvFile.text();
+            // Basahin ang bawat row, tanggalin ang blank lines
+            const rows = text.split('\n').map(r => r.split(',')).filter(r => r.length > 1);
+            
+            // I-save ang original data para ibalik mamaya
+            const origTitle = document.getElementById('inputTitle').value;
+            const origCode = document.getElementById('inputCode').value;
+            const origCompany = document.getElementById('inputCompany').value;
+            
+            // Mag-loop sa bawat item sa CSV (Assuming Column 0 = Title, Col 1 = Code, Col 2 = Company)
+            // Nagsisimula tayo sa i=1 para i-skip ang header row ng Excel/CSV
+            for (let i = 1; i < rows.length; i++) { 
+                const row = rows[i];
+                document.getElementById('inputTitle').value = row[0] ? row[0].trim() : origTitle;
+                document.getElementById('inputCode').value = row[1] ? row[1].trim() : origCode;
+                document.getElementById('inputCompany').value = row[2] ? row[2].trim() : origCompany;
+                
+                updateLiveLabel(); // I-render ang bagong barcode/QR
+                
+                // Bigyan ng 50 milliseconds ang browser para i-draw ang SVG Barcode bago i-screenshot
+                await new Promise(r => setTimeout(r, 50)); 
+                pages += `<div class="page">${paper.innerHTML}</div>`;
+            }
+            
+            // Ibalik ang original na text sa screen pagkatapos mag-generate
+            document.getElementById('inputTitle').value = origTitle;
+            document.getElementById('inputCode').value = origCode;
+            document.getElementById('inputCompany').value = origCompany;
+            updateLiveLabel();
+            
+            addAuditLog('BULK PRINT CSV'); // Kung idinagdag mo yung Audit Log natin
+            
+        } else {
+            // ================= STANDARD / BATCH LOGIC =================
+            const seqTot = document.getElementById('enableSequence').checked ? parseInt(document.getElementById('seqTotal').value) : 1;
+            const html = paper.innerHTML;
+            for(let i=1; i<=seqTot; i++) {
+                let pContent = html;
+                if(seqTot > 1) { pContent = pContent.replace(`${document.getElementById('seqCurrent').value}/${seqTot}`, `${i}/${seqTot}`); }
+                pages += `<div class="page">${pContent}</div>`;
+            }
+            addAuditLog('PRINT'); // Kung idinagdag mo yung Audit Log natin
+        }
+
+        // ================= OPEN PRINT PREVIEW =================
+        const win = window.open('', '_blank');
+        win.document.write(`
+            <html><head><title>Print Labels</title>
+            <style>
+                @page { margin: 0; size: ${widthIn} ${heightIn}; }
+                body { margin: 0; background: #fff; }
+                .page { position: relative; width: ${wPx}px; height: ${hPx}px; overflow: hidden; page-break-after: always; border: none; background: #fff; }
+                .draggable-item { position: absolute; white-space: nowrap; transform-origin: center center; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
+                .flex { display: flex } .flex-col { flex-direction: column } .gap-1 { gap: 4px; } .gap-2 { gap: 8px; } .w-16 { width: 64px; } .hidden { display: none !important } img { object-fit: contain } .tracking-widest { letter-spacing: 0.1em } .uppercase { text-transform: uppercase } .font-bold { font-weight: 700 } .font-black { font-weight: 900 }
+            </style>
+            </head><body>
+            ${pages}
+            <script>setTimeout(()=>{window.print();window.close()},500)<\/script>
+            </body></html>
+        `);
+        win.document.close();
+        if(typeof openAuditLogs === "function") openAuditLogs(); // Buksan ang modal kung existing
+    }
+
+    function exportLabelToImage() {
+
+        addAuditLog('EXPORT');
+
+        document.querySelectorAll('.draggable-item').forEach(d => d.classList.remove('is-selected'));
+        html2canvas(document.getElementById('paper-canvas'), { scale: 2, backgroundColor: "#ffffff" }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `AIM_Label_${document.getElementById('inputCode').value}.png`;
+            link.href = canvas.toDataURL('image/png'); link.click();
+        });
+    }
+
+    let auditLogsData = [];
+
+    function addAuditLog(actionType) {
+        const now = new Date();
+        const timeStr = now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
+        
+        const typeSelect = document.getElementById('labelTypeSelector');
+        const labelType = typeSelect.options[typeSelect.selectedIndex].text;
+        
+        const code = document.getElementById('inputCode').value;
+        const seqTot = document.getElementById('enableSequence').checked ? parseInt(document.getElementById('seqTotal').value) : 1;
+
+        // I-save ang data
+        auditLogsData.unshift({ time: timeStr, action: actionType, type: labelType, id: code, qty: seqTot });
+        
+        renderAuditLogs();
+    }
+
+    function renderAuditLogs() {
+        const tbody = document.getElementById('auditLogTableBody');
+        tbody.innerHTML = '';
+        
+        if(auditLogsData.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-8 text-center text-slate-500 italic">No activity logs found for this session.</td></tr>`;
+            return;
+        }
+
+        auditLogsData.forEach(log => {
+            const actionColor = log.action === 'PRINT' ? 'text-sky-600 dark:text-sky-400 bg-sky-100 dark:bg-sky-900/30' : 'text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30';
+            
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors";
+            tr.innerHTML = `
+                <td class="px-4 py-2.5">${log.time}</td>
+                <td class="px-4 py-2.5">
+                    <span class="px-2 py-0.5 rounded font-black text-[9px] ${actionColor}">${log.action}</span>
+                </td>
+                <td class="px-4 py-2.5">${log.type}</td>
+                <td class="px-4 py-2.5 font-bold text-slate-800 dark:text-slate-200">${log.id}</td>
+                <td class="px-4 py-2.5">${log.qty} labels</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function openAuditLogs() {
+        renderAuditLogs(); // I-refresh ang data bago buksan
+        const modal = document.getElementById('auditLogModal');
+        const content = document.getElementById('auditLogModalContent');
+        
+        modal.classList.remove('hidden');
+        // Slight delay for smooth animation
+        setTimeout(() => {
+            modal.classList.remove('opacity-0');
+            content.classList.remove('scale-95');
+        }, 10);
+    }
+
+    function closeAuditLogs() {
+        const modal = document.getElementById('auditLogModal');
+        const content = document.getElementById('auditLogModalContent');
+        
+        modal.classList.add('opacity-0');
+        content.classList.add('scale-95');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+    }
+</script>
+{% endblock %}

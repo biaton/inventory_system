@@ -1,102 +1,102 @@
 {% extends "Inventory/master/master_base.html" %}
 
 {% block master_content %}
-<div class="max-w-[100%] mx-auto pb-20 mt-2 text-slate-800">
+<div class="max-w-[100%] mx-auto pb-20 mt-2 text-slate-800 dark:text-slate-200 transition-colors duration-300">
 
-    <div class="bg-slate-100 border border-slate-300 py-2 px-2 mb-4 flex flex-wrap justify-between items-center gap-2 shadow-sm">
+    <div class="bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 py-2 px-2 mb-4 flex flex-wrap justify-between items-center gap-2 shadow-sm transition-colors duration-300">
         
         <form method="GET" action="" class="flex-1 min-w-[300px] flex gap-2">
             <div class="relative flex-1">
-                <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500"></i>
                 <input type="text" name="q" value="{{ search_query|default:'' }}" placeholder="Search Item Code or Description..." 
-                       class="w-full pl-9 pr-3 py-1.5 bg-white border border-slate-400 text-xs font-bold text-slate-800 uppercase tracking-widest focus:ring-1 focus:ring-teal-500 outline-none shadow-inner">
+                       class="w-full pl-9 pr-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-400 dark:border-slate-600 text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-widest focus:ring-1 focus:ring-teal-500 outline-none shadow-inner transition-colors duration-300 placeholder-slate-400 dark:placeholder-slate-500">
             </div>
             {% if search_query %}
-                <a href="." class="bg-slate-200 text-slate-600 border border-slate-400 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-slate-300 transition-colors flex items-center justify-center">
+                <a href="." class="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-400 dark:border-slate-600 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors flex items-center justify-center">
                     Clear
                 </a>
             {% endif %}
-            <button type="submit" class="bg-slate-800 text-white border border-slate-900 px-6 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all">
+            <button type="submit" class="bg-slate-800 dark:bg-teal-700 text-white border border-slate-900 dark:border-teal-900 px-6 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-black dark:hover:bg-teal-800 transition-all">
                 Filter
             </button>
         </form>
 
         <div class="flex items-center gap-2">
-            <button type="button" onclick="openImportModal()" class="bg-indigo-600 text-white border border-indigo-800 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all flex items-center gap-1.5 shadow-sm">
+            <button type="button" onclick="openImportModal()" class="bg-indigo-600 dark:bg-indigo-600 text-white border border-indigo-800 dark:border-indigo-700 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 dark:hover:bg-indigo-500 transition-all flex items-center gap-1.5 shadow-sm">
                 <i data-lucide="file-up" class="w-3.5 h-3.5"></i> Import Excel
             </button>
-            <button onclick="window.print()" class="bg-white border border-slate-300 text-slate-600 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center gap-1.5 shadow-sm">
+            <button onclick="window.print()" class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-700 transition-all flex items-center gap-1.5 shadow-sm">
                 <i data-lucide="printer" class="w-3.5 h-3.5"></i> Print List
             </button>
-            <button type="button" onclick="openItemModal('add')" class="bg-teal-700 text-white border border-teal-900 px-6 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-teal-800 transition-all flex items-center gap-1.5 shadow-sm">
+            <button type="button" onclick="openItemModal('add')" class="bg-teal-700 dark:bg-teal-600 text-white border border-teal-900 dark:border-teal-800 px-6 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-teal-800 dark:hover:bg-teal-700 transition-all flex items-center gap-1.5 shadow-sm">
                 <i data-lucide="plus" class="w-3.5 h-3.5"></i> Register New Item
             </button>
         </div>
     </div>
 
-    <div class="bg-white border border-slate-300 shadow-sm overflow-hidden">
+    <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm overflow-hidden transition-colors duration-300">
         <div class="overflow-x-auto min-h-[450px]">
             <table class="w-full text-left border-collapse" style="font-size: 11px;">
-                <thead class="bg-slate-800 text-white uppercase tracking-widest border-b border-slate-900 font-black text-[10px]">
+                <thead class="bg-slate-800 dark:bg-slate-950 text-white uppercase tracking-widest border-b border-slate-900 dark:border-slate-800 font-black text-[10px] transition-colors duration-300">
                     <tr>
-                        <th class="py-2.5 px-4 border-r border-slate-700 w-48 text-teal-400">Item Code</th>
-                        <th class="py-2.5 px-4 border-r border-slate-700">Full Description</th>
-                        <th class="py-2.5 px-4 border-r border-slate-700 w-24 text-center">UOM</th>
-                        <th class="py-2.5 px-4 border-r border-slate-700 w-32">Category</th>
-                        <th class="py-2.5 px-4 border-r border-slate-700 w-32">Primary Zone</th>
-                        <th class="py-2.5 px-4 border-r border-slate-700 w-24 text-right text-emerald-400">Live Stock</th>
-                        <th class="py-2.5 px-4 border-r border-slate-700 w-32 text-right">Unit Price</th>
+                        <th class="py-2.5 px-4 border-r border-slate-700 dark:border-slate-800 w-48 text-teal-400 dark:text-teal-500">Item Code</th>
+                        <th class="py-2.5 px-4 border-r border-slate-700 dark:border-slate-800">Full Description</th>
+                        <th class="py-2.5 px-4 border-r border-slate-700 dark:border-slate-800 w-24 text-center">UOM</th>
+                        <th class="py-2.5 px-4 border-r border-slate-700 dark:border-slate-800 w-32">Category</th>
+                        <th class="py-2.5 px-4 border-r border-slate-700 dark:border-slate-800 w-32">Primary Zone</th>
+                        <th class="py-2.5 px-4 border-r border-slate-700 dark:border-slate-800 w-24 text-right text-emerald-400 dark:text-emerald-500">Live Stock</th>
+                        <th class="py-2.5 px-4 border-r border-slate-700 dark:border-slate-800 w-32 text-right">Unit Price</th>
                         <th class="py-2.5 px-4 text-center w-28">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-200 text-slate-700 font-bold uppercase">
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-700 text-slate-700 dark:text-slate-300 font-bold uppercase transition-colors duration-300">
                     
                     {% for item in items %}
-                    <tr class="hover:bg-slate-50 transition-colors">
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                         
-                        <td class="py-2 px-4 border-r border-slate-200">
-                            <span class="font-black text-slate-900 tracking-tighter">{{ item.item_code }}</span>
+                        <td class="py-2 px-4 border-r border-slate-200 dark:border-slate-700">
+                            <span class="font-black text-slate-900 dark:text-slate-100 tracking-tighter transition-colors">{{ item.item_code }}</span>
                             {% if item.min_stock > 0 %}
-                                <span class="block text-[8px] text-amber-600 tracking-widest mt-0.5">Min Stock: {{ item.min_stock }}</span>
+                                <span class="block text-[8px] text-amber-600 dark:text-amber-500 tracking-widest mt-0.5 transition-colors">Min Stock: {{ item.min_stock }}</span>
                             {% endif %}
                         </td>
 
-                        <td class="py-2 px-4 border-r border-slate-200">
+                        <td class="py-2 px-4 border-r border-slate-200 dark:border-slate-700">
                             <p class="text-[10px] leading-snug">{{ item.description|default:"NO DESCRIPTION SET" }}</p>
                         </td>
 
-                        <td class="py-2 px-4 border-r border-slate-200 text-center">
-                            <span class="px-2 py-0.5 bg-slate-100 border border-slate-300 text-slate-600 text-[9px] font-black">
+                        <td class="py-2 px-4 border-r border-slate-200 dark:border-slate-700 text-center">
+                            <span class="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 text-[9px] font-black transition-colors">
                                 {{ item.uom|default:"PCS" }}
                             </span>
                         </td>
 
-                        <td class="py-2 px-4 border-r border-slate-200">
-                            <span class="text-[10px] font-black text-indigo-600">
+                        <td class="py-2 px-4 border-r border-slate-200 dark:border-slate-700">
+                            <span class="text-[10px] font-black text-indigo-600 dark:text-indigo-400 transition-colors">
                                 <i data-lucide="tag" class="w-3 h-3 inline-block mr-1"></i>
                                 {{ item.get_category_display|default:item.category }}
                             </span>
                         </td>
 
-                        <td class="py-2 px-4 border-r border-slate-200">
+                        <td class="py-2 px-4 border-r border-slate-200 dark:border-slate-700">
                             <div class="flex items-center gap-1.5">
-                                <i data-lucide="map-pin" class="w-3 h-3 text-slate-400"></i>
-                                <span class="text-[10px] text-slate-500">{{ item.default_zone|default:"UNASSIGNED" }}</span>
+                                <i data-lucide="map-pin" class="w-3 h-3 text-slate-400 dark:text-slate-500 transition-colors"></i>
+                                <span class="text-[10px] text-slate-500 dark:text-slate-400 transition-colors">{{ item.default_zone|default:"UNASSIGNED" }}</span>
                             </div>
                         </td>
 
-                        <td class="py-2 px-4 border-r border-slate-200 text-right bg-slate-50/50">
+                        <td class="py-2 px-4 border-r border-slate-200 dark:border-slate-700 text-right bg-slate-50/50 dark:bg-slate-900/50 transition-colors">
                             {% if item.current_stock <= 0 %}
-                                <span class="text-[12px] font-black text-rose-500 block">OUT OF STOCK</span>
+                                <span class="text-[12px] font-black text-rose-500 dark:text-rose-400 block transition-colors">OUT OF STOCK</span>
                             {% elif item.current_stock <= item.min_stock %}
-                                <span class="text-[12px] font-black text-amber-500 block" title="Low Stock Warning">{{ item.current_stock }}</span>
+                                <span class="text-[12px] font-black text-amber-500 dark:text-amber-400 block transition-colors" title="Low Stock Warning">{{ item.current_stock }}</span>
                             {% else %}
-                                <span class="text-[12px] font-black text-emerald-600 block">{{ item.current_stock }}</span>
+                                <span class="text-[12px] font-black text-emerald-600 dark:text-emerald-500 block transition-colors">{{ item.current_stock }}</span>
                             {% endif %}
                         </td>
 
-                        <td class="py-2 px-4 border-r border-slate-200 text-right">
-                            <span class="text-[11px] font-black text-slate-800">
+                        <td class="py-2 px-4 border-r border-slate-200 dark:border-slate-700 text-right">
+                            <span class="text-[11px] font-black text-slate-800 dark:text-slate-200 transition-colors">
                                 ₱ {{ item.unit_price|floatformat:2 }}
                             </span>
                         </td>
@@ -104,7 +104,7 @@
                         <td class="py-2 px-4 text-center">
                             <div class="flex justify-center gap-1">
                                 <button type="button" onclick="openItemModal('edit', '{{ item.id }}', '{{ item.item_code|escapejs }}', '{{ item.description|escapejs }}', '{{ item.category }}', '{{ item.uom }}', '{{ item.unit_price }}', '{{ item.min_stock }}', '{{ item.default_zone|escapejs }}')" 
-                                        class="bg-slate-200 hover:bg-amber-500 text-slate-600 hover:text-white p-1.5 border border-slate-300 hover:border-amber-600 transition-colors shadow-sm" title="Edit Item">
+                                        class="bg-slate-200 dark:bg-slate-800 hover:bg-amber-500 dark:hover:bg-amber-600 text-slate-600 dark:text-slate-400 hover:text-white dark:hover:text-white p-1.5 border border-slate-300 dark:border-slate-700 hover:border-amber-600 dark:hover:border-amber-500 transition-colors shadow-sm" title="Edit Item">
                                     <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
                                 </button>
                                 
@@ -112,7 +112,7 @@
                                     {% csrf_token %}
                                     <input type="hidden" name="action" value="delete">
                                     <input type="hidden" name="item_id" value="{{ item.id }}">
-                                    <button type="submit" class="bg-slate-200 hover:bg-rose-600 text-slate-600 hover:text-white p-1.5 border border-slate-300 hover:border-rose-700 transition-colors shadow-sm" title="Archive Item">
+                                    <button type="submit" class="bg-slate-200 dark:bg-slate-800 hover:bg-rose-600 dark:hover:bg-rose-700 text-slate-600 dark:text-slate-400 hover:text-white dark:hover:text-white p-1.5 border border-slate-300 dark:border-slate-700 hover:border-rose-700 dark:hover:border-rose-600 transition-colors shadow-sm" title="Archive Item">
                                         <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                                     </button>
                                 </form>
@@ -122,7 +122,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="7" class="py-24 text-center text-slate-400">
+                        <td colspan="7" class="py-24 text-center text-slate-400 dark:text-slate-600 transition-colors">
                             <i data-lucide="package-x" class="w-12 h-12 mx-auto mb-3 opacity-20"></i>
                             <p class="font-black text-xs uppercase tracking-widest">No Items Registered In Masterlist</p>
                         </td>
@@ -133,27 +133,27 @@
             </table>
         </div>
         
-        <div class="bg-slate-50 border-t border-slate-200 p-3 flex flex-col md:flex-row justify-between items-center gap-4">
-            <span class="text-[9px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1">
+        <div class="bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-700 p-3 flex flex-col md:flex-row justify-between items-center gap-4 transition-colors duration-300">
+            <span class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1 transition-colors">
                 <i data-lucide="layers" class="w-3 h-3"></i> 
                 Page {{ items.number }} of {{ items.paginator.num_pages|default:1 }}
-                <span class="text-slate-400 mx-1">|</span> 
+                <span class="text-slate-400 dark:text-slate-600 mx-1">|</span> 
                 Total Registered Items: {{ items.paginator.count }}
             </span>
-            </div>
+        </div>
     </div>
 
-    <div id="itemModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-center items-center p-4">
-        <div class="bg-white border-t-4 border-teal-600 shadow-2xl w-full max-w-3xl flex flex-col overflow-hidden">
+    <div id="itemModal" class="hidden fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex justify-center items-center p-4 transition-colors duration-300">
+        <div class="bg-white dark:bg-slate-900 border-t-4 border-teal-600 dark:border-teal-500 shadow-2xl w-full max-w-3xl flex flex-col overflow-hidden rounded-sm transition-colors duration-300">
             
-            <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+            <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 transition-colors duration-300">
                 <div>
-                    <h3 id="modalTitle" class="font-black text-teal-900 uppercase tracking-widest flex items-center gap-2">
-                        <i data-lucide="package-plus" class="w-5 h-5"></i> Register Item Profile
+                    <h3 id="modalTitle" class="font-black text-teal-900 dark:text-teal-400 uppercase tracking-widest flex items-center gap-2 transition-colors duration-300">
+                        <i data-lucide="package-plus" class="w-5 h-5 text-teal-700 dark:text-teal-500"></i> Register Item Profile
                     </h3>
-                    <p class="text-[9px] font-bold text-slate-500 mt-1 uppercase tracking-widest">WMS Item Master Configuration</p>
+                    <p class="text-[9px] font-bold text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-widest transition-colors duration-300">WMS Item Master Configuration</p>
                 </div>
-                <button type="button" onclick="closeItemModal()" class="text-rose-600 hover:bg-rose-100 p-1.5 rounded transition-colors">
+                <button type="button" onclick="closeItemModal()" class="text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/30 p-1.5 rounded transition-colors">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
@@ -163,80 +163,80 @@
                 <input type="hidden" name="action" id="formAction" value="add">
                 <div id="hiddenItemIdContainer"></div>
                 
-                <div class="p-5 grid grid-cols-1 md:grid-cols-12 gap-5 bg-white">
+                <div class="p-5 grid grid-cols-1 md:grid-cols-12 gap-5 bg-white dark:bg-slate-900 max-h-[75vh] overflow-y-auto transition-colors duration-300">
                     
                     <div class="col-span-1 md:col-span-4">
-                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Item Code / SKU <span class="text-rose-500">*</span></label>
+                        <label class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-1 transition-colors duration-300">Item Code / SKU <span class="text-rose-500 dark:text-rose-400">*</span></label>
                         <input type="text" name="item_code" required placeholder="e.g. RM-1002" 
-                               class="w-full p-2 text-sm font-black border-2 border-teal-300 uppercase text-teal-900 focus:bg-teal-50 focus:border-teal-500 outline-none shadow-inner">
+                               class="w-full p-2 text-sm font-black border-2 border-teal-300 dark:border-teal-700 uppercase text-teal-900 dark:text-teal-300 bg-white dark:bg-slate-950 focus:bg-teal-50 dark:focus:bg-slate-900 focus:border-teal-500 dark:focus:border-teal-500 outline-none shadow-inner transition-colors duration-300 placeholder-slate-400 dark:placeholder-slate-600">
                     </div>
                     <div class="col-span-1 md:col-span-8">
-                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Full Description <span class="text-rose-500">*</span></label>
+                        <label class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-1 transition-colors duration-300">Full Description <span class="text-rose-500 dark:text-rose-400">*</span></label>
                         <input type="text" name="description" required placeholder="Describe the item clearly..." 
-                               class="w-full p-2 text-xs font-bold border border-slate-300 uppercase focus:bg-teal-50 focus:border-teal-500 outline-none">
+                               class="w-full p-2 text-xs font-bold border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-200 uppercase focus:bg-teal-50 dark:focus:bg-slate-900 focus:border-teal-500 dark:focus:border-teal-500 outline-none transition-colors duration-300 placeholder-slate-400 dark:placeholder-slate-600">
                     </div>
 
-                    <div class="col-span-12 border-t border-slate-200 my-1"></div>
+                    <div class="col-span-12 border-t border-slate-200 dark:border-slate-700 my-1 transition-colors duration-300"></div>
 
                     <div class="col-span-1 md:col-span-4">
-                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Item Category</label>
-                        <select name="category" class="w-full p-2 text-xs font-bold border border-slate-300 uppercase focus:bg-teal-50 focus:border-teal-500 outline-none">
+                        <label class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-1 transition-colors duration-300">Item Category</label>
+                        <select name="category" class="w-full p-2 text-xs font-bold border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-200 uppercase focus:bg-teal-50 dark:focus:bg-slate-900 focus:border-teal-500 dark:focus:border-teal-500 outline-none transition-colors duration-300">
                             {% for key, val in categories %}
                                 <option value="{{ key }}">{{ val }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="col-span-1 md:col-span-4">
-                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Base UOM</label>
-                        <select name="uom" class="w-full p-2 text-xs font-bold border border-slate-300 uppercase focus:bg-teal-50 focus:border-teal-500 outline-none">
+                        <label class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-1 transition-colors duration-300">Base UOM</label>
+                        <select name="uom" class="w-full p-2 text-xs font-bold border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-200 uppercase focus:bg-teal-50 dark:focus:bg-slate-900 focus:border-teal-500 dark:focus:border-teal-500 outline-none transition-colors duration-300">
                             {% for key, val in uoms %}
                                 <option value="{{ key }}">{{ val }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="col-span-1 md:col-span-4" id="initialStockContainer">
-                        <label class="text-[10px] font-black text-emerald-600 uppercase tracking-widest block mb-1 flex items-center gap-1">
+                        <label class="text-[10px] font-black text-emerald-600 dark:text-emerald-500 uppercase tracking-widest block mb-1 flex items-center gap-1 transition-colors duration-300">
                             <i data-lucide="package-plus" class="w-3 h-3"></i> Opening Stock Qty
                         </label>
                         <input type="number" name="initial_stock" id="initial_stock_input" min="0" placeholder="0" 
-                               class="w-full p-2 text-xs font-black border border-emerald-300 focus:bg-emerald-50 focus:border-emerald-500 outline-none">
-                        <p class="text-[8px] text-slate-400 mt-1 font-bold italic">Available only during first registration.</p>
+                               class="w-full p-2 text-xs font-black border border-emerald-300 dark:border-emerald-700 bg-white dark:bg-slate-950 text-emerald-900 dark:text-emerald-400 focus:bg-emerald-50 dark:focus:bg-slate-900 focus:border-emerald-500 dark:focus:border-emerald-500 outline-none transition-colors duration-300 placeholder-slate-400 dark:placeholder-slate-600">
+                        <p class="text-[8px] text-slate-400 dark:text-slate-500 mt-1 font-bold italic transition-colors duration-300">Available only during first registration.</p>
                     </div>
                     <div class="col-span-1 md:col-span-4">
-                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Unit Price (Standard)</label>
+                        <label class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-1 transition-colors duration-300">Unit Price (Standard)</label>
                         <input type="number" step="0.01" name="unit_price" placeholder="0.00" 
-                               class="w-full p-2 text-xs font-bold border border-slate-300 uppercase focus:bg-teal-50 focus:border-teal-500 outline-none text-right">
+                               class="w-full p-2 text-xs font-bold border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-200 uppercase focus:bg-teal-50 dark:focus:bg-slate-900 focus:border-teal-500 dark:focus:border-teal-500 outline-none text-right transition-colors duration-300 placeholder-slate-400 dark:placeholder-slate-600">
                     </div>
 
-                    <div class="col-span-12 border-t border-slate-200 my-1"></div>
+                    <div class="col-span-12 border-t border-slate-200 dark:border-slate-700 my-1 transition-colors duration-300"></div>
 
                     <div class="col-span-1 md:col-span-6">
-                        <label class="text-[10px] font-black text-indigo-500 uppercase tracking-widest block mb-1 flex items-center gap-1">
+                        <label class="text-[10px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-widest block mb-1 flex items-center gap-1 transition-colors duration-300">
                             <i data-lucide="map-pin" class="w-3 h-3"></i> Primary Storage Zone
                         </label>
                         <input type="text" name="default_zone" list="zone_suggestions" placeholder="Preferred warehouse zone..." 
-                               class="w-full p-2 text-xs font-bold border border-indigo-200 uppercase focus:bg-indigo-50 focus:border-indigo-500 outline-none">
+                               class="w-full p-2 text-xs font-bold border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-950 text-indigo-900 dark:text-indigo-200 uppercase focus:bg-indigo-50 dark:focus:bg-slate-900 focus:border-indigo-500 dark:focus:border-indigo-500 outline-none transition-colors duration-300 placeholder-slate-400 dark:placeholder-slate-600">
                         <datalist id="zone_suggestions">
                             {% for z in zones %}
                                 <option value="{{ z }}"></option>
                             {% endfor %}
                         </datalist>
-                        <p class="text-[9px] text-slate-400 mt-1 font-bold">Suggested area during Receiving Put-Away.</p>
+                        <p class="text-[9px] text-slate-400 dark:text-slate-500 mt-1 font-bold transition-colors duration-300">Suggested area during Receiving Put-Away.</p>
                     </div>
                     <div class="col-span-1 md:col-span-6">
-                        <label class="text-[10px] font-black text-amber-500 uppercase tracking-widest block mb-1 flex items-center gap-1">
+                        <label class="text-[10px] font-black text-amber-500 dark:text-amber-400 uppercase tracking-widest block mb-1 flex items-center gap-1 transition-colors duration-300">
                             <i data-lucide="alert-triangle" class="w-3 h-3"></i> Minimum Stock Level
                         </label>
                         <input type="number" name="min_stock" min="0" placeholder="0" 
-                               class="w-full p-2 text-xs font-black border border-amber-300 uppercase focus:bg-amber-50 focus:border-amber-500 outline-none">
-                        <p class="text-[9px] text-slate-400 mt-1 font-bold">Triggers re-order alert when stock hits this qty.</p>
+                               class="w-full p-2 text-xs font-black border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-950 text-amber-900 dark:text-amber-400 uppercase focus:bg-amber-50 dark:focus:bg-slate-900 focus:border-amber-500 dark:focus:border-amber-500 outline-none transition-colors duration-300 placeholder-slate-400 dark:placeholder-slate-600">
+                        <p class="text-[9px] text-slate-400 dark:text-slate-500 mt-1 font-bold transition-colors duration-300">Triggers re-order alert when stock hits this qty.</p>
                     </div>
 
                 </div>
                 
-                <div class="p-4 bg-slate-100 border-t border-slate-300 flex justify-end gap-2 shadow-inner">
-                    <button type="button" onclick="closeItemModal()" class="px-6 py-2 bg-white border border-slate-300 text-slate-600 text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-colors shadow-sm rounded-sm">Cancel</button>
-                    <button type="submit" id="submitItemBtn" class="px-8 py-2 bg-teal-700 border border-teal-900 text-white text-[10px] font-black uppercase tracking-widest hover:bg-teal-800 transition-colors flex items-center gap-2 shadow-sm rounded-sm">
+                <div class="p-4 bg-slate-100 dark:bg-slate-800/80 border-t border-slate-300 dark:border-slate-800 flex justify-end gap-2 shadow-inner transition-colors duration-300">
+                    <button type="button" onclick="closeItemModal()" class="px-6 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-sm rounded-sm">Cancel</button>
+                    <button type="submit" id="submitItemBtn" class="px-8 py-2 bg-teal-700 dark:bg-teal-600 border border-teal-900 dark:border-teal-800 text-white text-[10px] font-black uppercase tracking-widest hover:bg-teal-800 dark:hover:bg-teal-700 transition-colors flex items-center gap-2 shadow-sm rounded-sm">
                         <i data-lucide="save" class="w-3 h-3"></i> Save Item Profile
                     </button>
                 </div>
@@ -244,52 +244,52 @@
         </div>
     </div>
 
-</div>
-
-<div id="importModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-center items-center p-4">
-    <div class="bg-white border-t-4 border-indigo-600 shadow-2xl w-full max-w-md flex flex-col overflow-hidden">
-        <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
-            <div>
-                <h3 class="font-black text-indigo-900 uppercase tracking-widest flex items-center gap-2">
-                    <i data-lucide="file-spreadsheet" class="w-5 h-5"></i> Bulk Import Items
-                </h3>
-                <p class="text-[9px] font-bold text-slate-500 mt-1 uppercase tracking-widest">Upload your Excel file to register multiple items</p>
-            </div>
-            <button type="button" onclick="closeImportModal()" class="text-rose-600 hover:bg-rose-100 p-1.5 rounded transition-colors">
-                <i data-lucide="x" class="w-5 h-5"></i>
-            </button>
-        </div>
-        
-        <form method="POST" action="" enctype="multipart/form-data">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="import_excel">
-            
-            <div class="p-5 bg-white space-y-4">
-                <div class="bg-blue-50 border border-blue-200 p-3 rounded-sm flex items-start gap-3">
-                    <i data-lucide="info" class="w-5 h-5 text-blue-600 shrink-0"></i>
-                    <div>
-                        <p class="text-[10px] font-black text-blue-900 uppercase tracking-widest mb-1">Required Action</p>
-                        <p class="text-xs text-blue-800 font-bold mb-2">Please use the standard WMS template for importing items to avoid errors.</p>
-                        <a href="?download_template=true" class="inline-flex items-center gap-1 bg-white border border-blue-300 text-blue-700 px-3 py-1 text-[9px] font-black uppercase hover:bg-blue-100 transition-colors shadow-sm">
-                            <i data-lucide="download" class="w-3 h-3"></i> Download Template
-                        </a>
-                    </div>
-                </div>
+    <div id="importModal" class="hidden fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex justify-center items-center p-4 transition-colors duration-300">
+        <div class="bg-white dark:bg-slate-900 border-t-4 border-indigo-600 dark:border-indigo-500 shadow-2xl w-full max-w-md flex flex-col overflow-hidden rounded-sm transition-colors duration-300">
+            <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 transition-colors duration-300">
                 <div>
-                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Upload Excel File (.xlsx) <span class="text-rose-500">*</span></label>
-                    <input type="file" name="excel_file" accept=".xlsx, .xls" required
-                           class="w-full p-2 text-xs font-bold border border-slate-300 bg-slate-50 focus:bg-white outline-none cursor-pointer">
+                    <h3 class="font-black text-indigo-900 dark:text-indigo-400 uppercase tracking-widest flex items-center gap-2 transition-colors duration-300">
+                        <i data-lucide="file-spreadsheet" class="w-5 h-5"></i> Bulk Import Items
+                    </h3>
+                    <p class="text-[9px] font-bold text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-widest transition-colors duration-300">Upload your Excel file to register multiple items</p>
                 </div>
-            </div>
-            
-            <div class="p-4 bg-slate-100 border-t border-slate-300 flex justify-end gap-2 shadow-inner">
-                <button type="button" onclick="closeImportModal()" class="px-6 py-2 bg-white border border-slate-300 text-slate-600 text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-colors shadow-sm rounded-sm">Cancel</button>
-                <button type="submit" class="px-8 py-2 bg-indigo-600 border border-indigo-800 text-white text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-colors flex items-center gap-2 shadow-sm rounded-sm">
-                    <i data-lucide="upload-cloud" class="w-3 h-3"></i> Process Upload
+                <button type="button" onclick="closeImportModal()" class="text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/30 p-1.5 rounded transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
-        </form>
+            
+            <form method="POST" action="" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="import_excel">
+                
+                <div class="p-5 bg-white dark:bg-slate-900 space-y-4 transition-colors duration-300">
+                    <div class="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/50 p-3 rounded-sm flex items-start gap-3 transition-colors duration-300">
+                        <i data-lucide="info" class="w-5 h-5 text-blue-600 dark:text-blue-500 shrink-0"></i>
+                        <div>
+                            <p class="text-[10px] font-black text-blue-900 dark:text-blue-300 uppercase tracking-widest mb-1 transition-colors duration-300">Required Action</p>
+                            <p class="text-xs text-blue-800 dark:text-blue-400 font-bold mb-2 transition-colors duration-300">Please use the standard WMS template for importing items to avoid errors.</p>
+                            <a href="?download_template=true" class="inline-flex items-center gap-1 bg-white dark:bg-slate-800 border border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-400 px-3 py-1 text-[9px] font-black uppercase hover:bg-blue-100 dark:hover:bg-slate-700 transition-colors shadow-sm rounded-sm">
+                                <i data-lucide="download" class="w-3 h-3"></i> Download Template
+                            </a>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2 transition-colors duration-300">Upload Excel File (.xlsx) <span class="text-rose-500 dark:text-rose-400">*</span></label>
+                        <input type="file" name="excel_file" accept=".xlsx, .xls" required
+                               class="w-full p-2 text-xs font-bold border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-200 focus:bg-white dark:focus:bg-slate-900 outline-none cursor-pointer transition-colors duration-300">
+                    </div>
+                </div>
+                
+                <div class="p-4 bg-slate-100 dark:bg-slate-800/80 border-t border-slate-300 dark:border-slate-800 flex justify-end gap-2 shadow-inner transition-colors duration-300">
+                    <button type="button" onclick="closeImportModal()" class="px-6 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-sm rounded-sm">Cancel</button>
+                    <button type="submit" class="px-8 py-2 bg-indigo-600 dark:bg-indigo-600 border border-indigo-800 dark:border-indigo-700 text-white text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 dark:hover:bg-indigo-500 transition-colors flex items-center gap-2 shadow-sm rounded-sm">
+                        <i data-lucide="upload-cloud" class="w-3 h-3"></i> Process Upload
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
+
 </div>
 
 <script>
@@ -306,34 +306,36 @@
         const actionInput = document.getElementById('formAction');
         const hiddenContainer = document.getElementById('hiddenItemIdContainer');
         const submitBtn = document.getElementById('submitItemBtn');
-        const stockContainer = document.getElementById('initialStockContainer'); // 🚀 Para sa Opening Stock
+        const stockContainer = document.getElementById('initialStockContainer');
 
         modal.classList.remove('hidden');
 
+        // Check if dark mode is active to apply correct text colors
+        const isDark = document.documentElement.classList.contains('dark');
+        const titleIconColorAdd = isDark ? 'text-teal-500' : 'text-teal-700';
+        const titleIconColorEdit = isDark ? 'text-amber-400' : 'text-amber-500';
+
         if (action === 'add') {
-            title.innerHTML = '<i data-lucide="package-plus" class="w-5 h-5 text-teal-700"></i> Register Item Profile';
+            title.innerHTML = `<i data-lucide="package-plus" class="w-5 h-5 ${titleIconColorAdd}"></i> Register Item Profile`;
             actionInput.value = 'add';
             form.reset();
             hiddenContainer.innerHTML = ''; 
             submitBtn.innerHTML = '<i data-lucide="save" class="w-3 h-3"></i> Register Item';
             form.elements['item_code'].readOnly = false;
-            form.elements['item_code'].classList.remove('bg-slate-100');
+            form.elements['item_code'].classList.remove('bg-slate-100', 'dark:bg-slate-800');
             
-            // 🚀 IPAKITA ANG OPENING STOCK BOX KAPAG ADD
             if (stockContainer) stockContainer.classList.remove('hidden'); 
             if (document.getElementById('initial_stock_input')) document.getElementById('initial_stock_input').value = '0';
         } 
         else if (action === 'edit') {
-            title.innerHTML = '<i data-lucide="edit" class="w-5 h-5 text-amber-500"></i> Edit Item Profile';
+            title.innerHTML = `<i data-lucide="edit" class="w-5 h-5 ${titleIconColorEdit}"></i> Edit Item Profile`;
             actionInput.value = 'edit';
             submitBtn.innerHTML = '<i data-lucide="save" class="w-3 h-3"></i> Update Profile';
 
-            // I-lock ang item_code sa pag-edit para maiwasan ang conflict sa mga PO/Material Tags
             form.elements['item_code'].value = code;
             form.elements['item_code'].readOnly = true;
-            form.elements['item_code'].classList.add('bg-slate-100');
+            form.elements['item_code'].classList.add('bg-slate-100', 'dark:bg-slate-800');
 
-            // Auto-fill ang iba pang fields
             form.elements['description'].value = desc;
             form.elements['category'].value = category;
             form.elements['uom'].value = uom;
@@ -341,7 +343,6 @@
             form.elements['min_stock'].value = min_stock;
             form.elements['default_zone'].value = zone;
 
-            // 🚀 ITAGO ANG OPENING STOCK BOX KAPAG EDIT
             if (stockContainer) stockContainer.classList.add('hidden'); 
 
             hiddenContainer.innerHTML = `<input type="hidden" name="item_id" value="${id}">`;

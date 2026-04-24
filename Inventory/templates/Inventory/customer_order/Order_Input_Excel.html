@@ -1,88 +1,88 @@
 {% extends "Inventory/customer_order/order_base.html" %}
 
 {% block order_content%}
-<div class="max-w-[100%] mx-auto pb-20 mt-4 text-slate-800">
+<div class="max-w-[100%] mx-auto pb-20 mt-1 text-slate-800 dark:text-slate-200 transition-colors duration-300">
 
-    <div class="bg-white border border-slate-400 shadow-sm mb-4">
-        <div class="bg-slate-800 px-4 py-2 flex justify-between items-center text-white">
+    <div class="bg-white dark:bg-slate-900 border border-slate-400 dark:border-slate-700 shadow-sm mb-4 transition-colors duration-300">
+        <div class="bg-slate-800 dark:bg-slate-950 px-4 py-2 flex justify-between items-center text-white transition-colors">
             <h2 class="font-black text-sm uppercase tracking-widest flex items-center">
-                <i data-lucide="file-spreadsheet" class="w-4 h-4 mr-2 text-emerald-400"></i>Upload Excel File
+                <i data-lucide="file-spreadsheet" class="w-4 h-4 mr-2 text-emerald-400 dark:text-emerald-500"></i>Upload Excel File
             </h2>
         </div>
-        <form method="POST" enctype="multipart/form-data" class="p-3 bg-slate-50 flex flex-wrap items-center gap-4">
+        <form method="POST" enctype="multipart/form-data" class="p-3 bg-slate-50 dark:bg-slate-900/50 flex flex-wrap items-center gap-4 transition-colors">
             {% csrf_token %}
             <div class="flex items-center gap-3 flex-1">
-                <label class="text-xs font-bold text-slate-600 uppercase tracking-widest whitespace-nowrap">Select File:</label>
+                <label class="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest whitespace-nowrap transition-colors">Select File:</label>
                 <input type="file" name="excel_file" accept=".xlsx, .xls, .csv" required
-                       class="flex-1 text-xs text-slate-700 font-bold file:mr-4 file:py-1.5 file:px-4 file:rounded file:border-0 file:text-[10px] file:font-black file:uppercase file:tracking-widest file:bg-teal-100 file:text-teal-800 hover:file:bg-teal-200 border border-slate-300 bg-white p-1 cursor-pointer">
+                       class="flex-1 text-xs text-slate-700 dark:text-slate-300 font-bold file:mr-4 file:py-1.5 file:px-4 file:rounded file:border-0 file:text-[10px] file:font-black file:uppercase file:tracking-widest file:bg-teal-100 dark:file:bg-teal-900/30 file:text-teal-800 dark:file:text-teal-400 hover:file:bg-teal-200 dark:hover:file:bg-teal-900/50 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950 p-1 cursor-pointer transition-colors">
             </div>
-            <button type="submit" class="bg-teal-700 hover:bg-teal-800 text-white px-6 py-2 rounded text-[10px] font-black uppercase tracking-widest transition-all shadow-sm flex items-center gap-2 border border-teal-900">
+            <button type="submit" class="bg-teal-700 dark:bg-teal-600 hover:bg-teal-800 dark:hover:bg-teal-700 text-white px-6 py-2 rounded text-[10px] font-black uppercase tracking-widest transition-all shadow-sm flex items-center gap-2 border border-teal-900 dark:border-teal-800">
                 <i data-lucide="refresh-cw" class="w-3 h-3"></i> Preview Data
             </button>
         </form>
     </div>
 
-    <form method="POST" id="excelOrderForm" action="{% url 'order_excel' %}" class="bg-white border border-slate-300 shadow-sm p-4 border-t-4 border-t-teal-700">
+    <form method="POST" id="excelOrderForm" action="{% url 'order_excel' %}" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm p-4 border-t-4 border-t-teal-700 dark:border-t-teal-600 transition-colors duration-300">
         {% csrf_token %}
         
-        <div class="border-b-2 border-teal-800 pb-2 mb-4 flex justify-between items-end">
-            <h3 class="text-xl font-black text-teal-900 uppercase tracking-tight flex items-center gap-2">
-                <i data-lucide="info" class="w-5 h-5 text-teal-700"></i> Step 2: Fill Order Details
+        <div class="border-b-2 border-teal-800 dark:border-teal-700 pb-2 mb-4 flex justify-between items-end transition-colors">
+            <h3 class="text-xl font-black text-teal-900 dark:text-teal-400 uppercase tracking-tight flex items-center gap-2 transition-colors">
+                <i data-lucide="info" class="w-5 h-5 text-teal-700 dark:text-teal-500"></i> Step 2: Fill Order Details
             </h3>
-            <span class="text-xs font-bold text-slate-500">CO Excel Module v1.0</span>
+            <span class="text-xs font-bold text-slate-500 dark:text-slate-400 transition-colors">CO Excel Module v1.0</span>
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-2 mb-4">
             <div class="space-y-2">
                 <div class="flex items-center">
-                    <label class="w-32 text-xs font-bold text-slate-600">In Order No.</label>
+                    <label class="w-32 text-xs font-bold text-slate-600 dark:text-slate-400 transition-colors">In Order No.</label>
                     <div class="flex flex-1 gap-1">
-                        <input type="text" name="in_order_no" required placeholder="SO-XXXXX" class="w-full p-1 border border-slate-400 bg-slate-100 text-xs font-bold focus:bg-white text-teal-900 uppercase">
-                        <button type="button" onclick="generateSpecificOrderNo(this)" class="bg-teal-700 text-white px-2 py-1 text-[10px] font-bold hover:bg-teal-800 transition-colors shadow-sm">Gen</button>
+                        <input type="text" name="in_order_no" required placeholder="SO-XXXXX" class="w-full p-1 border border-slate-400 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 text-xs font-bold focus:bg-white dark:focus:bg-slate-950 text-teal-900 dark:text-teal-300 uppercase transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-600">
+                        <button type="button" onclick="generateSpecificOrderNo(this)" class="bg-teal-700 dark:bg-teal-600 text-white px-2 py-1 text-[10px] font-bold hover:bg-teal-800 dark:hover:bg-teal-700 transition-colors shadow-sm">Gen</button>
                     </div>
                 </div>
                 <div class="flex items-center">
-                    <label class="w-32 text-xs font-bold text-slate-600">Customer</label>
+                    <label class="w-32 text-xs font-bold text-slate-600 dark:text-slate-400 transition-colors">Customer</label>
                     <input list="cust_list" id="customer_name_id" name="customer_name" required placeholder="Search customer..." 
-                           class="flex-1 p-1 border border-slate-400 text-xs focus:bg-emerald-50 uppercase font-bold" 
+                           class="flex-1 p-1 border border-slate-400 dark:border-slate-600 text-xs bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:bg-emerald-50 dark:focus:bg-emerald-900/20 uppercase font-bold transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-600" 
                            onchange="autoFillCustomer()" autocomplete="off">
                     <datalist id="cust_list">
                         {% for c in customers %}<option value="{{ c.name }}"></option>{% endfor %}
                     </datalist>
                 </div>
                 <div class="flex items-center">
-                    <label class="w-32 text-xs font-bold text-slate-600">Contact Person</label>
-                    <input type="text" id="contact_person" name="contact_person" class="flex-1 p-1 border border-slate-400 text-xs focus:bg-emerald-50 uppercase font-bold" placeholder="TYPE OR AUTO-FILL">
+                    <label class="w-32 text-xs font-bold text-slate-600 dark:text-slate-400 transition-colors">Contact Person</label>
+                    <input type="text" id="contact_person" name="contact_person" class="flex-1 p-1 border border-slate-400 dark:border-slate-600 text-xs bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:bg-emerald-50 dark:focus:bg-emerald-900/20 uppercase font-bold transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-600" placeholder="TYPE OR AUTO-FILL">
                 </div>
             </div>
 
             <div class="space-y-2">
                 <div class="flex items-center">
-                    <label class="w-32 text-xs font-bold text-slate-600">Order Date</label>
-                    <input type="date" id="order_date" name="order_date" required class="flex-1 p-1 border border-slate-400 text-xs focus:bg-emerald-50 font-bold">
+                    <label class="w-32 text-xs font-bold text-slate-600 dark:text-slate-400 transition-colors">Order Date</label>
+                    <input type="date" id="order_date" name="order_date" required class="flex-1 p-1 border border-slate-400 dark:border-slate-600 text-xs bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:bg-emerald-50 dark:focus:bg-emerald-900/20 font-bold transition-colors">
                 </div>
                 <div class="flex items-center">
-                    <label class="w-32 text-xs font-bold text-slate-600">Order Type</label>
-                    <select name="order_type" class="flex-1 p-1 border border-slate-400 text-xs focus:bg-emerald-50 font-bold">
+                    <label class="w-32 text-xs font-bold text-slate-600 dark:text-slate-400 transition-colors">Order Type</label>
+                    <select name="order_type" class="flex-1 p-1 border border-slate-400 dark:border-slate-600 text-xs bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:bg-emerald-50 dark:focus:bg-emerald-900/20 font-bold transition-colors">
                         <option>Standard</option><option>Express</option><option>Schedule</option><option>Pick up</option>
                     </select>
                 </div>
                 <div class="flex items-center">
-                    <label class="w-32 text-xs font-bold text-slate-600">Delivery Address</label>
+                    <label class="w-32 text-xs font-bold text-slate-600 dark:text-slate-400 transition-colors">Delivery Address</label>
                     <div class="flex flex-1 gap-1">
-                        <input list="delivery_list" id="delivery_input" name="delivery_input" placeholder="Type address..." class="w-full p-1 border border-slate-400 text-xs focus:bg-emerald-50 uppercase font-bold">
+                        <input list="delivery_list" id="delivery_input" name="delivery_input" placeholder="Type address..." class="w-full p-1 border border-slate-400 dark:border-slate-600 text-xs bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:bg-emerald-50 dark:focus:bg-emerald-900/20 uppercase font-bold transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-600">
                         <datalist id="delivery_list">
                             {% for address in delivery_addresses %}<option value="{{ address }}"></option>{% endfor %}
                         </datalist>
-                        <button type="button" onclick="registerAddress()" class="bg-teal-700 text-white px-2 py-1 text-[10px] font-bold hover:bg-teal-800 border border-teal-800">New</button>
+                        <button type="button" onclick="registerAddress()" class="bg-teal-700 dark:bg-teal-600 text-white px-2 py-1 text-[10px] font-bold hover:bg-teal-800 dark:hover:bg-teal-700 border border-teal-800 dark:border-teal-700 transition-colors">New</button>
                     </div>
                 </div>
             </div>
 
             <div class="space-y-2">
                 <div class="flex items-center">
-                    <label class="w-32 text-xs font-bold text-slate-600">Order Status</label>
-                    <select name="order_status" id="main_status" class="flex-1 p-1 border border-teal-400 bg-teal-50 text-teal-900 text-xs font-bold focus:bg-white uppercase">
+                    <label class="w-32 text-xs font-bold text-slate-600 dark:text-slate-400 transition-colors">Order Status</label>
+                    <select name="order_status" id="main_status" class="flex-1 p-1 border border-teal-400 dark:border-teal-700 bg-teal-50 dark:bg-teal-900/30 text-teal-900 dark:text-teal-300 text-xs font-bold focus:bg-white dark:focus:bg-slate-950 uppercase transition-colors">
                         <option>Pending</option>
                         <option>Processing</option>
                         <option>Shipped</option>
@@ -92,96 +92,96 @@
                     </select>
                 </div>
                 <div class="flex items-center">
-                    <label class="w-32 text-xs font-bold text-slate-600">Transport</label>
-                    <select name="transport_main" id="main_transport" class="flex-1 p-1 border border-slate-400 text-xs focus:bg-emerald-50 uppercase font-bold">
+                    <label class="w-32 text-xs font-bold text-slate-600 dark:text-slate-400 transition-colors">Transport</label>
+                    <select name="transport_main" id="main_transport" class="flex-1 p-1 border border-slate-400 dark:border-slate-600 text-xs bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:bg-emerald-50 dark:focus:bg-emerald-900/20 uppercase font-bold transition-colors">
                         <option>Truck</option><option>Van</option><option>Motorcycle</option>
                     </select>
                 </div>
                 <div class="flex items-center">
-                    <label class="w-32 text-xs font-bold text-slate-600">Cust PO No.</label>
-                    <input type="text" name="cust_po_no" placeholder="Reference PO..." class="flex-1 p-1 border border-slate-400 text-xs focus:bg-emerald-50 uppercase">
+                    <label class="w-32 text-xs font-bold text-slate-600 dark:text-slate-400 transition-colors">Cust PO No.</label>
+                    <input type="text" name="cust_po_no" placeholder="Reference PO..." class="flex-1 p-1 border border-slate-400 dark:border-slate-600 text-xs bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:bg-emerald-50 dark:focus:bg-emerald-900/20 uppercase transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-600">
                 </div>
             </div>
         </div>
 
-        <div class="bg-slate-100 border-y border-slate-300 py-2 px-2 mb-4 flex flex-wrap justify-between items-center gap-2">
+        <div class="bg-slate-100 dark:bg-slate-800/80 border-y border-slate-300 dark:border-slate-700 py-2 px-2 mb-4 flex flex-wrap justify-between items-center gap-2 transition-colors">
             <div class="flex flex-wrap items-center gap-2">
-                <button type="button" onclick="cancelForm()" class="bg-slate-200 text-slate-800 border border-slate-400 px-4 py-1.5 text-xs font-bold hover:bg-slate-300 uppercase tracking-widest">Clear Form</button>
-                <div class="h-6 w-[1px] bg-slate-300 mx-1"></div>
-                <button type="button" onclick="setGlobalPrice()" class="bg-slate-200 text-slate-800 border border-slate-400 px-4 py-1.5 text-[10px] font-black hover:bg-slate-300 uppercase tracking-widest">Set Price</button>
+                <button type="button" onclick="cancelForm()" class="bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-300 border border-slate-400 dark:border-slate-600 px-4 py-1.5 text-xs font-bold hover:bg-slate-300 dark:hover:bg-slate-700 uppercase tracking-widest transition-colors">Clear Form</button>
+                <div class="h-6 w-[1px] bg-slate-300 dark:bg-slate-700 mx-1 transition-colors"></div>
+                <button type="button" onclick="setGlobalPrice()" class="bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-300 border border-slate-400 dark:border-slate-600 px-4 py-1.5 text-[10px] font-black hover:bg-slate-300 dark:hover:bg-slate-700 uppercase tracking-widest transition-colors">Set Price</button>
             </div>
             <div class="flex flex-wrap items-center gap-2">
-                <div class="flex items-center gap-2 bg-white border border-slate-300 px-3 py-1 text-xs font-bold mr-2 uppercase tracking-widest">
-                    <span class="text-slate-500">Excel Rows:</span>
-                    <span id="list_count" class="text-teal-700">{{ excel_data|length|default:"0" }}</span>
+                <div class="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 px-3 py-1 text-xs font-bold mr-2 uppercase tracking-widest transition-colors">
+                    <span class="text-slate-500 dark:text-slate-400 transition-colors">Excel Rows:</span>
+                    <span id="list_count" class="text-teal-700 dark:text-teal-400 transition-colors">{{ excel_data|length|default:"0" }}</span>
                 </div>
             </div>
         </div>
 
-        <div class="overflow-x-auto border border-slate-400 mb-4 min-h-[300px]">
+        <div class="overflow-x-auto border border-slate-400 dark:border-slate-700 mb-4 min-h-[300px] transition-colors">
             <table class="w-full text-left min-w-[1300px] border-collapse" style="font-size: 11px;">
-                <thead>
-                    <tr class="bg-slate-200 text-slate-800 border-b border-slate-400 uppercase tracking-widest">
-                        <th class="py-1.5 px-2 border-r border-slate-400 text-center w-8">No.</th>
-                        <th class="py-1.5 px-2 border-r border-slate-400 w-32">Item Code</th>
-                        <th class="py-1.5 px-2 border-r border-slate-400 w-32 text-blue-800">Cust Item Code</th>
-                        <th class="py-1.5 px-2 border-r border-slate-400">Description</th>
-                        <th class="py-1.5 px-2 border-r border-slate-400 w-24">Del. Date</th>
-                        <th class="py-1.5 px-2 border-r border-slate-400 w-20">Transport</th>
-                        <th class="py-1.5 px-2 border-r border-slate-400 w-20 text-center text-teal-900">Order Qty</th>
-                        <th class="py-1.5 px-2 border-r border-slate-400 w-16 text-center">Unit</th>
-                        <th class="py-1.5 px-2 border-r border-slate-400 w-24 text-right">Unit Price</th>
-                        <th class="py-1.5 px-2 border-r border-slate-400 w-28 text-right text-teal-900">Amount</th>
-                        <th class="py-1.5 px-2 border-r border-slate-400 w-24 text-center">Status</th>
-                        <th class="py-1.5 px-2 text-center w-8 text-rose-600">X</th>
+                <thead class="transition-colors">
+                    <tr class="bg-slate-200 dark:bg-slate-950 text-slate-800 dark:text-slate-300 border-b border-slate-400 dark:border-slate-800 uppercase tracking-widest transition-colors">
+                        <th class="py-1.5 px-2 border-r border-slate-400 dark:border-slate-700 text-center w-8">No.</th>
+                        <th class="py-1.5 px-2 border-r border-slate-400 dark:border-slate-700 w-32">Item Code</th>
+                        <th class="py-1.5 px-2 border-r border-slate-400 dark:border-slate-700 w-32 text-blue-800 dark:text-blue-400">Cust Item Code</th>
+                        <th class="py-1.5 px-2 border-r border-slate-400 dark:border-slate-700">Description</th>
+                        <th class="py-1.5 px-2 border-r border-slate-400 dark:border-slate-700 w-24">Del. Date</th>
+                        <th class="py-1.5 px-2 border-r border-slate-400 dark:border-slate-700 w-20">Transport</th>
+                        <th class="py-1.5 px-2 border-r border-slate-400 dark:border-slate-700 w-20 text-center text-teal-900 dark:text-teal-400">Order Qty</th>
+                        <th class="py-1.5 px-2 border-r border-slate-400 dark:border-slate-700 w-16 text-center">Unit</th>
+                        <th class="py-1.5 px-2 border-r border-slate-400 dark:border-slate-700 w-24 text-right">Unit Price</th>
+                        <th class="py-1.5 px-2 border-r border-slate-400 dark:border-slate-700 w-28 text-right text-teal-900 dark:text-teal-400">Amount</th>
+                        <th class="py-1.5 px-2 border-r border-slate-400 dark:border-slate-700 w-24 text-center">Status</th>
+                        <th class="py-1.5 px-2 text-center w-8 text-rose-600 dark:text-rose-500">X</th>
                     </tr>
                 </thead>
-                <tbody id="tableBody" class="divide-y divide-slate-300">
+                <tbody id="tableBody" class="divide-y divide-slate-300 dark:divide-slate-800 transition-colors">
                     {% for row in excel_data %}
-                    <tr class="item-row bg-white hover:bg-emerald-50 transition-colors">
-                        <td class="py-1 px-1 border-r border-slate-300 text-center font-bold text-slate-500 row-num">{{ forloop.counter }}</td>
+                    <tr class="item-row bg-white dark:bg-slate-900 hover:bg-emerald-50 dark:hover:bg-teal-900/20 transition-colors">
+                        <td class="py-1 px-1 border-r border-slate-300 dark:border-slate-700 text-center font-bold text-slate-500 dark:text-slate-400 row-num transition-colors">{{ forloop.counter }}</td>
                         
-                        <td class="py-1 px-1 border-r border-slate-300">
-                            <input type="text" name="item_code_row[]" value="{{ row.item_code }}" class="code-input w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white text-xs font-bold uppercase" onchange="autoFillItemRow(this)">
-                        </td>
-                        
-                        <td class="py-1 px-1 border-r border-slate-300">
-                            <input type="text" name="cust_item_code_row[]" placeholder="-" class="w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white text-xs text-blue-700 italic">
+                        <td class="py-1 px-1 border-r border-slate-300 dark:border-slate-700 transition-colors">
+                            <input type="text" name="item_code_row[]" value="{{ row.item_code }}" class="code-input w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white dark:focus:bg-slate-800 text-xs font-bold uppercase dark:text-slate-200 transition-colors" onchange="autoFillItemRow(this)">
                         </td>
                         
-                        <td class="py-1 px-1 border-r border-slate-300">
-                            <input type="text" name="description_row[]" value="{{ row.description|default:'' }}" class="w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white text-[10px] uppercase font-bold text-slate-600">
+                        <td class="py-1 px-1 border-r border-slate-300 dark:border-slate-700 transition-colors">
+                            <input type="text" name="cust_item_code_row[]" placeholder="-" class="w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white dark:focus:bg-slate-800 text-xs text-blue-700 dark:text-blue-400 italic transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-600">
                         </td>
                         
-                        <td class="py-1 px-1 border-r border-slate-300">
-                            <input type="date" name="del_date_row[]" class="row-del-date w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white text-[10px] text-slate-600 font-bold">
+                        <td class="py-1 px-1 border-r border-slate-300 dark:border-slate-700 transition-colors">
+                            <input type="text" name="description_row[]" value="{{ row.description|default:'' }}" class="w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white dark:focus:bg-slate-800 text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400 transition-colors">
                         </td>
-                        <td class="py-1 px-1 border-r border-slate-300">
-                            <input type="text" name="transport_row[]" class="row-transport w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white text-[10px] uppercase font-bold text-slate-500">
+                        
+                        <td class="py-1 px-1 border-r border-slate-300 dark:border-slate-700 transition-colors">
+                            <input type="date" name="del_date_row[]" class="row-del-date w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white dark:focus:bg-slate-800 text-[10px] text-slate-600 dark:text-slate-400 font-bold transition-colors">
                         </td>
-                        <td class="py-1 px-1 border-r border-slate-300 bg-teal-50">
-                            <input type="number" name="qty_row[]" value="{{ row.qty|default:'1' }}" min="1" oninput="calculateRow(this)" class="qty-input w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white text-xs font-bold text-center text-teal-900">
+                        <td class="py-1 px-1 border-r border-slate-300 dark:border-slate-700 transition-colors">
+                            <input type="text" name="transport_row[]" class="row-transport w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white dark:focus:bg-slate-800 text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 transition-colors">
                         </td>
-                        <td class="py-1 px-1 border-r border-slate-300">
-                            <input type="text" name="unit_row[]" value="PCS" class="w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white text-[10px] text-center font-bold text-slate-500 uppercase">
+                        <td class="py-1 px-1 border-r border-slate-300 dark:border-slate-700 bg-teal-50 dark:bg-teal-900/20 transition-colors">
+                            <input type="number" name="qty_row[]" value="{{ row.qty|default:'1' }}" min="1" oninput="calculateRow(this)" class="qty-input w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white dark:focus:bg-slate-800 text-xs font-bold text-center text-teal-900 dark:text-teal-400 transition-colors">
                         </td>
-                        <td class="py-1 px-1 border-r border-slate-300">
-                            <input type="number" name="price_row[]" value="{{ row.price|default:'0.00' }}" step="0.01" oninput="calculateRow(this)" class="price-input w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white text-xs text-right font-bold">
+                        <td class="py-1 px-1 border-r border-slate-300 dark:border-slate-700 transition-colors">
+                            <input type="text" name="unit_row[]" value="PCS" class="w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white dark:focus:bg-slate-800 text-[10px] text-center font-bold text-slate-500 dark:text-slate-400 uppercase transition-colors">
                         </td>
-                        <td class="py-1 px-1 border-r border-slate-300 text-right bg-teal-50">
-                            <span class="text-xs font-bold text-teal-900 pr-1 row-total">0.00</span>
+                        <td class="py-1 px-1 border-r border-slate-300 dark:border-slate-700 transition-colors">
+                            <input type="number" name="price_row[]" value="{{ row.price|default:'0.00' }}" step="0.01" oninput="calculateRow(this)" class="price-input w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white dark:focus:bg-slate-800 text-xs text-right font-bold dark:text-slate-200 transition-colors">
+                        </td>
+                        <td class="py-1 px-1 border-r border-slate-300 dark:border-slate-700 text-right bg-teal-50 dark:bg-teal-900/20 transition-colors">
+                            <span class="text-xs font-bold text-teal-900 dark:text-teal-400 pr-1 row-total transition-colors">0.00</span>
                             <input type="hidden" name="amount_row[]" class="raw-amount-input" value="0">
                         </td>
-                        <td class="py-1 px-1 border-r border-slate-300">
-                            <input type="text" name="status_row[]" class="row-status w-full p-1 border-none bg-transparent text-[10px] text-center text-slate-500 font-bold uppercase" readonly>
+                        <td class="py-1 px-1 border-r border-slate-300 dark:border-slate-700 transition-colors">
+                            <input type="text" name="status_row[]" class="row-status w-full p-1 border-none bg-transparent text-[10px] text-center text-slate-500 dark:text-slate-400 font-bold uppercase transition-colors" readonly>
                         </td>
-                        <td class="py-1 px-1 text-center">
-                            <button type="button" onclick="removeRow(this)" class="text-rose-600 font-bold px-2 hover:bg-rose-100">X</button>
+                        <td class="py-1 px-1 text-center transition-colors">
+                            <button type="button" onclick="removeRow(this)" class="text-rose-600 dark:text-rose-500 font-bold px-2 hover:bg-rose-100 dark:hover:bg-rose-900/30 rounded transition-colors">X</button>
                         </td>
                     </tr>
                     {% empty %}
                     <tr id="empty-state">
-                        <td colspan="12" class="py-12 text-center text-slate-400 italic">
+                        <td colspan="12" class="py-12 text-center text-slate-400 dark:text-slate-500 italic transition-colors">
                             <i data-lucide="upload-cloud" class="w-10 h-10 mx-auto mb-2 opacity-30"></i>
                             <p class="font-bold text-xs uppercase tracking-widest">No data uploaded. Please select an Excel/CSV file above.</p>
                         </td>
@@ -191,14 +191,14 @@
             </table>
         </div>
 
-        <div class="flex justify-between items-center bg-slate-100 border border-slate-400 p-3 shadow-md">
-            <button type="submit" onclick="return confirm('Register this single Customer Order to the database?')" class="bg-teal-700 text-white border border-teal-900 px-10 py-3 text-sm font-black uppercase tracking-widest hover:bg-teal-800 shadow-sm">
+        <div class="flex justify-between items-center bg-slate-100 dark:bg-slate-950 border border-slate-400 dark:border-slate-800 p-3 shadow-md transition-colors duration-300">
+            <button type="submit" onclick="return confirm('Register this single Customer Order to the database?')" class="bg-teal-700 dark:bg-teal-600 text-white border border-teal-900 dark:border-teal-800 px-10 py-3 text-sm font-black uppercase tracking-widest hover:bg-teal-800 dark:hover:bg-teal-500 shadow-sm transition-colors">
                 Register Order
             </button>
             
-            <div class="flex items-center gap-4 pl-6 border-l border-slate-300">
-                <span class="text-xs font-black uppercase tracking-widest text-teal-900">Grand Total:</span>
-                <span class="text-2xl font-black text-teal-800 w-48 text-right border-b-4 border-teal-800">₱ <span id="grand_total_display">0.00</span></span>
+            <div class="flex items-center gap-4 pl-6 border-l border-slate-300 dark:border-slate-700 transition-colors">
+                <span class="text-xs font-black uppercase tracking-widest text-teal-900 dark:text-teal-400 transition-colors">Grand Total:</span>
+                <span class="text-2xl font-black text-teal-800 dark:text-teal-500 w-48 text-right border-b-4 border-teal-800 dark:border-teal-600 transition-colors">₱ <span id="grand_total_display">0.00</span></span>
             </div>
         </div>
 
@@ -241,7 +241,6 @@
         });
     });
 
-    // 🚀 BAGO: Generator para sa Main PO No.
     function generateSpecificOrderNo(btnElement) {
         const input = btnElement.previousElementSibling;
         const date = new Date();
@@ -305,7 +304,6 @@
         }
     }
 
-    // 🚀 BAGO: Mas malinis na Database handling para hindi mag-error kapag may special characters
     const customerDatabase = {
         {% for c in customers %}
         "{{ c.name|upper|escapejs }}": {
@@ -335,16 +333,6 @@
             document.getElementById('delivery_input').value = newAddress.toUpperCase();
         }
     }
-
-    const itemMasterDatabase = {
-        {% for item in items %}
-        "{{ item.item_code|upper|escapejs }}": {
-            "description": "{{ item.description|default:''|escapejs }}",
-            "unit_price": "{{ item.unit_price|default:'0.00' }}",
-            "uom": "{{ item.uom|default:'PCS'|escapejs }}"
-        }{% if not forloop.last %},{% endif %}
-        {% endfor %}
-    };
 
     function autoFillItemRow(inputElement) {
         const itemCode = inputElement.value.trim().toUpperCase();

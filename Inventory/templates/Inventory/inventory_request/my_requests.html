@@ -1,21 +1,21 @@
 {% extends "Inventory/inventory_request/request_base.html" %}
 
 {% block request_content %}
-<div class="w-full bg-white border border-slate-300 shadow-sm flex flex-col font-sans">
+<div class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm flex flex-col font-sans transition-colors duration-300">
     
-    <div class="bg-violet-700 text-white px-4 py-3 flex justify-between items-center">
+    <div class="bg-violet-700 dark:bg-violet-800 text-white px-4 py-3 flex justify-between items-center transition-colors">
         <h2 class="text-xs font-black uppercase tracking-widest flex items-center gap-2">
             <i data-lucide="list" class="w-4 h-4 text-violet-300"></i> My Material Requests
         </h2>
-        <span class="text-[10px] font-bold bg-violet-800 px-2 py-0.5 rounded border border-violet-600">
+        <span class="text-[10px] font-bold bg-violet-800 dark:bg-violet-950 px-2 py-0.5 rounded border border-violet-600 dark:border-violet-700">
             Latest 50 Records
         </span>
     </div>
 
     <div class="overflow-x-auto min-h-[400px]">
         <table class="w-full text-left border-collapse text-[11px]">
-            <thead class="bg-slate-200 text-slate-700 uppercase tracking-widest font-black sticky top-0 shadow-sm">
-                <tr class="border-b-2 border-slate-400">
+            <thead class="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 uppercase tracking-widest font-black sticky top-0 shadow-sm transition-colors">
+                <tr class="border-b-2 border-slate-400 dark:border-slate-700">
                     <th class="py-2 px-3 w-40">Request No.</th>
                     <th class="py-2 px-3 w-32">Date</th>
                     <th class="py-2 px-3 w-48">Department / Zone</th>
@@ -25,34 +25,34 @@
                     <th class="py-2 px-3 w-24 text-center">Action</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-200 text-slate-800 bg-white">
+            <tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-800 dark:text-slate-300 bg-white dark:bg-slate-900 transition-colors">
                 {% for req in requests %}
-                <tr class="hover:bg-violet-50 transition-colors group">
-                    <td class="py-2 px-3 font-black text-violet-900">{{ req.request_no }}</td>
-                    <td class="py-2 px-3 font-bold text-slate-600">{{ req.request_date|date:"Y-m-d" }}</td>
-                    <td class="py-2 px-3 font-bold text-slate-700 uppercase">{{ req.receiving_place }}</td>
-                    <td class="py-2 px-3 text-slate-600 truncate max-w-xs capitalize" title="{{ req.reason }}">{{ req.reason }}</td>
-                    <td class="py-2 px-3 text-center font-black text-indigo-600">{{ req.item_count }}</td>
+                <tr class="hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors group">
+                    <td class="py-2 px-3 font-black text-violet-900 dark:text-violet-400">{{ req.request_no }}</td>
+                    <td class="py-2 px-3 font-bold text-slate-600 dark:text-slate-400">{{ req.request_date|date:"Y-m-d" }}</td>
+                    <td class="py-2 px-3 font-bold text-slate-700 dark:text-slate-200 uppercase">{{ req.receiving_place }}</td>
+                    <td class="py-2 px-3 text-slate-600 dark:text-slate-400 truncate max-w-xs capitalize" title="{{ req.reason }}">{{ req.reason }}</td>
+                    <td class="py-2 px-3 text-center font-black text-indigo-600 dark:text-indigo-400">{{ req.item_count }}</td>
                     <td class="py-2 px-3 text-center">
                         {% if req.status == 'Pending' %}
-                            <span class="bg-amber-100 text-amber-700 border border-amber-300 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest">Pending</span>
+                            <span class="bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-800 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest">Pending</span>
                         {% elif req.status == 'Processing' or req.status == 'Partial' %}
-                            <span class="bg-blue-100 text-blue-700 border border-blue-300 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest">Processing</span>
+                            <span class="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-300 dark:border-blue-800 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest">Processing</span>
                         {% elif req.status == 'Completed' %}
-                            <span class="bg-emerald-100 text-emerald-700 border border-emerald-300 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest">Completed</span>
+                            <span class="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest">Completed</span>
                         {% else %}
-                            <span class="bg-slate-100 text-slate-600 border border-slate-300 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest">{{ req.status }}</span>
+                            <span class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-300 dark:border-slate-700 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest">{{ req.status }}</span>
                         {% endif %}
                     </td>
                     <td class="py-2 px-3 text-center">
-                        <button type="button" onclick="viewRequestDetails('{{ req.id }}')" class="bg-slate-100 hover:bg-violet-600 hover:text-white text-slate-600 border border-slate-300 hover:border-violet-700 p-1.5 rounded transition-colors shadow-sm" title="View Details">
+                        <button type="button" onclick="viewRequestDetails('{{ req.id }}')" class="bg-slate-100 dark:bg-slate-800 hover:bg-violet-600 dark:hover:bg-violet-700 hover:text-white text-slate-600 dark:text-slate-400 border border-slate-300 dark:border-slate-700 hover:border-violet-700 p-1.5 rounded transition-colors shadow-sm" title="View Details">
                             <i data-lucide="eye" class="w-3.5 h-3.5"></i>
                         </button>
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="7" class="py-12 text-center text-slate-400">
+                    <td colspan="7" class="py-12 text-center text-slate-400 dark:text-slate-600 bg-white dark:bg-slate-900 transition-colors">
                         <i data-lucide="inbox" class="w-12 h-12 mx-auto mb-3 opacity-20"></i>
                         <p class="font-black text-xs uppercase tracking-widest">No Requests Found</p>
                     </td>
@@ -63,59 +63,59 @@
     </div>
 </div>
 
-<div id="viewModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-center items-center p-4 font-sans">
-    <div class="bg-white border-t-4 border-violet-600 shadow-2xl w-full max-w-4xl flex flex-col overflow-hidden max-h-[90vh]">
+<div id="viewModal" class="hidden fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex justify-center items-center p-4 font-sans transition-all">
+    <div class="bg-white dark:bg-slate-900 border-t-4 border-violet-600 dark:border-violet-500 shadow-2xl w-full max-w-4xl flex flex-col overflow-hidden max-h-[90vh] rounded-sm transition-colors duration-300">
         
-        <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+        <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950/50 transition-colors">
             <div>
-                <h3 class="font-black text-violet-900 uppercase tracking-widest flex items-center gap-2 text-sm">
+                <h3 class="font-black text-violet-900 dark:text-violet-400 uppercase tracking-widest flex items-center gap-2 text-sm">
                     <i data-lucide="file-search" class="w-5 h-5"></i> Request Details
                 </h3>
-                <p id="modalReqNo" class="text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-widest">REQ-XXXXX</p>
+                <p id="modalReqNo" class="text-[10px] font-bold text-slate-500 dark:text-slate-500 mt-1 uppercase tracking-widest">REQ-XXXXX</p>
             </div>
-            <button type="button" onclick="closeViewModal()" class="text-rose-600 hover:bg-rose-100 p-1.5 rounded transition-colors">
+            <button type="button" onclick="closeViewModal()" class="text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/30 p-1.5 rounded transition-colors">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
         
-        <div class="p-5 grid grid-cols-3 gap-4 bg-white border-b border-slate-100 text-xs">
+        <div class="p-5 grid grid-cols-1 md:grid-cols-3 gap-4 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 text-xs transition-colors">
             <div>
-                <span class="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Department</span>
-                <span id="modalDept" class="font-bold text-slate-800 uppercase">---</span>
+                <span class="block text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Department</span>
+                <span id="modalDept" class="font-bold text-slate-800 dark:text-slate-200 uppercase">---</span>
             </div>
             <div>
-                <span class="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Date Requested</span>
-                <span id="modalDate" class="font-bold text-slate-800">---</span>
+                <span class="block text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Date Requested</span>
+                <span id="modalDate" class="font-bold text-slate-800 dark:text-slate-200">---</span>
             </div>
             <div>
-                <span class="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Status</span>
+                <span class="block text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Status</span>
                 <span id="modalStatus" class="font-bold text-slate-800">---</span>
             </div>
-            <div class="col-span-3 mt-2 border-t border-slate-100 pt-2">
-                <span class="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Purpose</span>
-                <span id="modalPurpose" class="font-bold text-slate-800 capitalize">---</span>
+            <div class="col-span-1 md:col-span-3 mt-2 border-t border-slate-100 dark:border-slate-800 pt-2">
+                <span class="block text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Purpose</span>
+                <span id="modalPurpose" class="font-bold text-slate-800 dark:text-slate-300 capitalize">---</span>
             </div>
         </div>
 
-        <div class="overflow-y-auto flex-1 bg-slate-50 p-4">
-            <table class="w-full text-left border-collapse text-[10px] bg-white border border-slate-200 shadow-sm">
-                <thead class="bg-slate-200 text-slate-700 uppercase tracking-widest font-black">
-                    <tr class="divide-x divide-slate-300 border-b border-slate-300">
+        <div class="overflow-y-auto flex-1 bg-slate-50 dark:bg-slate-950 transition-colors p-4">
+            <table class="w-full text-left border-collapse text-[10px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
+                <thead class="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 uppercase tracking-widest font-black transition-colors">
+                    <tr class="divide-x divide-slate-300 dark:divide-slate-700 border-b border-slate-300 dark:border-slate-700">
                         <th class="py-2 px-2 w-32">Item Code</th>
                         <th class="py-2 px-2">Description</th>
-                        <th class="py-2 px-2 w-20 text-center text-violet-800">Req Qty</th>
-                        <th class="py-2 px-2 w-20 text-center text-emerald-700">Delivered</th>
+                        <th class="py-2 px-2 w-20 text-center text-violet-800 dark:text-violet-400">Req Qty</th>
+                        <th class="py-2 px-2 w-20 text-center text-emerald-700 dark:text-emerald-500">Delivered</th>
                         <th class="py-2 px-2 w-48">Remarks</th>
                     </tr>
                 </thead>
-                <tbody id="modalItemsBody" class="divide-y divide-slate-200 text-slate-700 font-bold uppercase">
+                <tbody id="modalItemsBody" class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-700 dark:text-slate-300 font-bold uppercase transition-colors">
                     </tbody>
             </table>
         </div>
 
-        <div class="p-4 bg-slate-100 border-t border-slate-300 flex justify-end gap-2 shadow-inner">
-            <button type="button" onclick="closeViewModal()" class="px-6 py-2 bg-white border border-slate-300 text-slate-600 text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-colors shadow-sm rounded-sm">Close Window</button>
-            <button type="button" onclick="window.print()" class="px-6 py-2 bg-slate-800 border border-slate-900 text-white text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 transition-colors shadow-sm rounded-sm flex items-center gap-2">
+        <div class="p-4 bg-slate-100 dark:bg-slate-950 border-t border-slate-300 dark:border-slate-800 flex justify-end gap-2 shadow-inner transition-colors">
+            <button type="button" onclick="closeViewModal()" class="px-6 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-sm rounded-sm">Close Window</button>
+            <button type="button" onclick="window.print()" class="px-6 py-2 bg-slate-800 dark:bg-slate-700 border border-slate-900 dark:border-slate-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 dark:hover:bg-slate-600 transition-colors shadow-sm rounded-sm flex items-center gap-2">
                 <i data-lucide="printer" class="w-3 h-3"></i> Print Form
             </button>
         </div>
@@ -133,44 +133,40 @@
         const modal = document.getElementById('viewModal');
         const tbody = document.getElementById('modalItemsBody');
         
-        // Reset and show loading text
         tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-amber-500 font-black text-xs animate-pulse">Loading Data from Server...</td></tr>';
         modal.classList.remove('hidden');
 
-        // Fetch data via API
         fetch(`/api/request-details/${reqId}/`)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Populate Header info
                     document.getElementById('modalReqNo').innerText = data.data.request_no;
                     document.getElementById('modalDept').innerText = data.data.department;
                     document.getElementById('modalDate').innerText = data.data.date;
                     document.getElementById('modalPurpose').innerText = data.data.purpose;
                     
-                    // Design Status text
                     const statusSpan = document.getElementById('modalStatus');
                     statusSpan.innerText = data.data.status;
-                    statusSpan.className = "font-black px-2 py-0.5 rounded text-[10px] uppercase tracking-widest ";
+                    statusSpan.className = "font-black px-2 py-0.5 rounded text-[10px] uppercase tracking-widest transition-colors ";
+                    
                     if (data.data.status === 'Completed') {
-                        statusSpan.classList.add('bg-emerald-100', 'text-emerald-700', 'border', 'border-emerald-300');
+                        statusSpan.classList.add('bg-emerald-100', 'text-emerald-700', 'border', 'border-emerald-300', 'dark:bg-emerald-900/30', 'dark:text-emerald-400', 'dark:border-emerald-800');
                     } else if (data.data.status === 'Pending') {
-                        statusSpan.classList.add('bg-amber-100', 'text-amber-700', 'border', 'border-amber-300');
+                        statusSpan.classList.add('bg-amber-100', 'text-amber-700', 'border', 'border-amber-300', 'dark:bg-amber-900/30', 'dark:text-amber-400', 'dark:border-amber-800');
                     } else {
-                        statusSpan.classList.add('bg-blue-100', 'text-blue-700', 'border', 'border-blue-300');
+                        statusSpan.classList.add('bg-blue-100', 'text-blue-700', 'border', 'border-blue-300', 'dark:bg-blue-900/30', 'dark:text-blue-400', 'dark:border-blue-800');
                     }
 
-                    // Populate Items in Table
                     tbody.innerHTML = '';
                     data.data.items.forEach(item => {
                         const tr = document.createElement('tr');
-                        tr.className = "hover:bg-slate-50 divide-x divide-slate-200 transition-colors";
+                        tr.className = "hover:bg-slate-50 dark:hover:bg-slate-800/50 divide-x divide-slate-200 dark:divide-slate-800 transition-colors";
                         tr.innerHTML = `
-                            <td class="py-1.5 px-2 font-black text-violet-900">${item.item_code}</td>
-                            <td class="py-1.5 px-2 text-slate-600">${item.description}</td>
-                            <td class="py-1.5 px-2 text-center font-black text-violet-700 bg-violet-50">${item.request_qty}</td>
-                            <td class="py-1.5 px-2 text-center font-black text-emerald-700 bg-emerald-50">${item.delivered_qty || 0}</td>
-                            <td class="py-1.5 px-2 text-[9px] text-slate-500 italic lowercase">${item.remarks || '-'}</td>
+                            <td class="py-1.5 px-2 font-black text-violet-900 dark:text-violet-400">${item.item_code}</td>
+                            <td class="py-1.5 px-2 text-slate-600 dark:text-slate-400">${item.description}</td>
+                            <td class="py-1.5 px-2 text-center font-black text-violet-700 dark:text-violet-300 bg-violet-50 dark:bg-violet-900/20">${item.request_qty}</td>
+                            <td class="py-1.5 px-2 text-center font-black text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20">${item.delivered_qty || 0}</td>
+                            <td class="py-1.5 px-2 text-[9px] text-slate-500 dark:text-slate-500 italic lowercase">${item.remarks || '-'}</td>
                         `;
                         tbody.appendChild(tr);
                     });

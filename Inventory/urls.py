@@ -10,7 +10,9 @@ urlpatterns = [
     # dashboard
     path('profile/', views.view_profile, name='view_profile'),
     path('profile/edit/', views.edit_profile, name='edit_profile'),
-    path('dashboard/', views.dashboard_view, name='dashboard'), 
+    path('dashboard/', views.dashboard_view, name='dashboard'),
+    path('tools/barcode-designer/', views.barcode_designer_view, name='barcode_designer'),
+    path('tools/cycle-count/', views.cycle_count, name='cycle_count'),
 
     # notifications
     path('notification/read/<int:notif_id>/', views.read_notification_view, name='read_notification'),
@@ -151,6 +153,7 @@ urlpatterns = [
     path('api/assembly/complete/', views.api_assembly_complete, name='api_assembly_complete'),
 
     # PASSWORD RESET PATHS
+    
     path('reset_password/', auth_views.PasswordResetView.as_view(template_name='Inventory/auth/password_reset_form.html'), name='password_reset'),
     path('reset_password_sent/', auth_views.PasswordResetDoneView.as_view(template_name='Inventory/auth/password_reset_done.html'), name='password_reset_done'),
     path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(template_name='Inventory/auth/password_reset_confirm.html'), name='password_reset_confirm'),

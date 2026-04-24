@@ -3,9 +3,9 @@
 {% block title %}Machine Detail{% endblock %}
 
 {% block content %}
-<div class="max-w-[100%] mx-auto pb-10 mt-2 text-slate-800 font-sans">
+<div class="max-w-[100%] mx-auto pb-10 mt-2 text-slate-800 dark:text-slate-200 font-sans transition-colors duration-300">
 
-    <div class="bg-slate-900 border border-slate-700 shadow-sm mb-2 flex justify-between items-center px-4 py-2 text-slate-200">
+    <div class="bg-slate-900 border border-slate-700 shadow-sm mb-2 flex justify-between items-center px-4 py-2 text-slate-200 transition-colors duration-300">
         <div class="flex items-center gap-4">
             <a href="{% url 'assembly_dashboard' %}" class="text-slate-400 hover:text-white transition-colors" title="Back to Dashboard">
                 <i data-lucide="corner-up-left" class="w-4 h-4"></i>
@@ -45,9 +45,9 @@
         
         <div class="lg:col-span-7 flex flex-col gap-2">
             
-            <div class="bg-white border border-slate-300 shadow-sm p-3">
-                <h3 class="font-black text-slate-800 tracking-widest text-[9px] uppercase mb-2 flex items-center gap-1 border-b border-slate-200 pb-1">
-                    <i data-lucide="terminal" class="w-3 h-3 text-indigo-600"></i> Terminal / Entry
+            <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm p-3 transition-colors duration-300">
+                <h3 class="font-black text-slate-800 dark:text-slate-200 tracking-widest text-[9px] uppercase mb-2 flex items-center gap-1 border-b border-slate-200 dark:border-slate-800 pb-1">
+                    <i data-lucide="terminal" class="w-3 h-3 text-indigo-600 dark:text-indigo-400"></i> Terminal / Entry
                 </h3>
                 
                 <form method="POST" action="{% url 'api_assembly_action' %}" class="flex flex-wrap items-end gap-2">
@@ -55,65 +55,65 @@
                     <input type="hidden" name="machine_id" value="{{ machine.id }}">
                     
                     <div class="w-32 space-y-1">
-                        <label class="text-[8px] font-black text-slate-500 uppercase tracking-widest">Action</label>
-                        <select name="action" class="w-full py-1 px-2 bg-slate-50 border border-slate-300 text-[10px] font-black uppercase text-indigo-900 focus:bg-white outline-none cursor-pointer h-7">
+                        <label class="text-[8px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Action</label>
+                        <select name="action" class="w-full py-1 px-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-[10px] font-black uppercase text-indigo-900 dark:text-indigo-400 focus:bg-white dark:focus:bg-slate-750 outline-none cursor-pointer h-7 transition-colors">
                             <option value="Assemble">Assemble (+)</option>
                             <option value="Dismantle">Dismantle (-)</option>
                         </select>
                     </div>
 
                     <div class="w-28 space-y-1">
-                        <label class="text-[8px] font-black text-slate-500 uppercase tracking-widest">Tag ID</label>
-                        <input type="text" name="tag_id" placeholder="TAG-00001" required class="w-full py-1 px-2 bg-white border border-slate-400 text-[10px] font-mono font-bold uppercase text-slate-900 focus:border-indigo-500 outline-none h-7">
+                        <label class="text-[8px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Tag ID</label>
+                        <input type="text" name="tag_id" placeholder="TAG-00001" required class="w-full py-1 px-2 bg-white dark:bg-slate-800 border border-slate-400 dark:border-slate-700 text-[10px] font-mono font-bold uppercase text-slate-900 dark:text-slate-100 focus:border-indigo-500 outline-none h-7 transition-colors">
                     </div>
 
                     <div class="w-16 space-y-1">
-                        <label class="text-[8px] font-black text-slate-500 uppercase tracking-widest">Qty</label>
-                        <input type="number" name="qty" value="1" min="0.01" step="0.01" required class="w-full py-1 px-2 bg-white border border-slate-400 text-[10px] font-mono font-bold text-center text-slate-900 focus:border-indigo-500 outline-none h-7">
+                        <label class="text-[8px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Qty</label>
+                        <input type="number" name="qty" value="1" min="0.01" step="0.01" required class="w-full py-1 px-2 bg-white dark:bg-slate-800 border border-slate-400 dark:border-slate-700 text-[10px] font-mono font-bold text-center text-slate-900 dark:text-slate-100 focus:border-indigo-500 outline-none h-7 transition-colors">
                     </div>
 
                     <div class="flex-1 min-w-[120px] space-y-1">
-                        <label class="text-[8px] font-black text-slate-500 uppercase tracking-widest">Remarks</label>
-                        <input type="text" name="remarks" placeholder="Optional notes..." class="w-full py-1 px-2 bg-white border border-slate-300 text-[10px] font-bold text-slate-700 focus:border-indigo-500 outline-none h-7">
+                        <label class="text-[8px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Remarks</label>
+                        <input type="text" name="remarks" placeholder="Optional notes..." class="w-full py-1 px-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-[10px] font-bold text-slate-700 dark:text-slate-300 focus:border-indigo-500 outline-none h-7 transition-colors">
                     </div>
 
-                    <button type="submit" class="bg-indigo-700 text-white px-4 py-1 text-[10px] font-black uppercase tracking-widest hover:bg-indigo-800 transition-colors border border-indigo-900 h-7 flex items-center justify-center gap-1 min-w-[80px]">
+                    <button type="submit" class="bg-indigo-700 dark:bg-indigo-600 text-white px-4 py-1 text-[10px] font-black uppercase tracking-widest hover:bg-indigo-800 dark:hover:bg-indigo-500 transition-colors border border-indigo-900 dark:border-indigo-700 h-7 flex items-center justify-center gap-1 min-w-[80px]">
                         EXECUTE <i data-lucide="circle-play" class="w-3.5 h-3.5"></i>
                     </button>
                 </form>
             </div>
 
-            <div class="bg-white border border-slate-300 shadow-sm flex-1 flex flex-col min-h-[300px]">
-                <div class="bg-slate-100 border-b border-slate-300 px-3 py-2 flex justify-between items-center">
-                    <h3 class="font-black text-slate-800 tracking-widest text-[9px] uppercase flex items-center gap-1.5">
-                        <i data-lucide="database" class="w-3 h-3 text-indigo-600"></i> BOM / Installed State
+            <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm flex-1 flex flex-col min-h-[300px] transition-colors duration-300">
+                <div class="bg-slate-100 dark:bg-slate-800 border-b border-slate-300 dark:border-slate-700 px-3 py-2 flex justify-between items-center transition-colors">
+                    <h3 class="font-black text-slate-800 dark:text-slate-200 tracking-widest text-[9px] uppercase flex items-center gap-1.5">
+                        <i data-lucide="database" class="w-3 h-3 text-indigo-600 dark:text-indigo-400"></i> BOM / Installed State
                     </h3>
-                    <span class="text-[8px] font-black text-slate-400 uppercase tracking-widest">Auto-Calculated</span>
+                    <span class="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Auto-Calculated</span>
                 </div>
                 
-                <div class="overflow-x-auto flex-1 bg-white">
+                <div class="overflow-x-auto flex-1 bg-white dark:bg-slate-900 transition-colors">
                     <table class="w-full text-left border-collapse whitespace-nowrap">
-                        <thead class="bg-slate-200 text-slate-700 uppercase tracking-widest font-black text-[9px] sticky top-0 border-b border-slate-300">
+                        <thead class="bg-slate-200 dark:bg-slate-950 text-slate-700 dark:text-slate-300 uppercase tracking-widest font-black text-[9px] sticky top-0 border-b border-slate-300 dark:border-slate-800 transition-colors">
                             <tr>
-                                <th class="py-1.5 px-3 border-r border-slate-300 w-24">Tag Ref</th>
-                                <th class="py-1.5 px-3 border-r border-slate-300 w-32">Item Code</th>
-                                <th class="py-1.5 px-3 border-r border-slate-300">Description</th>
-                                <th class="py-1.5 px-3 border-r border-slate-300 w-24">Lot No.</th>
-                                <th class="py-1.5 px-3 text-right text-indigo-800 w-16">Net Qty</th>
+                                <th class="py-1.5 px-3 border-r border-slate-300 dark:border-slate-800 w-24">Tag Ref</th>
+                                <th class="py-1.5 px-3 border-r border-slate-300 dark:border-slate-800 w-32">Item Code</th>
+                                <th class="py-1.5 px-3 border-r border-slate-300 dark:border-slate-800">Description</th>
+                                <th class="py-1.5 px-3 border-r border-slate-300 dark:border-slate-800 w-24">Lot No.</th>
+                                <th class="py-1.5 px-3 text-right text-indigo-800 dark:text-indigo-400 w-16">Net Qty</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-200 text-[10px]">
+                        <tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-[10px] transition-colors">
                             {% for part in installed_parts %}
-                            <tr class="hover:bg-indigo-50 transition-colors">
-                                <td class="py-1.5 px-3 border-r border-slate-200 font-mono font-bold text-slate-500">TAG-{{ part.material_tag__id|stringformat:"05d" }}</td>
-                                <td class="py-1.5 px-3 border-r border-slate-200 font-black text-indigo-900 uppercase">{{ part.material_tag__item_code }}</td>
-                                <td class="py-1.5 px-3 border-r border-slate-200 font-bold text-slate-600 truncate max-w-[150px]" title="{{ part.material_tag__description }}">{{ part.material_tag__description }}</td>
-                                <td class="py-1.5 px-3 border-r border-slate-200 font-mono text-slate-500">{{ part.material_tag__lot_no }}</td>
-                                <td class="py-1.5 px-3 text-right font-mono font-black text-emerald-700 bg-emerald-50/50">{{ part.net_qty|floatformat:0 }}</td>
+                            <tr class="hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors">
+                                <td class="py-1.5 px-3 border-r border-slate-200 dark:border-slate-800 font-mono font-bold text-slate-500 dark:text-slate-400">TAG-{{ part.material_tag__id|stringformat:"05d" }}</td>
+                                <td class="py-1.5 px-3 border-r border-slate-200 dark:border-slate-800 font-black text-indigo-900 dark:text-indigo-300 uppercase">{{ part.material_tag__item_code }}</td>
+                                <td class="py-1.5 px-3 border-r border-slate-200 dark:border-slate-800 font-bold text-slate-600 dark:text-slate-400 truncate max-w-[150px]" title="{{ part.material_tag__description }}">{{ part.material_tag__description }}</td>
+                                <td class="py-1.5 px-3 border-r border-slate-200 dark:border-slate-800 font-mono text-slate-500 dark:text-slate-500">{{ part.material_tag__lot_no }}</td>
+                                <td class="py-1.5 px-3 text-right font-mono font-black text-emerald-700 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20">{{ part.net_qty|floatformat:0 }}</td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="5" class="py-8 text-center text-slate-400">
+                                <td colspan="5" class="py-8 text-center text-slate-400 dark:text-slate-600 transition-colors">
                                     <p class="uppercase font-black text-[10px] tracking-widest">No Data Available</p>
                                 </td>
                             </tr>
@@ -123,24 +123,24 @@
                 </div>
             </div>
 
-            <div class="bg-slate-200 border border-slate-300 shadow-sm p-3 mt-auto">
-                <div class="flex justify-between items-center border-b border-slate-200 pb-2 mb-2">
-                    <h3 class="font-black text-slate-800 tracking-widest text-[9px] uppercase flex items-center gap-1.5">
-                        <i data-lucide="printer" class="w-3 h-3 text-indigo-600"></i> Print Preview Panel
+            <div class="bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 shadow-sm p-3 mt-auto transition-colors duration-300">
+                <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-2 mb-2 transition-colors">
+                    <h3 class="font-black text-slate-800 dark:text-slate-200 tracking-widest text-[9px] uppercase flex items-center gap-1.5">
+                        <i data-lucide="printer" class="w-3 h-3 text-indigo-600 dark:text-indigo-400"></i> Print Preview Panel
                     </h3>
                     
                     {% if print_log %}
-                    <button type="button" onclick="openPrintWindow({{ print_log.id }})" class="bg-indigo-700 hover:bg-indigo-600 text-white px-4 py-1 text-[9px] font-black uppercase tracking-widest shadow-sm flex items-center gap-1.5 transition-colors border border-indigo-800">
+                    <button type="button" onclick="openPrintWindow({{ print_log.id }})" class="bg-indigo-700 dark:bg-indigo-600 hover:bg-indigo-600 dark:hover:bg-indigo-500 text-white px-4 py-1 text-[9px] font-black uppercase tracking-widest shadow-sm flex items-center gap-1.5 transition-colors border border-indigo-800 dark:border-indigo-700">
                         <i data-lucide="printer" class="w-3 h-3"></i> Print Slip Now
                     </button>
                     {% else %}
-                    <button type="button" disabled class="bg-slate-200 text-slate-400 px-4 py-1 text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 border border-slate-300 cursor-not-allowed">
+                    <button type="button" disabled class="bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 px-4 py-1 text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 border border-slate-300 dark:border-slate-600 cursor-not-allowed">
                         <i data-lucide="printer" class="w-3 h-3"></i> Waiting...
                     </button>
                     {% endif %}
                 </div>
 
-                <div class="bg-slate-50 border border-slate-300 border-dashed min-h-[120px] flex items-center justify-center p-4">
+                <div class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 border-dashed min-h-[120px] flex items-center justify-center p-4 transition-colors duration-300">
                     {% if print_log %}
                         <div class="bg-white shadow-lg flex flex-col font-mono text-black relative" style="width: 550px; min-height: 190px; padding: 12px; box-sizing: border-box;">
                             
@@ -197,55 +197,54 @@
                     {% else %}
                         <div class="text-center opacity-40">
                             <i data-lucide="file-dashed" class="w-8 h-8 mx-auto mb-2 text-slate-500"></i>
-                            <p class="font-black text-[10px] uppercase tracking-widest text-slate-600">No Slip Generated</p>
+                            <p class="font-black text-[10px] uppercase tracking-widest text-slate-600 dark:text-slate-400">No Slip Generated</p>
                             <p class="text-[8px] font-bold text-slate-500 mt-0.5">Execute an action above to generate a printable slip.</p>
                         </div>
                     {% endif %}
                 </div>
             </div>
-
         </div>
 
-        <div class="lg:col-span-5 bg-white border border-slate-300 shadow-sm flex flex-col h-[600px] lg:h-auto">
-            <div class="bg-slate-800 px-3 py-2 border-b border-slate-900">
+        <div class="lg:col-span-5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm flex flex-col h-[600px] lg:h-auto transition-colors duration-300">
+            <div class="bg-slate-800 dark:bg-slate-950 px-3 py-2 border-b border-slate-900 dark:border-slate-800 transition-colors">
                 <h3 class="font-black text-white tracking-widest text-[9px] uppercase flex items-center gap-1.5">
                     <i data-lucide="activity" class="w-3 h-3 text-amber-400"></i> Movement Ledger
                 </h3>
             </div>
             
-            <div class="overflow-x-auto flex-1 bg-slate-50">
+            <div class="overflow-x-auto flex-1 bg-slate-50 dark:bg-slate-950 transition-colors">
                 <table class="w-full text-left border-collapse whitespace-nowrap">
-                    <thead class="bg-slate-200 text-slate-600 uppercase tracking-widest font-black text-[8px] sticky top-0 border-b border-slate-300">
+                    <thead class="bg-slate-200 dark:bg-slate-900 text-slate-600 dark:text-slate-400 uppercase tracking-widest font-black text-[8px] sticky top-0 border-b border-slate-300 dark:border-slate-800 transition-colors">
                         <tr>
-                            <th class="py-1.5 px-2 border-r border-slate-300 w-20">Date/Time</th>
-                            <th class="py-1.5 px-2 border-r border-slate-300 w-16 text-center">Type</th>
-                            <th class="py-1.5 px-2 border-r border-slate-300 w-24">Item/Tag</th>
-                            <th class="py-1.5 px-2 border-r border-slate-300 w-10 text-right">Qty</th>
+                            <th class="py-1.5 px-2 border-r border-slate-300 dark:border-slate-800 w-20">Date/Time</th>
+                            <th class="py-1.5 px-2 border-r border-slate-300 dark:border-slate-800 w-16 text-center">Type</th>
+                            <th class="py-1.5 px-2 border-r border-slate-300 dark:border-slate-800 w-24">Item/Tag</th>
+                            <th class="py-1.5 px-2 border-r border-slate-300 dark:border-slate-800 w-10 text-right">Qty</th>
                             <th class="py-1.5 px-2">User / Note</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-200 text-[9px]">
+                    <tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-[9px] transition-colors">
                         {% for log in ledger_logs %}
-                        <tr class="hover:bg-white transition-colors">
-                            <td class="py-1.5 px-2 border-r border-slate-200 font-mono text-slate-500">{{ log.timestamp|date:"m/d/y H:i" }}</td>
-                            <td class="py-1.5 px-2 border-r border-slate-200 text-center font-black uppercase tracking-widest {% if log.action == 'Assemble' %}text-emerald-600{% else %}text-rose-600{% endif %}">
+                        <tr class="hover:bg-white dark:hover:bg-slate-900 transition-colors">
+                            <td class="py-1.5 px-2 border-r border-slate-200 dark:border-slate-800 font-mono text-slate-500 dark:text-slate-500">{{ log.timestamp|date:"m/d/y H:i" }}</td>
+                            <td class="py-1.5 px-2 border-r border-slate-200 dark:border-slate-800 text-center font-black uppercase tracking-widest {% if log.action == 'Assemble' %}text-emerald-600 dark:text-emerald-400{% else %}text-rose-600 dark:text-rose-400{% endif %} transition-colors">
                                 {% if log.action == 'Assemble' %}IN{% else %}OUT{% endif %}
                             </td>
-                            <td class="py-1.5 px-2 border-r border-slate-200">
-                                <div class="font-black text-slate-800">{{ log.material_tag.item_code }}</div>
-                                <div class="font-mono text-slate-400 text-[8px]">T-{{ log.material_tag.id|stringformat:"05d" }}</div>
+                            <td class="py-1.5 px-2 border-r border-slate-200 dark:border-slate-800">
+                                <div class="font-black text-slate-800 dark:text-slate-300 transition-colors">{{ log.material_tag.item_code }}</div>
+                                <div class="font-mono text-slate-400 dark:text-slate-500 text-[8px]">T-{{ log.material_tag.id|stringformat:"05d" }}</div>
                             </td>
-                            <td class="py-1.5 px-2 border-r border-slate-200 text-right font-mono font-bold">{{ log.qty|floatformat:0 }}</td>
+                            <td class="py-1.5 px-2 border-r border-slate-200 dark:border-slate-800 text-right font-mono font-bold transition-colors">{{ log.qty|floatformat:0 }}</td>
                             <td class="py-1.5 px-2">
-                                <div class="font-bold text-indigo-800">{{ log.performed_by.username|default:"SYS" }}</div>
+                                <div class="font-bold text-indigo-800 dark:text-indigo-400 transition-colors">{{ log.performed_by.username|default:"SYS" }}</div>
                                 {% if log.remarks %}
-                                <div class="text-slate-500 text-[8px] truncate max-w-[100px]" title="{{ log.remarks }}">{{ log.remarks }}</div>
+                                <div class="text-slate-500 dark:text-slate-500 text-[8px] truncate max-w-[100px] transition-colors" title="{{ log.remarks }}">{{ log.remarks }}</div>
                                 {% endif %}
                             </td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="5" class="py-8 text-center text-slate-400">
+                            <td colspan="5" class="py-8 text-center text-slate-400 dark:text-slate-600 transition-colors">
                                 <p class="uppercase font-black text-[9px] tracking-widest">Ledger Empty</p>
                             </td>
                         </tr>
@@ -263,9 +262,7 @@
         if (typeof lucide !== 'undefined') lucide.createIcons();
     });
 
-    // 🚀 BAGONG LOGIC: Bubuksan lang ang Print Label kapag pinindot ang "Print Slip Now" button
     function openPrintWindow(logId) {
-        // Mag-o-open ito ng maliit na window para sa printing
         const printWindow = window.open(`/assembly/print-label/${logId}/`, 'PrintLabel', 'width=450,height=500,toolbar=no,scrollbars=no,resizable=no');
         
         if (!printWindow || printWindow.closed || typeof printWindow.closed == 'undefined') { 

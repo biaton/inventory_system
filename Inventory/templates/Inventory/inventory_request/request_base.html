@@ -3,38 +3,38 @@
 {% block title %}Inventory Request{% endblock %}
 
 {% block content %}
-<div class="w-full px-2 sm:px-4 mt-4 text-slate-800 font-sans">
+<div class="w-full px-2 sm:px-4 mt-4 text-slate-800 dark:text-slate-200 font-sans transition-colors duration-300">
     
-    <div class="border-b-2 border-slate-800 pb-2 mb-4 flex flex-col md:flex-row md:items-end md:justify-between">
+    <div class="border-b-2 border-slate-800 dark:border-slate-700 pb-2 mb-4 flex flex-col md:flex-row md:items-end md:justify-between transition-colors duration-300">
         <div>
-            <h1 class="text-2xl font-black text-slate-900 uppercase tracking-tighter flex items-center gap-2">
-                <i data-lucide="clipboard-signature" class="w-6 h-6 text-violet-700"></i> Material Requisition
+            <h1 class="text-2xl font-black text-slate-900 dark:text-slate-100 uppercase tracking-tighter flex items-center gap-2 transition-colors duration-300">
+                <i data-lucide="clipboard-signature" class="w-6 h-6 text-violet-700 dark:text-violet-500"></i> Material Requisition
             </h1>
         </div>
-        <div class="text-xs font-bold text-slate-500 uppercase tracking-widest mt-2 md:mt-0">
+        <div class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-2 md:mt-0 transition-colors duration-300">
             Internal Order & Fulfillment Tracking
         </div>
     </div>
 
-    <div class="mb-4 bg-slate-100 border border-slate-300 p-1 flex flex-wrap gap-1 shadow-sm">
+    <div class="mb-4 bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 p-1 flex flex-wrap gap-1 shadow-sm transition-colors duration-300">
         
         <a href="{% url 'new_request' %}" 
            class="flex-1 flex items-center justify-center px-4 py-1.5 text-[10px] md:text-xs font-black uppercase tracking-widest transition-colors 
-           {% if request.resolver_match.url_name == 'new_request' %} bg-violet-900 text-white shadow-sm border border-violet-900 {% else %} text-slate-600 hover:bg-slate-200 border border-transparent {% endif %}">
+           {% if request.resolver_match.url_name == 'new_request' %} bg-violet-900 dark:bg-violet-800 text-white shadow-sm border border-violet-900 dark:border-violet-700 {% else %} text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 border border-transparent {% endif %}">
             <i data-lucide="file-plus-2" class="w-3 h-3 mr-2"></i>
             <span class="hidden sm:inline">New Request</span>
         </a>
 
         <a href="{% url 'my_requests' %}" 
            class="flex-1 flex items-center justify-center px-4 py-1.5 text-[10px] md:text-xs font-black uppercase tracking-widest transition-colors 
-           {% if request.resolver_match.url_name == 'my_requests' %} bg-violet-700 text-white shadow-sm border border-violet-900 {% else %} text-slate-600 hover:bg-slate-200 border border-transparent {% endif %}">
+           {% if request.resolver_match.url_name == 'my_requests' %} bg-violet-700 dark:bg-violet-600 text-white shadow-sm border border-violet-900 dark:border-violet-800 {% else %} text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 border border-transparent {% endif %}">
             <i data-lucide="list-todo" class="w-3 h-3 mr-2"></i>
             <span class="hidden sm:inline">My Requests</span>
         </a>
 
         <a href="{% url 'return_slip' %}" 
            class="flex-1 flex items-center justify-center px-4 py-1.5 text-[10px] md:text-xs font-black uppercase tracking-widest transition-colors 
-           {% if request.resolver_match.url_name == 'return_slip' %} bg-indigo-900 text-white shadow-sm border border-indigo-800 {% else %} text-slate-600 hover:bg-slate-200 border border-transparent {% endif %}">
+           {% if request.resolver_match.url_name == 'return_slip' %} bg-indigo-900 dark:bg-indigo-800 text-white shadow-sm border border-indigo-800 dark:border-indigo-700 {% else %} text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 border border-transparent {% endif %}">
             <i data-lucide="undo-2" class="w-3 h-3 mr-2"></i>
             <span class="hidden sm:inline">Return Slip</span>
         </a>

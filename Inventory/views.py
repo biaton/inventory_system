@@ -525,6 +525,132 @@ def dashboard_view(request):
     
     return render(request, 'Inventory/dashboard.html', context)
 
+@login_required
+def barcode_designer_view(request):
+    # Kunin lahat ng items para pwedeng i-search o piliin sa designer
+    # Gagamitin natin ito para sa auto-fill functionality
+    all_items = Item.objects.all().order_by('item_code')
+    
+    # Kung may pinasa na specific item code via GET parameter (halimbawa, galing sa Inventory List page)
+    # e.g., /barcode-designer/?item=ITM-001
+    preselected_item = None
+    item_query = request.GET.get('item')
+    if item_query:
+        try:
+            preselected_item = Item.objects.get(item_code=item_query)
+        except Item.DoesNotExist:
+            pass
+
+    context = {
+        'all_items': all_items,
+        'preselected': preselected_item,
+    }
+    
+    return render(request, 'Inventory/tools/barcode_designer.html', context)
+
+@login_required
+def cycle_count(request):
+    # ==========================================
+    # AJAX GET: PARA SA BARCODE SCANNER
+    # ==========================================
+    if request.method == 'GET' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        sku = request.GET.get('sku', '').strip().upper()
+        bin_code = request.GET.get('bin', '').strip()
+        
+        # Hanapin sa Item Master
+        item = Item.objects.filter(item_code=sku).first()
+        if not item:
+            return JsonResponse({'error': 'Item not found'}, status=404)
+            
+        # Hanapin ang Bin Location
+        loc = LocationMaster.objects.filter(location_code=bin_code).first()
+        
+        # Kunin ang System Quantity sa specific bin na 'to
+        system_qty = 0
+        if loc:
+            tag = MaterialTag.objects.filter(item_code=sku, location=loc).first()
+            if tag:
+                system_qty = tag.total_pcs
+                
+        return JsonResponse({
+            'sku': item.item_code,
+            'name': item.description or 'No Description',
+            'uom': item.uom,
+            'system_qty': system_qty
+        })
+
+    # ==========================================
+    # POST: PAG-SUBMIT NG AUDIT LIST
+    # ==========================================
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            audit_list = data.get('auditList', [])
+            
+            with transaction.atomic():
+                for item in audit_list:
+                    bin_code = item['bin']
+                    sku = item['sku']
+                    actual_qty = int(item['actual'])
+                    variance = int(item['variance'])
+                    
+                    location_obj = LocationMaster.objects.filter(location_code=bin_code).first()
+                    
+                    if location_obj:
+                        tag = MaterialTag.objects.filter(item_code=sku, location=location_obj).first()
+                        
+                        if tag:
+                            old_qty = tag.total_pcs
+                            if variance != 0:
+                                tag.total_pcs = actual_qty
+                                tag.save()
+                                
+                                StockLog.objects.create(
+                                    material_tag=tag, action_type='CORR',
+                                    old_qty=old_qty, new_qty=actual_qty, change_qty=variance,
+                                    user=request.user, notes=f"Cycle Count. Variance: {variance}"
+                                )
+                        else:
+                            # Kung may Ghost Stock na nabilang
+                            if actual_qty > 0:
+                                import datetime
+                                new_lot_no = f"AUDIT-{datetime.datetime.now().strftime('%y%m%d%H%M%S')}"
+                                
+                                # Kukunin natin ang Item Master info para sa bagong Tag
+                                item_master = Item.objects.filter(item_code=sku).first()
+                                desc = item_master.description if item_master else "Discovered during Audit"
+                                uom = item_master.uom if item_master else "PCS"
+
+                                new_tag = MaterialTag.objects.create(
+                                    item_code=sku, description=desc, lot_no=new_lot_no,
+                                    total_pcs=actual_qty, packing_type=uom, 
+                                    location=location_obj, inspection_status="Passed",
+                                    remarks="Ghost stock registered via Cycle Count"
+                                )
+                                
+                                StockLog.objects.create(
+                                    material_tag=new_tag, action_type='REG',
+                                    old_qty=0, new_qty=actual_qty, change_qty=actual_qty,
+                                    user=request.user, notes="New stock discovered during Cycle Count."
+                                )
+
+                SystemAuditLog.objects.create(
+                    user=request.user, action='UPDATE', module='Cycle Count',
+                    description=f"Performed Cycle Count for {len(audit_list)} items."
+                )
+            
+            return JsonResponse({'status': 'success', 'message': f'Successfully updated and audited {len(audit_list)} items!'})
+        
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+            
+    # ==========================================
+    # NORMAL GET: LOAD ANG PAGE
+    # ==========================================
+    # Ipapasa natin lahat ng locations papunta sa dropdown ng HTML
+    locations = LocationMaster.objects.all().order_by('location_code')
+    return render(request, 'Inventory/tools/cycle_count.html', {'locations': locations})
+
 def read_notification_view(request, notif_id):
     # Hanapin yung notification
     notif = get_object_or_404(SystemNotification, id=notif_id, user=request.user)
@@ -567,7 +693,6 @@ def user_master_view(request):
                 return redirect('user_master')
 
             username = email
-            
             first_name = request.POST.get('first_name', '').strip() # BAGO
             last_name = request.POST.get('last_name', '').strip()   # BAGO
             is_active = True 
@@ -1789,6 +1914,7 @@ def order_correction_view(request):
     # ==========================================
     if request.method == "POST":
         batch_ref = request.POST.get('batch_ref')
+        main_po_no = request.POST.get('main_po_no')
         correction_reason = request.POST.get('correction_reason')
         
         item_ids = request.POST.getlist('item_id[]')
@@ -1814,15 +1940,18 @@ def order_correction_view(request):
                     
                     item.order_status = 'Pending'
                     current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+                    audit_log = f" [Corrected on {current_time} - Reason: {correction_reason}]"
                     item.remarks = str(item.remarks or "") + audit_log
                     item.save() 
 
-            messages.success(request, f"Success! Order Batch {batch_ref} has been corrected and sent back to Pending status.")
-            return redirect('order_inquiry') # 🚀 BAGO: Ibabalik sa Inquiry imbes na Dashboard
+            messages.success(request, f"Success! Order Batch {main_po_no} has been corrected and sent back to Pending status.")
+            return redirect('order_inquiry')
 
         except Exception as e:
             messages.error(request, f"Error updating database: {str(e)}")
-            return redirect(f'/customer-order/correction/?search_order={batch_ref}')
+            
+            url = reverse('order_correction') 
+            return redirect(f"{url}?search_order={batch_ref}")
 
     # ==========================================
     # 2. KUNG NAG-SEARCH NG ORDER NUMBER (GET)
@@ -5590,14 +5719,13 @@ def machine_detail_view(request, machine_id):
     # ==========================================
     # CORE PRINCIPLE: DERIVE STATE FROM EVENTS
     # ==========================================
-    # Hindi tayo nagse-save ng "current_qty" sa machine. Kino-compute natin siya!
-    # Formula: (Sum ng Assemble) - (Sum ng Dismantle) per Material Tag
-    
     installed_parts = MachineComponent.objects.filter(machine=machine).values(
         'material_tag__id',
         'material_tag__item_code',
         'material_tag__description',
-        'material_tag__lot_no'
+        'material_tag__lot_no',
+        # I-assume natin na may unit_price ka sa Item master o Tag. Kung wala pa, pwede itong i-adjust.
+        # 'material_tag__item_master__unit_price' # Halimbawa
     ).annotate(
         net_qty=Sum(
             Case(
@@ -5607,7 +5735,10 @@ def machine_detail_view(request, machine_id):
                 output_field=DecimalField()
             )
         )
-    ).filter(net_qty__gt=0) # Ipakita lang yung mga may natitira pang nakakabit
+    ).filter(net_qty__gt=0) 
+
+    # Compute Total Parts Count para sa Dashboard
+    total_installed_qty = sum(part['net_qty'] for part in installed_parts)
 
     # Kunin yung buong Event Ledger / History para sa Audit Trail
     ledger_logs = machine.components.all().order_by('-timestamp')
@@ -5620,8 +5751,9 @@ def machine_detail_view(request, machine_id):
     context = {
         'machine': machine,
         'installed_parts': installed_parts,
+        'total_installed_qty': total_installed_qty, # BAGONG IPAPASA SA UI
         'ledger_logs': ledger_logs,
-        'print_log': print_log, # 🚀 IDAGDAG ITO SA CONTEXT
+        'print_log': print_log, 
     }
     return render(request, 'Inventory/assembly/machine_detail.html', context)
 

@@ -1,14 +1,14 @@
 {% extends "Inventory/inventory_inquiry/inquiry_base.html" %}
 
 {% block inquiry_content %}
-<div class="max-w-[100%] mx-auto pb-20 mt-4 text-slate-800">
+<div class="max-w-[100%] mx-auto pb-20 mt-4 text-slate-800 dark:text-slate-200 transition-colors duration-300">
 
-    <div class="bg-white border border-slate-300 shadow-sm mb-6">
-        <div class="bg-slate-800 px-4 py-2 flex justify-between items-center text-white border-b border-slate-700">
+    <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm mb-6 transition-colors duration-300">
+        <div class="bg-slate-800 dark:bg-slate-950 px-4 py-2 flex justify-between items-center text-white border-b border-slate-700 dark:border-slate-800 transition-colors">
             <h2 class="font-black text-sm uppercase tracking-widest flex items-center">
-                <i data-lucide="settings" class="w-4 h-4 mr-2 text-slate-400"></i> Global Inquiry Preferences
+                <i data-lucide="settings" class="w-4 h-4 mr-2 text-slate-400 dark:text-slate-500"></i> Global Inquiry Preferences
             </h2>
-            <span class="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">System Configuration</span>
+            <span class="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">System Configuration</span>
         </div>
     </div>
 
@@ -16,25 +16,25 @@
         {% csrf_token %}
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-            <div class="bg-white border border-slate-300 shadow-sm p-5">
-                <h3 class="font-black text-xs uppercase tracking-widest text-slate-800 border-b border-slate-200 pb-2 mb-4 flex items-center gap-2">
-                    <i data-lucide="monitor" class="w-4 h-4 text-teal-600"></i> View Preferences
+            <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm p-5 transition-colors duration-300">
+                <h3 class="font-black text-xs uppercase tracking-widest text-slate-800 dark:text-slate-100 border-b border-slate-200 dark:border-slate-800 pb-2 mb-4 flex items-center gap-2 transition-colors">
+                    <i data-lucide="monitor" class="w-4 h-4 text-teal-600 dark:text-teal-500"></i> View Preferences
                 </h3>
                 
                 <div class="space-y-4">
                     <div class="space-y-1">
-                        <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Default Items Per Page</label>
-                        <select name="items_per_page" class="w-full p-2 text-xs font-bold border border-slate-300 bg-slate-50 focus:ring-1 focus:ring-teal-600 outline-none rounded-sm">
+                        <label class="text-[9px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-widest transition-colors">Default Items Per Page</label>
+                        <select name="items_per_page" class="w-full p-2 text-xs font-bold border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-teal-600 dark:focus:ring-teal-500 outline-none rounded-sm transition-colors">
                             <option value="25" {% if items_per_page == 25 %}selected{% endif %}>25 Records</option>
                             <option value="50" {% if items_per_page == 50 %}selected{% endif %}>50 Records</option>
                             <option value="100" {% if items_per_page == 100 %}selected{% endif %}>100 Records</option>
                         </select>
-                        <p class="text-[8px] font-bold text-slate-400 uppercase mt-1">Affects all tables in processing module</p>
+                        <p class="text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase mt-1 transition-colors">Affects all tables in processing module</p>
                     </div>
 
                     <div class="space-y-1">
-                        <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Default Target Warehouse</label>
-                        <select name="default_warehouse" class="w-full p-2 text-xs font-bold border border-slate-300 bg-slate-50 focus:ring-1 focus:ring-teal-600 outline-none rounded-sm">
+                        <label class="text-[9px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-widest transition-colors">Default Target Warehouse</label>
+                        <select name="default_warehouse" class="w-full p-2 text-xs font-bold border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-teal-600 dark:focus:ring-teal-500 outline-none rounded-sm transition-colors">
                             <option value="Material Warehouse">Material Warehouse</option>
                             <option value="Product Warehouse">Product Warehouse</option>
                             <option value="Receiving Warehouse">Receiving Warehouse</option>
@@ -43,36 +43,36 @@
                 </div>
             </div>
 
-            <div class="bg-white border border-slate-300 shadow-sm p-5">
-                <h3 class="font-black text-xs uppercase tracking-widest text-slate-800 border-b border-slate-200 pb-2 mb-4 flex items-center gap-2">
-                    <i data-lucide="bell" class="w-4 h-4 text-amber-500"></i> Thresholds & Alerts
+            <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm p-5 transition-colors duration-300">
+                <h3 class="font-black text-xs uppercase tracking-widest text-slate-800 dark:text-slate-100 border-b border-slate-200 dark:border-slate-800 pb-2 mb-4 flex items-center gap-2 transition-colors">
+                    <i data-lucide="bell" class="w-4 h-4 text-amber-500 dark:text-amber-400"></i> Thresholds & Alerts
                 </h3>
                 
                 <div class="space-y-4">
                     <div class="space-y-1">
-                        <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Global Low Stock Limit (PCS)</label>
-                        <input type="number" name="low_stock_limit" value="{{ low_stock_limit }}" class="w-full p-2 text-lg font-black text-amber-700 border border-amber-300 bg-amber-50 focus:ring-2 focus:ring-amber-500 outline-none rounded-sm">
-                        <p class="text-[8px] font-bold text-slate-400 uppercase mt-1">Items below this amount will be marked red</p>
+                        <label class="text-[9px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-widest transition-colors">Global Low Stock Limit (PCS)</label>
+                        <input type="number" name="low_stock_limit" value="{{ low_stock_limit }}" class="w-full p-2 text-lg font-black text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 focus:ring-2 focus:ring-amber-500 dark:focus:ring-amber-600 outline-none rounded-sm transition-colors">
+                        <p class="text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase mt-1 transition-colors">Items below this amount will be marked red</p>
                     </div>
 
-                    <div class="flex items-center gap-3 mt-4 p-3 bg-slate-50 border border-slate-200">
-                        <input type="checkbox" id="email_alerts" name="email_alerts" {% if email_alerts_enabled %}checked{% endif %} class="w-4 h-4 text-teal-600 bg-white border-slate-300 rounded focus:ring-teal-500 focus:ring-2">
-                        <label for="email_alerts" class="text-[9px] font-black uppercase text-slate-600 tracking-widest cursor-pointer">
+                    <div class="flex items-center gap-3 mt-4 p-3 bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 transition-colors">
+                        <input type="checkbox" id="email_alerts" name="email_alerts" {% if email_alerts_enabled %}checked{% endif %} class="w-4 h-4 text-teal-600 dark:text-teal-500 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded focus:ring-teal-500 dark:focus:ring-teal-600 focus:ring-2 transition-colors">
+                        <label for="email_alerts" class="text-[9px] font-black uppercase text-slate-600 dark:text-slate-400 tracking-widest cursor-pointer transition-colors">
                             Enable System Notifications
                         </label>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white border border-slate-300 shadow-sm p-5">
-                <h3 class="font-black text-xs uppercase tracking-widest text-slate-800 border-b border-slate-200 pb-2 mb-4 flex items-center gap-2">
-                    <i data-lucide="file-down" class="w-4 h-4 text-blue-500"></i> Data Export Settings
+            <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm p-5 transition-colors duration-300">
+                <h3 class="font-black text-xs uppercase tracking-widest text-slate-800 dark:text-slate-100 border-b border-slate-200 dark:border-slate-800 pb-2 mb-4 flex items-center gap-2 transition-colors">
+                    <i data-lucide="file-down" class="w-4 h-4 text-blue-500 dark:text-blue-400"></i> Data Export Settings
                 </h3>
                 
                 <div class="space-y-4">
                     <div class="space-y-1">
-                        <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Default Excel Format</label>
-                        <select name="excel_format" class="w-full p-2 text-xs font-bold border border-slate-300 bg-slate-50 focus:ring-1 focus:ring-teal-600 outline-none rounded-sm">
+                        <label class="text-[9px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-widest transition-colors">Default Excel Format</label>
+                        <select name="excel_format" class="w-full p-2 text-xs font-bold border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-teal-600 dark:focus:ring-teal-500 outline-none rounded-sm transition-colors">
                             <option value="xlsx">.xlsx (Modern Excel)</option>
                             <option value="xls">.xls (Legacy Excel 97-2003)</option>
                             <option value="csv">.csv (Comma Separated)</option>
@@ -80,8 +80,8 @@
                     </div>
 
                     <div class="space-y-1 mt-4">
-                        <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest">Include Audit Trail in Export?</label>
-                        <select name="include_audit" class="w-full p-2 text-xs font-bold border border-slate-300 bg-slate-50 focus:ring-1 focus:ring-teal-600 outline-none rounded-sm">
+                        <label class="text-[9px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-widest transition-colors">Include Audit Trail in Export?</label>
+                        <select name="include_audit" class="w-full p-2 text-xs font-bold border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-teal-600 dark:focus:ring-teal-500 outline-none rounded-sm transition-colors">
                             <option value="yes">Yes, include system timestamps</option>
                             <option value="no">No, raw data only</option>
                         </select>
@@ -92,7 +92,7 @@
         </div>
 
         <div class="mt-6 flex justify-end">
-            <button type="submit" class="bg-slate-800 text-white border border-slate-900 px-10 py-3 text-[10px] font-black uppercase tracking-widest hover:bg-teal-700 hover:border-teal-800 transition-all shadow-md flex items-center gap-2">
+            <button type="submit" class="bg-slate-800 dark:bg-teal-700 text-white border border-slate-900 dark:border-teal-800 px-10 py-3 text-[10px] font-black uppercase tracking-widest hover:bg-teal-700 dark:hover:bg-teal-600 hover:border-teal-800 dark:hover:border-teal-700 transition-all shadow-md flex items-center gap-2 rounded-sm">
                 <i data-lucide="save" class="w-4 h-4"></i> Apply System Settings
             </button>
         </div>

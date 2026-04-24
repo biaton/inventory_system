@@ -1,17 +1,17 @@
 {% extends "Inventory/inbound/inbound_base.html" %}
 
 {% block inbound_content %}
-<div class="max-w-[100%] mx-auto pb-20 mt-4 text-slate-800">
+<div class="max-w-[100%] mx-auto pb-20 mt-4 text-slate-800 dark:text-slate-200 transition-colors duration-300">
 
-    <div class="bg-teal-50 border-l-4 border-teal-600 p-4 mb-6 shadow-sm flex items-center justify-between">
+    <div class="bg-teal-50 dark:bg-teal-900/20 border-l-4 border-teal-600 dark:border-teal-500 p-4 mb-6 shadow-sm flex items-center justify-between transition-colors">
         <div class="flex items-center gap-3">
-            <i data-lucide="shield-check" class="text-teal-700 w-6 h-6"></i>
+            <i data-lucide="shield-check" class="text-teal-700 dark:text-teal-400 w-6 h-6 transition-colors"></i>
             <div>
-                <h2 class="text-xl font-black text-teal-900 uppercase tracking-tighter">Gate / Dock Arrival</h2>
-                <p class="text-[10px] font-bold text-teal-700 uppercase tracking-widest">Verify handling units and approve <span class="font-black text-slate-900 text-xs ml-1">{{ po_no }}</span> for receiving</p>
+                <h2 class="text-xl font-black text-teal-900 dark:text-teal-300 uppercase tracking-tighter transition-colors">Gate / Dock Arrival</h2>
+                <p class="text-[10px] font-bold text-teal-700 dark:text-teal-400 uppercase tracking-widest transition-colors">Verify handling units and approve <span class="font-black text-slate-900 dark:text-slate-100 text-xs ml-1 transition-colors">{{ po_no }}</span> for receiving</p>
             </div>
         </div>
-        <a href="{% url 'shipment_inquiry' %}" class="bg-white border border-slate-300 px-4 py-1.5 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-100 shadow-sm flex items-center gap-2">
+        <a href="{% url 'shipment_inquiry' %}" class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 px-4 py-1.5 text-[10px] font-black uppercase text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-sm flex items-center gap-2 transition-colors">
             <i data-lucide="x" class="w-3 h-3"></i> Cancel
         </a>
     </div>
@@ -19,26 +19,26 @@
     <form method="POST" action="{% url 'shipment_allocation' po_no %}">
         {% csrf_token %}
         
-        <div class="bg-white border border-slate-300 shadow-sm p-4 mb-4 grid grid-cols-1 md:grid-cols-3 gap-6 border-t-2 border-t-slate-800">
+        <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm p-4 mb-4 grid grid-cols-1 md:grid-cols-3 gap-6 border-t-2 border-t-slate-800 dark:border-t-slate-600 transition-colors">
             <div class="space-y-1">
-                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Time Arrived at Guard/Dock <span class="text-rose-500">*</span></label>
-                <input type="time" name="guard_time" value="{{ current_time }}" required class="w-full p-2 bg-slate-50 border border-slate-400 text-xs font-bold text-teal-900 focus:bg-white outline-none focus:ring-1 focus:ring-teal-500 shadow-inner">
+                <label class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Time Arrived at Guard/Dock <span class="text-rose-500 dark:text-rose-400">*</span></label>
+                <input type="time" name="guard_time" value="{{ current_time }}" required class="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-400 dark:border-slate-600 text-xs font-bold text-teal-900 dark:text-teal-300 focus:bg-white dark:focus:bg-slate-900 outline-none focus:ring-1 focus:ring-teal-500 dark:focus:ring-teal-600 shadow-inner transition-colors">
             </div>
             <div class="space-y-1 md:col-span-2">
-                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Gate / Dock Remarks</label>
-                <input type="text" name="dock_remarks" placeholder="e.g. Plate No. ABC-1234, Driver: Juan..." class="w-full p-2 bg-white border border-slate-400 text-xs font-bold italic text-slate-600 focus:bg-emerald-50 outline-none shadow-inner">
+                <label class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Gate / Dock Remarks</label>
+                <input type="text" name="dock_remarks" placeholder="e.g. Plate No. ABC-1234, Driver: Juan..." class="w-full p-2 bg-white dark:bg-slate-950 border border-slate-400 dark:border-slate-600 text-xs font-bold italic text-slate-600 dark:text-slate-300 focus:bg-emerald-50 dark:focus:bg-emerald-900/20 outline-none shadow-inner transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-500">
             </div>
         </div>
 
-        <div class="bg-white border border-slate-300 shadow-xl overflow-hidden">
-            <div class="bg-slate-800 px-6 py-4 flex justify-between items-center border-b-2 border-slate-900">
+        <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-xl overflow-hidden transition-colors">
+            <div class="bg-slate-800 dark:bg-slate-950 px-6 py-4 flex justify-between items-center border-b-2 border-slate-900 dark:border-slate-800 transition-colors">
                 <div>
-                    <h3 class="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
-                        <i data-lucide="truck" class="w-4 h-4 text-teal-400"></i> {{ supplier_name }}
+                    <h3 class="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2 transition-colors">
+                        <i data-lucide="truck" class="w-4 h-4 text-teal-400 dark:text-teal-500"></i> {{ supplier_name }}
                     </h3>
                 </div>
                 <div class="text-right">
-                    <span class="text-[10px] font-bold text-amber-300 uppercase tracking-widest border border-amber-700 px-3 py-1 bg-amber-900/50 rounded-full shadow-inner">
+                    <span class="text-[10px] font-bold text-amber-300 dark:text-amber-400 uppercase tracking-widest border border-amber-700 dark:border-amber-600 px-3 py-1 bg-amber-900/50 rounded-full shadow-inner transition-colors">
                         DOCK VERIFICATION
                     </span>
                 </div>
@@ -46,44 +46,41 @@
 
             <div class="overflow-x-auto min-h-[400px]">
                 <table class="w-full text-left border-collapse" style="font-size: 11px;">
-                    <thead class="bg-slate-100 text-slate-600 uppercase tracking-widest font-black text-[9px]">
+                    <thead class="bg-slate-100 dark:bg-slate-900/80 text-slate-600 dark:text-slate-400 uppercase tracking-widest font-black text-[9px] transition-colors">
                         <tr>
-                            <th class="py-3 px-4 border-b border-slate-300 w-1/3">Item Details</th>
-                            <th class="py-3 px-4 text-center border-b border-slate-300 w-24">Expected Pcs</th>
-                            <th class="py-3 px-4 text-center border-b border-slate-300 w-32 bg-slate-50">Actual Pcs</th>
-                            <th class="py-3 px-4 text-center border-b border-slate-300 w-32 bg-teal-50 text-teal-800">Box/Carton Count</th>
-                            <th class="py-3 px-4 border-b border-slate-300 w-48 bg-amber-50 text-amber-800">Visual Condition</th>
+                            <th class="py-3 px-4 border-b border-slate-300 dark:border-slate-700 w-1/3">Item Details</th>
+                            <th class="py-3 px-4 text-center border-b border-slate-300 dark:border-slate-700 w-24">Expected Pcs</th>
+                            <th class="py-3 px-4 text-center border-b border-slate-300 dark:border-slate-700 w-32 bg-slate-50 dark:bg-slate-950">Actual Pcs</th>
+                            <th class="py-3 px-4 text-center border-b border-slate-300 dark:border-slate-700 w-32 bg-teal-50 dark:bg-teal-900/30 text-teal-800 dark:text-teal-400">Box/Carton Count</th>
+                            <th class="py-3 px-4 border-b border-slate-300 dark:border-slate-700 w-48 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-400">Visual Condition</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-200 font-bold">
+                    <tbody class="divide-y divide-slate-200 dark:divide-slate-800 font-bold transition-colors">
                         {% for item in po_items %}
-                        <tr class="hover:bg-slate-50 transition-colors item-row">
-                            <td class="py-3 px-4 border-r border-slate-100">
-                                <span class="text-teal-700 font-black uppercase block mb-1">{{ item.safe_code }}</span>
-                                <span class="text-slate-500 text-[9px] font-bold block">{{ item.safe_desc }}</span>
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors item-row">
+                            <td class="py-3 px-4 border-r border-slate-100 dark:border-slate-800 transition-colors">
+                                <span class="text-teal-700 dark:text-teal-400 font-black uppercase block mb-1 transition-colors">{{ item.safe_code }}</span>
+                                <span class="text-slate-500 dark:text-slate-400 text-[9px] font-bold block transition-colors">{{ item.safe_desc }}</span>
                             </td>
-                            <td class="py-3 px-4 text-center border-r border-slate-100 text-slate-800 bg-slate-50">{{ item.safe_qty }}</td>
+                            <td class="py-3 px-4 text-center border-r border-slate-100 dark:border-slate-800 text-slate-800 dark:text-slate-200 bg-slate-50 dark:bg-slate-950/30 transition-colors">{{ item.safe_qty }}</td>
                             
-                            <!-- Actual Item Quantity -->
-                            <td class="py-2 px-3 border-r border-slate-200 bg-slate-50/50">
-                                <input type="number" name="actual_qty_{{ item.id }}" value="{{ item.safe_qty }}" step="0.01" class="w-full p-2 border border-slate-300 bg-white text-sm font-black text-center focus:outline-none focus:border-teal-500 shadow-inner">
+                            <td class="py-2 px-3 border-r border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 transition-colors">
+                                <input type="number" name="actual_qty_{{ item.id }}" value="{{ item.safe_qty }}" step="0.01" class="w-full p-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950 text-sm font-black text-center focus:outline-none focus:border-teal-500 dark:focus:border-teal-600 shadow-inner text-slate-800 dark:text-slate-200 transition-colors">
                             </td>
                             
-                            <!-- Number of Boxes / Cartons -->
-                            <td class="py-2 px-3 border-r border-teal-100 bg-teal-50/50">
+                            <td class="py-2 px-3 border-r border-teal-100 dark:border-teal-900/50 bg-teal-50/50 dark:bg-teal-900/20 transition-colors">
                                 <div class="flex items-center">
-                                    <input type="number" name="box_count_{{ item.id }}" placeholder="0" min="1" required class="w-full p-2 border-2 border-teal-400 bg-white text-sm font-black text-center focus:outline-none focus:border-teal-600 shadow-inner">
-                                    <span class="text-[8px] font-black text-teal-700 uppercase ml-2 w-10">Boxes</span>
+                                    <input type="number" name="box_count_{{ item.id }}" placeholder="0" min="1" required class="w-full p-2 border-2 border-teal-400 dark:border-teal-600 bg-white dark:bg-slate-950 text-sm font-black text-center focus:outline-none focus:border-teal-600 dark:focus:border-teal-500 shadow-inner text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-colors">
+                                    <span class="text-[8px] font-black text-teal-700 dark:text-teal-400 uppercase ml-2 w-10 transition-colors">Boxes</span>
                                 </div>
                             </td>
 
-                            <!-- Visual Condition -->
-                            <td class="py-2 px-3 border-r border-amber-100 bg-amber-50/30">
-                                <select name="condition_{{ item.id }}" class="w-full p-2 border border-slate-300 bg-white text-xs font-black uppercase focus:outline-none focus:border-amber-500 shadow-inner">
-                                    <option value="Good Condition" class="text-emerald-600" selected>Good / Sealed</option>
-                                    <option value="Damaged Box" class="text-amber-600">Damaged Box / Yupi</option>
-                                    <option value="Wet Carton" class="text-rose-600">Wet / Basa</option>
-                                    <option value="Open Seal" class="text-rose-600">Open Seal / Bukas Na</option>
+                            <td class="py-2 px-3 border-r border-amber-100 dark:border-amber-900/50 bg-amber-50/30 dark:bg-amber-900/20 transition-colors">
+                                <select name="condition_{{ item.id }}" class="w-full p-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950 text-xs font-black uppercase focus:outline-none focus:border-amber-500 dark:focus:border-amber-600 shadow-inner transition-colors">
+                                    <option value="Good Condition" class="text-emerald-600 dark:text-emerald-400" selected>Good / Sealed</option>
+                                    <option value="Damaged Box" class="text-amber-600 dark:text-amber-500">Damaged Box / Yupi</option>
+                                    <option value="Wet Carton" class="text-rose-600 dark:text-rose-500">Wet / Basa</option>
+                                    <option value="Open Seal" class="text-rose-600 dark:text-rose-500">Open Seal / Bukas Na</option>
                                 </select>
                             </td>
                         </tr>
@@ -92,13 +89,13 @@
                 </table>
             </div>
             
-            <div class="bg-slate-50 border-t border-slate-300 p-4 flex justify-between items-center">
-                <div class="text-[9px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
-                    <i data-lucide="shield-alert" class="w-4 h-4 text-teal-600"></i>
+            <div class="bg-slate-50 dark:bg-slate-950/80 border-t border-slate-300 dark:border-slate-800 p-4 flex justify-between items-center transition-colors">
+                <div class="text-[9px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-2 transition-colors">
+                    <i data-lucide="shield-alert" class="w-4 h-4 text-teal-600 dark:text-teal-500 transition-colors"></i>
                     Once approved, items will be forwarded to the Receiving QA Module.
                 </div>
                 
-                <button type="submit" class="bg-teal-700 text-white px-8 py-3 text-xs font-black uppercase tracking-widest hover:bg-teal-800 transition-transform active:scale-95 shadow-lg flex items-center gap-2 border border-teal-900">
+                <button type="submit" class="bg-teal-700 dark:bg-teal-600 text-white px-8 py-3 text-xs font-black uppercase tracking-widest hover:bg-teal-800 dark:hover:bg-teal-700 transition-transform active:scale-95 shadow-lg flex items-center gap-2 border border-teal-900 dark:border-teal-800 rounded-sm">
                     <i data-lucide="check-circle" class="w-4 h-4"></i> Approve & Send to Receiving
                 </button>
             </div>

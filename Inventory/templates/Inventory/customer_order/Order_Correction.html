@@ -1,115 +1,115 @@
 {% extends "Inventory/customer_order/order_base.html" %}
 
-{% block order_content%}
-<div class="max-w-[100%] mx-auto pb-20 mt-4 text-slate-800">
+{% block order_content %}
+<div class="max-w-[100%] mx-auto pb-20 mt-4 text-slate-800 dark:text-slate-200 transition-colors duration-300">
 
-    <div class="bg-white border border-slate-400 shadow-sm mb-4">
-        <div class="bg-amber-600 px-4 py-2 flex justify-between items-center text-white">
+    <div class="bg-white dark:bg-slate-900 border border-slate-400 dark:border-slate-700 shadow-sm mb-4 transition-colors duration-300">
+        <div class="bg-amber-600 dark:bg-amber-700 px-4 py-2 flex justify-between items-center text-white transition-colors">
             <h2 class="font-black text-sm uppercase tracking-widest flex items-center">
-                <i data-lucide="edit-3" class="w-4 h-4 mr-2 text-amber-200"></i> Order Correction Module
+                <i data-lucide="edit-3" class="w-4 h-4 mr-2 text-amber-200"></i> P.O. Correction Module
             </h2>
         </div>
-        <form method="GET" class="p-3 bg-slate-50 flex flex-wrap items-center gap-4">
+        <form method="GET" class="p-3 bg-slate-50 dark:bg-slate-950/50 flex flex-wrap items-center gap-4 transition-colors">
             <div class="flex items-center gap-3 flex-1 relative">
-                <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4"></i>
-                <input type="text" name="search_order" value="{{ search_query }}" 
-                       placeholder="Enter Main PO No. or Batch ID..." required
-                       class="w-full pl-9 pr-4 py-1.5 bg-white border border-slate-400 text-xs font-bold uppercase tracking-widest focus:ring-1 focus:ring-amber-500 outline-none">
+                <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 w-4 h-4"></i>
+                <input type="text" name="search_order" value="{{ request.GET.search_order }}" 
+                       placeholder="Enter Main PO No. or Batch Reference..." required
+                       class="w-full pl-9 pr-4 py-1.5 bg-white dark:bg-slate-900 border border-slate-400 dark:border-slate-600 text-xs font-bold uppercase tracking-widest focus:ring-1 focus:ring-amber-500 dark:focus:ring-amber-600 outline-none text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-colors">
             </div>
-            <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white px-8 py-1.5 rounded text-[10px] font-black uppercase tracking-widest transition-all shadow-sm flex items-center gap-2 border border-amber-800">
-                Find Batch Order
+            <button type="submit" class="bg-amber-600 dark:bg-amber-700 hover:bg-amber-700 dark:hover:bg-amber-600 text-white px-8 py-1.5 rounded text-[10px] font-black uppercase tracking-widest transition-all shadow-sm flex items-center gap-2 border border-amber-800 dark:border-amber-900">
+                Find Batch
             </button>
         </form>
     </div>
 
     {% if search_query and not grouped_orders %}
-    <div class="bg-rose-50 p-8 border border-rose-200 shadow-sm flex flex-col items-center justify-center">
+    <div class="bg-rose-50 dark:bg-rose-950/30 p-8 border border-rose-200 dark:border-rose-900/50 shadow-sm flex flex-col items-center justify-center transition-colors duration-300">
         <i data-lucide="alert-circle" class="w-10 h-10 text-rose-400 mb-2"></i>
-        <h3 class="text-rose-800 font-black uppercase tracking-widest">Order Not Found</h3>
-        <p class="text-rose-600 text-xs font-bold mt-1">Walang record para sa: <span class="text-rose-900 bg-rose-200 px-2 py-0.5">{{ search_query }}</span></p>
+        <h3 class="text-rose-800 dark:text-rose-400 font-black uppercase tracking-widest transition-colors">Order Not Found</h3>
+        <p class="text-rose-600 dark:text-rose-500 text-xs font-bold mt-1 transition-colors">Walang record para sa: <span class="text-rose-900 dark:text-rose-200 bg-rose-200 dark:bg-rose-900/50 px-2 py-0.5 transition-colors">{{ search_query }}</span></p>
     </div>
     {% endif %}
 
     {% if searched and grouped_orders %}
-    <form method="POST" id="correctionOrderForm" class="bg-white border border-slate-300 shadow-sm p-4 border-t-4 border-t-amber-500">
+    <form method="POST" id="correctionOrderForm" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm p-4 border-t-4 border-t-amber-500 dark:border-t-amber-600 transition-colors duration-300">
         {% csrf_token %}
         <input type="hidden" name="batch_ref" value="{{ batch_ref }}">
 
-        <div class="border-b-2 border-amber-600 pb-4 mb-6 flex flex-col md:flex-row md:justify-between md:items-end gap-4">
+        <div class="border-b-2 border-amber-600 dark:border-amber-700 pb-4 mb-6 flex flex-col md:flex-row md:justify-between md:items-end gap-4 transition-colors">
             <div>
-                <h3 class="text-xl font-black text-amber-900 uppercase tracking-tight flex items-center gap-2">
-                    <i data-lucide="file-signature" class="w-5 h-5 text-amber-700"></i> Edit Batch Order Details
+                <h3 class="text-xl font-black text-amber-900 dark:text-amber-400 uppercase tracking-tight flex items-center gap-2 transition-colors">
+                    <i data-lucide="file-signature" class="w-5 h-5 text-amber-700 dark:text-amber-500"></i> Edit Batch Order Details
                 </h3>
-                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">System Batch Reference: <span class="text-amber-700">{{ batch_ref }}</span></p>
+                <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1 transition-colors">System Batch Reference: <span class="text-amber-700 dark:text-amber-500">{{ batch_ref }}</span></p>
             </div>
             
-            <div class="bg-amber-50 border border-amber-200 px-4 py-2 text-right rounded-sm shadow-inner">
-                <span class="text-[9px] font-black text-amber-600 uppercase tracking-widest block leading-none mb-1">Main PO No.</span>
-                <span class="text-2xl font-black text-amber-900 leading-none tracking-tighter">{{ main_po_no }}</span>
+            <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 px-4 py-2 text-right rounded-sm shadow-inner transition-colors">
+                <span class="text-[9px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-widest block leading-none mb-1 transition-colors">Main PO No.</span>
+                <span class="text-2xl font-black text-amber-900 dark:text-amber-400 leading-none tracking-tighter transition-colors">{{ main_po_no }}</span>
             </div>
         </div>
 
-        <div class="mb-6 bg-rose-50 p-4 border border-rose-200 shadow-sm">
+        <div class="mb-6 bg-rose-50 dark:bg-rose-950/20 p-4 border border-rose-200 dark:border-rose-900/50 shadow-sm transition-colors">
             <div class="flex flex-col">
-                <label class="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-1 flex items-center gap-1"><i data-lucide="alert-triangle" class="w-3 h-3"></i> Reason for Correction *</label>
+                <label class="text-[10px] font-black text-rose-600 dark:text-rose-500 uppercase tracking-widest mb-1 flex items-center gap-1 transition-colors"><i data-lucide="alert-triangle" class="w-3 h-3"></i> Reason for Correction *</label>
                 <textarea name="correction_reason" required placeholder="State why this entire batch is being edited (e.g., Wrong price entered, client changed quantity)..." rows="2"
-                          class="w-full p-2 border border-rose-300 bg-white text-xs font-bold focus:ring-1 focus:ring-rose-500 outline-none placeholder:text-rose-300 shadow-inner"></textarea>
+                          class="w-full p-2 border border-rose-300 dark:border-rose-800 bg-white dark:bg-slate-900 text-xs font-bold focus:ring-1 focus:ring-rose-500 outline-none placeholder:text-rose-300 dark:placeholder:text-rose-700 shadow-inner text-slate-800 dark:text-slate-200 transition-colors"></textarea>
             </div>
         </div>
 
         <div class="space-y-6">
             {% for order_data in grouped_orders %}
-            <div class="border border-slate-300 shadow-sm relative">
+            <div class="border border-slate-300 dark:border-slate-700 shadow-sm relative transition-colors duration-300">
                 
-                <div class="absolute -top-3 -left-3 bg-amber-600 text-white w-7 h-7 flex items-center justify-center text-[10px] font-black rounded-full shadow-md">
+                <div class="absolute -top-3 -left-3 bg-amber-600 dark:bg-amber-700 text-white w-7 h-7 flex items-center justify-center text-[10px] font-black rounded-full shadow-md transition-colors">
                     {{ forloop.counter }}
                 </div>
 
-                <div class="bg-slate-100 border-b border-slate-300 py-3 px-5 flex flex-col md:flex-row md:items-center justify-between gap-2">
+                <div class="bg-slate-100 dark:bg-slate-950 border-b border-slate-300 dark:border-slate-700 py-3 px-5 flex flex-col md:flex-row md:items-center justify-between gap-2 transition-colors">
                     <div>
-                        <span class="text-[11px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-1.5">
-                            <i data-lucide="user" class="w-4 h-4 text-amber-600"></i> Customer: <span class="text-indigo-700">{{ order_data.header.customer }}</span>
+                        <span class="text-[11px] font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest flex items-center gap-1.5 transition-colors">
+                            <i data-lucide="user" class="w-4 h-4 text-amber-600 dark:text-amber-500"></i> Customer: <span class="text-indigo-700 dark:text-indigo-400">{{ order_data.header.customer }}</span>
                         </span>
                     </div>
                     <div class="flex items-center gap-3">
-                        <span class="text-[9px] font-bold text-slate-500 uppercase">Sub Order: <span class="text-slate-800 bg-white border border-slate-200 px-2 py-0.5">{{ order_data.header.order_no }}</span></span>
+                        <span class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase transition-colors">Sub Order: <span class="text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-2 py-0.5 transition-colors">{{ order_data.header.order_no }}</span></span>
                     </div>
                 </div>
 
-                <div class="overflow-x-auto bg-white p-2">
+                <div class="overflow-x-auto bg-white dark:bg-slate-900 p-2 transition-colors">
                     <table class="w-full text-left border-collapse min-w-[1000px]" style="font-size: 11px;">
-                        <thead>
-                            <tr class="bg-slate-800 text-white border-b border-slate-600 uppercase tracking-widest text-[10px]">
-                                <th class="py-2 px-2 border-r border-slate-700 text-center w-8">#</th>
-                                <th class="py-2 px-2 border-r border-slate-700 w-32">Item Code</th>
-                                <th class="py-2 px-2 border-r border-slate-700">Description</th>
-                                <th class="py-2 px-2 border-r border-slate-700 w-28 text-center text-amber-300">New Qty</th>
-                                <th class="py-2 px-2 border-r border-slate-700 w-32 text-right text-amber-300">New Price</th>
-                                <th class="py-2 px-2 text-right w-40 text-emerald-300">Total Amount</th>
+                        <thead class="transition-colors">
+                            <tr class="bg-slate-800 dark:bg-slate-950 text-white border-b border-slate-600 dark:border-slate-800 uppercase tracking-widest text-[10px] transition-colors">
+                                <th class="py-2 px-2 border-r border-slate-700 dark:border-slate-800 text-center w-8">#</th>
+                                <th class="py-2 px-2 border-r border-slate-700 dark:border-slate-800 w-32">Item Code</th>
+                                <th class="py-2 px-2 border-r border-slate-700 dark:border-slate-800">Description</th>
+                                <th class="py-2 px-2 border-r border-slate-700 dark:border-slate-800 w-28 text-center text-amber-300 dark:text-amber-400">New Qty</th>
+                                <th class="py-2 px-2 border-r border-slate-700 dark:border-slate-800 w-32 text-right text-amber-300 dark:text-amber-400">New Price</th>
+                                <th class="py-2 px-2 text-right w-40 text-emerald-300 dark:text-emerald-400">Total Amount</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-200">
+                        <tbody class="divide-y divide-slate-200 dark:divide-slate-800 transition-colors">
                             {% for item in order_data.items %}
-                            <tr class="hover:bg-amber-50/30 transition-colors item-row">
+                            <tr class="hover:bg-amber-50/30 dark:hover:bg-amber-900/20 transition-colors item-row bg-white dark:bg-slate-900">
                                 <input type="hidden" name="item_id[]" value="{{ item.id }}">
                                 
-                                <td class="py-2 px-2 border-r border-slate-200 text-center font-bold text-slate-400 bg-slate-50">{{ forloop.counter }}</td>
-                                <td class="py-2 px-2 border-r border-slate-200">
-                                    <input type="text" value="{{ item.item_code }}" readonly class="w-full bg-transparent border-none text-xs font-black text-indigo-800 uppercase focus:ring-0">
+                                <td class="py-2 px-2 border-r border-slate-200 dark:border-slate-800 text-center font-bold text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-950/50 transition-colors">{{ forloop.counter }}</td>
+                                <td class="py-2 px-2 border-r border-slate-200 dark:border-slate-800 transition-colors">
+                                    <input type="text" value="{{ item.item_code }}" readonly class="w-full bg-transparent border-none text-xs font-black text-indigo-800 dark:text-indigo-400 uppercase focus:ring-0 transition-colors">
                                 </td>
-                                <td class="py-2 px-2 border-r border-slate-200">
-                                    <input type="text" value="{{ item.description|default:'' }}" readonly class="w-full bg-transparent border-none text-[10px] font-bold text-slate-600 uppercase focus:ring-0">
+                                <td class="py-2 px-2 border-r border-slate-200 dark:border-slate-800 transition-colors">
+                                    <input type="text" value="{{ item.description|default:'' }}" readonly class="w-full bg-transparent border-none text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase focus:ring-0 transition-colors">
                                 </td>
-                                <td class="py-1 px-1 border-r border-slate-200 bg-amber-50/50">
+                                <td class="py-1 px-1 border-r border-slate-200 dark:border-slate-800 bg-amber-50/50 dark:bg-amber-950/30 transition-colors">
                                     <input type="number" name="qty_row[]" value="{{ item.quantity }}" min="1" oninput="calculateRow(this)"
-                                           class="qty-input w-full p-1.5 border border-amber-300 bg-white text-xs font-black text-center text-amber-900 focus:ring-1 focus:ring-amber-500 outline-none shadow-inner">
+                                           class="qty-input w-full p-1.5 border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-900 text-xs font-black text-center text-amber-900 dark:text-amber-400 focus:ring-1 focus:ring-amber-500 outline-none shadow-inner transition-colors">
                                 </td>
-                                <td class="py-1 px-1 border-r border-slate-200 bg-amber-50/50">
+                                <td class="py-1 px-1 border-r border-slate-200 dark:border-slate-800 bg-amber-50/50 dark:bg-amber-950/30 transition-colors">
                                     <input type="number" name="price_row[]" value="{{ item.unit_price|floatformat:2 }}" step="0.01" min="0" oninput="calculateRow(this)"
-                                           class="price-input w-full p-1.5 border border-amber-300 bg-white text-xs font-black text-right text-amber-900 focus:ring-1 focus:ring-amber-500 outline-none shadow-inner">
+                                           class="price-input w-full p-1.5 border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-900 text-xs font-black text-right text-amber-900 dark:text-amber-400 focus:ring-1 focus:ring-amber-500 outline-none shadow-inner transition-colors">
                                 </td>
-                                <td class="py-2 px-3 text-right font-black text-slate-800 bg-slate-50">
-                                    <span class="row-total-display tracking-tighter text-sm">{{ item.amount|floatformat:2 }}</span>
+                                <td class="py-2 px-3 text-right font-black text-slate-800 dark:text-slate-200 bg-slate-50 dark:bg-slate-950/50 transition-colors">
+                                    <span class="row-total-display tracking-tighter text-sm transition-colors">{{ item.amount|floatformat:2 }}</span>
                                     <input type="hidden" name="amount_row[]" value="{{ item.amount|floatformat:2 }}" class="row-amount-input">
                                 </td>
                             </tr>
@@ -121,18 +121,18 @@
             {% endfor %}
         </div>
 
-        <div class="flex flex-col md:flex-row justify-between items-center gap-6 mt-8 bg-slate-100 border border-slate-400 p-4 shadow-md">
-            <div class="text-[10px] text-slate-500 max-w-sm italic bg-white p-2 border border-slate-200">
-                <strong><i data-lucide="info" class="w-3 h-3 inline"></i> Warning:</strong> Updating this record will permanently overwrite the original data and log this action in the system history. The status will revert to <strong>PENDING</strong>.
+        <div class="flex flex-col md:flex-row justify-between items-center gap-6 mt-8 bg-slate-100 dark:bg-slate-950 border border-slate-400 dark:border-slate-700 p-4 shadow-md transition-colors duration-300">
+            <div class="text-[10px] text-slate-500 dark:text-slate-400 max-w-sm italic bg-white dark:bg-slate-900 p-2 border border-slate-200 dark:border-slate-800 transition-colors">
+                <strong><i data-lucide="info" class="w-3 h-3 inline"></i> Warning:</strong> Updating this record will permanently overwrite the original data and log this action in the system history. The status will revert to <strong class="dark:text-slate-300">PENDING</strong>.
             </div>
 
             <div class="flex items-center gap-8">
-                <div class="flex flex-col text-right">
-                    <span class="text-[9px] font-black text-amber-700 uppercase tracking-widest">New Batch Grand Total</span>
-                    <span class="text-2xl font-black text-amber-900 tracking-tighter">₱ <span id="grand_total_display">0.00</span></span>
+                <div class="flex flex-col text-right transition-colors">
+                    <span class="text-[9px] font-black text-amber-700 dark:text-amber-500 uppercase tracking-widest transition-colors">New Batch Grand Total</span>
+                    <span class="text-2xl font-black text-amber-900 dark:text-amber-400 tracking-tighter transition-colors">₱ <span id="grand_total_display">0.00</span></span>
                 </div>
 
-                <button type="submit" onclick="return confirm('WARNING: Are you sure you want to apply these corrections to the ENTIRE batch?')" class="bg-amber-600 hover:bg-amber-700 text-white px-8 py-3 text-xs font-black uppercase tracking-widest transition-all border border-amber-800 shadow-sm flex items-center gap-2 rounded-sm transform active:scale-95">
+                <button type="submit" onclick="return confirm('WARNING: Are you sure you want to apply these corrections to the ENTIRE batch?')" class="bg-amber-600 dark:bg-amber-700 hover:bg-amber-700 dark:hover:bg-amber-600 text-white px-8 py-3 text-xs font-black uppercase tracking-widest transition-all border border-amber-800 dark:border-amber-900 shadow-sm flex items-center gap-2 rounded-sm transform active:scale-95">
                     <i data-lucide="save" class="w-5 h-5"></i> Save All Corrections
                 </button>
             </div>

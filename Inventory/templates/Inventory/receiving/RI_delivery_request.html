@@ -1,36 +1,36 @@
 {% extends "Inventory/receiving/receiving_base.html" %}
 
 {% block receiving_content %}
-<div class="max-w-[100%] mx-auto pb-20 mt-4 text-slate-800">
+<div class="max-w-[100%] mx-auto pb-20 mt-4 text-slate-800 dark:text-slate-200 transition-colors duration-300">
 
-    <form method="POST" action="{% url 'delivery_request' %}" id="deliveryRequestForm" class="bg-white border border-slate-300 shadow-md">
+    <form method="POST" action="{% url 'delivery_request' %}" id="deliveryRequestForm" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-md transition-colors duration-300">
         {% csrf_token %}
 
-        <div class="bg-white px-5 py-4 border-b-4 border-teal-800 flex justify-between items-end sticky top-0 z-10 shadow-sm">
+        <div class="bg-white dark:bg-slate-900 px-5 py-4 border-b-4 border-teal-800 dark:border-teal-600 flex justify-between items-end sticky top-0 z-10 shadow-sm transition-colors">
             <div>
-                <h2 class="text-2xl font-black text-teal-900 uppercase tracking-tight flex items-center gap-3">
-                    <i data-lucide="clipboard-list" class="w-6 h-6 text-teal-700"></i> Delivery Request Entry
+                <h2 class="text-2xl font-black text-teal-900 dark:text-teal-400 uppercase tracking-tight flex items-center gap-3 transition-colors">
+                    <i data-lucide="clipboard-list" class="w-6 h-6 text-teal-700 dark:text-teal-500"></i> Delivery Request Entry
                 </h2>
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Create and register movement slips</p>
+                <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1 transition-colors">Create and register movement slips</p>
             </div>
             <div class="flex gap-2">
-                <a href="{% url 'delivery_request' %}" class="bg-slate-100 text-slate-600 border border-slate-300 px-5 py-2 text-[10px] font-black uppercase hover:bg-slate-200 transition-all flex items-center gap-2 rounded-sm">
+                <a href="{% url 'delivery_request' %}" class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-600 px-5 py-2 text-[10px] font-black uppercase hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex items-center gap-2 rounded-sm">
                     <i data-lucide="ban" class="w-3 h-3"></i> Cancel
                 </a>
-                <button type="button" onclick="printCurrentSlip()" class="bg-slate-700 text-white border border-slate-900 px-5 py-2 text-[10px] font-black uppercase hover:bg-slate-800 transition-all flex items-center gap-2 shadow-sm rounded-sm">
+                <button type="button" onclick="printCurrentSlip()" class="bg-slate-700 dark:bg-slate-800 text-white border border-slate-900 dark:border-slate-950 px-5 py-2 text-[10px] font-black uppercase hover:bg-slate-800 dark:hover:bg-slate-700 transition-all flex items-center gap-2 shadow-sm rounded-sm">
                     <i data-lucide="printer" class="w-3 h-3"></i> Print Delivery Slip
                 </button>
-                <button type="submit" class="bg-teal-700 text-white border border-teal-900 px-8 py-2 text-[11px] font-black uppercase hover:bg-teal-800 transition-all shadow-md flex items-center gap-2 rounded-sm">
+                <button type="submit" class="bg-teal-700 dark:bg-teal-600 text-white border border-teal-900 dark:border-teal-800 px-8 py-2 text-[11px] font-black uppercase hover:bg-teal-800 dark:hover:bg-teal-700 transition-all shadow-md flex items-center gap-2 rounded-sm">
                     <i data-lucide="save" class="w-4 h-4"></i> Register
                 </button>
             </div>
         </div>
 
-        <div class="p-5 bg-slate-50 border-b border-slate-300">
+        <div class="p-5 bg-slate-50 dark:bg-slate-950/50 border-b border-slate-300 dark:border-slate-800 transition-colors">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 
-                <div class="bg-white border border-slate-200 shadow-sm p-4 rounded-sm">
-                    <h3 class="text-[10px] font-black text-teal-800 uppercase tracking-widest border-b border-slate-100 pb-2 mb-3 flex items-center gap-2">
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm p-4 rounded-sm transition-colors">
+                    <h3 class="text-[10px] font-black text-teal-800 dark:text-teal-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2 mb-3 flex items-center gap-2 transition-colors">
                         <i data-lucide="map-pin" class="w-3 h-3"></i> Routing Details
                     </h3>
                     <div class="space-y-3">
@@ -43,55 +43,55 @@
                         </datalist>
 
                         <div class="flex flex-col">
-                            <label class="text-[9px] font-bold text-slate-500 uppercase mb-1">Delivery Place</label>
+                            <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 transition-colors">Delivery Place</label>
                             <div class="flex gap-1">
-                                <input type="text" id="header_delivery_place" name="delivery_place" list="location_list" required placeholder="Select source warehouse..." class="flex-1 p-1.5 border border-slate-300 text-xs font-black text-teal-900 focus:border-teal-500 focus:bg-teal-50 outline-none">
-                                <button type="button" onclick="applyDeliveryPlace()" class="bg-teal-700 text-white px-3 text-[9px] font-black uppercase hover:bg-teal-800 transition-colors" title="Apply to all rows">SET</button>
+                                <input type="text" id="header_delivery_place" name="delivery_place" list="location_list" required placeholder="Select source warehouse..." class="flex-1 p-1.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950 text-xs font-black text-teal-900 dark:text-teal-300 focus:border-teal-500 dark:focus:border-teal-500 focus:bg-teal-50 dark:focus:bg-teal-900/30 outline-none transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-600">
+                                <button type="button" onclick="applyDeliveryPlace()" class="bg-teal-700 dark:bg-teal-600 text-white px-3 text-[9px] font-black uppercase hover:bg-teal-800 dark:hover:bg-teal-700 transition-colors" title="Apply to all rows">SET</button>
                             </div>
                         </div>
                         <div class="flex gap-3">
                             <div class="flex flex-col w-1/2">
-                                <label class="text-[9px] font-bold text-slate-500 uppercase mb-1">Receiving Place</label>
-                                <input type="text" name="receiving_place" list="location_list" required placeholder="Destination..." class="p-1.5 border border-slate-300 text-xs font-bold focus:border-teal-500 outline-none">
+                                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 transition-colors">Receiving Place</label>
+                                <input type="text" name="receiving_place" list="location_list" required placeholder="Destination..." class="p-1.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 text-xs font-bold focus:border-teal-500 dark:focus:border-teal-500 outline-none transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-600">
                             </div>
                             <div class="flex flex-col w-1/2">
-                                <label class="text-[9px] font-bold text-slate-500 uppercase mb-1">Req. Reason</label>
-                                <input type="text" name="reason" required placeholder="Why move?" class="p-1.5 border border-slate-300 text-xs font-bold focus:border-teal-500 outline-none">
+                                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 transition-colors">Req. Reason</label>
+                                <input type="text" name="reason" required placeholder="Why move?" class="p-1.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 text-xs font-bold focus:border-teal-500 dark:focus:border-teal-500 outline-none transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-600">
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white border border-slate-200 shadow-sm p-4 rounded-sm">
-                    <h3 class="text-[10px] font-black text-amber-700 uppercase tracking-widest border-b border-slate-100 pb-2 mb-3 flex items-center gap-2">
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm p-4 rounded-sm transition-colors">
+                    <h3 class="text-[10px] font-black text-amber-700 dark:text-amber-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2 mb-3 flex items-center gap-2 transition-colors">
                         <i data-lucide="calendar-clock" class="w-3 h-3"></i> Schedule & Production
                     </h3>
                     <div class="space-y-3">
                         <div class="flex gap-3">
                             <div class="flex flex-col w-1/2">
-                                <label class="text-[9px] font-bold text-slate-500 uppercase mb-1">Request Date</label>
-                                <input type="date" value="{{ now|date:'Y-m-d' }}" readonly class="p-1.5 border border-slate-200 text-xs font-bold bg-slate-100 text-slate-500 outline-none cursor-not-allowed">
+                                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 transition-colors">Request Date</label>
+                                <input type="date" value="{{ now|date:'Y-m-d' }}" readonly class="p-1.5 border border-slate-200 dark:border-slate-700 text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 outline-none cursor-not-allowed transition-colors">
                             </div>
                             <div class="flex flex-col w-1/2">
-                                <label class="text-[9px] font-black text-rose-500 uppercase mb-1">Delivery Date *</label>
-                                <input type="date" name="delivery_date" required class="p-1.5 border border-slate-300 text-xs font-black text-teal-900 focus:border-teal-500 focus:bg-teal-50 outline-none">
+                                <label class="text-[9px] font-black text-rose-500 dark:text-rose-400 uppercase mb-1 transition-colors">Delivery Date *</label>
+                                <input type="date" name="delivery_date" required class="p-1.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950 text-xs font-black text-teal-900 dark:text-teal-300 focus:border-teal-500 dark:focus:border-teal-500 focus:bg-teal-50 dark:focus:bg-teal-900/30 outline-none transition-colors">
                             </div>
                         </div>
                         <div class="flex gap-3">
                             <div class="flex flex-col w-1/2">
-                                <label class="text-[9px] font-bold text-slate-500 uppercase mb-1">Model Name</label>
-                                <input type="text" name="model_name" placeholder="Model..." class="p-1.5 border border-slate-300 text-xs font-bold focus:border-teal-500 outline-none">
+                                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 transition-colors">Model Name</label>
+                                <input type="text" name="model_name" placeholder="Model..." class="p-1.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 text-xs font-bold focus:border-teal-500 dark:focus:border-teal-500 outline-none transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-600">
                             </div>
                             <div class="flex flex-col w-1/2">
-                                <label class="text-[9px] font-bold text-slate-500 uppercase mb-1">Production No.</label>
-                                <input type="text" name="production_no" placeholder="Prod No..." class="p-1.5 border border-slate-300 text-xs font-bold focus:border-teal-500 outline-none">
+                                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 transition-colors">Production No.</label>
+                                <input type="text" name="production_no" placeholder="Prod No..." class="p-1.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 text-xs font-bold focus:border-teal-500 dark:focus:border-teal-500 outline-none transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-600">
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white border border-slate-200 shadow-sm p-4 rounded-sm">
-                    <h3 class="text-[10px] font-black text-slate-600 uppercase tracking-widest border-b border-slate-100 pb-2 mb-3 flex items-center gap-2">
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm p-4 rounded-sm transition-colors">
+                    <h3 class="text-[10px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2 mb-3 flex items-center gap-2 transition-colors">
                         <i data-lucide="users" class="w-3 h-3"></i> Client & Notes
                     </h3>
                     <div class="space-y-3">
@@ -103,21 +103,21 @@
 
                         <div class="flex gap-3">
                             <div class="flex flex-col w-1/3">
-                                <label class="text-[9px] font-bold text-slate-500 uppercase mb-1">Client Name</label>
-                                <input type="text" name="maker_name" list="customer_list" placeholder="Select Client..." class="p-1.5 border border-slate-300 text-xs font-bold focus:border-teal-500 outline-none">
+                                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 transition-colors">Client Name</label>
+                                <input type="text" name="maker_name" list="customer_list" placeholder="Select Client..." class="p-1.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 text-xs font-bold focus:border-teal-500 dark:focus:border-teal-500 outline-none transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-600">
                             </div>
                             <div class="flex flex-col w-1/3">
-                                <label class="text-[9px] font-bold text-slate-500 uppercase mb-1">Part Name</label>
-                                <input type="text" id="header_part_name" name="part_name" placeholder="Part description..." class="p-1.5 border border-slate-300 text-xs font-bold focus:border-teal-500 outline-none">
+                                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 transition-colors">Part Name</label>
+                                <input type="text" id="header_part_name" name="part_name" placeholder="Part description..." class="p-1.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 text-xs font-bold focus:border-teal-500 dark:focus:border-teal-500 outline-none transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-600">
                             </div>
                             <div class="flex flex-col w-32">
-                                <label class="text-[9px] font-bold text-slate-500 uppercase mb-1">PO No.</label>
-                                <input type="text" name="po_no" placeholder="PO-..." class="p-1.5 border border-slate-300 text-xs font-bold focus:border-teal-500 outline-none">
+                                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 transition-colors">PO No.</label>
+                                <input type="text" name="po_no" placeholder="PO-..." class="p-1.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 text-xs font-bold focus:border-teal-500 dark:focus:border-teal-500 outline-none transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-600">
                             </div>
                         </div>
                         <div class="flex flex-col">
-                            <label class="text-[9px] font-bold text-slate-500 uppercase mb-1">General Remarks</label>
-                            <input type="text" name="remarks" placeholder="Add any special instructions here..." class="p-1.5 border border-slate-300 text-xs italic font-bold focus:border-teal-500 outline-none">
+                            <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 transition-colors">General Remarks</label>
+                            <input type="text" name="remarks" placeholder="Add any special instructions here..." class="p-1.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 text-xs italic font-bold focus:border-teal-500 dark:focus:border-teal-500 outline-none transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-600">
                         </div>
                     </div>
                 </div>
@@ -125,7 +125,7 @@
             </div>
         </div>
 
-        <div class="bg-white border-b border-slate-300 px-5 py-3 flex flex-wrap lg:flex-nowrap items-center justify-between gap-4">
+        <div class="bg-white dark:bg-slate-900 border-b border-slate-300 dark:border-slate-700 px-5 py-3 flex flex-wrap lg:flex-nowrap items-center justify-between gap-4 transition-colors">
             
             <div class="flex items-center gap-2 flex-wrap">
                 <datalist id="item_master_list">
@@ -134,57 +134,57 @@
                     {% endfor %}
                 </datalist>
 
-                <div class="flex border border-slate-300 rounded-sm overflow-hidden shadow-sm">
-                    <button type="button" onclick="openStockModal()" class="bg-gray-300 text-black border border-slate-300 px-3 py-1.5 text-[10px] font-black uppercase hover:bg-yellow-300 transition-colors flex items-center gap-1 rounded-sm">
+                <div class="flex border border-slate-300 dark:border-slate-600 rounded-sm overflow-hidden shadow-sm transition-colors">
+                    <button type="button" onclick="openStockModal()" class="bg-gray-300 dark:bg-slate-800 text-black dark:text-slate-200 border-r border-slate-300 dark:border-slate-700 px-3 py-1.5 text-[10px] font-black uppercase hover:bg-yellow-300 dark:hover:bg-yellow-600 transition-colors flex items-center gap-1 rounded-sm">
                         <i data-lucide="search" class="w-3 h-3"></i> Search Material
                     </button>
                 </div>
                 
-                <div class="h-6 w-[1px] bg-slate-300 mx-1"></div>
+                <div class="h-6 w-[1px] bg-slate-300 dark:bg-slate-700 mx-1 transition-colors"></div>
 
-                <button type="button" onclick="addItemRow()" class="bg-teal-50 text-teal-800 border border-teal-200 px-3 py-1.5 text-[10px] font-black uppercase hover:bg-teal-100 transition-colors flex items-center gap-1 rounded-sm">
+                <button type="button" onclick="addItemRow()" class="bg-teal-50 dark:bg-teal-900/30 text-teal-800 dark:text-teal-400 border border-teal-200 dark:border-teal-800 px-3 py-1.5 text-[10px] font-black uppercase hover:bg-teal-100 dark:hover:bg-teal-900/50 transition-colors flex items-center gap-1 rounded-sm">
                     <i data-lucide="plus" class="w-3 h-3"></i> Add Blank Row
                 </button>
             </div>
 
             <div class="flex items-center gap-3 flex-wrap">
-                <div class="flex items-center border border-emerald-300 rounded-sm overflow-hidden shadow-sm">
-                    <span id="file_name_display" class="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-3 py-1.5 hidden max-w-[120px] truncate border-r border-emerald-300"></span>
+                <div class="flex items-center border border-emerald-300 dark:border-emerald-800 rounded-sm overflow-hidden shadow-sm transition-colors">
+                    <span id="file_name_display" class="text-[10px] font-bold text-emerald-800 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-3 py-1.5 hidden max-w-[120px] truncate border-r border-emerald-300 dark:border-emerald-800 transition-colors"></span>
                     <input type="file" id="excel_file" class="hidden" onchange="document.getElementById('file_name_display').innerText = this.files[0].name; document.getElementById('file_name_display').classList.remove('hidden');">
-                    <button type="button" onclick="document.getElementById('excel_file').click()" class="bg-emerald-50 text-emerald-900 px-3 py-1.5 text-[10px] font-black uppercase hover:bg-emerald-100 transition-colors flex items-center gap-1 border-r border-emerald-300">
+                    <button type="button" onclick="document.getElementById('excel_file').click()" class="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-900 dark:text-emerald-400 px-3 py-1.5 text-[10px] font-black uppercase hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors flex items-center gap-1 border-r border-emerald-300 dark:border-emerald-800">
                         <i data-lucide="paperclip" class="w-3 h-3"></i> Select Excel
                     </button>
-                    <button type="button" onclick="processImport()" class="bg-emerald-600 text-white px-4 py-1.5 text-[10px] font-black uppercase hover:bg-emerald-700 transition-colors flex items-center gap-1">
+                    <button type="button" onclick="processImport()" class="bg-emerald-600 dark:bg-emerald-700 text-white px-4 py-1.5 text-[10px] font-black uppercase hover:bg-emerald-700 dark:hover:bg-emerald-600 transition-colors flex items-center gap-1">
                         <i data-lucide="file-up" class="w-3 h-3"></i> Import
                     </button>
                 </div>
 
-                <div class="h-6 w-[1px] bg-slate-300 mx-1"></div>
+                <div class="h-6 w-[1px] bg-slate-300 dark:bg-slate-700 mx-1 transition-colors"></div>
 
-                <div class="bg-slate-100 border border-slate-300 px-3 py-1 flex items-center gap-3 rounded-sm">
-                    <span class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Items</span>
-                    <span id="list_count_display" class="text-sm font-black text-teal-800">0</span>
+                <div class="bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-3 py-1 flex items-center gap-3 rounded-sm transition-colors">
+                    <span class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Items</span>
+                    <span id="list_count_display" class="text-sm font-black text-teal-800 dark:text-teal-400 transition-colors">0</span>
                 </div>
             </div>
         </div>
 
-        <div class="overflow-x-auto min-h-[400px]">
+        <div class="overflow-x-auto min-h-[400px] transition-colors">
             <table class="w-full text-left min-w-[1200px] border-collapse" style="font-size: 11px;">
-                <thead>
-                    <tr class="bg-slate-800 text-white uppercase tracking-widest font-black text-[9px] border-b-4 border-slate-900">
-                        <th class="py-3 px-3 border-r border-slate-600 w-40 opacity-90">Delivery Place</th>
-                        <th class="py-3 px-3 border-r border-slate-600 w-44 opacity-90">Item Code</th>
-                        <th class="py-3 px-3 border-r border-slate-600 opacity-90">Description</th>
-                        <th class="py-3 px-3 border-r border-slate-600 w-32 opacity-90">Revision</th>
-                        <th class="py-3 px-3 border-r border-slate-600 w-24 text-center text-teal-300">Stock Qty</th>
-                        <th class="py-3 px-3 border-r border-slate-600 w-32 text-center text-amber-300">Request Qty</th>
-                        <th class="py-3 px-3 border-r border-slate-600 w-48 opacity-90">Item Remarks</th>
-                        <th class="py-3 px-2 text-center w-12 text-rose-400">Action</th>
+                <thead class="transition-colors">
+                    <tr class="bg-slate-800 dark:bg-slate-950 text-white uppercase tracking-widest font-black text-[9px] border-b-4 border-slate-900 dark:border-slate-800 transition-colors">
+                        <th class="py-3 px-3 border-r border-slate-600 dark:border-slate-800 w-40 opacity-90">Delivery Place</th>
+                        <th class="py-3 px-3 border-r border-slate-600 dark:border-slate-800 w-44 opacity-90">Item Code</th>
+                        <th class="py-3 px-3 border-r border-slate-600 dark:border-slate-800 opacity-90">Description</th>
+                        <th class="py-3 px-3 border-r border-slate-600 dark:border-slate-800 w-32 opacity-90">Revision</th>
+                        <th class="py-3 px-3 border-r border-slate-600 dark:border-slate-800 w-24 text-center text-teal-300 dark:text-teal-500">Stock Qty</th>
+                        <th class="py-3 px-3 border-r border-slate-600 dark:border-slate-800 w-32 text-center text-amber-300 dark:text-amber-500">Request Qty</th>
+                        <th class="py-3 px-3 border-r border-slate-600 dark:border-slate-800 w-48 opacity-90">Item Remarks</th>
+                        <th class="py-3 px-2 text-center w-12 text-rose-400 dark:text-rose-500">Action</th>
                     </tr>
                 </thead>
-                <tbody id="request_table_body" class="divide-y divide-slate-200 bg-slate-50">
+                <tbody id="request_table_body" class="divide-y divide-slate-200 dark:divide-slate-800 bg-slate-50 dark:bg-slate-900 transition-colors">
                     <tr id="empty_state">
-                        <td colspan="8" class="py-24 text-center text-slate-400 bg-white">
+                        <td colspan="8" class="py-24 text-center text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-900 transition-colors">
                             <i data-lucide="clipboard-type" class="w-12 h-12 mx-auto mb-3 opacity-20"></i>
                             <p class="font-black text-xs uppercase tracking-widest">No items requested yet</p>
                         </td>
@@ -196,37 +196,37 @@
     </form>
 </div>
 
-<div id="stockModal" class="fixed inset-0 bg-slate-900/60 hidden z-50 flex items-center justify-center backdrop-blur-sm transition-all">
-    <div class="bg-white rounded-sm shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden">
+<div id="stockModal" class="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 hidden z-50 flex items-center justify-center backdrop-blur-sm transition-all">
+    <div class="bg-white dark:bg-slate-900 rounded-sm shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden transition-colors duration-300">
         
-        <div class="bg-teal-900 px-5 py-3 flex justify-between items-center shadow-md z-10">
+        <div class="bg-teal-900 dark:bg-teal-950 px-5 py-3 flex justify-between items-center shadow-md z-10 transition-colors">
             <h3 class="text-white font-black uppercase tracking-widest text-sm flex items-center gap-2">
-                <i data-lucide="package-search" class="w-4 h-4 text-teal-300"></i> Select Material from Stock
+                <i data-lucide="package-search" class="w-4 h-4 text-teal-300 dark:text-teal-500"></i> Select Material from Stock
             </h3>
-            <button type="button" onclick="closeStockModal()" class="text-teal-300 hover:text-white transition-colors">
+            <button type="button" onclick="closeStockModal()" class="text-teal-300 dark:text-teal-500 hover:text-white transition-colors">
                 <i data-lucide="x" class="w-6 h-6"></i>
             </button>
         </div>
         
-        <div class="p-3 border-b border-slate-200 bg-slate-100 flex gap-2">
+        <div class="p-3 border-b border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800/50 flex gap-2 transition-colors">
             <div class="relative flex-1">
-                <i data-lucide="filter" class="absolute left-3 top-2.5 w-4 h-4 text-slate-400"></i>
-                <input type="text" id="modal_search_input" placeholder="Type to filter Item Code or Description..." class="w-full pl-9 pr-3 py-2 border border-slate-300 text-xs font-bold focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none rounded-sm shadow-inner" onkeyup="filterModalTable()">
+                <i data-lucide="filter" class="absolute left-3 top-2.5 w-4 h-4 text-slate-400 dark:text-slate-500"></i>
+                <input type="text" id="modal_search_input" placeholder="Type to filter Item Code or Description..." class="w-full pl-9 pr-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 text-xs font-bold focus:border-teal-500 dark:focus:border-teal-500 focus:ring-1 focus:ring-teal-500 dark:focus:ring-teal-500 outline-none rounded-sm shadow-inner transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-600" onkeyup="filterModalTable()">
             </div>
         </div>
         
-        <div class="overflow-y-auto flex-1 bg-white">
+        <div class="overflow-y-auto flex-1 bg-white dark:bg-slate-900 transition-colors">
             <table class="w-full text-left border-collapse" style="font-size: 11px;">
-                <thead class="sticky top-0 bg-slate-200 shadow-sm z-10">
-                    <tr class="text-slate-700 uppercase tracking-widest font-black text-[9px] border-b border-slate-300">
+                <thead class="sticky top-0 bg-slate-200 dark:bg-slate-950 shadow-sm z-10 transition-colors">
+                    <tr class="text-slate-700 dark:text-slate-300 uppercase tracking-widest font-black text-[9px] border-b border-slate-300 dark:border-slate-800 transition-colors">
                         <th class="py-3 px-4">Item Code</th>
                         <th class="py-3 px-4">Description</th>
                         <th class="py-3 px-4 text-center">Revision</th>
-                        <th class="py-3 px-4 text-center text-teal-800">Available Stock</th>
+                        <th class="py-3 px-4 text-center text-teal-800 dark:text-teal-400">Available Stock</th>
                         <th class="py-3 px-4 text-center">Action</th>
                     </tr>
                 </thead>
-                <tbody id="modal_table_body" class="divide-y divide-slate-100">
+                <tbody id="modal_table_body" class="divide-y divide-slate-100 dark:divide-slate-800 transition-colors">
                 </tbody>
             </table>
         </div>
@@ -266,41 +266,39 @@
         const currentDeliveryPlace = document.getElementById('header_delivery_place').value || "Not Set";
         const cleanRev = (rev === 'Select Goods') ? '' : rev;
 
-        // 🚀 BAGO: AUTO-FILL PART NAME LOGIC
-        // Kung may in-add na item galing modal at blangko pa yung Part Name sa header, kusa itong ipa-paste
         const partNameHeader = document.getElementById('header_part_name');
         if (desc !== "" && partNameHeader.value.trim() === "") {
             partNameHeader.value = desc;
         }
 
         const row = `
-        <tr class="item-row hover:bg-teal-50/30 transition-colors bg-white border-b border-slate-200">
-            <td class="py-2 px-3 border-r border-slate-200 text-[10px] font-bold text-slate-500 italic row-place-display align-middle">
+        <tr class="item-row hover:bg-teal-50/30 dark:hover:bg-teal-900/20 transition-colors bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+            <td class="py-2 px-3 border-r border-slate-200 dark:border-slate-800 text-[10px] font-bold text-slate-500 dark:text-slate-400 italic row-place-display align-middle transition-colors">
                 ${currentDeliveryPlace}
             </td>
-            <td class="py-2 px-2 border-r border-slate-200 align-middle">
-                <input type="text" name="item_code[]" value="${itemCode}" placeholder="CODE" class="w-full p-1.5 bg-white border border-slate-300 text-xs font-black text-slate-800 uppercase focus:outline-none focus:border-teal-500 shadow-sm rounded-sm">
+            <td class="py-2 px-2 border-r border-slate-200 dark:border-slate-800 align-middle transition-colors">
+                <input type="text" name="item_code[]" value="${itemCode}" placeholder="CODE" class="w-full p-1.5 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs font-black text-slate-800 dark:text-slate-200 uppercase focus:outline-none focus:border-teal-500 dark:focus:border-teal-500 focus:bg-teal-50 dark:focus:bg-teal-900/20 shadow-sm rounded-sm transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-600">
             </td>
-            <td class="py-2 px-2 border-r border-slate-200 align-middle">
-                <input type="text" name="description[]" value="${desc}" placeholder="Description" class="w-full p-1.5 bg-white border border-slate-300 text-[10px] font-bold text-slate-700 focus:outline-none focus:border-teal-500 shadow-sm rounded-sm">
+            <td class="py-2 px-2 border-r border-slate-200 dark:border-slate-800 align-middle transition-colors">
+                <input type="text" name="description[]" value="${desc}" placeholder="Description" class="w-full p-1.5 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-[10px] font-bold text-slate-700 dark:text-slate-300 focus:outline-none focus:border-teal-500 dark:focus:border-teal-500 focus:bg-teal-50 dark:focus:bg-teal-900/20 shadow-sm rounded-sm transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-600">
             </td>
-            <td class="py-2 px-2 border-r border-slate-200 align-middle">
-                <input type="text" name="revision[]" value="${cleanRev}" placeholder="REV-..." class="w-full p-1.5 bg-white border border-slate-300 text-[10px] font-black text-slate-700 uppercase focus:outline-none focus:border-teal-500 shadow-sm rounded-sm text-center">
+            <td class="py-2 px-2 border-r border-slate-200 dark:border-slate-800 align-middle transition-colors">
+                <input type="text" name="revision[]" value="${cleanRev}" placeholder="REV-..." class="w-full p-1.5 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase focus:outline-none focus:border-teal-500 dark:focus:border-teal-500 focus:bg-teal-50 dark:focus:bg-teal-900/20 shadow-sm rounded-sm text-center transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-600">
             </td>
-            <td class="py-2 px-3 border-r border-slate-200 text-center font-black text-teal-700 bg-slate-50/50 align-middle text-xs">
+            <td class="py-2 px-3 border-r border-slate-200 dark:border-slate-800 text-center font-black text-teal-700 dark:text-teal-400 bg-slate-50/50 dark:bg-slate-800/50 align-middle text-xs transition-colors">
                 ${Number(stock).toLocaleString()}
             </td>
-            <td class="py-2 px-2 border-r border-slate-200 bg-amber-50/30 align-middle">
-                <div class="flex items-center justify-center border border-amber-400 bg-white rounded-sm overflow-hidden shadow-sm">
-                    <input type="number" name="request_qty[]" value="1" required class="w-full p-1.5 text-xs font-black text-center text-teal-900 focus:outline-none focus:bg-amber-50">
-                    <span class="text-[8px] font-black text-slate-500 uppercase px-2 border-l border-amber-300 bg-slate-100 h-full flex items-center">PCS</span>
+            <td class="py-2 px-2 border-r border-slate-200 dark:border-slate-800 bg-amber-50/30 dark:bg-amber-900/20 align-middle transition-colors">
+                <div class="flex items-center justify-center border border-amber-400 dark:border-amber-600 bg-white dark:bg-slate-900 rounded-sm overflow-hidden shadow-sm transition-colors">
+                    <input type="number" name="request_qty[]" value="1" required class="w-full p-1.5 text-xs font-black text-center text-teal-900 dark:text-teal-300 bg-transparent focus:outline-none focus:bg-amber-50 dark:focus:bg-amber-900/40 transition-colors">
+                    <span class="text-[8px] font-black text-slate-500 dark:text-slate-400 uppercase px-2 border-l border-amber-300 dark:border-amber-600 bg-slate-100 dark:bg-slate-800 h-full flex items-center transition-colors">PCS</span>
                 </div>
             </td>
-            <td class="py-2 px-2 border-r border-slate-200 align-middle">
-                <input type="text" name="item_remarks[]" value="${remarks}" placeholder="Type note..." class="w-full p-1.5 bg-white border border-slate-300 focus:border-teal-500 outline-none text-[10px] font-bold italic text-slate-600 shadow-sm rounded-sm">
+            <td class="py-2 px-2 border-r border-slate-200 dark:border-slate-800 align-middle transition-colors">
+                <input type="text" name="item_remarks[]" value="${remarks}" placeholder="Type note..." class="w-full p-1.5 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 focus:border-teal-500 dark:focus:border-teal-500 focus:bg-teal-50 dark:focus:bg-teal-900/20 outline-none text-[10px] font-bold italic text-slate-600 dark:text-slate-400 shadow-sm rounded-sm transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-600">
             </td>
-            <td class="py-2 px-2 text-center align-middle">
-                <button type="button" onclick="this.closest('tr').remove(); updateListCount();" class="text-slate-400 hover:text-rose-600 transition-colors p-1.5 hover:bg-rose-50 rounded border border-transparent hover:border-rose-200 shadow-sm bg-white">
+            <td class="py-2 px-2 text-center align-middle transition-colors">
+                <button type="button" onclick="this.closest('tr').remove(); updateListCount();" class="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 transition-colors p-1.5 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded border border-transparent hover:border-rose-200 dark:hover:border-rose-800 shadow-sm bg-white dark:bg-slate-900">
                     <i data-lucide="trash-2" class="w-4 h-4 mx-auto"></i>
                 </button>
             </td>
@@ -370,7 +368,7 @@
             const tbody = document.getElementById('request_table_body');
             tbody.innerHTML = `
                 <tr id="empty_state">
-                    <td colspan="8" class="py-24 text-center text-slate-400 bg-white">
+                    <td colspan="8" class="py-24 text-center text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-900 transition-colors">
                         <i data-lucide="clipboard-type" class="w-12 h-12 mx-auto mb-3 opacity-20"></i>
                         <p class="font-black text-xs uppercase tracking-widest">No items requested yet</p>
                     </td>
@@ -393,7 +391,7 @@
 
     function fetchStocksForModal() {
         const tbody = document.getElementById('modal_table_body');
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-10 text-slate-400 font-bold italic"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2 text-teal-600"></i>Loading inventory data...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-10 text-slate-400 dark:text-slate-500 font-bold italic transition-colors"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2 text-teal-600 dark:text-teal-400"></i>Loading inventory data...</td></tr>';
         lucide.createIcons();
 
         fetch('/receiving/search-items/')
@@ -403,12 +401,12 @@
                     allStockData = data.results;
                     renderModalTable(allStockData);
                 } else {
-                    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-10 text-rose-500 font-bold">Error: ${data.error}</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-10 text-rose-500 dark:text-rose-400 font-bold transition-colors">Error: ${data.error}</td></tr>`;
                 }
             })
             .catch(err => {
                 console.error(err);
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-10 text-rose-500 font-bold">Failed to connect to server.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-10 text-rose-500 dark:text-rose-400 font-bold transition-colors">Failed to connect to server.</td></tr>';
             });
     }
 
@@ -417,7 +415,7 @@
         tbody.innerHTML = '';
         
         if(dataArray.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-10 text-slate-400 font-bold">No stocks available.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-10 text-slate-400 dark:text-slate-500 font-bold transition-colors">No stocks available.</td></tr>';
             return;
         }
 
@@ -425,14 +423,14 @@
             const safeDesc = item.description ? item.description.replace(/'/g, "\\'").replace(/"/g, '&quot;') : "No Description";
             
             const row = `
-                <tr class="hover:bg-teal-50 transition-colors group">
-                    <td class="py-2 px-4 font-black text-slate-800 uppercase">${item.item_code}</td>
-                    <td class="py-2 px-4 font-bold text-slate-600">${item.description}</td>
-                    <td class="py-2 px-4 text-center font-bold text-slate-500">${item.revision}</td>
-                    <td class="py-2 px-4 text-center font-black text-teal-700 text-sm">${Number(item.stock_qty).toLocaleString()}</td>
-                    <td class="py-2 px-4 text-center">
+                <tr class="hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors group">
+                    <td class="py-2 px-4 font-black text-slate-800 dark:text-slate-200 uppercase transition-colors">${item.item_code}</td>
+                    <td class="py-2 px-4 font-bold text-slate-600 dark:text-slate-400 transition-colors">${item.description}</td>
+                    <td class="py-2 px-4 text-center font-bold text-slate-500 dark:text-slate-500 transition-colors">${item.revision}</td>
+                    <td class="py-2 px-4 text-center font-black text-teal-700 dark:text-teal-400 text-sm transition-colors">${Number(item.stock_qty).toLocaleString()}</td>
+                    <td class="py-2 px-4 text-center transition-colors">
                         <button type="button" onclick="selectStockFromModal('${item.item_code}', '${safeDesc}', ${item.stock_qty}, '${item.revision}')" 
-                                class="bg-teal-600 text-white px-4 py-1.5 rounded-sm text-[9px] font-black uppercase hover:bg-teal-700 transition-transform active:scale-95 opacity-0 group-hover:opacity-100 shadow-sm">
+                                class="bg-teal-600 dark:bg-teal-700 text-white px-4 py-1.5 rounded-sm text-[9px] font-black uppercase hover:bg-teal-700 dark:hover:bg-teal-600 transition-transform active:scale-95 opacity-0 group-hover:opacity-100 shadow-sm transition-colors">
                             Select
                         </button>
                     </td>

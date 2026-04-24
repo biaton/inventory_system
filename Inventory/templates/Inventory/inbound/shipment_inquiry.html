@@ -1,143 +1,142 @@
-{% extends "Inventory/inbound/inbound_base.html" %}
+{% extends "Inventory/inbound/inbound_base.html" %})
 
 {% block inbound_content %}
-
-<div class="max-w-[100%] mx-auto pb-20 mt-4 text-slate-800">
+<div class="max-w-[100%] mx-auto pb-20 mt-4 text-slate-800 dark:text-slate-200 transition-colors duration-300">
 
     <div class="mt-6 mb-8 grid grid-cols-1 md:grid-cols-4 gap-4">
         
-        <div class="bg-white border border-slate-300 p-4 shadow-sm relative overflow-hidden group">
+        <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-4 shadow-sm relative overflow-hidden group transition-colors duration-300">
             <div class="absolute left-0 top-0 w-1 h-full bg-blue-600 transition-all group-hover:w-1.5"></div>
             <div class="flex justify-between items-start">
                 <div>
-                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Expected Shipments</p>
-                    <h2 class="text-2xl font-black text-slate-800 leading-none">{{ total_shipments|default:"0" }}</h2>
+                    <p class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1 transition-colors">Expected Shipments</p>
+                    <h2 class="text-2xl font-black text-slate-800 dark:text-slate-100 leading-none transition-colors">{{ total_shipments|default:"0" }}</h2>
                 </div>
-                <div class="bg-blue-50 p-2 rounded">
-                    <i data-lucide="package-search" class="w-5 h-5 text-blue-600"></i>
+                <div class="bg-blue-50 dark:bg-blue-900/30 p-2 rounded transition-colors">
+                    <i data-lucide="package-search" class="w-5 h-5 text-blue-600 dark:text-blue-400"></i>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white border border-slate-300 p-4 shadow-sm relative overflow-hidden group">
+        <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-4 shadow-sm relative overflow-hidden group transition-colors duration-300">
             <div class="absolute left-0 top-0 w-1 h-full bg-cyan-500 transition-all group-hover:w-1.5"></div>
             <div class="flex justify-between items-start">
                 <div>
-                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">In Transit / Shipped</p>
-                    <h2 class="text-2xl font-black text-slate-800 leading-none">{{ total_in_transit|default:"0" }}</h2>
+                    <p class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1 transition-colors">In Transit / Shipped</p>
+                    <h2 class="text-2xl font-black text-slate-800 dark:text-slate-100 leading-none transition-colors">{{ total_in_transit|default:"0" }}</h2>
                 </div>
-                <div class="bg-cyan-50 p-2 rounded">
-                    <i data-lucide="truck" class="w-5 h-5 text-cyan-600"></i>
+                <div class="bg-cyan-50 dark:bg-cyan-900/30 p-2 rounded transition-colors">
+                    <i data-lucide="truck" class="w-5 h-5 text-cyan-600 dark:text-cyan-400"></i>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white border border-slate-300 p-4 shadow-sm relative overflow-hidden group">
-            <div class="absolute left-0 top-0 w-1 h-full {% if total_delayed > 0 %}bg-rose-500{% else %}bg-emerald-500{% endif %} transition-all group-hover:w-1.5"></div>
+        <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-4 shadow-sm relative overflow-hidden group transition-colors duration-300">
+            <div class="absolute left-0 top-0 w-1 h-full {% if total_delayed > 0 %}bg-rose-500 dark:bg-rose-600{% else %}bg-emerald-500 dark:bg-emerald-600{% endif %} transition-all group-hover:w-1.5"></div>
             <div class="flex justify-between items-start">
                 <div>
-                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Delayed Deliveries</p>
-                    <h2 class="text-2xl font-black {% if total_delayed > 0 %}text-rose-600{% else %}text-slate-800{% endif %} leading-none">{{ total_delayed|default:"0" }}</h2>
+                    <p class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1 transition-colors">Delayed Deliveries</p>
+                    <h2 class="text-2xl font-black {% if total_delayed > 0 %}text-rose-600 dark:text-rose-400{% else %}text-slate-800 dark:text-slate-100{% endif %} leading-none transition-colors">{{ total_delayed|default:"0" }}</h2>
                 </div>
-                <div class="{% if total_delayed > 0 %}bg-rose-50{% else %}bg-emerald-50{% endif %} p-2 rounded">
-                    <i data-lucide="alert-triangle" class="w-5 h-5 {% if total_delayed > 0 %}text-rose-600{% else %}text-emerald-600{% endif %}"></i>
+                <div class="{% if total_delayed > 0 %}bg-rose-50 dark:bg-rose-900/30{% else %}bg-emerald-50 dark:bg-emerald-900/30{% endif %} p-2 rounded transition-colors">
+                    <i data-lucide="alert-triangle" class="w-5 h-5 {% if total_delayed > 0 %}text-rose-600 dark:text-rose-400{% else %}text-emerald-600 dark:text-emerald-400{% endif %}"></i>
                 </div>
             </div>
         </div>
 
-        <div class="bg-slate-800 border border-slate-900 p-4 shadow-md relative overflow-hidden group">
+        <div class="bg-slate-800 dark:bg-slate-950 border border-slate-900 dark:border-slate-800 p-4 shadow-md relative overflow-hidden group transition-colors duration-300">
             <div class="absolute right-0 top-0 w-1 h-full bg-blue-400 transition-all group-hover:w-1.5"></div>
             <div class="flex justify-between items-start">
                 <div>
-                    <p class="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1">Incoming Value</p>
+                    <p class="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1 transition-colors">Incoming Value</p>
                     <h2 class="text-2xl font-black text-white leading-none tracking-tight">₱ {{ overall_inbound_value|floatformat:2 }}</h2>
                 </div>
-                <div class="bg-slate-700 p-2 rounded border border-slate-600">
-                    <i data-lucide="banknote" class="w-5 h-5 text-blue-300"></i>
+                <div class="bg-slate-700 dark:bg-slate-800 p-2 rounded border border-slate-600 dark:border-slate-700 transition-colors">
+                    <i data-lucide="banknote" class="w-5 h-5 text-blue-300 dark:text-blue-400"></i>
                 </div>
             </div>
         </div>
 
     </div>
 
-    <div class="bg-white border border-slate-300 shadow-sm p-4 mb-4 flex flex-col md:flex-row justify-between items-center gap-4 border-l-4 border-l-blue-600">
+    <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm p-4 mb-4 flex flex-col md:flex-row justify-between items-center gap-4 border-l-4 border-l-blue-600 transition-colors duration-300">
         <div class="flex items-center gap-2">
-            <div class="bg-blue-100 p-2 rounded-sm text-blue-700">
+            <div class="bg-blue-100 dark:bg-blue-900/50 p-2 rounded-sm text-blue-700 dark:text-blue-400 transition-colors">
                 <i data-lucide="radar" class="w-5 h-5"></i>
             </div>
             <div>
-                <h2 class="text-lg font-black text-slate-900 uppercase tracking-tight">Shipment Schedule Inquiry</h2>
-                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Track incoming supplier deliveries</p>
+                <h2 class="text-lg font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight transition-colors">Shipment Schedule Inquiry</h2>
+                <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Track incoming supplier deliveries</p>
             </div>
         </div>
 
         <form method="GET" class="flex flex-wrap items-center gap-2 w-full md:w-auto m-0">
-            <select name="status" class="p-2 text-xs font-bold border border-slate-300 focus:border-blue-500 outline-none uppercase bg-slate-50">
+            <select name="status" class="p-2 text-xs font-bold border border-slate-300 dark:border-slate-600 focus:border-blue-500 dark:focus:border-blue-500 outline-none uppercase bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 transition-colors">
                 <option value="">All Status</option>
                 <option value="Approved" {% if status_filter == 'Approved' %}selected{% endif %}>Approved</option>
                 <option value="Shipped" {% if status_filter == 'Shipped' %}selected{% endif %}>Shipped / In Transit</option>
                 <option value="Pending Approval" {% if status_filter == 'Pending Approval' %}selected{% endif %}>Pending</option>
             </select>
-            <input type="text" name="search" value="{{ search_query }}" placeholder="Search PO No. or Supplier..." class="w-full md:w-64 p-2 text-xs font-bold border border-slate-300 focus:border-blue-500 focus:bg-blue-50 outline-none uppercase placeholder:text-slate-400">
-            <button type="submit" class="bg-slate-800 text-white px-4 py-2 text-xs font-black uppercase tracking-widest hover:bg-slate-700 transition-colors">Search</button>
+            <input type="text" name="search" value="{{ search_query }}" placeholder="Search PO No. or Supplier..." class="w-full md:w-64 p-2 text-xs font-bold border border-slate-300 dark:border-slate-600 focus:border-blue-500 dark:focus:border-blue-500 focus:bg-blue-50 dark:focus:bg-blue-900/20 outline-none uppercase bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-colors">
+            <button type="submit" class="bg-slate-800 dark:bg-blue-700 text-white px-4 py-2 text-xs font-black uppercase tracking-widest hover:bg-slate-700 dark:hover:bg-blue-600 transition-colors">Search</button>
             {% if search_query or status_filter %}
-                <a href="{% url 'shipment_inquiry' %}" class="bg-rose-100 text-rose-700 px-3 py-2 text-xs font-black uppercase tracking-widest hover:bg-rose-200 border border-rose-300">Clear</a>
+                <a href="{% url 'shipment_inquiry' %}" class="bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 px-3 py-2 text-xs font-black uppercase tracking-widest hover:bg-rose-200 dark:hover:bg-rose-900/50 border border-rose-300 dark:border-rose-800 transition-colors">Clear</a>
             {% endif %}
         </form>
     </div>
 
-    <div class="bg-white border border-slate-300 shadow-sm overflow-hidden">
+    <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm overflow-hidden transition-colors duration-300">
         <div class="overflow-x-auto min-h-[400px]">
             <table class="w-full text-left border-collapse" style="font-size: 11px;">
-                <thead class="bg-slate-100 text-slate-600 uppercase tracking-widest font-black text-[9px]">
+                <thead class="bg-slate-100 dark:bg-slate-950 text-slate-600 dark:text-slate-400 uppercase tracking-widest font-black text-[9px] transition-colors">
                     <tr>
-                        <th class="py-3 px-3 border-b border-slate-300 w-40">Purchase Order</th>
-                        <th class="py-3 px-3 border-b border-slate-300 w-28 text-center">Expected Date</th>
-                        <th class="py-3 px-3 border-b border-slate-300">Supplier Name</th>
-                        <th class="py-3 px-3 border-b border-slate-300 w-24 text-center">Items</th>
-                        <th class="py-3 px-3 border-b border-slate-300 w-32 text-right">PO Total</th>
-                        <th class="py-3 px-3 border-b border-slate-300 w-32 text-center">Status</th>
-                        <th class="py-3 px-3 border-b border-slate-300 w-24 text-center">Action</th>
+                        <th class="py-3 px-3 border-b border-slate-300 dark:border-slate-700 w-40">Purchase Order</th>
+                        <th class="py-3 px-3 border-b border-slate-300 dark:border-slate-700 w-28 text-center">Expected Date</th>
+                        <th class="py-3 px-3 border-b border-slate-300 dark:border-slate-700">Supplier Name</th>
+                        <th class="py-3 px-3 border-b border-slate-300 dark:border-slate-700 w-24 text-center">Items</th>
+                        <th class="py-3 px-3 border-b border-slate-300 dark:border-slate-700 w-32 text-right">PO Total</th>
+                        <th class="py-3 px-3 border-b border-slate-300 dark:border-slate-700 w-32 text-center">Status</th>
+                        <th class="py-3 px-3 border-b border-slate-300 dark:border-slate-700 w-24 text-center">Action</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-200 font-bold">
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-800 font-bold transition-colors">
                     {% for po in items %}
-                    <tr class="hover:bg-blue-50/50 transition-colors group border-b border-slate-200">
-                        <td class="py-2.5 px-3 border-r border-slate-100">
-                            <span class="text-blue-700 font-black tracking-tighter text-sm block">{{ po.header.po_no }}</span>
+                    <tr class="hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-colors group border-b border-slate-200 dark:border-slate-800">
+                        <td class="py-2.5 px-3 border-r border-slate-100 dark:border-slate-800">
+                            <span class="text-blue-700 dark:text-blue-400 font-black tracking-tighter text-sm block transition-colors">{{ po.header.po_no }}</span>
                         </td>
-                        <td class="py-2.5 px-3 text-center border-r border-slate-100 text-slate-600">
+                        <td class="py-2.5 px-3 text-center border-r border-slate-100 dark:border-slate-800 text-slate-600 dark:text-slate-400 transition-colors">
                             {{ po.header.delivery_date|date:"Y-m-d"|default:"TBD" }}
                         </td>
                         
-                        <td class="py-2.5 px-3 border-r border-slate-100 text-slate-800 uppercase">
+                        <td class="py-2.5 px-3 border-r border-slate-100 dark:border-slate-800 text-slate-800 dark:text-slate-200 uppercase transition-colors">
                             <span class="block truncate max-w-[250px]">{{ po.header.supplier }}</span>
                         </td>
                         
-                        <td class="py-2.5 px-3 text-center border-r border-slate-100 text-slate-600">{{ po.items|length }} <span class="text-[9px]">items</span></td>
-                        <td class="py-2.5 px-3 text-right border-r border-slate-100 text-slate-800 font-black tracking-tighter bg-slate-50/50">₱ {{ po.header.grand_total|floatformat:"2" }}</td>
+                        <td class="py-2.5 px-3 text-center border-r border-slate-100 dark:border-slate-800 text-slate-600 dark:text-slate-400 transition-colors">{{ po.items|length }} <span class="text-[9px]">items</span></td>
+                        <td class="py-2.5 px-3 text-right border-r border-slate-100 dark:border-slate-800 text-slate-800 dark:text-slate-200 font-black tracking-tighter bg-slate-50/50 dark:bg-slate-900/50 transition-colors">₱ {{ po.header.grand_total|floatformat:"2" }}</td>
                         
-                        <td class="py-2.5 px-3 text-center border-r border-slate-100">
+                        <td class="py-2.5 px-3 text-center border-r border-slate-100 dark:border-slate-800 transition-colors">
                             {% if po.header.status == 'Pending Approval' or po.header.status == 'Pending' %}
-                                <span class="bg-amber-100 text-amber-700 px-2 py-0.5 text-[9px] uppercase tracking-widest border border-amber-200">Pending</span>
+                                <span class="bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-2 py-0.5 text-[9px] uppercase tracking-widest border border-amber-200 dark:border-amber-800 transition-colors">Pending</span>
                             {% elif po.header.status == 'Shipped' or po.header.status == 'In Transit' %}
-                                <span class="bg-cyan-100 text-cyan-700 px-2 py-0.5 text-[9px] uppercase tracking-widest border border-cyan-200">In Transit</span>
+                                <span class="bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-400 px-2 py-0.5 text-[9px] uppercase tracking-widest border border-cyan-200 dark:border-cyan-800 transition-colors">In Transit</span>
                             {% elif po.header.status == 'Approved' %}
-                                <span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 text-[9px] uppercase tracking-widest border border-emerald-200">Approved</span>
+                                <span class="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 text-[9px] uppercase tracking-widest border border-emerald-200 dark:border-emerald-800 transition-colors">Approved</span>
                             {% else %}
-                                <span class="bg-slate-100 text-slate-600 px-2 py-0.5 text-[9px] uppercase tracking-widest border border-slate-300">{{ po.header.status }}</span>
+                                <span class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 text-[9px] uppercase tracking-widest border border-slate-300 dark:border-slate-600 transition-colors">{{ po.header.status }}</span>
                             {% endif %}
                         </td>
 
                         <td class="py-2.5 px-3 text-center">
-                            <button type="button" onclick="openShipmentModal('{{ po.header.po_no }}')" class="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 text-[9px] font-black uppercase tracking-widest shadow-sm transition-all transform active:scale-95">
+                            <button type="button" onclick="openShipmentModal('{{ po.header.po_no }}')" class="inline-flex items-center gap-1.5 bg-slate-800 dark:bg-slate-700 hover:bg-slate-700 dark:hover:bg-slate-600 text-white px-3 py-1.5 text-[9px] font-black uppercase tracking-widest shadow-sm transition-all transform active:scale-95 rounded-sm">
                                 <i data-lucide="eye" class="w-3 h-3"></i> View PO
                             </button>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="7" class="py-12 text-center text-slate-400 italic font-bold uppercase text-xs">
+                        <td colspan="7" class="py-12 text-center text-slate-400 dark:text-slate-500 italic font-bold uppercase text-xs transition-colors">
                             <i data-lucide="box" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
                             No inbound shipments found matching your criteria.
                         </td>
@@ -147,25 +146,25 @@
             </table>
         </div>
         
-        <div class="bg-slate-50 border-t border-slate-200 p-3 flex flex-col md:flex-row justify-between items-center gap-4">
-            <span class="text-[9px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1">
+        <div class="bg-slate-50 dark:bg-slate-900/80 border-t border-slate-200 dark:border-slate-700 p-3 flex flex-col md:flex-row justify-between items-center gap-4 transition-colors duration-300">
+            <span class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1 transition-colors">
                 <i data-lucide="layers" class="w-3 h-3"></i> 
                 Page {{ items.number }} of {{ items.paginator.num_pages|default:1 }}
             </span>
 
-            <div class="flex items-center gap-1 shadow-sm">
+            <div class="flex items-center gap-1 shadow-sm transition-colors">
                 {% if items.has_previous %}
-                    <a href="?page={{ items.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="px-3 py-1.5 bg-white border border-slate-300 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-blue-50 transition-colors rounded-l-sm">Prev</a>
+                    <a href="?page={{ items.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors rounded-l-sm">Prev</a>
                 {% else %}
-                    <span class="px-3 py-1.5 bg-slate-100 border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 rounded-l-sm cursor-not-allowed">Prev</span>
+                    <span class="px-3 py-1.5 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-600 rounded-l-sm cursor-not-allowed transition-colors">Prev</span>
                 {% endif %}
 
-                <span class="px-4 py-1.5 bg-slate-800 text-white border-y border-slate-800 text-[10px] font-black uppercase tracking-widest">{{ items.number }}</span>
+                <span class="px-4 py-1.5 bg-slate-800 dark:bg-blue-700 text-white border-y border-slate-800 dark:border-blue-700 text-[10px] font-black uppercase tracking-widest transition-colors">{{ items.number }}</span>
 
                 {% if items.has_next %}
-                    <a href="?page={{ items.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="px-3 py-1.5 bg-white border border-slate-300 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-blue-50 transition-colors rounded-r-sm">Next</a>
+                    <a href="?page={{ items.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors rounded-r-sm">Next</a>
                 {% else %}
-                    <span class="px-3 py-1.5 bg-slate-100 border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 rounded-r-sm cursor-not-allowed">Next</span>
+                    <span class="px-3 py-1.5 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-600 rounded-r-sm cursor-not-allowed transition-colors">Next</span>
                 {% endif %}
             </div>
         </div>
@@ -173,86 +172,86 @@
 </div>
 
 {% for po in items %}
-<div id="modal-{{ po.header.po_no }}" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[200] flex justify-center items-center p-4">
-    <div class="bg-white border-t-8 border-blue-700 shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+<div id="modal-{{ po.header.po_no }}" class="hidden fixed inset-0 bg-slate-900/80 dark:bg-slate-950/80 backdrop-blur-sm z-[200] flex justify-center items-center p-4 transition-colors duration-300">
+    <div class="bg-white dark:bg-slate-900 border-t-8 border-blue-700 dark:border-blue-600 shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200 rounded-sm transition-colors duration-300">
         
-        <div class="px-6 py-4 border-b flex justify-between items-center bg-blue-50">
+        <div class="px-6 py-4 border-b dark:border-slate-800 flex justify-between items-center bg-blue-50 dark:bg-blue-950/30 transition-colors">
             <div>
-                <h2 class="text-xl md:text-2xl font-black text-blue-900 uppercase tracking-tighter flex items-center gap-3">
-                    <i data-lucide="file-text" class="w-6 h-6 text-blue-700"></i> Purchase Order: {{ po.header.po_no }}
+                <h2 class="text-xl md:text-2xl font-black text-blue-900 dark:text-blue-400 uppercase tracking-tighter flex items-center gap-3 transition-colors">
+                    <i data-lucide="file-text" class="w-6 h-6 text-blue-700 dark:text-blue-500"></i> Purchase Order: {{ po.header.po_no }}
                 </h2>
-                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">
-                    Supplier: <span class="text-blue-700">{{ po.header.supplier }}</span>
+                <p class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1 transition-colors">
+                    Supplier: <span class="text-blue-700 dark:text-blue-400">{{ po.header.supplier }}</span>
                 </p>
             </div>
-            <button type="button" onclick="closeShipmentModal('{{ po.header.po_no }}')" class="text-rose-600 hover:bg-rose-100 p-2 rounded-full transition-colors"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <button type="button" onclick="closeShipmentModal('{{ po.header.po_no }}')" class="text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/30 p-2 rounded-full transition-colors"><i data-lucide="x" class="w-6 h-6"></i></button>
         </div>
 
-        <div class="overflow-y-auto p-6 bg-slate-100">
-            <div class="bg-white border border-slate-300 shadow-sm p-4 mb-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="overflow-y-auto p-6 bg-slate-100 dark:bg-slate-950 transition-colors">
+            <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm p-4 mb-4 grid grid-cols-2 md:grid-cols-4 gap-4 transition-colors">
                 <div>
-                    <span class="text-[9px] font-bold text-slate-400 uppercase block mb-1">Expected Date</span>
-                    <span class="text-sm font-black text-slate-800">{{ po.header.delivery_date|date:"Y-m-d"|default:"TBD" }}</span>
+                    <span class="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase block mb-1 transition-colors">Expected Date</span>
+                    <span class="text-sm font-black text-slate-800 dark:text-slate-200 transition-colors">{{ po.header.delivery_date|date:"Y-m-d"|default:"TBD" }}</span>
                 </div>
                 <div>
-                    <span class="text-[9px] font-bold text-slate-400 uppercase block mb-1">Status</span>
-                    <span class="text-xs font-black text-slate-700 uppercase">{{ po.header.status }}</span>
+                    <span class="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase block mb-1 transition-colors">Status</span>
+                    <span class="text-xs font-black text-slate-700 dark:text-slate-300 uppercase transition-colors">{{ po.header.status }}</span>
                 </div>
                 <div class="col-span-2">
-                    <span class="text-[9px] font-bold text-slate-400 uppercase block mb-1">Remarks</span>
-                    <span class="text-[10px] font-bold text-slate-600 italic">"{{ po.header.remarks|default:'No remarks' }}"</span>
+                    <span class="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase block mb-1 transition-colors">Remarks</span>
+                    <span class="text-[10px] font-bold text-slate-600 dark:text-slate-400 italic transition-colors">"{{ po.header.remarks|default:'No remarks' }}"</span>
                 </div>
             </div>
 
-            <table class="w-full text-left border-collapse text-[10px] bg-white border border-slate-300 shadow-sm">
-                <thead class="bg-slate-800 text-white uppercase">
+            <table class="w-full text-left border-collapse text-[10px] bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm transition-colors">
+                <thead class="bg-slate-800 dark:bg-slate-950 text-white uppercase transition-colors">
                     <tr>
-                        <th class="py-2 px-3">Item Code</th>
-                        <th class="py-2 px-3">Description</th>
-                        <th class="py-2 px-3 text-center">Order Qty</th>
-                        <th class="py-2 px-3 text-right">Unit Price</th>
+                        <th class="py-2 px-3 border-r dark:border-slate-800">Item Code</th>
+                        <th class="py-2 px-3 border-r dark:border-slate-800">Description</th>
+                        <th class="py-2 px-3 text-center border-r dark:border-slate-800">Order Qty</th>
+                        <th class="py-2 px-3 text-right border-r dark:border-slate-800">Unit Price</th>
                         <th class="py-2 px-3 text-right">Total</th>
                     </tr>
                 </thead>
-                <tbody class="font-bold text-slate-700">
+                <tbody class="font-bold text-slate-700 dark:text-slate-300 transition-colors">
                     {% for item in po.items %}
-                    <tr class="border-b border-slate-100 hover:bg-slate-50">
-                        <td class="py-2 px-3 text-blue-700">{{ item.item_code }}</td>
-                        <td class="py-2 px-3">{{ item.description|default:"-" }}</td>
-                        <td class="py-2 px-3 text-center">{{ item.quantity }} {{ item.unit|default:"PCS" }}</td>
-                        <td class="py-2 px-3 text-right">₱{{ item.unit_price|floatformat:2 }}</td>
-                        <td class="py-2 px-3 text-right text-slate-900">₱{{ item.amount|default:"0.00"|floatformat:2 }}</td>
+                    <tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                        <td class="py-2 px-3 text-blue-700 dark:text-blue-400 border-r dark:border-slate-800 transition-colors">{{ item.item_code }}</td>
+                        <td class="py-2 px-3 border-r dark:border-slate-800 transition-colors">{{ item.description|default:"-" }}</td>
+                        <td class="py-2 px-3 text-center border-r dark:border-slate-800 transition-colors">{{ item.quantity }} {{ item.unit|default:"PCS" }}</td>
+                        <td class="py-2 px-3 text-right border-r dark:border-slate-800 transition-colors">₱{{ item.unit_price|floatformat:2 }}</td>
+                        <td class="py-2 px-3 text-right text-slate-900 dark:text-slate-100 transition-colors">₱{{ item.amount|default:"0.00"|floatformat:2 }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
         
-        <div class="p-4 bg-white border-t border-slate-300 flex justify-between items-center">
-            <div class="text-xs font-black uppercase tracking-widest text-slate-500">
-                PO Grand Total: <span class="text-xl text-blue-900 border-b-2 border-blue-300 ml-2">₱{{ po.header.grand_total|floatformat:2 }}</span>
+        <div class="p-4 bg-white dark:bg-slate-900 border-t border-slate-300 dark:border-slate-700 flex flex-wrap md:flex-nowrap justify-between items-center gap-4 transition-colors">
+            <div class="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 transition-colors">
+                PO Grand Total: <span class="text-xl text-blue-900 dark:text-blue-400 border-b-2 border-blue-300 dark:border-blue-700 ml-2 transition-colors">₱{{ po.header.grand_total|floatformat:2 }}</span>
             </div>
             
             <div class="flex items-center gap-2">
                 {% if po.header.status == 'Approved' or po.header.status == 'Pending Approval' %}
-                <a href="{% url 'shipping_confirmation' po.header.po_no %}" class="bg-blue-600 text-white px-6 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-colors shadow-sm rounded-sm flex items-center gap-2">
+                <a href="{% url 'shipping_confirmation' po.header.po_no %}" class="bg-blue-600 dark:bg-blue-700 text-white px-6 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors shadow-sm rounded-sm flex items-center gap-2">
                     <i data-lucide="truck" class="w-4 h-4"></i> Confirm Shipment
                 </a>
                 {% endif %}
                 
                 {% if po.header.status == 'Shipped' or po.header.status == 'In Transit' %}
-                <a href="{% url 'shipment_allocation' po.header.po_no %}" class="bg-emerald-600 text-white px-6 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-colors shadow-sm rounded-sm flex items-center gap-2">
+                <a href="{% url 'shipment_allocation' po.header.po_no %}" class="bg-emerald-600 dark:bg-emerald-700 text-white px-6 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 dark:hover:bg-emerald-600 transition-colors shadow-sm rounded-sm flex items-center gap-2">
                     <i data-lucide="clipboard-check" class="w-4 h-4"></i> Receive & Allocate
                 </a>
                 {% endif %}
 
                 {% if po.header.status == 'Received' %}
-                <a href="{% url 'shipment_print_doc' po.header.po_no %}" target="_blank" class="bg-slate-600 text-white px-6 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-slate-700 transition-colors shadow-sm rounded-sm flex items-center gap-2">
+                <a href="{% url 'shipment_print_doc' po.header.po_no %}" target="_blank" class="bg-slate-600 dark:bg-slate-700 text-white px-6 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-slate-700 dark:hover:bg-slate-600 transition-colors shadow-sm rounded-sm flex items-center gap-2">
                     <i data-lucide="printer" class="w-4 h-4"></i> Print GRN
                 </a>
                 {% endif %}
 
-                <button type="button" onclick="closeShipmentModal('{{ po.header.po_no }}')" class="bg-slate-800 text-white px-6 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-slate-700 transition-colors shadow-sm rounded-sm">Close</button>
+                <button type="button" onclick="closeShipmentModal('{{ po.header.po_no }}')" class="bg-slate-800 dark:bg-slate-700 text-white px-6 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-slate-700 dark:hover:bg-slate-600 transition-colors shadow-sm rounded-sm">Close</button>
             </div>
         </div>
     </div>

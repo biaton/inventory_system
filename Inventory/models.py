@@ -27,6 +27,9 @@ class Item(models.Model):
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, default='RAW')
     min_stock = models.IntegerField(default=0, help_text="Minimum level for low stock alerts")
     unit_price = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+
+    brand = models.CharField(max_length=100, blank=True, null=True)
+    category = models.CharField(max_length=100, blank=True, null=True)
     
     # 🚀 BAGO PARA SA WMS:
     default_zone = models.CharField(max_length=100, blank=True, null=True, help_text="Primary storage location")

@@ -1,24 +1,24 @@
 {% extends "Inventory/inventory_request/request_base.html" %}
 
 {% block request_content %}
-<div class="w-full bg-white border border-slate-300 shadow-sm flex flex-col font-sans">
+<div class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm flex flex-col font-sans transition-colors duration-300">
 
     <form method="POST" action="{% url 'new_request' %}" id="requestForm" class="flex flex-col">
         {% csrf_token %}
         
-        <div class="bg-violet-900 text-white px-4 py-2 flex justify-between items-center">
+        <div class="bg-violet-900 dark:bg-violet-950 text-white px-4 py-2 flex justify-between items-center border-b dark:border-violet-900/50">
             <h2 class="text-xs font-black uppercase tracking-widest flex items-center gap-2">
                 <i data-lucide="file-text" class="w-4 h-4 text-violet-300"></i> Material Requisition Form
             </h2>
-            <span class="text-[10px] font-bold bg-violet-800 px-2 py-0.5 rounded border border-violet-600">
+            <span class="text-[10px] font-bold bg-violet-800 dark:bg-violet-900 px-2 py-0.5 rounded border border-violet-600 dark:border-violet-800">
                 Date: {% now "Y-m-d" %}
             </span>
         </div>
 
-        <div class="bg-violet-50 p-3 border-b border-violet-200 grid grid-cols-4 gap-4">
+        <div class="bg-violet-50 dark:bg-violet-900/10 p-3 border-b border-violet-200 dark:border-violet-900/30 grid grid-cols-1 md:grid-cols-4 gap-4 transition-colors duration-300">
             <div class="flex flex-col gap-1">
-                <label class="text-[9px] font-black uppercase tracking-widest text-violet-800">Requesting Dept / Zone <span class="text-rose-500">*</span></label>
-                <select name="department" required class="p-1.5 text-xs font-bold border border-violet-300 outline-none focus:border-violet-600 bg-white shadow-sm">
+                <label class="text-[9px] font-black uppercase tracking-widest text-violet-800 dark:text-violet-400">Requesting Dept / Zone <span class="text-rose-500">*</span></label>
+                <select name="department" required class="p-1.5 text-xs font-bold border border-violet-300 dark:border-violet-800 outline-none focus:border-violet-600 dark:focus:border-violet-500 bg-white dark:bg-slate-950 dark:text-slate-200 shadow-sm transition-colors">
                     <option value="">Select Department...</option>
                     <option value="Assembly Line 1">Assembly Line 1</option>
                     <option value="Assembly Line 2">Assembly Line 2</option>
@@ -27,75 +27,74 @@
                 </select>
             </div>
             <div class="flex flex-col gap-1">
-                <label class="text-[9px] font-black uppercase tracking-widest text-violet-800">Required Date <span class="text-rose-500">*</span></label>
-                <input type="date" name="required_date" required class="p-1.5 text-xs font-bold border border-violet-300 outline-none focus:border-violet-600 bg-white shadow-sm">
+                <label class="text-[9px] font-black uppercase tracking-widest text-violet-800 dark:text-violet-400">Required Date <span class="text-rose-500">*</span></label>
+                <input type="date" name="required_date" required class="p-1.5 text-xs font-bold border border-violet-300 dark:border-violet-800 outline-none focus:border-violet-600 dark:focus:border-violet-500 bg-white dark:bg-slate-950 dark:text-slate-200 shadow-sm transition-colors">
             </div>
             <div class="flex flex-col gap-1 col-span-2">
-                <label class="text-[9px] font-black uppercase tracking-widest text-violet-800">Purpose / Remarks <span class="text-rose-500">*</span></label>
-                <input type="text" name="purpose" required placeholder="e.g. Parts for Machine A overhaul" class="p-1.5 text-xs font-bold border border-violet-300 outline-none focus:border-violet-600 bg-white shadow-sm">
+                <label class="text-[9px] font-black uppercase tracking-widest text-violet-800 dark:text-violet-400">Purpose / Remarks <span class="text-rose-500">*</span></label>
+                <input type="text" name="purpose" required placeholder="e.g. Parts for Machine A overhaul" class="p-1.5 text-xs font-bold border border-violet-300 dark:border-violet-800 outline-none focus:border-violet-600 dark:focus:border-violet-500 bg-white dark:bg-slate-950 dark:text-slate-200 shadow-sm transition-colors placeholder-slate-400 dark:placeholder-slate-600">
             </div>
         </div>
 
-        <div class="bg-white p-2 border-b border-slate-300 flex justify-between items-center shadow-sm z-10">
+        <div class="bg-white dark:bg-slate-900 p-2 border-b border-slate-300 dark:border-slate-800 flex justify-between items-center shadow-sm z-10 transition-colors duration-300">
             <div class="flex items-center gap-2">
-                <button type="button" onclick="addNewRow()" class="bg-violet-100 hover:bg-violet-200 text-violet-800 border border-violet-300 px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded shadow-sm transition-colors flex items-center gap-1">
+                <button type="button" onclick="addNewRow()" class="bg-violet-100 dark:bg-violet-900/30 hover:bg-violet-200 dark:hover:bg-violet-900/50 text-violet-800 dark:text-violet-300 border border-violet-300 dark:border-violet-800 px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded shadow-sm transition-all flex items-center gap-1">
                     <i data-lucide="plus" class="w-3 h-3"></i> Add Blank Row
                 </button>
             </div>
             
             <div class="flex items-center gap-2">
-                <button type="button" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-6 py-1.5 text-[10px] font-black uppercase tracking-widest rounded shadow-sm transition-colors border border-slate-300">
+                <button type="button" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-6 py-1.5 text-[10px] font-black uppercase tracking-widest rounded shadow-sm transition-all border border-slate-300 dark:border-slate-700">
                     Clear Form
                 </button>
-                <button type="submit" class="bg-violet-700 hover:bg-violet-600 text-white px-8 py-1.5 text-[10px] font-black uppercase tracking-widest rounded shadow-sm transition-colors border border-violet-900 flex items-center gap-2">
+                <button type="submit" class="bg-violet-700 dark:bg-violet-600 hover:bg-violet-600 dark:hover:bg-violet-500 text-white px-8 py-1.5 text-[10px] font-black uppercase tracking-widest rounded shadow-sm transition-all border border-violet-900 dark:border-violet-800 flex items-center gap-2">
                     <i data-lucide="send" class="w-3 h-3"></i> Submit Request
                 </button>
             </div>
         </div>
 
-        <div class="overflow-y-auto min-h-[300px] bg-slate-50">
+        <div class="overflow-y-auto min-h-[300px] bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
             <table class="w-full text-left border-collapse text-[10px]" id="requestTable">
-                <thead class="bg-slate-200 text-slate-700 uppercase tracking-widest font-black sticky top-0 shadow-sm z-10">
-                    <tr class="divide-x divide-slate-300 border-b-2 border-slate-400">
+                <thead class="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 uppercase tracking-widest font-black sticky top-0 shadow-sm z-10 transition-colors">
+                    <tr class="divide-x divide-slate-300 dark:divide-slate-700 border-b-2 border-slate-400 dark:border-slate-900">
                         <th class="py-1.5 px-2 w-12 text-center">Del</th>
                         <th class="py-1.5 px-2 w-12 text-center">No.</th>
                         <th class="py-1.5 px-2 w-48">Item Code <span class="text-rose-500">*</span></th>
                         <th class="py-1.5 px-2">Description / Specifications</th>
-                        <th class="py-1.5 px-2 w-32 text-right text-violet-800 bg-violet-100 border-x-2 border-violet-300">Req Qty <span class="text-rose-500">*</span></th>
+                        <th class="py-1.5 px-2 w-32 text-right text-violet-800 dark:text-violet-300 bg-violet-100 dark:bg-violet-900/40 border-x-2 border-violet-300 dark:border-violet-800 transition-colors">Req Qty <span class="text-rose-500">*</span></th>
                         <th class="py-1.5 px-2 w-24 text-center">UOM</th>
                         <th class="py-1.5 px-2 w-64">Item Remarks</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-200 text-slate-800 bg-white" id="tableBody">
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-900 transition-colors duration-300" id="tableBody">
                     
-                    <tr class="hover:bg-violet-50 divide-x divide-slate-200 group">
-                        <td class="py-1 px-1 text-center bg-white shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
-                            <button type="button" onclick="removeRow(this)" class="text-slate-400 hover:text-rose-600 transition-colors" title="Remove Row">
+                    <tr class="hover:bg-violet-50 dark:hover:bg-violet-950/20 divide-x divide-slate-200 dark:divide-slate-800 group">
+                        <td class="py-1 px-1 text-center bg-white dark:bg-slate-900 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] dark:shadow-none">
+                            <button type="button" onclick="removeRow(this)" class="text-slate-400 dark:text-slate-600 hover:text-rose-600 dark:hover:text-rose-400 transition-colors" title="Remove Row">
                                 <i data-lucide="x-circle" class="w-4 h-4 mx-auto"></i>
                             </button>
                         </td>
-                        <td class="py-1 px-2 text-center font-mono text-slate-400 row-number">1</td>
+                        <td class="py-1 px-2 text-center font-mono text-slate-400 dark:text-slate-500 row-number">1</td>
                         <td class="py-1 px-1">
-                            <!-- 🚀 DINAGDAG ANG list="item_master_list" at autocomplete="off" -->
                             <input type="text" name="item_code[]" required placeholder="Type or Select Code..." 
                                    list="item_master_list" autocomplete="off" oninput="fetchItemDetails(this)" 
-                                   class="w-full uppercase font-black text-violet-900 border-none outline-none focus:bg-violet-50 px-1 py-0.5 placeholder-slate-300">
+                                   class="w-full uppercase font-black text-violet-900 dark:text-violet-400 border-none outline-none bg-transparent focus:bg-violet-50 dark:focus:bg-violet-900/30 px-1 py-0.5 placeholder-slate-300 dark:placeholder-slate-700">
                         </td>
                         <td class="py-1 px-1">
-                            <input type="text" name="item_desc[]" placeholder="Auto-fills or type desc..." class="w-full font-bold text-slate-600 border-none outline-none focus:bg-violet-50 px-1 py-0.5">
+                            <input type="text" name="item_desc[]" placeholder="Auto-fills or type desc..." class="w-full font-bold text-slate-600 dark:text-slate-400 border-none outline-none bg-transparent focus:bg-violet-50 dark:focus:bg-violet-900/30 px-1 py-0.5 placeholder-slate-300 dark:placeholder-slate-700">
                         </td>
-                        <td class="py-1 px-1 bg-violet-50 focus-within:bg-white border-x-2 border-violet-200">
-                            <input type="number" name="request_qty[]" required min="1" value="1" class="w-full text-right outline-none bg-transparent focus:ring-1 focus:ring-violet-500 font-black font-mono text-violet-700 px-1 py-0.5">
+                        <td class="py-1 px-1 bg-violet-50 dark:bg-violet-900/20 focus-within:bg-white dark:focus-within:bg-slate-950 border-x-2 border-violet-200 dark:border-violet-900/50 transition-colors">
+                            <input type="number" name="request_qty[]" required min="1" value="1" class="w-full text-right outline-none bg-transparent focus:ring-0 font-black font-mono text-violet-700 dark:text-violet-400 px-1 py-0.5">
                         </td>
                         <td class="py-1 px-1 text-center">
-                            <select name="uom[]" class="w-full text-center border-none outline-none bg-transparent font-bold text-slate-600">
-                                <option>PCS</option>
-                                <option>BOX</option>
-                                <option>KGS</option>
+                            <select name="uom[]" class="w-full text-center border-none outline-none bg-transparent font-bold text-slate-600 dark:text-slate-400 cursor-pointer">
+                                <option class="dark:bg-slate-900">PCS</option>
+                                <option class="dark:bg-slate-900">BOX</option>
+                                <option class="dark:bg-slate-900">KGS</option>
                             </select>
                         </td>
                         <td class="py-1 px-1">
-                            <input type="text" name="item_remarks[]" placeholder="Optional notes..." class="w-full font-bold text-slate-600 border-none outline-none focus:bg-violet-50 px-1 py-0.5">
+                            <input type="text" name="item_remarks[]" placeholder="Optional notes..." class="w-full font-bold text-slate-600 dark:text-slate-400 border-none outline-none bg-transparent focus:bg-violet-50 dark:focus:bg-violet-900/30 px-1 py-0.5 placeholder-slate-300 dark:placeholder-slate-700">
                         </td>
                     </tr>
                     
@@ -118,32 +117,31 @@
         const rowCount = tbody.children.length + 1;
         
         const tr = document.createElement('tr');
-        tr.className = "hover:bg-violet-50 divide-x divide-slate-200 group";
+        tr.className = "hover:bg-violet-50 dark:hover:bg-violet-950/20 divide-x divide-slate-200 dark:divide-slate-800 group transition-colors duration-150";
         
         tr.innerHTML = `
-            <td class="py-1 px-1 text-center bg-white shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
-                <button type="button" onclick="removeRow(this)" class="text-slate-400 hover:text-rose-600 transition-colors" title="Remove Row">
+            <td class="py-1 px-1 text-center bg-white dark:bg-slate-900 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] dark:shadow-none">
+                <button type="button" onclick="removeRow(this)" class="text-slate-400 dark:text-slate-600 hover:text-rose-600 dark:hover:text-rose-400 transition-colors" title="Remove Row">
                     <i data-lucide="x-circle" class="w-4 h-4 mx-auto"></i>
                 </button>
             </td>
-            <td class="py-1 px-2 text-center font-mono text-slate-400 row-number">${rowCount}</td>
+            <td class="py-1 px-2 text-center font-mono text-slate-400 dark:text-slate-500 row-number">${rowCount}</td>
             <td class="py-1 px-1">
-                <!-- 🚀 IN-UPDATE RIN DITO ANG list at autocomplete -->
                 <input type="text" name="item_code[]" required placeholder="Type or Select Code..." 
                        list="item_master_list" autocomplete="off" oninput="fetchItemDetails(this)" 
-                       class="w-full uppercase font-black text-violet-900 border-none outline-none focus:bg-violet-50 px-1 py-0.5 placeholder-slate-300">
+                       class="w-full uppercase font-black text-violet-900 dark:text-violet-400 border-none outline-none bg-transparent focus:bg-violet-50 dark:focus:bg-violet-900/30 px-1 py-0.5 placeholder-slate-300 dark:placeholder-slate-700">
             </td>
             <td class="py-1 px-1 relative">
-                <input type="text" name="item_desc[]" readonly placeholder="Auto-fills after typing code..." class="w-full font-bold text-slate-600 border-none outline-none focus:bg-violet-50 px-1 py-0.5 bg-transparent">
+                <input type="text" name="item_desc[]" readonly placeholder="Auto-fills after typing code..." class="w-full font-bold text-slate-600 dark:text-slate-400 border-none outline-none bg-transparent focus:bg-violet-50 dark:focus:bg-violet-900/30 px-1 py-0.5 placeholder-slate-300 dark:placeholder-slate-700">
             </td>
-            <td class="py-1 px-1 bg-violet-50 focus-within:bg-white border-x-2 border-violet-200">
-                <input type="number" name="request_qty[]" required min="1" value="1" class="w-full text-right outline-none bg-transparent focus:ring-1 focus:ring-violet-500 font-black font-mono text-violet-700 px-1 py-0.5">
+            <td class="py-1 px-1 bg-violet-50 dark:bg-violet-900/20 focus-within:bg-white dark:focus-within:bg-slate-950 border-x-2 border-violet-200 dark:border-violet-900/50 transition-colors">
+                <input type="number" name="request_qty[]" required min="1" value="1" class="w-full text-right outline-none bg-transparent focus:ring-0 font-black font-mono text-violet-700 dark:text-violet-400 px-1 py-0.5">
             </td>
             <td class="py-1 px-1 text-center">
-                <input type="text" name="uom[]" readonly class="w-full text-center border-none outline-none bg-transparent font-bold text-slate-600 uppercase" placeholder="-">
+                <input type="text" name="uom[]" readonly class="w-full text-center border-none outline-none bg-transparent font-bold text-slate-600 dark:text-slate-400 uppercase" placeholder="-">
             </td>
             <td class="py-1 px-1">
-                <input type="text" name="item_remarks[]" placeholder="Optional notes..." class="w-full font-bold text-slate-600 border-none outline-none focus:bg-violet-50 px-1 py-0.5">
+                <input type="text" name="item_remarks[]" placeholder="Optional notes..." class="w-full font-bold text-slate-600 dark:text-slate-400 border-none outline-none bg-transparent focus:bg-violet-50 dark:focus:bg-violet-900/30 px-1 py-0.5 placeholder-slate-300 dark:placeholder-slate-700">
             </td>
         `;
         
@@ -154,7 +152,6 @@
 
     function removeRow(btn) {
         const tbody = document.getElementById('tableBody');
-        // Prevent deleting the very last row
         if (tbody.children.length > 1) {
             btn.closest('tr').remove();
             updateRowNumbers();
@@ -175,8 +172,6 @@
         if (!rawValue) return;
 
         const code = rawValue.trim().toUpperCase();
-        
-        // Wag mag-search kung sobrang ikli pa lang ng tina-type
         if (code.length < 2) return;
 
         const tr = inputElement.closest('tr');
@@ -184,11 +179,9 @@
         const uomElement = tr.querySelector('[name="uom[]"]');
 
         descInput.value = "Searching Database...";
-        descInput.classList.remove('text-rose-600', 'text-emerald-700');
+        descInput.classList.remove('text-rose-600', 'text-emerald-700', 'dark:text-emerald-400', 'dark:text-rose-400');
         descInput.classList.add('text-amber-500', 'animate-pulse');
 
-        // 🚀 THE BULLETPROOF URL FIX: 
-        // Sinesend natin pareho ang 'code' at 'item_code' para walang kawala sa views.py!
         const apiUrl = `/api/get-item-details/?code=${encodeURIComponent(code)}&item_code=${encodeURIComponent(code)}`;
 
         fetch(apiUrl)
@@ -200,46 +193,47 @@
                 descInput.classList.remove('text-amber-500', 'animate-pulse');
             
                 if (data.success) {
-                    // 🚀 FIX: Fallback kung sakaling ang tinamaan ay yung lumang API na walang stock computation
                     let stockInfo = data.available_stock !== undefined ? data.available_stock : "N/A";
-                    
                     descInput.value = data.description + " | STOCK: " + stockInfo;
                     
                     if (data.available_stock !== undefined && data.available_stock <= 0) {
-                        descInput.classList.add('text-rose-600');
+                        descInput.classList.add('text-rose-600', 'dark:text-rose-400');
                         descInput.value = data.description + " | 🚨 OUT OF STOCK";
                     } else {
-                        descInput.classList.add('text-emerald-700');
+                        descInput.classList.add('text-emerald-700', 'dark:text-emerald-400');
                     }
                     
-                    // I-update ang UOM Dropdown (Select box compatibility)
-                    if (uomElement && data.uom) {
-                        let uomFound = false;
-                        for (let i = 0; i < uomElement.options.length; i++) {
-                            if (uomElement.options[i].value.toUpperCase() === data.uom.toUpperCase()) {
-                                uomElement.selectedIndex = i;
-                                uomFound = true;
-                                break;
+                    if (uomElement) {
+                        if (uomElement.tagName === 'SELECT') {
+                            let uomFound = false;
+                            for (let i = 0; i < uomElement.options.length; i++) {
+                                if (uomElement.options[i].value.toUpperCase() === data.uom.toUpperCase()) {
+                                    uomElement.selectedIndex = i;
+                                    uomFound = true;
+                                    break;
+                                }
                             }
-                        }
-                        if(!uomFound) {
-                           let opt = document.createElement('option');
-                           opt.value = data.uom.toUpperCase();
-                           opt.innerHTML = data.uom.toUpperCase();
-                           uomElement.appendChild(opt);
-                           uomElement.value = data.uom.toUpperCase();
+                            if(!uomFound) {
+                                let opt = document.createElement('option');
+                                opt.value = data.uom.toUpperCase();
+                                opt.innerHTML = data.uom.toUpperCase();
+                                uomElement.appendChild(opt);
+                                uomElement.value = data.uom.toUpperCase();
+                            }
+                        } else {
+                            uomElement.value = data.uom.toUpperCase();
                         }
                     }
                 } else {
                     descInput.value = data.error || "Item not found!";
-                    descInput.classList.add('text-rose-600');
+                    descInput.classList.add('text-rose-600', 'dark:text-rose-400');
                 }
             })
             .catch(err => {
                 console.error("Fetch Error: ", err);
                 descInput.classList.remove('text-amber-500', 'animate-pulse');
                 descInput.value = "Error connecting to server.";
-                descInput.classList.add('text-rose-600');
+                descInput.classList.add('text-rose-600', 'dark:text-rose-400');
             });
     }
 </script>
