@@ -142,10 +142,23 @@
                     <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
 
                         <td class="py-1.5 px-3 border-r border-slate-200 dark:border-slate-800 text-center sticky left-0 bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800/50 z-10 shadow-[1px_0_0_0_#e2e8f0] dark:shadow-[1px_0_0_0_#1e293b] transition-colors">
-                            <a href="{% url 'stock_io_history' stock.id %}" target="_blank"
-                                class="bg-blue-600 text-white px-2 py-1 text-[8px] font-black uppercase rounded-[2px] hover:bg-blue-700 flex items-center justify-center gap-1 mx-auto shadow-sm w-[75px] transition-colors">
-                                <i data-lucide="activity" class="w-3 h-3"></i> Stock I/O
-                            </a>
+                            
+                            {% if machine_id and stock.total_pcs > 0 %}
+                                <a href="{% url 'machine_detail' machine_id %}?prefill_tag=TAG-{{ stock.id|stringformat:'05d' }}" 
+                                   class="bg-indigo-600 text-white px-2 py-1 text-[8px] font-black uppercase rounded-[2px] hover:bg-indigo-700 flex items-center justify-center gap-1 mx-auto shadow-sm w-[85px] transition-colors ring-1 ring-indigo-400">
+                                    <i data-lucide="check-circle" class="w-3 h-3"></i> Use Part
+                                </a>
+                            {% elif req_id and stock.total_pcs > 0 %}
+                                <a href="{% url 'process_request' req_id %}?prefill_tag=TAG-{{ stock.id|stringformat:'05d' }}" 
+                                   class="bg-orange-600 text-white px-2 py-1 text-[8px] font-black uppercase rounded-[2px] hover:bg-orange-700 flex items-center justify-center gap-1 mx-auto shadow-sm w-[85px] transition-colors ring-1 ring-orange-400">
+                                    <i data-lucide="check-circle" class="w-3 h-3"></i> Pick Item
+                                </a>
+                            {% else %}
+                                <a href="{% url 'stock_io_history' stock.id %}" target="_blank"
+                                    class="bg-blue-600 text-white px-2 py-1 text-[8px] font-black uppercase rounded-[2px] hover:bg-blue-700 flex items-center justify-center gap-1 mx-auto shadow-sm w-[75px] transition-colors">
+                                    <i data-lucide="activity" class="w-3 h-3"></i> Stock I/O
+                                </a>
+                            {% endif %}
                         </td>
 
                         <td class="py-1.5 px-3 border-r border-slate-200 dark:border-slate-800 font-bold text-slate-600 dark:text-slate-400 transition-colors">
@@ -235,8 +248,8 @@
             </span>
             <div class="flex items-center gap-1 shadow-sm transition-colors">
                 {% if page_obj.has_previous %}
-                    <a href="?page=1{% if inquiry_type %}&inquiry_type={{ inquiry_type }}{% endif %}{% if item_code %}&item_code={{ item_code }}{% endif %}{% if lot_no %}&lot_no={{ lot_no }}{% endif %}{% if company %}&company={{ company }}{% endif %}" class="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 hover:bg-teal-50 dark:hover:bg-slate-800 hover:text-teal-700 dark:hover:text-teal-400 hover:border-teal-300 dark:hover:border-teal-600 transition-colors rounded-l-sm">First</a>
-                    <a href="?page={{ page_obj.previous_page_number }}{% if inquiry_type %}&inquiry_type={{ inquiry_type }}{% endif %}{% if item_code %}&item_code={{ item_code }}{% endif %}{% if lot_no %}&lot_no={{ lot_no }}{% endif %}{% if company %}&company={{ company }}{% endif %}" class="px-3 py-1.5 bg-white dark:bg-slate-900 border-y border-r border-slate-300 dark:border-slate-700 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 hover:bg-teal-50 dark:hover:bg-slate-800 hover:text-teal-700 dark:hover:text-teal-400 hover:border-teal-300 dark:hover:border-teal-600 transition-colors">Prev</a>
+                    <a href="?page=1{% if machine_id %}&machine_id={{ machine_id }}{% endif %}{% if inquiry_type %}&inquiry_type={{ inquiry_type }}{% endif %}{% if item_code %}&item_code={{ item_code }}{% endif %}{% if lot_no %}&lot_no={{ lot_no }}{% endif %}{% if company %}&company={{ company }}{% endif %}" class="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 hover:bg-teal-50 dark:hover:bg-slate-800 hover:text-teal-700 dark:hover:text-teal-400 hover:border-teal-300 dark:hover:border-teal-600 transition-colors rounded-l-sm">First</a>
+                    <a href="?page={{ page_obj.previous_page_number }}{% if machine_id %}&machine_id={{ machine_id }}{% endif %}{% if inquiry_type %}&inquiry_type={{ inquiry_type }}{% endif %}{% if item_code %}&item_code={{ item_code }}{% endif %}{% if lot_no %}&lot_no={{ lot_no }}{% endif %}{% if company %}&company={{ company }}{% endif %}" class="px-3 py-1.5 bg-white dark:bg-slate-900 border border-r border-slate-300 dark:border-slate-700 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 hover:bg-teal-50 dark:hover:bg-slate-800 hover:text-teal-700 dark:hover:text-teal-400 hover:border-teal-300 dark:hover:border-teal-600 transition-colors">Prev</a>
                 {% else %}
                     <span class="px-3 py-1.5 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-600 rounded-l-sm cursor-not-allowed transition-colors">First</span>
                     <span class="px-3 py-1.5 bg-slate-100 dark:bg-slate-950 border-y border-r border-slate-200 dark:border-slate-800 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-600 cursor-not-allowed transition-colors">Prev</span>
@@ -245,8 +258,8 @@
                 <span class="px-4 py-1.5 bg-slate-800 dark:bg-teal-700 text-white border-y border-slate-800 dark:border-teal-700 text-[10px] font-black uppercase tracking-widest transition-colors">{{ page_obj.number }}</span>
 
                 {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}{% if inquiry_type %}&inquiry_type={{ inquiry_type }}{% endif %}{% if item_code %}&item_code={{ item_code }}{% endif %}{% if lot_no %}&lot_no={{ lot_no }}{% endif %}{% if company %}&company={{ company }}{% endif %}" class="px-3 py-1.5 bg-white dark:bg-slate-900 border-y border-l border-slate-300 dark:border-slate-700 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 hover:bg-teal-50 dark:hover:bg-slate-800 hover:text-teal-700 dark:hover:text-teal-400 hover:border-teal-300 dark:hover:border-teal-600 transition-colors">Next</a>
-                    <a href="?page={{ page_obj.paginator.num_pages }}{% if inquiry_type %}&inquiry_type={{ inquiry_type }}{% endif %}{% if item_code %}&item_code={{ item_code }}{% endif %}{% if lot_no %}&lot_no={{ lot_no }}{% endif %}{% if company %}&company={{ company }}{% endif %}" class="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 hover:bg-teal-50 dark:hover:bg-slate-800 hover:text-teal-700 dark:hover:text-teal-400 hover:border-teal-300 dark:hover:border-teal-600 transition-colors rounded-r-sm">Last</a>
+                    <a href="?page={{ page_obj.next_page_number }}{% if machine_id %}&machine_id={{ machine_id }}{% endif %}{% if inquiry_type %}&inquiry_type={{ inquiry_type }}{% endif %}{% if item_code %}&item_code={{ item_code }}{% endif %}{% if lot_no %}&lot_no={{ lot_no }}{% endif %}{% if company %}&company={{ company }}{% endif %}" class="px-3 py-1.5 bg-white dark:bg-slate-900 border border-l border-slate-300 dark:border-slate-700 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 hover:bg-teal-50 dark:hover:bg-slate-800 hover:text-teal-700 dark:hover:text-teal-400 hover:border-teal-300 dark:hover:border-teal-600 transition-colors">Next</a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}{% if machine_id %}&machine_id={{ machine_id }}{% endif %}{% if inquiry_type %}&inquiry_type={{ inquiry_type }}{% endif %}{% if item_code %}&item_code={{ item_code }}{% endif %}{% if lot_no %}&lot_no={{ lot_no }}{% endif %}{% if company %}&company={{ company }}{% endif %}" class="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 hover:bg-teal-50 dark:hover:bg-slate-800 hover:text-teal-700 dark:hover:text-teal-400 hover:border-teal-300 dark:hover:border-teal-600 transition-colors rounded-r-sm">Last</a>
                 {% else %}
                     <span class="px-3 py-1.5 bg-slate-100 dark:bg-slate-950 border-y border-l border-slate-200 dark:border-slate-800 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-600 cursor-not-allowed transition-colors">Next</span>
                     <span class="px-3 py-1.5 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-600 rounded-r-sm cursor-not-allowed transition-colors">Last</span>

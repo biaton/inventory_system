@@ -53,14 +53,11 @@
                     </div>
 
                     <div class="w-full sm:w-100">
-                        <label class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1 transition-colors">Warehouse Location</label>
-                        <select id="view_location" onchange="fetchLocationStock()" class="w-full p-2 bg-white dark:bg-slate-900 border border-slate-400 dark:border-slate-700 text-[10px] font-black text-slate-700 dark:text-slate-300 focus:border-teal-500 outline-none shadow-sm uppercase transition-colors">
-                            <option value="">-- Warehouse --</option>
-                            {% for loc in locations %}
-                                <option value="{{ loc.id }}">
-                                    {% if loc.zone %}{{ loc.zone }}
-                                    {% endif %}
-                                </option>
+                        <label class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1 transition-colors">Warehouse Location Filter</label>
+                        <select id="warehouse_filter" onchange="filterRacks()" class="w-full p-2 bg-white dark:bg-slate-900 border border-slate-400 dark:border-slate-700 text-[10px] font-black text-slate-700 dark:text-slate-300 focus:border-teal-500 outline-none shadow-sm uppercase transition-colors">
+                            <option value="">-- ALL WAREHOUSES --</option>
+                            {% for wh in warehouses %}
+                                <option value="{{ wh }}">{{ wh }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -70,11 +67,8 @@
                         <div class="relative">
                             <i data-lucide="scan-line" class="absolute left-2 top-1.5 w-4 h-4 text-emerald-500 dark:text-emerald-400"></i>
                             <input type="text" id="location_scan" list="location_options" placeholder="SCAN OR SELECT LOC..." class="w-full pl-8 pr-2 py-1.5 border-2 border-emerald-400 dark:border-emerald-600/50 bg-emerald-50/30 dark:bg-emerald-950/20 text-xs font-black text-emerald-900 dark:text-emerald-400 uppercase focus:border-emerald-600 focus:ring-1 focus:ring-emerald-500 outline-none shadow-inner transition-colors placeholder-emerald-700/50 dark:placeholder-emerald-600/50">
-                            <datalist id="location_options">
-                                {% for loc in locations %}
-                                    <option value="{{ loc.location_code }}">{{ loc.zone }}</option>
-                                {% endfor %}
-                            </datalist>
+                            
+                            <datalist id="location_options"></datalist>
                         </div>
                     </div>
 
@@ -422,6 +416,41 @@
         } catch (error) {
             console.error("Failed to fetch location stock:", error);
         }
+    }
+    const allLocations = {{ locations_json|safe }};
+
+    document.addEventListener("DOMContentLoaded", function() {
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        document.getElementById('processing_date').valueAsDate = new Date();
+        
+        // I-load lahat ng racks sa datalist kapag unang bukas ng page
+        filterRacks(); 
+    });
+
+    // 🚀 THE FILTER ENGINE
+    function filterRacks() {
+        const selectedWarehouse = document.getElementById('warehouse_filter').value;
+        const datalist = document.getElementById('location_options');
+        
+        // 1. Linisin ang lumang listahan sa datalist
+        datalist.innerHTML = '';
+        
+        // 2. I-filter ang data base sa piniling Warehouse (kung may pinili)
+        let filteredLocations = allLocations;
+        if (selectedWarehouse) {
+            filteredLocations = allLocations.filter(loc => loc.warehouse === selectedWarehouse);
+        }
+        
+        // 3. I-inject ang mga bagong Rack/Bin Codes sa datalist
+        filteredLocations.forEach(loc => {
+            const opt = document.createElement('option');
+            opt.value = loc.location_code; // Ito ang ita-type/isasave sa DB
+            opt.text = loc.zone ? `Zone: ${loc.zone}` : ''; // Extra info lang pag pinindot ng user
+            datalist.appendChild(opt);
+        });
+
+        // 4. I-clear ang input box para hindi mag-save ng maling rack ang staff
+        document.getElementById('location_scan').value = '';
     }
 </script>
 {% endblock %}

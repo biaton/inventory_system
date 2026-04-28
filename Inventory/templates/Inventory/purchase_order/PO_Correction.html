@@ -40,9 +40,7 @@
                 <h3 class="text-xl font-black text-amber-900 dark:text-amber-400 uppercase tracking-tight flex items-center gap-2 transition-colors">
                     <i data-lucide="file-signature" class="w-5 h-5 text-amber-700 dark:text-amber-500"></i> Edit Purchase Order Batch
                 </h3>
-                <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1 transition-colors">System Batch Reference: <span class="text-amber-700 dark:text-amber-500">{{ batch_ref }}</span></p>
             </div>
-            
             <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 px-4 py-2 text-right rounded-sm shadow-inner transition-colors">
                 <span class="text-[9px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-widest block leading-none mb-1 transition-colors">Main PO No.</span>
                 <span class="text-2xl font-black text-amber-900 dark:text-amber-400 leading-none tracking-tighter transition-colors">{{ main_po_no }}</span>
@@ -57,7 +55,33 @@
             </div>
         </div>
 
-        <div class="space-y-8">
+        {% with first_po=po_list.0 %}
+        <div class="bg-slate-50 dark:bg-slate-950/50 border border-slate-300 dark:border-slate-700 p-4 mb-6 shadow-sm rounded-sm transition-colors duration-300">
+            <h3 class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest border-b border-slate-200 dark:border-slate-800 pb-2 mb-3 flex items-center gap-2 transition-colors">
+                <i data-lucide="globe" class="w-3 h-3 text-teal-600 dark:text-teal-500"></i> Global P.O. Settings
+            </h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                    <span class="text-[9px] font-bold text-slate-400 uppercase block transition-colors">System Batch ID</span>
+                    <span class="text-sm font-black text-indigo-700 dark:text-indigo-400 transition-colors">{{ batch_ref }}</span>
+                </div>
+                <div>
+                    <span class="text-[9px] font-bold text-slate-400 uppercase block transition-colors">Current Status</span>
+                    <span class="text-sm font-black text-amber-600 dark:text-amber-500 uppercase transition-colors">{{ first_po.ordering_status }}</span>
+                </div>
+                <div>
+                    <span class="text-[9px] font-bold text-slate-400 uppercase block transition-colors">Global Delivery Date</span>
+                    <span class="text-sm font-black text-rose-600 dark:text-rose-400 uppercase transition-colors">{{ first_po.delivery_date|date:"Y-m-d"|default:"-" }}</span>
+                </div>
+                <div>
+                    <span class="text-[9px] font-bold text-slate-400 uppercase block transition-colors">Transport Method</span>
+                    <span class="text-sm font-black text-slate-700 dark:text-slate-200 uppercase transition-colors">{{ first_po.transport }}</span>
+                </div>
+            </div>
+        </div>
+        {% endwith %}
+
+        <div class="space-y-6">
             {% for po in po_list %}
             <div class="border border-slate-300 dark:border-slate-700 shadow-sm relative overflow-hidden transition-colors duration-300">
                 
@@ -65,23 +89,51 @@
                     {{ forloop.counter }}
                 </div>
 
-                <div class="bg-slate-100 dark:bg-slate-950 border-b border-slate-300 dark:border-slate-800 py-3 px-6 flex flex-col md:flex-row md:items-center justify-between gap-2 transition-colors">
-                    <span class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest flex items-center gap-2 transition-colors">
-                        <i data-lucide="truck" class="w-4 h-4 text-amber-600 dark:text-amber-500"></i> Supplier: <span class="text-indigo-800 dark:text-indigo-400">{{ po.supplier.name }}</span>
+                <div class="bg-slate-800 dark:bg-slate-950 border-b border-slate-700 dark:border-slate-800 py-3 px-6 flex flex-col md:flex-row md:items-center justify-between gap-2 transition-colors">
+                    <span class="text-sm font-black text-white dark:text-slate-200 uppercase tracking-widest flex items-center gap-2 transition-colors">
+                        <i data-lucide="building" class="w-4 h-4 text-amber-500 dark:text-amber-400"></i> Supplier: <span class="text-indigo-300 dark:text-indigo-400">{{ po.supplier.name }}</span>
                     </span>
-                    <span class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase transition-colors">Sub PO: <span class="text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-2 py-0.5 ml-1 transition-colors">{{ po.po_no }}</span></span>
+                    <span class="text-[10px] font-bold text-slate-300 dark:text-slate-400 uppercase transition-colors">Sub PO: <span class="text-white dark:text-slate-200 bg-slate-700 dark:bg-slate-800 border border-slate-600 dark:border-slate-700 px-2 py-0.5 ml-1 rounded-sm transition-colors">{{ po.po_no }}</span></span>
+                </div>
+
+                <div class="p-4 grid grid-cols-1 md:grid-cols-4 gap-x-6 gap-y-4 bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800 transition-colors">
+                    <div>
+                        <span class="block text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1 border-b border-slate-200 dark:border-slate-800 pb-1 transition-colors">Contact Person</span>
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase transition-colors">{{ po.supplier.contact_name|default:"NOT SPECIFIED" }}</span>
+                    </div>
+                    <div>
+                        <span class="block text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1 border-b border-slate-200 dark:border-slate-800 pb-1 transition-colors">Specific Order Date</span>
+                        <span class="text-xs font-black text-slate-800 dark:text-slate-200 transition-colors">{{ po.order_date|date:"Y-m-d"|default:"-" }}</span>
+                    </div>
+                    <div>
+                        <span class="block text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1 border-b border-slate-200 dark:border-slate-800 pb-1 transition-colors">Tax Term</span>
+                        <span class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase transition-colors">{{ po.tax_term|default:"-" }}</span>
+                    </div>
+                    <div>
+                        <span class="block text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1 border-b border-slate-200 dark:border-slate-800 pb-1 transition-colors">Currency</span>
+                        <span class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase transition-colors">{{ po.currency|default:"PHP" }}</span>
+                    </div>
+                    
+                    <div class="md:col-span-2">
+                        <span class="block text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1 border-b border-slate-200 dark:border-slate-800 pb-1 transition-colors">Discount Applied</span>
+                        <span class="text-xs font-black text-rose-600 dark:text-rose-400 uppercase transition-colors">{{ po.discount_rate|default:"0" }}%</span>
+                    </div>
+                    <div class="md:col-span-2">
+                        <span class="block text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1 border-b border-slate-200 dark:border-slate-800 pb-1 transition-colors">Remarks / Instructions</span>
+                        <span class="text-xs font-bold italic text-slate-700 dark:text-slate-300 transition-colors">"{{ po.remarks|default:'No remarks provided.' }}"</span>
+                    </div>
                 </div>
 
                 <div class="overflow-x-auto bg-white dark:bg-slate-900 p-2 transition-colors">
                     <table class="w-full text-left border-collapse min-w-[1000px]" style="font-size: 11px;">
                         <thead class="transition-colors">
-                            <tr class="bg-slate-800 dark:bg-slate-950 text-white border-b border-slate-600 dark:border-slate-800 uppercase tracking-widest text-[10px] transition-colors">
-                                <th class="py-2 px-2 border-r border-slate-700 dark:border-slate-800 text-center w-8">#</th>
-                                <th class="py-2 px-2 border-r border-slate-700 dark:border-slate-800 w-32">Item Code</th>
-                                <th class="py-2 px-2 border-r border-slate-700 dark:border-slate-800">Description</th>
-                                <th class="py-2 px-2 border-r border-slate-700 dark:border-slate-800 w-28 text-center text-amber-300 dark:text-amber-400">New Qty</th>
-                                <th class="py-2 px-2 border-r border-slate-700 dark:border-slate-800 w-32 text-right text-amber-300 dark:text-amber-400">New Price</th>
-                                <th class="py-2 px-2 text-right w-40 text-emerald-300 dark:text-emerald-400">New Amount</th>
+                            <tr class="bg-slate-200 dark:bg-slate-950 text-slate-800 dark:text-slate-300 border-b border-slate-300 dark:border-slate-800 uppercase tracking-widest text-[10px] transition-colors">
+                                <th class="py-2 px-2 border-r border-slate-300 dark:border-slate-800 text-center w-8">#</th>
+                                <th class="py-2 px-2 border-r border-slate-300 dark:border-slate-800 w-32">Item Code</th>
+                                <th class="py-2 px-2 border-r border-slate-300 dark:border-slate-800">Description</th>
+                                <th class="py-2 px-2 border-r border-slate-300 dark:border-slate-800 w-28 text-center text-amber-600 dark:text-amber-500">New Qty</th>
+                                <th class="py-2 px-2 border-r border-slate-300 dark:border-slate-800 w-32 text-right text-amber-600 dark:text-amber-500">New Price</th>
+                                <th class="py-2 px-2 text-right w-40 text-emerald-600 dark:text-emerald-500">New Amount</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-200 dark:divide-slate-800 transition-colors">
@@ -120,12 +172,12 @@
 
         <div class="flex flex-col md:flex-row justify-between items-center gap-6 mt-10 bg-slate-100 dark:bg-slate-950 border border-slate-400 dark:border-slate-700 p-4 shadow-md transition-colors duration-300">
             <div class="text-[10px] text-slate-500 dark:text-slate-400 max-w-sm italic bg-white dark:bg-slate-900 p-2 border border-slate-200 dark:border-slate-800 transition-colors">
-                <strong><i data-lucide="info" class="w-3 h-3 inline"></i> System Note:</strong> Saving these corrections will reset the status of all {{ po_list|length }} POs in this batch to <strong class="text-amber-600 dark:text-amber-500">Pending Approval</strong>.
+                <strong><i data-lucide="info" class="w-3 h-3 inline"></i> System Note:</strong> Saving these corrections will reset the status of all {{ po_list|length }} POs in this batch to <strong class="text-amber-600 dark:text-amber-500">Pending Approval</strong>. System will automatically recalculate Tax & Discounts based on original settings.
             </div>
 
             <div class="flex items-center gap-8">
                 <div class="flex flex-col text-right transition-colors">
-                    <span class="text-[9px] font-black text-amber-700 dark:text-amber-500 uppercase tracking-widest transition-colors">New Batch Grand Total</span>
+                    <span class="text-[9px] font-black text-amber-700 dark:text-amber-500 uppercase tracking-widest transition-colors">New Base Amount (Excl. Tax)</span>
                     <span class="text-2xl font-black text-amber-900 dark:text-amber-400 tracking-tighter transition-colors">₱ <span id="grand_total_display">0.00</span></span>
                 </div>
 
@@ -143,7 +195,7 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        lucide.createIcons();
+        if (typeof lucide !== 'undefined') lucide.createIcons();
         calculateGrandTotal();
     });
 

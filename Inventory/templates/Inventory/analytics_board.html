@@ -1,209 +1,354 @@
 {% extends "Inventory/base.html" %}
 
-{% block title %}Analytics Report Dashboard{% endblock %}
+{% block title %}System Analytics & Command Center{% endblock %}
 
 {% block content %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<div class="max-w-[100%] mx-auto mt-4 px-2 sm:px-4 text-slate-800 dark:text-slate-200 pb-12 transition-colors duration-300">
+<style>
+    /* Custom Scrollbar para sa mga tables sa loob ng dashboard */
+    .dash-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
+    .dash-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 2px; }
+    .dash-scroll:hover::-webkit-scrollbar-thumb { background: #64748b; }
+    .tabular-nums { font-variant-numeric: tabular-nums; }
+</style>
+
+<div class="max-w-[100%] mx-auto mt-4 px-2 sm:px-4 text-slate-800 dark:text-slate-200 pb-12 transition-colors duration-300 font-sans">
     
-    <div class="border-b-2 border-slate-800 dark:border-slate-700 pb-2 mb-4 flex flex-col md:flex-row md:items-end md:justify-between transition-colors duration-300">
+    <div class="border-b border-slate-300 dark:border-slate-800 pb-3 mb-5 flex flex-col md:flex-row md:items-end md:justify-between transition-colors duration-300">
         <div>
-            <h1 class="text-2xl font-black text-slate-900 dark:text-slate-100 uppercase tracking-tighter flex items-center gap-2 transition-colors duration-300">
-                <i data-lucide="monitor-dot" class="w-6 h-6 text-teal-700 dark:text-teal-500"></i> Report & Analytics Dashboard
+            <h1 class="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter flex items-center gap-2">
+                <div class="bg-indigo-600 p-1.5 rounded-sm text-white shadow-md shadow-indigo-600/20">
+                    <i data-lucide="bar-chart-big" class="w-5 h-5"></i>
+                </div>
+                Command Center Analytics
             </h1>
-            <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1 transition-colors duration-300">Real-time Warehouse Intelligence & Analytics</p>
+            <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1.5 flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                Real-time Warehouse Intelligence
+            </p>
+        </div>
+        <div class="mt-3 md:mt-0 flex gap-2">
+            <button class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center gap-2 shadow-sm">
+                <i data-lucide="download" class="w-3 h-3"></i> Export Report
+            </button>
+            <button onclick="window.location.reload()" class="bg-indigo-600 border border-indigo-700 text-white px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-sm hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-sm shadow-indigo-900/20">
+                <i data-lucide="refresh-cw" class="w-3 h-3"></i> Refresh Data
+            </button>
         </div>
     </div>
 
-    <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
-        <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-4 flex flex-col justify-between shadow-sm relative overflow-hidden group transition-colors duration-300">
-            <div class="absolute right-0 top-0 w-1 h-full bg-emerald-600 transition-all group-hover:w-1.5"></div>
-            <p class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                <i data-lucide="wallet" class="w-3 h-3 text-emerald-600 dark:text-emerald-500"></i> Total Value
-            </p>
-            <h2 class="text-xl lg:text-2xl font-black text-slate-800 dark:text-slate-100 leading-none">₱ {{ total_inventory_value|floatformat:2|default:"0.00" }}</h2>
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-5">
+        <div class="bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-900/80 border border-slate-200 dark:border-slate-800 p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 rounded-sm relative overflow-hidden group transition-all duration-300">
+            <div class="absolute right-0 top-0 w-1 h-full bg-emerald-500"></div>
+            <div class="flex justify-between items-start mb-3">
+                <p class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Total Value</p>
+                <div class="bg-emerald-100 dark:bg-emerald-900/30 p-1 rounded-sm"><i data-lucide="banknote" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"></i></div>
+            </div>
+            <h2 class="text-xl lg:text-2xl font-black text-slate-800 dark:text-slate-100 leading-none tabular-nums tracking-tight">
+                <span class="text-emerald-600 dark:text-emerald-500 text-sm">₱</span> {{ total_inventory_value|floatformat:2|default:"0.00" }}
+            </h2>
         </div>
 
-        <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-4 flex flex-col justify-between shadow-sm relative overflow-hidden group transition-colors duration-300">
-            <div class="absolute right-0 top-0 w-1 h-full bg-teal-600 transition-all group-hover:w-1.5"></div>
-            <p class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                <i data-lucide="package" class="w-3 h-3 text-teal-600 dark:text-teal-500"></i> Total Pcs
-            </p>
-            <h2 class="text-xl lg:text-2xl font-black text-slate-800 dark:text-slate-100 leading-none">{{ total_pcs }}</h2>
+        <div class="bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-900/80 border border-slate-200 dark:border-slate-800 p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 rounded-sm relative overflow-hidden group transition-all duration-300">
+            <div class="absolute right-0 top-0 w-1 h-full bg-sky-500"></div>
+            <div class="flex justify-between items-start mb-3">
+                <p class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Overall Pcs</p>
+                <div class="bg-sky-100 dark:bg-sky-900/30 p-1 rounded-sm"><i data-lucide="boxes" class="w-3.5 h-3.5 text-sky-600 dark:text-sky-400"></i></div>
+            </div>
+            <h2 class="text-xl lg:text-2xl font-black text-slate-800 dark:text-slate-100 leading-none tabular-nums tracking-tight">{{ total_pcs }}</h2>
         </div>
         
-        <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-4 flex flex-col justify-between shadow-sm relative overflow-hidden group transition-colors duration-300">
-            <div class="absolute right-0 top-0 w-1 h-full bg-blue-600 transition-all group-hover:w-1.5"></div>
-            <p class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                <i data-lucide="layers" class="w-3 h-3 text-blue-600 dark:text-blue-500"></i> Active SKU
-            </p>
-            <h2 class="text-xl lg:text-2xl font-black text-slate-800 dark:text-slate-100 leading-none">{{ total_skus }}</h2>
+        <div class="bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-900/80 border border-slate-200 dark:border-slate-800 p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 rounded-sm relative overflow-hidden group transition-all duration-300">
+            <div class="absolute right-0 top-0 w-1 h-full bg-indigo-500"></div>
+            <div class="flex justify-between items-start mb-3">
+                <p class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Active SKU</p>
+                <div class="bg-indigo-100 dark:bg-indigo-900/30 p-1 rounded-sm"><i data-lucide="layers" class="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400"></i></div>
+            </div>
+            <h2 class="text-xl lg:text-2xl font-black text-slate-800 dark:text-slate-100 leading-none tabular-nums tracking-tight">{{ total_skus }}</h2>
         </div>
 
-        <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-4 flex flex-col justify-between shadow-sm relative overflow-hidden group transition-colors duration-300">
-            <div class="absolute right-0 top-0 w-1 h-full bg-amber-500 transition-all group-hover:w-1.5"></div>
-            <p class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                <i data-lucide="truck" class="w-3 h-3 text-amber-500 dark:text-amber-400"></i> Pending Dispatch
-            </p>
-            <h2 class="text-xl lg:text-2xl font-black text-slate-800 dark:text-slate-100 leading-none">{{ pending_shipments }}</h2>
+        <div class="bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-900/80 border border-slate-200 dark:border-slate-800 p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 rounded-sm relative overflow-hidden group transition-all duration-300">
+            <div class="absolute right-0 top-0 w-1 h-full bg-amber-500"></div>
+            <div class="flex justify-between items-start mb-3">
+                <p class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Pending Dispatch</p>
+                <div class="bg-amber-100 dark:bg-amber-900/30 p-1 rounded-sm"><i data-lucide="truck" class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400"></i></div>
+            </div>
+            <h2 class="text-xl lg:text-2xl font-black text-slate-800 dark:text-slate-100 leading-none tabular-nums tracking-tight">{{ pending_shipments }}</h2>
         </div>
 
-        <div class="bg-rose-50/50 dark:bg-rose-950/30 border border-rose-300 dark:border-rose-900/50 p-4 flex flex-col justify-between shadow-sm relative overflow-hidden group transition-colors duration-300">
-            <div class="absolute right-0 top-0 w-1 h-full bg-rose-600 transition-all group-hover:w-1.5"></div>
-            <p class="text-[9px] font-black text-rose-600 dark:text-rose-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                <i data-lucide="alert-triangle" class="w-3 h-3"></i> Critical Stocks
-            </p>
-            <h2 class="text-xl lg:text-2xl font-black text-rose-700 dark:text-rose-400 leading-none">{{ critical_count }}</h2>
+        <div class="bg-gradient-to-br from-rose-50 to-white dark:from-rose-950/40 dark:to-slate-900/90 border border-rose-200 dark:border-rose-900/50 p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 rounded-sm relative overflow-hidden group transition-all duration-300">
+            <div class="absolute right-0 top-0 w-1 h-full bg-rose-600"></div>
+            <div class="flex justify-between items-start mb-3">
+                <p class="text-[9px] font-black text-rose-600 dark:text-rose-500 uppercase tracking-widest">Critical Stocks</p>
+                <div class="bg-rose-100 dark:bg-rose-900/50 p-1 rounded-sm {% if critical_count > 0 %}animate-pulse{% endif %}"><i data-lucide="alert-octagon" class="w-3.5 h-3.5 text-rose-600 dark:text-rose-400"></i></div>
+            </div>
+            <h2 class="text-xl lg:text-2xl font-black text-rose-700 dark:text-rose-400 leading-none tabular-nums tracking-tight">{{ critical_count }}</h2>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 gap-6 mb-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-5">
         
-        <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm flex flex-col w-full transition-colors duration-300">
-            <div class="bg-slate-800 dark:bg-slate-950 px-4 py-2 border-b border-slate-700 dark:border-slate-800 flex justify-between items-center transition-colors duration-300">
-                <h3 class="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-2">
-                    <i data-lucide="warehouse" class="w-3 h-3 text-amber-400"></i> Global Warehouse Capacity Utilization
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-sm flex flex-col w-full transition-colors duration-300">
+            <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-800/80 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50">
+                <h3 class="text-[10px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-widest flex items-center gap-2">
+                    <i data-lucide="warehouse" class="w-4 h-4 text-indigo-500"></i> Capacity Warehouse Utilization
                 </h3>
             </div>
-            <div class="p-4 w-full h-[350px] relative">
+            <div class="p-4 w-full h-[320px] relative">
                 <canvas id="spaceChart"></canvas>
             </div>
         </div>
 
-        <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm flex flex-col w-full transition-colors duration-300">
-            <div class="bg-slate-800 dark:bg-slate-950 px-4 py-2 border-b border-slate-700 dark:border-slate-800 transition-colors duration-300">
-                <h3 class="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-1.5">
-                    <i data-lucide="trending-up" class="w-3 h-3 text-indigo-400"></i> 7-Day Inventory Flow Trend (System-Wide)
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-sm flex flex-col w-full transition-colors duration-300">
+            <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-800/80 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50">
+                <h3 class="text-[10px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-widest flex items-center gap-2">
+                    <i data-lucide="trending-up" class="w-4 h-4 text-sky-500"></i>Inventory Flow Trend
                 </h3>
             </div>
-            <div class="p-4 w-full h-[350px] relative">
+            <div class="p-4 w-full h-[320px] relative">
                 <canvas id="flowChart"></canvas>
             </div>
         </div>
 
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         
-        <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm flex flex-col h-[380px] transition-colors duration-300">
-            <div class="bg-slate-800 dark:bg-slate-950 px-4 py-2 border-b border-slate-700 dark:border-slate-800 transition-colors duration-300">
-                <h3 class="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-1.5">
-                    <i data-lucide="activity" class="w-3 h-3 text-teal-400"></i> Stock Health
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-sm flex flex-col h-[350px]">
+            <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-800/80 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50">
+                <h3 class="text-[10px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-widest flex items-center gap-2">
+                    <i data-lucide="heart-pulse" class="w-4 h-4 text-emerald-500"></i> Stock Health Profile
                 </h3>
             </div>
             <div class="p-4 flex-1 flex justify-center items-center">
-                <div class="relative w-full max-w-[200px] aspect-square">
+                <div class="relative w-full max-w-[240px] aspect-square">
                     <canvas id="healthChart"></canvas>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                        <span class="text-3xl font-black text-slate-800 dark:text-white leading-none">{{ total_skus }}</span>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Total SKUs</span>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm flex flex-col h-[380px] transition-colors duration-300">
-            <div class="bg-rose-700 dark:bg-rose-900 px-4 py-2 flex items-center justify-between transition-colors duration-300">
-                <h3 class="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-2">
-                    <i data-lucide="shopping-cart" class="w-3 h-3"></i> Critical Target Alerts
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-sm flex flex-col h-[350px]">
+            <div class="bg-rose-50 dark:bg-rose-950/40 px-4 py-3 border-b border-rose-100 dark:border-rose-900/50 flex items-center justify-between">
+                <h3 class="text-[10px] font-black text-rose-700 dark:text-rose-400 uppercase tracking-widest flex items-center gap-2">
+                    <i data-lucide="target" class="w-4 h-4"></i> Critical Low Stocks
                 </h3>
+                <span class="bg-rose-600 text-white text-[8px] px-1.5 py-0.5 font-black rounded-sm shadow-sm shadow-rose-500/50">{{ critical_count }}</span>
             </div>
-            <div class="overflow-y-auto flex-1 p-0">
-                <table class="w-full text-left border-collapse">
-                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                        {% for item in low_stock_items %}
-                        <tr class="hover:bg-rose-50/50 dark:hover:bg-rose-900/20 transition-colors group">
-                            <td class="py-3 px-3">
-                                <p class="text-[10px] font-black text-slate-800 dark:text-slate-200 uppercase transition-colors">{{ item.item_code }}</p>
-                                <p class="text-[9px] font-bold text-slate-500 dark:text-slate-400 truncate max-w-[120px] transition-colors">{{ item.description }}</p>
-                            </td>
-                            <td class="py-3 px-3 text-right">
-                                <span class="text-xs font-black text-rose-600 dark:text-rose-400 transition-colors">{{ item.total_stock }}</span>
-                                <span class="text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase ml-0.5 transition-colors">Pcs</span>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="2" class="py-12 text-center">
-                                <i data-lucide="check-circle" class="w-8 h-8 text-emerald-400 mx-auto mb-2 opacity-50"></i>
-                                <p class="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest transition-colors">Healthy stocks.</p>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <div class="overflow-y-auto dash-scroll flex-1 p-2">
+                <ul class="space-y-1">
+                    {% for item in low_stock_items %}
+                    <li class="flex items-center justify-between p-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-sm transition-colors group border border-transparent hover:border-slate-200 dark:hover:border-slate-700">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <div class="w-1 h-8 bg-rose-500 rounded-full shadow-[0_0_8px_rgba(244,63,94,0.6)]"></div>
+                            <div class="min-w-0">
+                                <p class="text-[10px] font-black text-slate-800 dark:text-slate-200 uppercase truncate">{{ item.item_code }}</p>
+                                <p class="text-[9px] font-bold text-slate-500 truncate max-w-[110px]">{{ item.description }}</p>
+                            </div>
+                        </div>
+                        <div class="text-right shrink-0 bg-rose-50 dark:bg-rose-900/20 px-2 py-1 rounded-sm border border-rose-100 dark:border-rose-800/50 group-hover:border-rose-300 dark:group-hover:border-rose-700 transition-colors">
+                            <span class="text-xs font-black text-rose-600 dark:text-rose-400 tabular-nums">{{ item.total_stock }}</span>
+                        </div>
+                    </li>
+                    {% empty %}
+                    <li class="h-full flex flex-col items-center justify-center text-center opacity-60">
+                        <i data-lucide="shield-check" class="w-8 h-8 text-emerald-500 mb-2"></i>
+                        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">All Stocks Healthy</p>
+                    </li>
+                    {% endfor %}
+                </ul>
             </div>
         </div>
 
-        <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm flex flex-col h-[380px] transition-colors duration-300">
-            <div class="bg-slate-800 dark:bg-slate-950 px-4 py-2 flex items-center justify-between transition-colors duration-300">
-                <h3 class="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-2">
-                    <i data-lucide="zap" class="w-3 h-3 text-emerald-400"></i> Fast-Movers (Top Dispatch)
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-sm flex flex-col h-[350px]">
+            <div class="bg-amber-50 dark:bg-amber-950/40 px-4 py-3 border-b border-amber-100 dark:border-amber-900/50 flex items-center justify-between">
+                <h3 class="text-[10px] font-black text-amber-700 dark:text-amber-400 uppercase tracking-widest flex items-center gap-2">
+                    <i data-lucide="microscope" class="w-4 h-4"></i> Pending QC Check
                 </h3>
+                <span class="bg-amber-600 text-white text-[8px] px-1.5 py-0.5 font-black rounded-sm shadow-sm shadow-amber-500/50">{{ qc_pending_count }}</span>
             </div>
-            <div class="overflow-y-auto flex-1 p-0">
-                <table class="w-full text-left border-collapse">
-                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                        {% for item in top_items %}
-                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
-                            <td class="py-3 px-3 w-8 text-center">
-                                <span class="w-4 h-4 flex items-center justify-center bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-sm text-[9px] font-black mx-auto transition-colors">
-                                    {{ forloop.counter }}
-                                </span>
-                            </td>
-                            <td class="py-3 px-2">
-                                <p class="text-[10px] font-black text-slate-800 dark:text-slate-200 uppercase transition-colors">{{ item.item_code }}</p>
-                            </td>
-                            <td class="py-3 px-3 text-right">
-                                <span class="text-xs font-black text-teal-600 dark:text-teal-400 transition-colors">{{ item.total_out }}</span>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="3" class="py-12 text-center">
-                                <i data-lucide="bar-chart-3" class="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2 opacity-50 transition-colors"></i>
-                                <p class="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest transition-colors">No data yet.</p>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <div class="overflow-y-auto dash-scroll flex-1 p-2">
+                <ul class="space-y-1">
+                    {% for tag in qc_pending_list %}
+                    <li class="flex items-center justify-between p-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-sm transition-colors group border border-transparent hover:border-slate-200 dark:hover:border-slate-700">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <div class="w-1 h-8 bg-amber-500 rounded-full shadow-[0_0_8px_rgba(245,158,11,0.6)]"></div>
+                            <div class="min-w-0">
+                                <p class="text-[10px] font-black text-slate-800 dark:text-slate-200 uppercase truncate">{{ tag.item_code }}</p>
+                                <p class="text-[9px] font-bold text-slate-500">Wait: <span class="text-amber-600 dark:text-amber-400 font-black">{{ tag.arrival_date|timesince }}</span></p>
+                            </div>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <span class="text-xs font-black text-slate-700 dark:text-slate-300 tabular-nums">{{ tag.total_pcs }}</span>
+                            <span class="text-[8px] font-bold text-slate-500 uppercase ml-0.5">{{ tag.packing_type }}</span>
+                        </div>
+                    </li>
+                    {% empty %}
+                    <li class="h-full flex flex-col items-center justify-center text-center opacity-60">
+                        <i data-lucide="check-circle-2" class="w-8 h-8 text-emerald-500 mb-2"></i>
+                        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">No Pending QC</p>
+                    </li>
+                    {% endfor %}
+                </ul>
             </div>
         </div>
 
-        <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm flex flex-col h-[380px] transition-colors duration-300">
-            <div class="bg-slate-800 dark:bg-slate-950 px-4 py-2 flex items-center justify-between transition-colors duration-300">
-                <h3 class="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-2">
-                    <i data-lucide="radio" class="w-3 h-3 text-blue-400"></i> Activity Log
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-sm flex flex-col h-[350px]">
+            <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
+                <h3 class="text-[10px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-widest flex items-center gap-2">
+                    <i data-lucide="zap" class="w-4 h-4 text-sky-500"></i> Fast Movers (Top Dispatch)
                 </h3>
             </div>
-            <div class="overflow-y-auto flex-1 p-4 pl-6 relative">
-                <div class="absolute left-7 top-4 bottom-4 w-px bg-slate-200 dark:bg-slate-700 transition-colors duration-300"></div>
+            <div class="overflow-y-auto dash-scroll flex-1 p-2">
+                <ul class="space-y-1">
+                    {% for item in top_items %}
+                    <li class="flex items-center justify-between p-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-sm transition-colors group border border-transparent hover:border-slate-200 dark:hover:border-slate-700">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-5 h-5 flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-sm text-[9px] font-black group-hover:bg-sky-100 group-hover:text-sky-600 dark:group-hover:bg-sky-900/40 dark:group-hover:text-sky-400 transition-colors">
+                                {{ forloop.counter }}
+                            </span>
+                            <p class="text-[10px] font-black text-slate-800 dark:text-slate-200 uppercase">{{ item.item_code }}</p>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <i data-lucide="arrow-down-right" class="w-3 h-3 text-sky-500"></i>
+                            <span class="text-xs font-black text-slate-700 dark:text-slate-300 tabular-nums">{{ item.total_out }}</span>
+                        </div>
+                    </li>
+                    {% empty %}
+                    <li class="h-full flex flex-col items-center justify-center text-center opacity-60">
+                        <i data-lucide="bar-chart-3" class="w-8 h-8 text-slate-400 mb-2"></i>
+                        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">No Dispatch Data</p>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-sm flex flex-col h-[350px]">
+            <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
+                <h3 class="text-[10px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-widest flex items-center gap-2">
+                    <i data-lucide="snail" class="w-4 h-4 text-indigo-500"></i> Slow Movers (Aging Stock)
+                </h3>
+            </div>
+            <div class="overflow-y-auto dash-scroll flex-1 p-2">
+                <ul class="space-y-1">
+                    {% for item in slow_movers %}
+                    <li class="flex items-center justify-between p-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-sm transition-colors group border border-transparent hover:border-slate-200 dark:hover:border-slate-700">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-5 h-5 flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-sm text-[9px] font-black group-hover:bg-indigo-100 group-hover:text-indigo-600 dark:group-hover:bg-indigo-900/40 dark:group-hover:text-indigo-400 transition-colors">
+                                {{ forloop.counter }}
+                            </span>
+                            <div>
+                                <p class="text-[10px] font-black text-slate-800 dark:text-slate-200 uppercase leading-none">{{ item.item_code }}</p>
+                                <p class="text-[8px] font-bold text-slate-400 uppercase mt-0.5">Idle: {{ item.arrival_date|timesince }}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1 bg-indigo-50 dark:bg-indigo-900/20 px-2 py-0.5 rounded-sm">
+                            <span class="text-xs font-black text-indigo-600 dark:text-indigo-400 tabular-nums">{{ item.total_pcs }}</span>
+                        </div>
+                    </li>
+                    {% empty %}
+                    <li class="h-full flex flex-col items-center justify-center text-center opacity-60">
+                        <i data-lucide="activity" class="w-8 h-8 text-emerald-500 mb-2"></i>
+                        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Stocks are moving fast</p>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-sm flex flex-col h-[350px]">
+            <div class="bg-fuchsia-50 dark:bg-fuchsia-950/40 px-4 py-3 border-b border-fuchsia-100 dark:border-fuchsia-900/50 flex items-center justify-between">
+                <h3 class="text-[10px] font-black text-fuchsia-700 dark:text-fuchsia-400 uppercase tracking-widest flex items-center gap-2">
+                    <i data-lucide="calendar-off" class="w-4 h-4"></i> Expiry Warning
+                </h3>
+                <span class="bg-fuchsia-600 text-white text-[8px] px-1.5 py-0.5 font-black rounded-sm shadow-sm shadow-fuchsia-500/50">{{ expiring_count }}</span>
+            </div>
+            <div class="overflow-y-auto dash-scroll flex-1 p-2">
+                <ul class="space-y-1">
+                    {% for item in expiring_items %}
+                    <li class="flex items-center justify-between p-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-sm transition-colors group border border-transparent hover:border-slate-200 dark:hover:border-slate-700">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <div class="w-1 h-8 {% if item.expiration_date < today %}bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]{% else %}bg-fuchsia-500 shadow-[0_0_8px_rgba(217,70,239,0.6)]{% endif %} rounded-full"></div>
+                            <div class="min-w-0">
+                                <p class="text-[10px] font-black text-slate-800 dark:text-slate-200 uppercase truncate flex items-center gap-2">
+                                    {{ item.item_code }}
+                                    <span class="text-[8px] font-bold bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded-sm text-slate-600 dark:text-slate-300">
+                                        Lot: {{ item.lot_no|default:"N/A" }}
+                                    </span>
+                                </p>
+                                <div class="flex items-center gap-2 mt-0.5">
+                                    <p class="text-[9px] font-bold {% if item.expiration_date < today %}text-red-600 dark:text-red-400 animate-pulse{% else %}text-fuchsia-600 dark:text-fuchsia-400{% endif %}">
+                                        {% if item.expiration_date < today %}
+                                            EXPIRED: {{ item.expiration_date|date:"Y-m-d" }}
+                                        {% else %}
+                                            Exp: {{ item.expiration_date|date:"Y-m-d" }}
+                                        {% endif %}
+                                    </p>
+                                    <span class="text-[8px] text-slate-400 dark:text-slate-500">| TAG-{{ item.id|stringformat:"05d" }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <span class="text-xs font-black text-slate-700 dark:text-slate-300 tabular-nums">{{ item.total_pcs }}</span>
+                            <span class="text-[8px] font-bold text-slate-500 uppercase ml-0.5">Pcs</span>
+                        </div>
+                    </li>
+                    {% empty %}
+                    <li class="h-full flex flex-col items-center justify-center text-center opacity-60">
+                        <i data-lucide="shield-check" class="w-8 h-8 text-emerald-500 mb-2"></i>
+                        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">No Expiring Stocks</p>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="lg:col-span-3 md:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-sm flex flex-col min-h-[300px] mt-2">
+            <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
+                <h3 class="text-[10px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-widest flex items-center gap-2">
+                    <i data-lucide="activity-square" class="w-4 h-4 text-emerald-500"></i> Live Activity Feed
+                </h3>
+            </div>
+            <div class="overflow-y-auto dash-scroll flex-1 p-4 pl-5 relative">
+                <div class="absolute left-[26px] top-4 bottom-4 w-px bg-slate-200 dark:bg-slate-700"></div>
 
                 <ul class="space-y-4">
                     {% for log in recent_logs %}
                     <li class="relative flex items-start gap-4 group">
-                        <div class="w-6 h-6 shrink-0 flex items-center justify-center rounded-full border-2 bg-white dark:bg-slate-900 relative z-10 transition-colors duration-300
-                            {% if log.action_type == 'IN' or log.action_type == 'REG' %} border-emerald-500 dark:border-emerald-600 text-emerald-600 dark:text-emerald-500 
-                            {% else %} border-amber-500 dark:border-amber-600 text-amber-600 dark:text-amber-500 {% endif %} shadow-sm">
-                            <i data-lucide="{% if log.action_type == 'IN' or log.action_type == 'REG' %}arrow-down{% else %}arrow-up{% endif %}" class="w-3 h-3"></i>
+                        <div class="w-6 h-6 mt-0.5 shrink-0 flex items-center justify-center rounded-full relative z-10 
+                            {% if log.action_type == 'IN' or log.action_type == 'REG' %} bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 ring-4 ring-white dark:ring-slate-900
+                            {% else %} bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 ring-4 ring-white dark:ring-slate-900 {% endif %}">
+                            <i data-lucide="{% if log.action_type == 'IN' or log.action_type == 'REG' %}arrow-down-left{% else %}arrow-up-right{% endif %}" class="w-3.5 h-3.5 stroke-[3px]"></i>
                         </div>
                         
-                        <div class="flex-1 min-w-0 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 p-2.5 rounded-sm shadow-sm group-hover:border-slate-300 dark:group-hover:border-slate-500 transition-colors duration-300">
-                            <div class="flex justify-between items-start mb-1">
-                                <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 leading-tight transition-colors">
-                                    <span class="font-black text-slate-900 dark:text-slate-100 transition-colors">{{ log.user.username|default:"SYSTEM" }}</span> 
-                                    {% if log.action_type == 'OUT' %}issued{% else %}received{% endif %}
+                        <div class="flex-1 min-w-0 bg-slate-50/50 dark:bg-slate-800/30 p-3 rounded-sm border border-slate-100 dark:border-slate-800 group-hover:border-slate-300 dark:group-hover:border-slate-600 transition-colors">
+                            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-1 gap-2">
+                                <p class="text-[11px] font-black text-slate-800 dark:text-slate-200 uppercase truncate flex items-center gap-2">
+                                    {{ log.material_tag.item_code }}
+                                    <span class="text-[9px] font-bold bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded-sm text-slate-600 dark:text-slate-400">{{ log.material_tag.lot_no }}</span>
                                 </p>
-                                <p class="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest shrink-0 ml-2 transition-colors">{{ log.timestamp|timesince }}</p>
+                                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest shrink-0"><i data-lucide="clock" class="w-3 h-3 inline mr-1 opacity-50"></i> {{ log.timestamp|timesince }} ago</p>
                             </div>
-                            <div class="flex justify-between items-end">
-                                <p class="text-[10px] font-black text-indigo-700 dark:text-indigo-400 truncate uppercase transition-colors">{{ log.material_tag.item_code }}</p>
-                                <span class="font-black text-[10px] {% if log.action_type == 'OUT' %}text-amber-600 dark:text-amber-400{% else %}text-emerald-600 dark:text-emerald-400{% endif %} transition-colors">{{ log.change_qty }} pcs</span>
+                            <div class="flex justify-between items-end mt-2">
+                                <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 leading-snug">
+                                    User <span class="text-slate-700 dark:text-slate-300 font-black">@{{ log.user.username|default:"SYSTEM" }}</span> 
+                                    {% if log.action_type == 'OUT' %}deducted stock for fulfillment/scrap.{% else %}received/adjusted stock.{% endif %} 
+                                </p>
+                                <span class="font-black text-sm {% if log.action_type == 'OUT' or log.change_qty < 0 %}text-amber-600 dark:text-amber-400{% else %}text-emerald-600 dark:text-emerald-400{% endif %}">
+                                    {% if log.change_qty > 0 %}+{% endif %}{{ log.change_qty }} pcs
+                                </span>
                             </div>
                         </div>
                     </li>
                     {% empty %}
-                    <li class="py-12 text-center relative z-10 bg-white dark:bg-slate-900 transition-colors duration-300">
-                        <i data-lucide="clock" class="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2 opacity-50 transition-colors"></i>
-                        <p class="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest italic transition-colors">No recent activities.</p>
+                    <li class="py-8 text-center relative z-10">
+                        <i data-lucide="sleep" class="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2 opacity-50"></i>
+                        <p class="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">No recent activities recorded.</p>
                     </li>
                     {% endfor %}
                 </ul>
@@ -219,23 +364,18 @@
 
         // DARK MODE DETECTOR FOR CHART JS
         const isDark = document.documentElement.classList.contains('dark');
-        const gridColor = isDark ? '#1e293b' : '#f1f5f9';
-        const tooltipBg = isDark ? '#0f172a' : '#1e293b';
+        const gridColor = isDark ? '#334155' : '#f1f5f9';
+        const tooltipBg = isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)';
+        const tooltipText = isDark ? '#f8fafc' : '#0f172a';
         const chartTextColor = isDark ? '#94a3b8' : '#64748b';
 
         Chart.defaults.font.family = "'Inter', sans-serif";
         Chart.defaults.color = chartTextColor; 
 
-        // SAFE DATA PARSING
+        // DATA PARSING
         let healthData = [1, 0];
-        let flowDates = [];
-        let flowIn = [];
-        let flowOut = [];
-        let whLabels = [];
-        let whUtil = [];
-        let flowNet = [];
-        let whUsed = [];
-        let whFree = [];
+        let flowDates = [], flowIn = [], flowOut = [], flowNet = [];
+        let whLabels = [], whUtil = [], whUsed = [], whFree = [];
         try {
             healthData = JSON.parse('{{ chart_health_data|safe|default:"[1, 0]" }}');
             flowDates = JSON.parse('{{ flow_dates|safe|default:"[]" }}');
@@ -247,30 +387,56 @@
             whUsed = JSON.parse('{{ wh_used_data|safe|default:"[]" }}');
             whFree = JSON.parse('{{ wh_free_data|safe|default:"[]" }}');
         } catch (e) {
-            console.error("Error parsing chart data from Django:", e);
+            console.error("Error parsing chart data:", e);
         }
 
-        // 1. STACKED WAREHOUSE CAPACITY CHART
+        // TOOLTIP DESIGN
+        const customTooltip = {
+            backgroundColor: tooltipBg, titleColor: tooltipText, bodyColor: tooltipText,
+            borderColor: isDark ? '#475569' : '#e2e8f0', borderWidth: 1, padding: 12, cornerRadius: 6,
+            titleFont: { size: 11, weight: '900' }, bodyFont: { size: 12, weight: 'bold' }
+        };
+
+        // Helper para sa Gradients
+        function createGradient(ctx, color1, color2, isHorizontal = false) {
+            const gradient = isHorizontal ? ctx.createLinearGradient(0, 0, 400, 0) : ctx.createLinearGradient(0, 0, 0, 300);
+            gradient.addColorStop(0, color1);
+            gradient.addColorStop(1, color2);
+            return gradient;
+        }
+
+        // 1. WAREHOUSE CAPACITY CHART (Horizontal Gradient Bar)
         const canvasSpace = document.getElementById('spaceChart');
         if (canvasSpace && whLabels.length > 0) { 
-            new Chart(canvasSpace.getContext('2d'), {
+            const ctxSpace = canvasSpace.getContext('2d');
+            
+            // Map colors para sa bawat bar depende sa utilization %
+            const bgColors = whUtil.map(val => {
+                if (val >= 95) return createGradient(ctxSpace, '#f43f5e', '#be123c', true); // Red
+                if (val >= 75) return createGradient(ctxSpace, '#f59e0b', '#d97706', true); // Amber
+                return createGradient(ctxSpace, '#3b82f6', '#1d4ed8', true); // Blue
+            });
+
+            new Chart(ctxSpace, {
                 type: 'bar',
                 data: {
                     labels: whLabels,
                     datasets: [
                         {
-                            label: 'Used Capacity',
+                            label: 'Used Space',
                             data: whUsed, 
-                            backgroundColor: whUtil.map(val => val >= 95 ? '#e11d48' : (val >= 75 ? '#f59e0b' : '#0ea5e9')), 
+                            backgroundColor: bgColors, 
                             borderRadius: 4,
-                            barThickness: 35
+                            barThickness: 24,
+                            borderWidth: 1,
+                            borderColor: isDark ? '#0f172a' : '#ffffff'
                         },
                         {
                             label: 'Available Space',
                             data: whFree, 
-                            backgroundColor: isDark ? '#334155' : '#e2e8f0', // Adjust unused bar color for dark mode
+                            backgroundColor: isDark ? '#1e293b' : '#e2e8f0', 
                             borderRadius: 4,
-                            barThickness: 35
+                            barThickness: 24
                         }
                     ]
                 },
@@ -278,24 +444,28 @@
                     indexAxis: 'y', 
                     responsive: true, maintainAspectRatio: false,
                     scales: {
-                        x: { stacked: true, grid: { color: gridColor }, ticks: { font: { size: 10, weight: 'bold' } } },
-                        y: { stacked: true, grid: { display: false }, ticks: { font: { size: 10, weight: 'bold' } } }
+                        x: { stacked: true, grid: { color: gridColor, drawBorder: false }, ticks: { font: { size: 10, weight: 'bold' } } },
+                        y: { stacked: true, grid: { display: false }, ticks: { font: { size: 11, weight: '900' }, color: isDark ? '#f8fafc' : '#0f172a' } }
                     },
                     plugins: {
                         legend: { position: 'top', align: 'end', labels: { usePointStyle: true, boxWidth: 8, font: { size: 10, weight: 'bold' } } },
-                        tooltip: { 
-                            mode: 'index',
-                            backgroundColor: tooltipBg, titleFont: { size: 11 }, bodyFont: { size: 11, weight: 'bold' }, padding: 10, cornerRadius: 4 
-                        }
+                        tooltip: { ...customTooltip, mode: 'index' }
                     }
                 }
             });
         }
 
-        // 2. MIXED FLOW CHART (BARS + NET MOVEMENT LINE)
+        // 2. INVENTORY FLOW TREND (GLOWING AREA CHART + BARS)
         const canvasFlow = document.getElementById('flowChart');
         if (canvasFlow) { 
-            new Chart(canvasFlow.getContext('2d'), {
+            const ctxFlow = canvasFlow.getContext('2d');
+            
+            // Gradients para sa Flow Chart
+            const fillGradient = createGradient(ctxFlow, 'rgba(14, 165, 233, 0.3)', 'rgba(14, 165, 233, 0.0)');
+            const inGradient = createGradient(ctxFlow, '#34d399', '#059669'); // Light to Dark Emerald
+            const outGradient = createGradient(ctxFlow, '#fb7185', '#e11d48'); // Light to Dark Rose
+
+            new Chart(ctxFlow, {
                 data: {
                     labels: flowDates,
                     datasets: [
@@ -303,65 +473,78 @@
                             type: 'line', 
                             label: 'Net Trend',
                             data: flowNet, 
-                            borderColor: '#4f46e5', 
-                            backgroundColor: '#4f46e5',
+                            borderColor: '#0ea5e9', 
+                            backgroundColor: fillGradient, // Ito ang gagawa ng Area Chart (Glow effect sa ilalim)
+                            fill: true,
                             borderWidth: 3,
-                            tension: 0.4, 
-                            borderDash: [5, 5], 
-                            pointBackgroundColor: '#4f46e5',
-                            pointRadius: 4
+                            tension: 0.4, // Smooth curved line
+                            pointBackgroundColor: isDark ? '#0f172a' : '#ffffff',
+                            pointBorderColor: '#0ea5e9',
+                            pointBorderWidth: 2,
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            order: 1 // Para laging nasa ibabaw ang line
                         },
                         {
                             type: 'bar', 
-                            label: 'Received (IN)',
+                            label: 'IN (Received)',
                             data: flowIn, 
-                            backgroundColor: 'rgba(16, 185, 129, 0.8)', 
+                            backgroundColor: inGradient, 
                             borderRadius: 4,
-                            barThickness: 15
+                            barThickness: 14,
+                            order: 2
                         },
                         {
                             type: 'bar', 
-                            label: 'Issued (OUT)',
+                            label: 'OUT (Issued)',
                             data: flowOut, 
-                            backgroundColor: 'rgba(244, 63, 94, 0.8)', 
+                            backgroundColor: outGradient, 
                             borderRadius: 4,
-                            barThickness: 15
+                            barThickness: 14,
+                            order: 2
                         }
                     ]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     scales: {
-                        y: { beginAtZero: true, grid: { color: gridColor }, ticks: { font: { size: 10, weight: 'bold' } } },
-                        x: { grid: { display: false }, ticks: { font: { size: 10, weight: 'bold' } } }
+                        y: { beginAtZero: true, grid: { color: gridColor, drawBorder: false }, border: { dash: [4, 4] }, ticks: { font: { size: 10, weight: 'bold' } } },
+                        x: { grid: { display: false }, ticks: { font: { size: 10, weight: 'bold' }, color: isDark ? '#cbd5e1' : '#475569' } }
                     },
                     plugins: {
                         legend: { position: 'top', align: 'end', labels: { usePointStyle: true, boxWidth: 8, font: { size: 10, weight: 'bold' } } },
-                        tooltip: { mode: 'index', intersect: false, backgroundColor: tooltipBg, titleFont: { size: 11 }, bodyFont: { size: 11, weight: 'bold' }, padding: 10, cornerRadius: 4 }
+                        tooltip: { ...customTooltip, mode: 'index', intersect: false }
                     },
                     interaction: { mode: 'nearest', axis: 'x', intersect: false }
                 }
             });
         }
 
-        // 3. HEALTH CHART
+        // 3. STOCK HEALTH (3D-like Doughnut Chart)
         const canvasHealth = document.getElementById('healthChart');
         if (canvasHealth) { 
-            new Chart(canvasHealth.getContext('2d'), {
+            const ctxHealth = canvasHealth.getContext('2d');
+            
+            const healthyGrad = createGradient(ctxHealth, '#34d399', '#059669'); // Vibrant Emerald
+            const criticalGrad = createGradient(ctxHealth, '#fb7185', '#e11d48'); // Vibrant Rose
+
+            new Chart(ctxHealth, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Healthy', 'Critical'],
+                    labels: ['Healthy Items', 'Critical / Low Stock'],
                     datasets: [{
                         data: healthData, 
-                        backgroundColor: ['#0f766e', '#e11d48'],
-                        borderWidth: 0, hoverOffset: 4
+                        backgroundColor: [healthyGrad, criticalGrad],
+                        borderColor: isDark ? '#0f172a' : '#ffffff',
+                        borderWidth: 3, 
+                        hoverOffset: 8 // Luma-laki pag tinutok
                     }]
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: false, cutout: '75%',
+                    responsive: true, maintainAspectRatio: false, cutout: '80%', // Mas manipis na ring
                     plugins: {
-                        legend: { position: 'bottom', labels: { boxWidth: 10, padding: 15, font: { size: 10, weight: 'bold' } } },
-                        tooltip: { backgroundColor: tooltipBg, titleFont: { size: 10 }, bodyFont: { size: 10, weight: 'bold' }, padding: 8, cornerRadius: 2 }
+                        legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20, font: { size: 10, weight: 'bold' } } },
+                        tooltip: { ...customTooltip }
                     }
                 }
             });

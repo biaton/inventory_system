@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f1f5f9; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .header { background-color: #f59e0b; padding: 20px; color: #ffffff; text-align: center; }
+        .content { padding: 20px; color: #334155; line-height: 1.6; }
+        .table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; }
+        .table th { background-color: #f8fafc; text-align: left; padding: 10px; border-bottom: 2px solid #e2e8f0; }
+        .table td { padding: 10px; border-bottom: 1px solid #e2e8f0; }
+        .footer { background-color: #0f172a; padding: 15px; text-align: center; color: #94a3b8; font-size: 11px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2 style="margin: 0;">⏳ AGING REQUEST ALERT</h2>
+        </div>
+        <div class="content">
+            <p><strong>Attention Warehouse Team,</strong></p>
+            <p>The system has detected <strong>{{ count }} requests</strong> that have remained unfulfilled for more than 3 days. Please review the dashboard immediately to prevent production delays.</p>
+            
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Req No.</th>
+                        <th>Department</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in requests %}
+                    <tr>
+                        <td style="font-weight: bold; color: #b45309;">{{ req.request_no }}</td>
+                        <td>{{ req.receiving_place }}</td>
+                        <td>{{ req.request_date|date:"Y-m-d" }}</td>
+                        <td>{{ req.status }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% if count > 10 %}
+            <p style="text-align: center; font-size: 11px; color: #64748b; mt-3;"><i>Showing top 10 oldest requests. Please log in to view all {{ count }}.</i></p>
+            {% endif %}
+            
+            <p style="margin-top: 20px;">Please take action to fulfill these items.</p>
+        </div>
+        <div class="footer">
+            &copy; {% now "Y" %} ASIA Integrated Machine Inc. | WMS Automated Notification
+        </div>
+    </div>
+</body>
+</html>

@@ -9,21 +9,21 @@
         <div class="p-5 bg-slate-50 dark:bg-slate-950/50 border-b-2 border-slate-300 dark:border-slate-800 transition-colors">
             <div class="border-b border-slate-300 dark:border-slate-700 pb-2 mb-4 flex justify-between items-end transition-colors">
                 <h2 class="text-xl font-black text-teal-900 dark:text-teal-400 uppercase tracking-tight flex items-center gap-2 transition-colors">
-                    <i data-lucide="shopping-cart" class="w-5 h-5 text-teal-700 dark:text-teal-500"></i> Supplier P.O. Batch Entry
+                    <i data-lucide="shopping-cart" class="w-5 h-5 text-teal-700 dark:text-teal-500"></i> Purchase Order Entry
                 </h2>
                 <span class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest bg-white dark:bg-slate-800 px-2 py-1 border border-slate-200 dark:border-slate-700 transition-colors">Global P.O. Settings</span>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div class="space-y-1">
-                    <label class="text-[10px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest transition-colors">Main PO No.</label>
+                    <label class="text-[10px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest transition-colors">Main PO No. <span><span class="text-red-500">*</span></span></label>
                     <div class="flex gap-1">
                         <input type="text" name="main_po_no" placeholder="General PO..." class="w-full p-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950 text-xs font-black uppercase focus:outline-none focus:border-teal-500 dark:focus:border-teal-600 shadow-sm transition-colors text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500">
                         <button type="button" onclick="generateMainPO(this)" class="bg-teal-700 dark:bg-teal-600 text-white px-3 text-[10px] font-bold hover:bg-teal-800 dark:hover:bg-teal-700 transition-colors shadow-sm">GEN</button>
                     </div>
                 </div>
                 <div class="space-y-1">
-                    <label class="text-[10px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest transition-colors">Status</label>
+                    <label class="text-[10px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest transition-colors">Status <span class="text-red-500">*</span></label>
                     <select name="main_status" class="w-full p-2 border border-teal-400 dark:border-teal-700 bg-teal-50 dark:bg-teal-900/30 text-teal-900 dark:text-teal-300 text-xs font-black uppercase focus:outline-none shadow-sm transition-colors">
                         <option value="Valid" selected>Valid</option>
                         <option value="Pending">Pending</option>
@@ -33,70 +33,77 @@
                     </select>
                 </div>
                 <div class="space-y-1">
-                    <label class="text-[10px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest transition-colors">Delivery Date</label>
+                    <label class="text-[10px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest transition-colors">Delivery Date <span class="text-red-500">*</span></label>
                     <input type="date" id="main_delivery_date" name="main_delivery_date" required class="w-full p-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950 text-xs font-black focus:outline-none focus:border-teal-500 dark:focus:border-teal-600 shadow-sm text-rose-700 dark:text-rose-400 transition-colors">
                 </div>
                 <div class="space-y-1">
-                    <label class="text-[10px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest transition-colors">Transport</label>
+                    <label class="text-[10px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest transition-colors">Transport <span class="text-red-500">*</span></label>
                     <select name="main_transport" class="w-full p-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950 text-xs font-black uppercase focus:outline-none focus:border-teal-500 dark:focus:border-teal-600 shadow-sm text-slate-800 dark:text-slate-200 transition-colors">
-                        <option value="Truck" selected>Truck</option><option value="Van">Van</option><option value="Cargo Ship">Cargo Ship</option><option value="Cargo plane">Cargo plane</option>
+                        <option value="Truck" selected>Truck</option>
+                        <option value="Van">Van</option>
+                        <option value="Cargo Ship">Cargo Ship</option>
+                        <option value="Cargo plane">Cargo plane</option>
                     </select>
                 </div>
             </div>
         </div>
 
         <div id="dynamic-blocks-container" class="p-4 bg-slate-200 dark:bg-slate-950 space-y-6 transition-colors duration-300">
-            
-            <div class="dynamic-po-block bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-md rounded-sm overflow-hidden transition-colors duration-300" data-block-id="0">
-                <div class="bg-slate-700 dark:bg-slate-800 px-4 py-2 flex justify-between items-center text-white transition-colors">
+            <div class="dynamic-po-block bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-md rounded-sm overflow-hidden relative transition-colors duration-300" data-block-id="0">
+                
+                <button type="button" onclick="removeSupplierBlock(this)" class="absolute top-2 right-2 text-rose-300 dark:text-rose-400 hover:text-rose-500 dark:hover:text-rose-300 transition-colors" title="Remove Supplier">
+                    <i data-lucide="x-circle" class="w-5 h-5"></i>
+                </button>
+
+                <div class="bg-slate-700 dark:bg-slate-800 px-4 py-2 text-white transition-colors">
                     <h3 class="text-[11px] font-black uppercase tracking-widest flex items-center gap-2 block-counter-label">
-                        <i data-lucide="building" class="w-4 h-4 text-teal-400 dark:text-teal-500"></i> Supplier P.O. #1
+                        <i data-lucide="building" class="w-4 h-4 text-teal-400 dark:text-teal-500"></i> Supplier Purchase Order #1
                     </h3>
                 </div>
 
                 <div class="p-4 grid grid-cols-2 md:grid-cols-4 gap-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 transition-colors">
                     <div class="space-y-1">
-                        <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Supplier PO No.</label>
+                        <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Supplier PO No. <span class="text-red-500">*</span></label>
                         <div class="flex gap-1">
                             <input type="text" name="po_no[]" placeholder="Sub-PO No..." required class="w-full p-1.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs font-black text-teal-900 dark:text-teal-400 uppercase focus:bg-teal-50 dark:focus:bg-slate-800 outline-none po-no-input transition-colors placeholder-slate-400 dark:placeholder-slate-600">
                             <button type="button" onclick="generateSpecificPONo(this)" class="bg-teal-700 dark:bg-teal-600 text-white px-2 text-[9px] font-bold hover:bg-teal-800 dark:hover:bg-teal-700 transition-colors shadow-sm">GEN</button>
                         </div>
                     </div>
                     <div class="space-y-1">
-                        <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Supplier Name</label>
+                        <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Supplier Name <span class="text-red-500">*</span></label>
                         <input list="supplier_choices" name="supplier[]" placeholder="Select supplier..." required onchange="autoFillSupplier(this)" autocomplete="off" class="w-full p-1.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 text-xs font-black uppercase focus:bg-teal-50 dark:focus:bg-slate-800 outline-none transition-colors placeholder-slate-400 dark:placeholder-slate-600">
                     </div>
                     <div class="space-y-1">
-                        <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Contact Person</label>
+                        <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Contact Person <span class="text-red-500">*</span></label>
                         <input type="text" name="contact_person[]" placeholder="Auto-fill..." class="supplier-contact-field w-full p-1.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 text-xs font-bold uppercase focus:bg-teal-50 dark:focus:bg-slate-800 outline-none transition-colors placeholder-slate-400 dark:placeholder-slate-600">
                     </div>
                     <div class="space-y-1">
-                        <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Order Date</label>
-                        <input type="date" name="order_date[]" class="w-full p-1.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 text-xs font-bold focus:bg-teal-50 dark:focus:bg-slate-800 outline-none block-order-date transition-colors">
+                        <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Order Date <span class="text-red-500">*</span></label>
+                        <input type="date" name="order_date[]" required class="w-full p-1.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 text-xs font-bold focus:bg-teal-50 dark:focus:bg-slate-800 outline-none block-order-date transition-colors">
                     </div>
                     
                     <div class="space-y-1">
-                        <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Delivery Date</label>
-                        <input type="date" name="delivery_date[]" class="w-full p-1.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs font-bold text-rose-700 dark:text-rose-400 focus:bg-teal-50 dark:focus:bg-slate-800 outline-none block-del-date transition-colors">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Tax Term</label>
+                        <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Tax Term <span class="text-red-500">*</span></label>
                         <select name="tax_term[]" class="w-full p-1.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 text-xs font-bold focus:bg-teal-50 dark:focus:bg-slate-800 outline-none block-tax transition-colors" onchange="calculateGrandTotals()">
-                            <option value="VAT Inclusive" selected>VAT Inclusive</option><option value="Taxable">Taxable</option><option value="Non-taxable">Non-taxable</option><option value="Tax Exempt">Tax Exempt</option>
+                            <option value="VAT Inclusive" selected>VAT Inclusive</option>
+                            <option value="Taxable">Taxable</option>
+                            <option value="Non-taxable">Non-taxable</option>
+                            <option value="Tax Exempt">Tax Exempt</option>
                         </select>
                     </div>
                     <div class="space-y-1">
                         <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Currency</label>
                         <select name="currency[]" class="w-full p-1.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 text-xs font-bold focus:bg-teal-50 dark:focus:bg-slate-800 outline-none transition-colors">
-                            <option value="PHP">PHP (₱)</option><option value="USD">USD ($)</option><option value="JPY">JPY (¥)</option>
+                            <option value="PHP">PHP (₱)</option>
+                            <option value="USD">USD ($)</option>
+                            <option value="JPY">JPY (¥)</option>
                         </select>
                     </div>
                     <div class="space-y-1">
                         <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Discount (%)</label>
                         <input type="number" name="discount_rate[]" value="0" step="0.01" oninput="calculateGrandTotals()" class="block-discount flex-1 p-1.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs text-right font-black text-rose-600 dark:text-rose-400 focus:bg-teal-50 dark:focus:bg-slate-800 outline-none w-full transition-colors">
                     </div>
-                    
-                    <div class="space-y-1 md:col-span-4">
+                    <div class="space-y-1">
                         <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Remarks</label>
                         <input type="text" name="remarks[]" placeholder="Notes / Internal Instructions..." class="w-full p-1.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 text-xs font-bold italic focus:bg-teal-50 dark:focus:bg-slate-800 outline-none transition-colors placeholder-slate-400 dark:placeholder-slate-600">
                     </div>
@@ -116,7 +123,7 @@
                             <button type="button" class="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-[9px] font-black uppercase hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors rounded-r-sm">Search</button>
                         </div>
                     </div>
-                    <button type="button" onclick="addDynamicRow(this, 0)" class="bg-teal-100 dark:bg-teal-900/40 text-teal-900 dark:text-teal-400 border border-teal-400 dark:border-teal-700 px-3 py-1 text-[9px] font-black uppercase hover:bg-teal-200 dark:hover:bg-teal-900/60 rounded-sm flex items-center gap-1 shadow-sm transition-colors">
+                    <button type="button" onclick="addDynamicRow(this, '0')" class="bg-teal-100 dark:bg-teal-900/40 text-teal-900 dark:text-teal-400 border border-teal-400 dark:border-teal-700 px-3 py-1 text-[9px] font-black uppercase hover:bg-teal-200 dark:hover:bg-teal-900/60 rounded-sm flex items-center gap-1 shadow-sm transition-colors">
                         <i data-lucide="plus" class="w-3 h-3"></i> Add Row
                     </button>
                 </div>
@@ -125,7 +132,7 @@
                     <table class="w-full text-left min-w-[1400px] border-collapse" style="font-size: 11px;">
                         <thead class="bg-slate-200 dark:bg-slate-950 text-slate-700 dark:text-slate-300 transition-colors">
                             <tr>
-                                <th class="py-1.5 px-2 border-r border-slate-300 dark:border-slate-700 w-8 text-center">#</th>
+                                <th class="py-1.5 px-2 border-r border-slate-300 dark:border-slate-700 w-8 text-center">No.</th>
                                 <th class="py-1.5 px-2 border-r border-slate-300 dark:border-slate-700 w-32">Item Code</th>
                                 <th class="py-1.5 px-2 border-r border-slate-300 dark:border-slate-700 w-48">Description</th>
                                 <th class="py-1.5 px-2 border-r border-slate-300 dark:border-slate-700 w-16 text-center">Packing</th>
@@ -140,40 +147,80 @@
                             </tr>
                         </thead>
                         <tbody class="dynamic-table-body divide-y divide-slate-200 dark:divide-slate-800 transition-colors">
-                            </tbody>
+                            <tr id="dyn-row-default" class="item-row bg-white dark:bg-slate-900 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors border-b border-slate-200 dark:border-slate-800">
+                                <td class="py-1 px-1 border-r border-slate-300 dark:border-slate-700 text-center font-bold text-slate-500 dark:text-slate-400 row-num text-xs transition-colors">1</td>
+                                <td class="py-1 px-1 border-r border-slate-300 dark:border-slate-700 transition-colors"><input type="text" name="item_code_0[]" list="item_master_list" onchange="autoFillItemRow(this)" class="w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white dark:focus:bg-slate-800 text-xs font-bold uppercase text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-colors" placeholder="CODE" autocomplete="off"></td>
+                                <td class="py-1 px-1 border-r border-slate-300 dark:border-slate-700 transition-colors"><input type="text" name="description_0[]" class="w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white dark:focus:bg-slate-800 text-xs text-slate-600 dark:text-slate-400 placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-colors" placeholder="Description..."></td>
+                                <td class="p-0 border-r border-slate-400 dark:border-slate-700 transition-colors"><input type="number" step="any" min="0" name="packing_0[]" class="w-full h-full px-2 py-1.5 text-xs text-center border-none focus:ring-0 bg-transparent outline-none text-slate-800 dark:text-slate-200 transition-colors" value="1"></td>
+                                <td class="p-0 border-r border-slate-400 dark:border-slate-700 transition-colors"><input type="text" name="unit_pack_0[]" value="PCS" class="w-full h-full px-2 py-1.5 text-xs text-center border-none focus:ring-0 bg-transparent outline-none font-bold text-slate-500 dark:text-slate-400 uppercase transition-colors"></td>
+                                <td class="p-0 border-r border-slate-400 dark:border-slate-700 transition-colors"><input type="number" step="any" name="moq_0[]" class="w-full h-full px-2 py-1.5 text-xs text-center border-none focus:ring-0 bg-transparent outline-none text-slate-800 dark:text-slate-200 transition-colors" value="0"></td>
+                                <td class="py-1 px-1 border-r border-slate-300 dark:border-slate-700 bg-teal-50 dark:bg-teal-900/20 transition-colors"><input type="number" name="qty_0[]" oninput="calcRow('dyn-row-default')" value="1" min="1" class="w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white dark:focus:bg-slate-800 text-xs font-black text-center text-teal-900 dark:text-teal-400 row-qty transition-colors"></td>
+                                <td class="p-0 border-r border-slate-400 dark:border-slate-700 transition-colors"><input type="text" name="unit_qty_0[]" value="PCS" class="w-full h-full px-2 py-1.5 text-xs text-center border-none focus:ring-0 bg-transparent outline-none font-bold text-slate-500 dark:text-slate-400 uppercase transition-colors"></td>
+                                <td class="py-1 px-1 border-r border-slate-300 dark:border-slate-700 transition-colors"><input type="number" name="unit_price_0[]" oninput="calcRow('dyn-row-default')" step="0.01" value="0.00" min="0" class="w-full p-1 border-none bg-transparent focus:ring-1 focus:bg-white dark:focus:bg-slate-800 text-xs text-right font-black text-slate-800 dark:text-slate-200 row-price transition-colors"></td>
+                                <td class="py-1 px-1 border-r border-slate-300 dark:border-slate-700 text-right bg-teal-50 dark:bg-teal-900/20 transition-colors"><span class="amount-display text-xs font-black text-teal-900 dark:text-teal-400 pr-1 row-display transition-colors">₱ 0.00</span><input type="hidden" name="row_amount_0[]" class="global-amount-input row-amount" value="0"></td>
+                                <td class="py-1 px-1 border-r border-slate-300 dark:border-slate-700 text-center transition-colors"><input type="checkbox" name="amortization_0[]" value="1" class="w-3 h-3 text-teal-600 dark:text-teal-500 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:ring-teal-500 transition-colors"></td>
+                                <td class="py-1 px-1 text-center transition-colors"><button type="button" onclick="removeRow('dyn-row-default')" class="text-rose-400 dark:text-rose-500 hover:text-rose-600 dark:hover:text-rose-400 font-bold px-2 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded transition-colors">X</button></td>
+                            </tr>
+                        </tbody>
                     </table>
                 </div>
             </div>
-
         </div>
 
-        <div class="bg-white dark:bg-slate-900 border-t border-slate-300 dark:border-slate-700 p-4 transition-colors duration-300">
-            <div class="flex justify-center mb-6">
-                <button type="button" onclick="addSupplierBlock()" class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-2 border-dashed border-slate-400 dark:border-slate-600 px-10 py-3 text-xs font-black uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-200 transition-colors flex items-center gap-2 rounded-sm">
-                    <i data-lucide="plus-circle" class="w-4 h-4"></i> Add Another Supplier P.O.
+        <div class="bg-slate-100 dark:bg-slate-900 border-t border-slate-300 dark:border-slate-700 p-4 transition-colors duration-300">
+            <div class="flex justify-center mb-6 mt-2">
+                <button type="button" onclick="addSupplierBlock()" class="bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-2 border-dashed border-slate-400 dark:border-slate-600 px-10 py-3 text-xs font-black uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-200 transition-colors flex items-center gap-2 rounded-sm shadow-sm">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i> Add Another Supplier Purchase Order
                 </button>
             </div>
 
-            <div class="bg-slate-50 dark:bg-slate-950 p-4 flex flex-col md:flex-row justify-between items-center shadow-md rounded-sm gap-4 border border-slate-300 dark:border-slate-800 transition-colors">
-                <button type="button" onclick="if(confirm('Clear all data?')) location.reload();" class="text-slate-600 dark:text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center gap-1">
-                    <i data-lucide="trash" class="w-4 h-4"></i> Reset Entire Form
-                </button>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-sm p-4 shadow-sm overflow-hidden flex flex-col transition-colors">
+                    <h3 class="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-3 border-b border-slate-200 dark:border-slate-800 pb-2"><i data-lucide="list-checks" class="w-3 h-3 inline mr-1 text-teal-500"></i> Overall Items Summary</h3>
+                    <div class="overflow-y-auto max-h-56 border border-slate-200 dark:border-slate-700 shadow-inner bg-slate-50 dark:bg-slate-900">
+                        <table class="w-full text-left border-collapse min-w-[500px]">
+                            <thead class="bg-slate-200 dark:bg-slate-800 text-[9px] uppercase tracking-widest text-slate-600 dark:text-slate-400 sticky top-0 z-10 shadow-sm transition-colors">
+                                <tr>
+                                    <th class="py-2 px-2 border-r border-slate-300 dark:border-slate-700">Supplier</th>
+                                    <th class="py-2 px-2 border-r border-slate-300 dark:border-slate-700">Code / Desc</th>
+                                    <th class="py-2 px-2 border-r border-slate-300 dark:border-slate-700 text-center">Qty</th>
+                                    <th class="py-2 px-2 text-right">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody id="summary-table-body" class="divide-y divide-slate-200 dark:divide-slate-800 transition-colors">
+                                <tr><td colspan="4" class="py-6 text-center text-slate-400 text-xs italic">No items encoded yet...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
                 
-                <div class="flex flex-wrap justify-end items-center gap-6">
-                    <div class="flex items-center gap-2">
-                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 transition-colors">Total Net:</span>
-                        <span class="text-sm font-bold text-slate-700 dark:text-slate-300 w-24 text-right transition-colors">₱ <span id="po_amount_display">0.00</span></span>
+                <div class="bg-white dark:bg-slate-950 p-5 flex flex-col justify-between shadow-sm rounded-sm border border-slate-300 dark:border-slate-800 transition-colors">
+                    <div class="flex justify-between items-start mb-6">
+                        <h3 class="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400"><i data-lucide="calculator" class="w-3 h-3 inline text-teal-500"></i> Financials</h3>
+                        <button type="button" onclick="if(confirm('Clear all data?')) location.reload();" class="text-slate-400 dark:text-slate-500 hover:text-rose-500 dark:hover:text-rose-400 text-[9px] font-bold uppercase tracking-widest transition-colors flex items-center gap-1">
+                            <i data-lucide="trash" class="w-3 h-3"></i> Reset Form
+                        </button>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 transition-colors">Total Tax:</span>
-                        <span class="text-sm font-bold text-rose-600 dark:text-rose-400 w-24 text-right transition-colors">₱ <span id="tax_amount_display">0.00</span></span>
-                    </div>
-                    <div class="flex items-center gap-2 border-l border-slate-300 dark:border-slate-700 pl-6 text-right transition-colors">
-                        <span class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block transition-colors">Batch Grand Total</span>
-                        <span class="text-xl font-black text-teal-700 dark:text-teal-400 tracking-tighter transition-colors">₱ <span id="total_amount_display">0.00</span></span>
-                    </div>
-                    <button type="submit" onclick="return confirm('Generate and Save this Batch Purchase Order?')" class="bg-teal-700 dark:bg-teal-600 text-white border border-teal-900 dark:border-teal-800 px-8 py-2.5 text-sm font-black uppercase tracking-widest hover:bg-teal-800 dark:hover:bg-teal-700 transition-colors shadow-sm flex items-center gap-2 rounded-sm">
-                        <i data-lucide="save" class="w-5 h-5"></i> Save Batch
+
+                    <table class="w-full text-right mb-4">
+                        <tbody>
+                            <tr>
+                                <td class="pb-1 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Total Net Amount:</td>
+                                <td class="pb-1 text-sm font-bold text-slate-700 dark:text-slate-300">₱ <span id="po_amount_display">0.00</span></td>
+                            </tr>
+                            <tr class="border-b border-slate-300 dark:border-slate-700">
+                                <td class="pb-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Total Tax:</td>
+                                <td class="pb-3 text-sm font-bold text-rose-600 dark:text-rose-400">₱ <span id="tax_amount_display">0.00</span></td>
+                            </tr>
+                            <tr>
+                                <td class="pt-3 text-xs font-black uppercase tracking-widest text-teal-800 dark:text-teal-500">Grand Total:</td>
+                                <td class="pt-3 text-2xl font-black tracking-tighter text-teal-700 dark:text-teal-400">₱ <span id="total_amount_display">0.00</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <button type="submit" onclick="return confirm('Generate and Save this Purchase Order?')" class="w-full bg-teal-700 dark:bg-teal-600 text-white border border-teal-900 dark:border-teal-800 px-8 py-3 text-xs font-black uppercase tracking-widest hover:bg-teal-800 dark:hover:bg-teal-700 transition-colors shadow-md flex justify-center items-center gap-2 rounded-sm transform active:scale-95">
+                        <i data-lucide="save" class="w-4 h-4"></i> Save Purchase Order
                     </button>
                 </div>
             </div>
@@ -184,43 +231,39 @@
 
 <template id="supplier-block-template">
     <div class="dynamic-po-block bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-md rounded-sm overflow-hidden mt-6 relative transition-colors duration-300" data-block-id="{ID}">
-        <button type="button" onclick="this.closest('.dynamic-po-block').remove(); calculateGrandTotals();" class="absolute top-2 right-2 text-rose-300 dark:text-rose-400 hover:text-rose-500 dark:hover:text-rose-300 transition-colors" title="Remove Supplier">
+        <button type="button" onclick="removeSupplierBlock(this)" class="absolute top-2 right-2 text-rose-300 dark:text-rose-400 hover:text-rose-500 dark:hover:text-rose-300 transition-colors" title="Remove Supplier">
             <i data-lucide="x-circle" class="w-5 h-5"></i>
         </button>
 
         <div class="bg-slate-700 dark:bg-slate-800 px-4 py-2 text-white transition-colors">
             <h3 class="text-[11px] font-black uppercase tracking-widest flex items-center gap-2 block-counter-label">
-                <i data-lucide="building" class="w-4 h-4 text-teal-400 dark:text-teal-500"></i> Supplier P.O. #X
+                <i data-lucide="building" class="w-4 h-4 text-teal-400 dark:text-teal-500"></i> Supplier Purchase Order #X
             </h3>
         </div>
 
         <div class="p-4 grid grid-cols-2 md:grid-cols-4 gap-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 transition-colors">
             <div class="space-y-1">
-                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Supplier PO No.</label>
+                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Supplier PO No. <span class="text-rose-600">*</span></label>
                 <div class="flex gap-1">
-                    <input type="text" name="po_no[]" placeholder="Sub-PO No..." required class="w-full p-1.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs font-black text-teal-900 dark:text-teal-400 uppercase focus:bg-teal-50 dark:focus:bg-slate-800 outline-none po-no-input transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-600">
+                    <input type="text" name="po_no[]" placeholder="Sub-PO No..." required class="w-full p-1.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs font-black text-teal-900 dark:text-teal-400 uppercase focus:bg-teal-50 dark:focus:bg-slate-800 outline-none po-no-input transition-colors placeholder-slate-400 dark:placeholder-slate-600">
                     <button type="button" onclick="generateSpecificPONo(this)" class="bg-teal-700 dark:bg-teal-600 text-white px-2 text-[9px] font-bold hover:bg-teal-800 dark:hover:bg-teal-700 transition-colors shadow-sm">GEN</button>
                 </div>
             </div>
             <div class="space-y-1">
-                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Supplier Name</label>
-                <input list="supplier_choices" name="supplier[]" placeholder="Select supplier..." required onchange="autoFillSupplier(this)" autocomplete="off" class="w-full p-1.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 text-xs font-black uppercase focus:bg-teal-50 dark:focus:bg-slate-800 outline-none transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-600">
+                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Supplier Name <span class="text-rose-600">*</span></label>
+                <input list="supplier_choices" name="supplier[]" placeholder="Select supplier..." required onchange="autoFillSupplier(this)" autocomplete="off" class="w-full p-1.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 text-xs font-black uppercase focus:bg-teal-50 dark:focus:bg-slate-800 outline-none transition-colors placeholder-slate-400 dark:placeholder-slate-600">
             </div>
             <div class="space-y-1">
-                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Contact Person</label>
-                <input type="text" name="contact_person[]" placeholder="Auto-fill..." class="supplier-contact-field w-full p-1.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 text-xs font-bold uppercase focus:bg-teal-50 dark:focus:bg-slate-800 outline-none transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-600">
+                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Contact Person <span class="text-rose-600">*</span></label>
+                <input type="text" name="contact_person[]" placeholder="Auto-fill..." class="supplier-contact-field w-full p-1.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 text-xs font-bold uppercase focus:bg-teal-50 dark:focus:bg-slate-800 outline-none transition-colors placeholder-slate-400 dark:placeholder-slate-600">
             </div>
             <div class="space-y-1">
-                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Order Date</label>
-                <input type="date" name="order_date[]" class="w-full p-1.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 text-xs font-bold focus:bg-teal-50 dark:focus:bg-slate-800 outline-none block-order-date transition-colors">
+                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Order Date <span class="text-rose-600">*</span></label>
+                <input type="date" name="order_date[]" required class="w-full p-1.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 text-xs font-bold focus:bg-teal-50 dark:focus:bg-slate-800 outline-none block-order-date transition-colors">
             </div>
             
             <div class="space-y-1">
-                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Delivery Date</label>
-                <input type="date" name="delivery_date[]" class="w-full p-1.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 text-xs font-bold text-rose-700 dark:text-rose-400 focus:bg-teal-50 dark:focus:bg-slate-800 outline-none block-del-date transition-colors">
-            </div>
-            <div class="space-y-1">
-                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Tax Term</label>
+                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Tax Term <span class="text-rose-600">*</span></label>
                 <select name="tax_term[]" class="w-full p-1.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 text-xs font-bold focus:bg-teal-50 dark:focus:bg-slate-800 outline-none block-tax transition-colors" onchange="calculateGrandTotals()">
                     <option value="VAT Inclusive" selected>VAT Inclusive</option><option value="Taxable">Taxable</option><option value="Non-taxable">Non-taxable</option><option value="Tax Exempt">Tax Exempt</option>
                 </select>
@@ -235,10 +278,9 @@
                 <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Discount (%)</label>
                 <input type="number" name="discount_rate[]" value="0" step="0.01" oninput="calculateGrandTotals()" class="block-discount flex-1 p-1.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs text-right font-black text-rose-600 dark:text-rose-400 focus:bg-teal-50 dark:focus:bg-slate-800 outline-none w-full transition-colors">
             </div>
-            
-            <div class="space-y-1 md:col-span-4">
+            <div class="space-y-1">
                 <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Remarks</label>
-                <input type="text" name="remarks[]" placeholder="Notes / Internal Instructions..." class="w-full p-1.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 text-xs font-bold italic focus:bg-teal-50 dark:focus:bg-slate-800 outline-none transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-600">
+                <input type="text" name="remarks[]" placeholder="Notes / Internal Instructions..." class="w-full p-1.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 text-xs font-bold italic focus:bg-teal-50 dark:focus:bg-slate-800 outline-none transition-colors placeholder-slate-400 dark:placeholder-slate-600">
             </div>
         </div>
 
@@ -299,10 +341,35 @@
     document.addEventListener("DOMContentLoaded", function() {
         lucide.createIcons();
         const mainDelDate = document.getElementById('main_delivery_date');
-        if (mainDelDate && !mainDelDate.value) mainDelDate.valueAsDate = new Date();
+        if (mainDelDate && !mainDelDate.value) {
+            let defaultDate = new Date();
+            defaultDate.setDate(defaultDate.getDate() + 7);
+            mainDelDate.valueAsDate = defaultDate;
+        }
         
-        const firstBlockBtn = document.querySelector('.dynamic-po-block button[onclick^="addDynamicRow"]');
-        if(firstBlockBtn) firstBlockBtn.click();
+        const firstOrderDate = document.querySelector('.block-order-date');
+        if(firstOrderDate && !firstOrderDate.value) {
+            firstOrderDate.value = new Date().toISOString().split('T')[0];
+        }
+
+        // Live updater hook para sa Summary Table
+        document.getElementById('dynamic-blocks-container').addEventListener('input', function(e) {
+            if(e.target.matches('input[name^="supplier"], input[name^="item_code"], input[name^="description"]')) {
+                updateSummaryTable();
+            }
+        });
+    });
+
+    document.getElementById('poForm').addEventListener('submit', function(e) {
+        const blocks = document.querySelectorAll('.dynamic-po-block');
+        blocks.forEach((block, index) => {
+            const itemInputs = block.querySelectorAll('input[name], select[name]');
+            itemInputs.forEach(input => {
+                if (input.name.match(/_\d+\[\]/)) {
+                    input.name = input.name.replace(/_\d+\[\]/, `_${index}[]`);
+                }
+            });
+        });
     });
 
     const supplierDatabase = {
@@ -323,6 +390,7 @@
         } else {
             if(contactField) contactField.value = "";
         }
+        updateSummaryTable();
     }
 
     const itemMasterDatabase = {
@@ -379,16 +447,32 @@
         
         let newBlockHTML = template.replace(/{ID}/g, blockCounter).replace(/#X/g, `#${blockCounter + 1}`);
         container.insertAdjacentHTML('beforeend', newBlockHTML);
-        lucide.createIcons();
-
-        const newBlock = container.lastElementChild;
         
-        const globalDate = document.getElementById('main_delivery_date').value;
+        const newBlock = container.lastElementChild;
         newBlock.querySelector('.block-order-date').value = new Date().toISOString().split('T')[0];
-        newBlock.querySelector('.block-del-date').value = globalDate;
 
         const addBtn = newBlock.querySelector('button[onclick^="addDynamicRow"]');
         if(addBtn) addBtn.click();
+
+        updateSupplierBlockNumbers();
+    }
+
+    // 🚀 BAGO: Magic Re-Indexer para sa Supplier Labels
+    function removeSupplierBlock(btn) {
+        btn.closest('.dynamic-po-block').remove();
+        updateSupplierBlockNumbers();
+        calculateGrandTotals();
+    }
+
+    function updateSupplierBlockNumbers() {
+        const blocks = document.querySelectorAll('.dynamic-po-block');
+        blocks.forEach((block, index) => {
+            const labelElement = block.querySelector('.block-counter-label');
+            if (labelElement) {
+                labelElement.innerHTML = `<i data-lucide="building" class="w-4 h-4 text-teal-400 dark:text-teal-500"></i> Supplier Purchase Order #${index + 1}`;
+            }
+        });
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 
     function addDynamicRow(btnElement, blockId) {
@@ -460,6 +544,47 @@
         document.getElementById('po_amount_display').innerText = globalSubtotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         document.getElementById('tax_amount_display').innerText = globalTax.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         document.getElementById('total_amount_display').innerText = globalGrandTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        
+        updateSummaryTable();
+    }
+
+    // 🚀 BAGO: Function para sa Live Summary Table
+    function updateSummaryTable() {
+        const summaryTbody = document.getElementById('summary-table-body');
+        summaryTbody.innerHTML = '';
+        const blocks = document.querySelectorAll('.dynamic-po-block');
+        
+        blocks.forEach((block, index) => {
+            const suppInput = block.querySelector('input[name="supplier[]"]');
+            const suppName = (suppInput && suppInput.value) ? suppInput.value : `Supplier #${index + 1}`;
+            
+            const rows = block.querySelectorAll('.item-row');
+            rows.forEach(row => {
+                const code = row.querySelector('input[name^="item_code"]').value || '-';
+                const desc = row.querySelector('input[name^="description"]').value || '-';
+                const qty = row.querySelector('.row-qty').value || 0;
+                const amount = row.querySelector('.row-amount').value || 0;
+
+                if (code !== '-' || desc !== '-') {
+                    const tr = `
+                        <tr class="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 transition-colors">
+                            <td class="py-1.5 px-2 text-xs font-bold text-slate-700 dark:text-slate-300 truncate max-w-[120px] transition-colors">${suppName}</td>
+                            <td class="py-1.5 px-2">
+                                <span class="block text-xs font-black text-indigo-700 dark:text-indigo-400 transition-colors">${code}</span>
+                                <span class="block text-[9px] text-slate-500 dark:text-slate-400 truncate max-w-[150px] transition-colors">${desc}</span>
+                            </td>
+                            <td class="py-1.5 px-2 text-[10px] text-center font-bold text-teal-800 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/10 transition-colors">${qty}</td>
+                            <td class="py-1.5 px-2 text-[10px] text-right font-black text-slate-800 dark:text-slate-200 transition-colors">₱ ${parseFloat(amount).toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+                        </tr>
+                    `;
+                    summaryTbody.insertAdjacentHTML('beforeend', tr);
+                }
+            });
+        });
+
+        if (summaryTbody.innerHTML === '') {
+            summaryTbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-slate-400 text-[10px] italic transition-colors">No items encoded yet...</td></tr>`;
+        }
     }
 
     function updateRowNumbers(tbody) {

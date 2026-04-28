@@ -33,6 +33,7 @@ class Item(models.Model):
     
     # 🚀 BAGO PARA SA WMS:
     default_zone = models.CharField(max_length=100, blank=True, null=True, help_text="Primary storage location")
+    updated_at = models.DateTimeField(auto_now=True)
     
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -73,6 +74,8 @@ class CustomerOrder(models.Model):
 
     # Header Info
     order_no = models.CharField(max_length=100) 
+    cust_po_no = models.CharField(max_length=100, blank=True, null=True)
+    delivery_date = models.DateField(blank=True, null=True)
     customer = models.ForeignKey('Contact', on_delete=models.CASCADE) # Siguraduhing may Contact model ka
     order_date = models.DateField() 
     order_type = models.CharField(max_length=20, choices=ORDER_TYPES, default='Standard')
@@ -376,6 +379,9 @@ class EmailRoute(models.Model):
         ('ASSEMBLY_COMPLETED', 'Production: Machine Assembly Completed'),
         ('STOCK_MOVE', 'Inventory: Item Location Transfer Alert'),
         ('STOCK_OUT', 'Inventory: Stock Issuance / Deduction Alert'),
+        ('QC_PENDING', 'Quality Control: Pending Inspections Reminder'),
+        ('AGING_REQUESTS', 'Warehouse: Unfulfilled/Aging Requests Alert'),
+        ('DEAD_STOCK', 'Finance: Dead / Slow-Moving Stock Alert'),
     ]
     
     event_name = models.CharField(max_length=50, choices=EVENT_CHOICES, unique=True, verbose_name="Notification Event")

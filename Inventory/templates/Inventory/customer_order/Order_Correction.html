@@ -65,14 +65,32 @@
                     {{ forloop.counter }}
                 </div>
 
-                <div class="bg-slate-100 dark:bg-slate-950 border-b border-slate-300 dark:border-slate-700 py-3 px-5 flex flex-col md:flex-row md:items-center justify-between gap-2 transition-colors">
+                <div class="px-6 py-3 border-b dark:border-slate-800 flex justify-between items-end bg-slate-50 dark:bg-slate-900 transition-colors">
                     <div>
-                        <span class="text-[11px] font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest flex items-center gap-1.5 transition-colors">
+                        <h3 class="text-sm font-black uppercase tracking-widest text-slate-800 dark:text-slate-200 flex items-center gap-2 transition-colors">
                             <i data-lucide="user" class="w-4 h-4 text-amber-600 dark:text-amber-500"></i> Customer: <span class="text-indigo-700 dark:text-indigo-400">{{ order_data.header.customer }}</span>
-                        </span>
+                        </h3>
+                        <div class="flex items-center gap-4 mt-1">
+                            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase transition-colors">System Order: <span class="text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 rounded-sm transition-colors">{{ order_data.header.order_no }}</span></span>
+                            {% if order_data.header.cust_po_no != 'N/A' and order_data.header.cust_po_no %}
+                            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase transition-colors">Cust PO: <span class="text-slate-800 dark:text-slate-200 font-black">{{ order_data.header.cust_po_no }}</span></span>
+                            {% endif %}
+                        </div>
                     </div>
-                    <div class="flex items-center gap-3">
-                        <span class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase transition-colors">Sub Order: <span class="text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-2 py-0.5 transition-colors">{{ order_data.header.order_no }}</span></span>
+                </div>
+
+                <div class="p-4 grid grid-cols-1 md:grid-cols-3 gap-4 bg-white dark:bg-slate-800/30 border-b border-slate-200 dark:border-slate-800 transition-colors">
+                    <div>
+                        <span class="block text-[9px] font-bold text-slate-400 uppercase mb-1 transition-colors">Specific Order Date</span>
+                        <span class="text-xs font-black text-indigo-700 dark:text-indigo-400 uppercase transition-colors">{{ order_data.header.date }}</span>
+                    </div>
+                    <div>
+                        <span class="block text-[9px] font-bold text-slate-400 uppercase mb-1 transition-colors">Contact Person</span>
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase transition-colors">{{ order_data.header.contact_person|default:"-" }}</span>
+                    </div>
+                    <div>
+                        <span class="block text-[9px] font-bold text-slate-400 uppercase mb-1 transition-colors">Delivery Address</span>
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase transition-colors">{{ order_data.header.delivery_address|default:"-" }}</span>
                     </div>
                 </div>
 

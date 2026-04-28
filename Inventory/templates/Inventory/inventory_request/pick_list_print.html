@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pick List - {{ req.request_no }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: white; color: black; font-family: Arial, sans-serif; }
+        @media print {
+            body { font-size: 12px; }
+            .no-print { display: none !important; }
+            @page { margin: 0.5in; }
+        }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+        th { background-color: #f3f4f6; font-weight: bold; text-transform: uppercase; font-size: 10px; }
+        .checkbox-box { width: 15px; height: 15px; border: 1px solid black; display: inline-block; margin-top: 3px; }
+    </style>
+</head>
+<body class="p-8 max-w-4xl mx-auto">
+
+    <div class="mb-4 no-print text-right">
+        <button onclick="window.print()" class="bg-indigo-600 text-white px-4 py-2 font-bold rounded">Print Pick-List</button>
+        <button onclick="window.close()" class="bg-gray-300 text-black px-4 py-2 font-bold rounded ml-2">Close</button>
+    </div>
+
+    <div class="flex justify-between items-start border-b-2 border-black pb-4">
+        <div>
+            <h1 class="text-2xl font-black uppercase tracking-widest">Pick-List Form</h1>
+            <p class="text-sm font-bold mt-1">Warehouse Issuance & Fulfillment</p>
+        </div>
+        <div class="text-right">
+            <h2 class="text-xl font-black">{{ req.request_no }}</h2>
+            <p class="text-xs">Date Requested: {{ req.request_date|date:"Y-m-d" }}</p>
+            <p class="text-xs">Required By: {{ req.delivery_date|date:"Y-m-d" }}</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 mt-4 text-sm">
+        <div>
+            <p><span class="font-bold">Requesting Department:</span> {{ req.receiving_place }}</p>
+            <p><span class="font-bold">Purpose / Remarks:</span> {{ req.reason }}</p>
+        </div>
+        <div class="text-right">
+            <p><span class="font-bold">Printed By:</span> {{ printed_by|upper }}</p>
+            <p><span class="font-bold">Print Date:</span> {{ print_date|date:"Y-m-d H:i" }}</p>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 5%; text-align: center;">Pick</th>
+                <th style="width: 20%;">Item Code</th>
+                <th style="width: 35%;">Description</th>
+                <th style="width: 10%; text-align: center;">Qty to Pick</th>
+                <th style="width: 30%;">Suggested Location(s)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in pick_items %}
+            <tr>
+                <td style="text-align: center;"><div class="checkbox-box"></div></td>
+                <td class="font-bold">{{ item.item_code }}</td>
+                <td>{{ item.description }}</td>
+                <td style="text-align: center; font-size: 14px; font-weight: bold;">{{ item.pending_qty }}</td>
+                <td class="text-xs italic">{{ item.suggested_locations }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center font-bold py-8">All items have been fulfilled! Nothing to pick.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="mt-12 grid grid-cols-3 gap-8 text-center text-sm">
+        <div>
+            <div class="border-b border-black h-8 mb-2"></div>
+            <p class="font-bold">Picked By</p>
+            <p class="text-xs text-gray-500">(Signature over printed name)</p>
+        </div>
+        <div>
+            <div class="border-b border-black h-8 mb-2"></div>
+            <p class="font-bold">Issued By (Warehouse)</p>
+            <p class="text-xs text-gray-500">(Signature over printed name)</p>
+        </div>
+        <div>
+            <div class="border-b border-black h-8 mb-2"></div>
+            <p class="font-bold">Received By</p>
+            <p class="text-xs text-gray-500">(Signature over printed name)</p>
+        </div>
+    </div>
+
+    <script>
+        // Auto-print pagkabukas
+        window.onload = function() {
+            setTimeout(() => { window.print(); }, 500);
+        };
+    </script>
+</body>
+</html>

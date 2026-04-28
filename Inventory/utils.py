@@ -3,8 +3,19 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.core.mail import send_mail
 from django.conf import settings
+from django.utils import timezone
+from datetime import timedelta
 from django.contrib.auth.models import User
 from .models import SystemAuditLog, SystemNotification, EmailRoute
+from .models import (
+    SystemAuditLog, 
+    SystemNotification, 
+    EmailRoute, 
+    MaterialTag, 
+    PurchaseOrder, 
+    DeliveryRequest,
+    CustomerOrder
+)
 
 def send_shipping_notification(order_no, customer_email, courier_name, tracking_number=""):
     if not customer_email:
@@ -442,4 +453,216 @@ def alert_new_delivery_request(request_obj):
     except Exception as e:
         print(f">>> 🔥 CRITICAL EMAIL ERROR: {str(e)} <<<")
 
+def send_security_alert_email(username, ip, count):
+    """ Email trigger kapag may multiple failed logins """
+    try:
+        route = EmailRoute.objects.get(event_name='SECURITY_ALERT', is_active=True)
+        target_emails = route.get_email_list()
         
+        if target_emails:
+            subject = f"⚠️ SECURITY WARNING: Multiple Failed Logins for [{username}]"
+            context = {'username': username, 'ip': ip, 'count': count}
+            
+            html_message = render_to_string('Inventory/emails/security_alert_email.html', context)
+            plain_message = strip_tags(html_message)
+            
+            send_mail(subject, plain_message, settings.DEFAULT_FROM_EMAIL, target_emails, html_message=html_message, fail_silently=False)
+            print(f"Security Alert Email sent to {target_emails}")
+    except Exception as e:
+        print(f"Notice: Error with SECURITY_ALERT. {str(e)}")
+
+def send_qc_rejection_alert(instance):
+    """ HTML Email trigger kapag nag-Failed sa QC ang isang Material Tag """
+    try:
+        route = EmailRoute.objects.get(event_name='QC_FAILED', is_active=True)
+        target_emails = route.get_email_list()
+        
+        if target_emails:
+            subject = f"🚨 URGENT QC ALERT: Material Rejected - Lot: {instance.lot_no}"
+            context = {
+                'item_code': instance.item_code,
+                'description': instance.description,
+                'lot_no': instance.lot_no,
+                'qty': instance.total_pcs,
+                'uom': instance.packing_type,
+                'remarks': instance.remarks or 'No remarks provided by inspector.'
+            }
+            
+            html_message = render_to_string('Inventory/emails/qc_failed_email.html', context)
+            plain_message = strip_tags(html_message)
+            
+            send_mail(
+                subject, plain_message, settings.DEFAULT_FROM_EMAIL, target_emails, 
+                html_message=html_message, fail_silently=False
+            )
+            print(f"QC Failure HTML Email Alert sent for Lot: {instance.lot_no}")
+            
+    except EmailRoute.DoesNotExist:
+        print("Notice: No email route setup for QC_FAILED.")
+    except Exception as e:
+        print(f"Error sending QC Failure Alert: {str(e)}")
+
+def send_late_delivery_alert(po_data, total_count):
+    """ Email trigger para sa mga overdue Purchase Orders """
+    try:
+        route = EmailRoute.objects.get(event_name='LATE_DELIVERY', is_active=True)
+        target_emails = route.get_email_list()
+
+        if target_emails:
+            subject = f"⚠️ LOGISTICS ALERT: {total_count} Overdue Purchase Orders"
+            context = {'pos': po_data, 'total_count': total_count}
+            
+            html_message = render_to_string('Inventory/emails/late_delivery_email.html', context)
+            plain_message = strip_tags(html_message)
+
+            send_mail(subject, plain_message, settings.DEFAULT_FROM_EMAIL, target_emails, html_message=html_message, fail_silently=False)
+            print("✅ Late Delivery Alert sent.")
+    except Exception as e:
+        print(f"Error sending Late Delivery Alert: {str(e)}")
+
+def send_po_status_update_email(po, manager_user):
+    """ Ipadala ang alert sa nag-draft ng PO kapag nagbago ang status nito """
+    recipient_email = po.created_by.email if po.created_by and po.created_by.email else None
+    
+    if not recipient_email:
+        print(f"Notice: Walang email address si {po.created_by.username if po.created_by else 'Unknown'}. Skipping email.")
+        return
+
+    try:
+        subject = f"P.O. UPDATE: {po.po_no} is {po.ordering_status}"
+        context = {
+            'status': po.ordering_status,
+            'po_no': po.po_no,
+            'supplier': po.supplier.name if po.supplier else 'N/A',
+            'manager': manager_user.username if manager_user else 'System Admin'
+        }
+
+        html_message = render_to_string('Inventory/emails/po_status_update_email.html', context)
+        plain_message = strip_tags(html_message)
+
+        send_mail(
+            subject, plain_message, settings.DEFAULT_FROM_EMAIL, [recipient_email], 
+            html_message=html_message, fail_silently=False
+        )
+        print(f"PO Status update email sent to {recipient_email}")
+    except Exception as e:
+        print(f"Error sending PO status email: {str(e)}")
+
+def send_low_stock_email_alert(low_stock_items):
+    """ Email trigger kapag bumaba ang stock sa threshold """
+    try:
+        route = EmailRoute.objects.get(event_name='LOW_STOCK', is_active=True)
+        target_emails = route.get_email_list()
+        
+        if target_emails:
+            context = {
+                'items': low_stock_items,
+                'total_count': len(low_stock_items)
+            }
+            html_msg = render_to_string('Inventory/emails/low_stock_email.html', context)
+            
+            send_mail(
+                subject=f"⚠️ WMS ALERT: {len(low_stock_items)} Low Stock Items Detected",
+                message="Low stock items detected. Please check system.",
+                from_email=settings.DEFAULT_FROM_EMAIL, 
+                recipient_list=target_emails,
+                html_message=html_msg,
+                fail_silently=False
+            )
+            print(f"✅ Alert Email sent to {target_emails}")
+    except Exception as e:
+        print(f"❌ Error sending Low Stock email: {str(e)}")
+
+def scan_pending_qc():
+    """ Hahanapin ang mga piyesang hindi pa naitse-check ng QA (Nakatengga) """
+    pending_tags = MaterialTag.objects.filter(inspection_status='Pending')
+    if not pending_tags.exists(): return 0
+    
+    try:
+        route = EmailRoute.objects.get(event_name='QC_PENDING', is_active=True)
+        target_emails = route.get_email_list()
+        if target_emails:
+            subject = f"⚠️ QA REMINDER: {pending_tags.count()} Items Pending Inspection"
+            message = f"Hello QA Team,\n\nYou have {pending_tags.count()} material tags waiting for quality inspection. Please check the system to process them."
+            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, target_emails, fail_silently=False)
+            print("✅ QC Pending Reminder sent.")
+    except Exception as e:
+        print(f"Error QC_PENDING: {e}")
+    return pending_tags.count()
+
+def scan_aging_requests():
+    """ Hahanapin ang mga request na 3 araw na pero hindi pa rin nabibigay ng Warehouse """
+    three_days_ago = timezone.now().date() - timedelta(days=3)
+    aging_reqs = DeliveryRequest.objects.filter(status__in=['Pending', 'Processing'], request_date__lte=three_days_ago).order_by('request_date')
+    
+    if not aging_reqs.exists(): return 0
+    
+    try:
+        route = EmailRoute.objects.get(event_name='AGING_REQUESTS', is_active=True)
+        target_emails = route.get_email_list()
+        if target_emails:
+            subject = f"⏳ WAREHOUSE ALERT: {aging_reqs.count()} Aging Material Requests"
+            
+            # 🚀 I-pack ang data para sa HTML
+            context = {
+                'count': aging_reqs.count(),
+                'requests': aging_reqs[:10] # Ipakita lang ang top 10 sa email para hindi masyadong mahaba
+            }
+            html_message = render_to_string('Inventory/emails/aging_requests_email.html', context)
+            plain_message = strip_tags(html_message)
+            
+            send_mail(subject, plain_message, settings.DEFAULT_FROM_EMAIL, target_emails, html_message=html_message, fail_silently=False)
+            print("✅ Aging Requests HTML Reminder sent.")
+    except Exception as e:
+        print(f"Error AGING_REQUESTS: {e}")
+    return aging_reqs.count()
+
+def scan_pending_pos():
+    """ Hahanapin ang mga Purchase Order na hindi pa ina-approve ng Manager """
+    pending_pos = PurchaseOrder.objects.filter(ordering_status='Pending Approval').order_by('order_date')
+    if not pending_pos.exists(): return 0
+    
+    try:
+        route = EmailRoute.objects.get(event_name='PO_APPROVAL', is_active=True)
+        target_emails = route.get_email_list()
+        if target_emails:
+            subject = f"🔔 MANAGER REMINDER: {pending_pos.count()} Purchase Orders Awaiting Approval"
+            
+            context = {
+                'count': pending_pos.count(),
+                'pos': pending_pos[:10]
+            }
+            html_message = render_to_string('Inventory/emails/pending_pos_email.html', context)
+            plain_message = strip_tags(html_message)
+            
+            send_mail(subject, plain_message, settings.DEFAULT_FROM_EMAIL, target_emails, html_message=html_message, fail_silently=False)
+            print("✅ Pending PO HTML Reminder sent.")
+    except Exception as e:
+        print(f"Error PO_APPROVAL: {e}")
+    return pending_pos.count()
+
+def scan_dead_stock():
+    """ Hahanapin ang mga piyesang walang galaw sa warehouse nang mahigit 6 na buwan """
+    six_months_ago = timezone.now().date() - timedelta(days=180)
+    dead_stocks = MaterialTag.objects.filter(total_pcs__gt=0, arrival_date__lte=six_months_ago).order_by('arrival_date')
+    if not dead_stocks.exists(): return 0
+    
+    try:
+        route = EmailRoute.objects.get(event_name='DEAD_STOCK', is_active=True)
+        target_emails = route.get_email_list()
+        if target_emails:
+            subject = f"🕸️ FINANCE ALERT: {dead_stocks.count()} Slow-Moving / Dead Stock Lots Detected"
+            
+            context = {
+                'count': dead_stocks.count(),
+                'stocks': dead_stocks[:10],
+                'months': 6
+            }
+            html_message = render_to_string('Inventory/emails/dead_stock_email.html', context)
+            plain_message = strip_tags(html_message)
+            
+            send_mail(subject, plain_message, settings.DEFAULT_FROM_EMAIL, target_emails, html_message=html_message, fail_silently=False)
+            print("✅ Dead Stock HTML Alert sent.")
+    except Exception as e:
+        print(f"Error DEAD_STOCK: {e}")
+    return dead_stocks.count()

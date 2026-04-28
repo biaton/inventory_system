@@ -104,6 +104,9 @@ urlpatterns = [
     path('request/new/', views.new_request_view, name='new_request'),
     path('request/my-list/', views.my_requests_view, name='my_requests'),
     path('request/return/', views.return_slip_view, name='return_slip'),
+    path('request/process/<int:req_id>/', views.process_request_workspace, name='process_request'),
+    path('api/fulfill-request-item/', views.api_fulfill_request_item, name='api_fulfill_request_item'),
+    path('request/print-pick-list/<int:req_id>/', views.print_pick_list, name='print_pick_list'),
 
     # API para sa View Button
     path('api/request-details/<int:req_id>/', views.api_request_details, name='api_request_details'),    

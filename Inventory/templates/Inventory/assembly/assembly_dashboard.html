@@ -1,131 +1,132 @@
 {% extends "Inventory/base.html" %}
 
-{% block title %}Assembly Dashboard{% endblock %}
+{% block title %}Asset Assembly Dashboard{% endblock %}
 
 {% block content %}
-<div class="max-w-[100%] mx-auto pb-10 mt-2 text-slate-800 dark:text-slate-200 font-sans transition-colors duration-300">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+    .tabular-nums { font-variant-numeric: tabular-nums; }
+</style>
 
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
-        <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-2 shadow-sm flex justify-between items-center border-l-4 border-l-slate-600 transition-colors duration-300">
+<div class="max-w-[100%] mx-auto pb-10 mt-2 text-slate-800 dark:text-slate-200 font-sans h-[calc(100vh-60px)] flex flex-col">
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2 flex-shrink-0">
+        <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-1.5 shadow-sm flex justify-between items-center border-l-4 border-l-slate-600">
             <div>
                 <p class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-0.5">Total Assets</p>
-                <h2 class="text-xl font-black text-slate-800 dark:text-slate-100 leading-none font-mono">{{ total_assets|default:"0" }}</h2>
+                <h2 class="text-lg font-black text-slate-800 dark:text-slate-100 leading-none tabular-nums">{{ total_assets|default:"0" }}</h2>
             </div>
-            <i data-lucide="cpu" class="w-6 h-6 text-slate-300 dark:text-slate-700"></i>
+            <i data-lucide="cpu" class="w-5 h-5 text-slate-300 dark:text-slate-700"></i>
         </div>
 
-        <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-2 shadow-sm flex justify-between items-center border-l-4 border-l-indigo-600 transition-colors duration-300">
+        <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-1.5 shadow-sm flex justify-between items-center border-l-4 border-l-indigo-600">
             <div>
-                <p class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-0.5">Building</p>
-                <h2 class="text-xl font-black text-indigo-900 dark:text-indigo-400 leading-none font-mono">{{ building_count|default:"0" }}</h2>
+                <p class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-0.5">In Production</p>
+                <h2 class="text-lg font-black text-indigo-900 dark:text-indigo-400 leading-none tabular-nums">{{ building_count|default:"0" }}</h2>
             </div>
-            <i data-lucide="hammer" class="w-6 h-6 text-indigo-200 dark:text-indigo-900/50"></i>
+            <i data-lucide="hammer" class="w-5 h-5 text-indigo-200 dark:text-indigo-900/50"></i>
         </div>
 
-        <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-2 shadow-sm flex justify-between items-center border-l-4 border-l-amber-500 transition-colors duration-300">
+        <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-1.5 shadow-sm flex justify-between items-center border-l-4 border-l-amber-500">
             <div>
                 <p class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-0.5">Missing Parts</p>
-                <h2 class="text-xl font-black text-amber-600 dark:text-amber-500 leading-none font-mono">{{ partial_count|default:"0" }}</h2>
+                <h2 class="text-lg font-black text-amber-600 dark:text-amber-500 leading-none tabular-nums">{{ partial_count|default:"0" }}</h2>
             </div>
-            <i data-lucide="alert-circle" class="w-6 h-6 text-amber-200 dark:text-amber-900/50"></i>
+            <i data-lucide="alert-circle" class="w-5 h-5 text-amber-200 dark:text-amber-900/50"></i>
         </div>
 
-        <div class="bg-slate-800 dark:bg-slate-950 border border-slate-900 dark:border-slate-800 px-3 py-2 shadow-sm flex justify-between items-center border-l-4 border-l-emerald-400 transition-colors duration-300">
+        <div class="bg-slate-800 dark:bg-slate-950 border border-slate-900 dark:border-slate-800 px-3 py-1.5 shadow-sm flex justify-between items-center border-l-4 border-l-emerald-400">
             <div>
-                <p class="text-[9px] font-black text-emerald-400 uppercase tracking-widest mb-0.5">Complete / Ready</p>
-                <h2 class="text-xl font-black text-white leading-none font-mono">{{ available_count|default:"0" }}</h2>
+                <p class="text-[9px] font-black text-emerald-400 uppercase tracking-widest mb-0.5">Completed</p>
+                <h2 class="text-lg font-black text-white leading-none tabular-nums">{{ available_count|default:"0" }}</h2>
             </div>
-            <i data-lucide="check-circle" class="w-6 h-6 text-emerald-500/50"></i>
+            <i data-lucide="check-circle" class="w-5 h-5 text-emerald-500/50"></i>
         </div>
     </div>
 
-    <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm flex flex-col min-h-[500px] transition-colors duration-300">
+    <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm flex flex-col flex-1 overflow-hidden">
         
-        <div class="bg-slate-800 dark:bg-slate-950 px-3 py-2 flex flex-wrap justify-between items-center text-white border-b border-slate-700 dark:border-slate-800 gap-2 transition-colors duration-300">
-            <div class="flex items-center gap-2">
-                <i data-lucide="server" class="w-4 h-4 text-indigo-400"></i>
-                <h2 class="font-black text-[10px] uppercase tracking-widest">Asset Registry</h2>
+        <div class="bg-slate-50 dark:bg-slate-950 px-2 py-1.5 flex flex-wrap justify-between items-center border-b border-slate-300 dark:border-slate-800 gap-2 flex-shrink-0">
+            <div class="flex items-center gap-1.5">
+                <i data-lucide="server" class="w-3.5 h-3.5 text-indigo-500"></i>
+                <h2 class="font-black text-[10px] text-slate-700 dark:text-slate-300 uppercase tracking-widest">Asset Registry</h2>
             </div>
             
-            <div class="flex flex-wrap items-center gap-2 ml-auto">
-                <form method="GET" action="{% url 'assembly_dashboard' %}" class="flex items-center gap-1.5 m-0">
-                    <select name="status" class="py-1 px-2 text-[9px] font-black border border-slate-600 dark:border-slate-800 bg-slate-700 dark:bg-slate-900 text-white outline-none h-7 uppercase cursor-pointer transition-colors">
+            <div class="flex flex-wrap items-center gap-1.5 ml-auto">
+                <form method="GET" action="{% url 'assembly_dashboard' %}" class="flex items-center gap-1 m-0">
+                    <select name="status" class="py-1 px-1.5 text-[9px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 outline-none h-6 uppercase cursor-pointer">
                         <option value="">All Status</option>
                         <option value="Building" {% if status_filter == 'Building' %}selected{% endif %}>Building</option>
                         <option value="Partial" {% if status_filter == 'Partial' %}selected{% endif %}>Partial</option>
                         <option value="Available" {% if status_filter == 'Available' %}selected{% endif %}>Available</option>
                     </select>
                     
-                    <input type="text" name="search" value="{{ search_query }}" placeholder="Search Machine..." class="py-1 px-2 text-[10px] font-bold border border-slate-600 dark:border-slate-800 bg-slate-700 dark:bg-slate-900 text-white placeholder-slate-400 outline-none h-7 w-48 focus:border-indigo-400 transition-colors">
+                    <input type="text" name="search" value="{{ search_query }}" placeholder="Search Machine..." class="py-1 px-1.5 text-[10px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 outline-none h-6 w-40 focus:border-indigo-400">
                     
-                    <button type="submit" class="bg-slate-600 hover:bg-slate-500 dark:bg-slate-800 dark:hover:bg-slate-700 text-white border border-slate-500 dark:border-slate-700 px-3 py-1 text-[9px] font-black uppercase tracking-widest transition-colors shadow-sm h-7 flex items-center gap-1">
-                        <i data-lucide="search" class="w-3 h-3"></i> Filter
+                    <button type="submit" class="bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest h-6 flex items-center gap-1">
+                        <i data-lucide="filter" class="w-3 h-3"></i>
                     </button>
                     
                     {% if search_query or status_filter %}
-                    <a href="{% url 'assembly_dashboard' %}" class="text-slate-400 hover:text-white px-2 py-1 text-[9px] font-bold uppercase transition-colors h-7 flex items-center">
-                        Clear
+                    <a href="{% url 'assembly_dashboard' %}" class="text-rose-500 hover:text-rose-700 px-1 py-1 text-[9px] font-bold uppercase h-6 flex items-center" title="Clear Filters">
+                        <i data-lucide="x" class="w-3 h-3"></i>
                     </a>
                     {% endif %}
                 </form>
 
-                <div class="w-px h-5 bg-slate-600 dark:bg-slate-800 mx-1"></div> 
-                <button onclick="document.getElementById('createModal').classList.remove('hidden')" class="bg-indigo-600 hover:bg-indigo-500 dark:bg-indigo-700 dark:hover:bg-indigo-600 text-white border border-indigo-400 dark:border-indigo-800 px-4 py-1 text-[9px] font-black uppercase tracking-widest transition-colors shadow-sm h-7 flex items-center gap-1.5">
-                    <i data-lucide="plus" class="w-3 h-3"></i> New Asset
+                <div class="w-px h-4 bg-slate-300 dark:bg-slate-700 mx-1"></div> 
+                <button onclick="document.getElementById('createModal').classList.remove('hidden')" class="bg-indigo-600 hover:bg-indigo-700 text-white border border-indigo-700 px-3 py-0.5 text-[9px] font-black uppercase tracking-widest shadow-sm h-6 flex items-center gap-1">
+                    <i data-lucide="plus" class="w-3 h-3"></i> New
                 </button>
             </div>
         </div>
 
-        <div class="overflow-x-auto flex-1 bg-slate-50 dark:bg-slate-900/50 transition-colors duration-300">
-            <table class="w-full text-left border-collapse whitespace-nowrap">
-                <thead class="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 uppercase tracking-widest font-black text-[9px] sticky top-0 border-b border-slate-300 dark:border-slate-700 z-10 transition-colors">
+        <div class="flex-1 overflow-auto bg-white dark:bg-slate-900">
+            <table class="w-full text-left border-collapse whitespace-nowrap text-[10px]">
+                <thead class="bg-slate-100 dark:bg-slate-950 text-slate-500 dark:text-slate-400 uppercase tracking-widest font-black text-[9px] sticky top-0 border-b border-slate-300 dark:border-slate-800 z-10 outline outline-1 outline-slate-200 dark:outline-slate-800">
                     <tr>
-                        <th class="py-1.5 px-3 border-r border-slate-300 dark:border-slate-700 w-40">Asset Code</th>
-                        <th class="py-1.5 px-3 border-r border-slate-300 dark:border-slate-700">Model / Description</th>
-                        <th class="py-1.5 px-3 border-r border-slate-300 dark:border-slate-700 text-center w-28">Status</th>
-                        <th class="py-1.5 px-3 border-r border-slate-300 dark:border-slate-700 w-32">Created On</th>
-                        <th class="py-1.5 px-3 text-center w-16">Action</th>
+                        <th class="py-1.5 px-2 border-r border-slate-200 dark:border-slate-800 w-32">Asset Code</th>
+                        <th class="py-1.5 px-2 border-r border-slate-200 dark:border-slate-800">Model / Description</th>
+                        <th class="py-1.5 px-2 border-r border-slate-200 dark:border-slate-800 text-center w-24">Status</th>
+                        <th class="py-1.5 px-2 border-r border-slate-200 dark:border-slate-800 w-28">Created On</th>
+                        <th class="py-1.5 px-2 text-center w-16">Action</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-[10px] transition-colors">
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
                     {% for machine in machines %}
-                    <tr class="hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors group">
-                        <td class="py-1.5 px-3 border-r border-slate-200 dark:border-slate-800 font-mono font-black text-indigo-900 dark:text-indigo-400 tracking-widest">
+                    <tr class="hover:bg-indigo-50 dark:hover:bg-indigo-900/20">
+                        <td class="py-1.5 px-2 border-r border-slate-200 dark:border-slate-800 font-mono font-black text-indigo-700 dark:text-indigo-400 tracking-widest tabular-nums">
                             {{ machine.machine_code }}
                         </td>
-                        
-                        <td class="py-1.5 px-3 border-r border-slate-200 dark:border-slate-800">
-                            <div class="font-black text-slate-800 dark:text-slate-200 uppercase transition-colors">{{ machine.name }}</div>
-                            <div class="text-[8px] font-bold text-slate-500 dark:text-slate-500 truncate max-w-xs transition-colors" title="{{ machine.description }}">{{ machine.description|default:"No notes." }}</div>
+                        <td class="py-1.5 px-2 border-r border-slate-200 dark:border-slate-800">
+                            <div class="font-black text-slate-800 dark:text-slate-200 uppercase">{{ machine.name }}</div>
+                            <div class="text-[8px] font-bold text-slate-500 truncate max-w-xs" title="{{ machine.description }}">{{ machine.description|default:"No notes." }}</div>
                         </td>
-                        
-                        <td class="py-1.5 px-3 border-r border-slate-200 dark:border-slate-800 text-center">
+                        <td class="py-1.5 px-2 border-r border-slate-200 dark:border-slate-800 text-center">
                             {% if machine.status == 'Building' %}
-                                <span class="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 text-[8px] font-black uppercase tracking-widest inline-flex items-center gap-1 transition-colors"><i data-lucide="hammer" class="w-2.5 h-2.5"></i> Building</span>
+                                <span class="px-1.5 py-0.5 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700 rounded-sm text-[8px] font-black uppercase tracking-widest inline-flex items-center gap-1"><i data-lucide="hammer" class="w-2 h-2"></i> Prod</span>
                             {% elif machine.status == 'Partial' %}
-                                <span class="px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-400 border border-amber-300 dark:border-amber-800 text-[8px] font-black uppercase tracking-widest inline-flex items-center gap-1 transition-colors"><i data-lucide="alert-circle" class="w-2.5 h-2.5"></i> Partial</span>
+                                <span class="px-1.5 py-0.5 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 rounded-sm text-[8px] font-black uppercase tracking-widest inline-flex items-center gap-1"><i data-lucide="alert-circle" class="w-2 h-2"></i> Partial</span>
                             {% elif machine.status == 'Available' %}
-                                <span class="px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800 text-[8px] font-black uppercase tracking-widest inline-flex items-center gap-1 transition-colors"><i data-lucide="check-circle" class="w-2.5 h-2.5"></i> Ready</span>
+                                <span class="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 rounded-sm text-[8px] font-black uppercase tracking-widest inline-flex items-center gap-1"><i data-lucide="check" class="w-2 h-2"></i> Ready</span>
                             {% else %}
-                                <span class="px-1.5 py-0.5 bg-rose-100 dark:bg-rose-900/30 text-rose-800 dark:text-rose-400 border border-rose-300 dark:border-rose-800 text-[8px] font-black uppercase tracking-widest inline-flex items-center gap-1 transition-colors">{{ machine.status }}</span>
+                                <span class="px-1.5 py-0.5 bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50 rounded-sm text-[8px] font-black uppercase tracking-widest inline-flex items-center gap-1">{{ machine.status }}</span>
                             {% endif %}
                         </td>
-                        
-                        <td class="py-1.5 px-3 border-r border-slate-200 dark:border-slate-800 font-mono font-bold text-slate-600 dark:text-slate-400">
+                        <td class="py-1.5 px-2 border-r border-slate-200 dark:border-slate-800 font-mono text-slate-500 tabular-nums">
                             {{ machine.created_at|date:"m/d/y H:i" }}
                         </td>
-                        
-                        <td class="py-1.5 px-3 text-center">
-                            <a href="{% url 'machine_detail' machine.id %}" class="bg-slate-200 dark:bg-slate-800 hover:bg-indigo-600 dark:hover:bg-indigo-500 text-slate-600 dark:text-slate-400 hover:text-white px-2 py-1 shadow-sm inline-flex transition-colors border border-slate-300 dark:border-slate-700" title="Open Workspace">
-                                <i data-lucide="log-in" class="w-3 h-3"></i>
+                        <td class="py-1.5 px-2 text-center">
+                            <a href="{% url 'machine_detail' machine.id %}" class="text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-300 p-1 inline-flex" title="Open Workspace">
+                                <i data-lucide="folder-open" class="w-4 h-4"></i>
                             </a>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="5" class="py-12 text-center text-slate-400 dark:text-slate-600 bg-slate-50 dark:bg-slate-900/50">
-                            <p class="uppercase font-black text-[10px] tracking-widest">No Assets Found</p>
-                            <p class="text-[8px] mt-1">Try adjusting your search or click 'New Asset' to start.</p>
+                        <td colspan="5" class="py-10 text-center text-slate-400 dark:text-slate-600 bg-slate-50 dark:bg-slate-900/50">
+                            <i data-lucide="inbox" class="w-6 h-6 mx-auto mb-1 opacity-50"></i>
+                            <p class="uppercase font-black text-[9px] tracking-widest">No Assets Found</p>
                         </td>
                     </tr>
                     {% endfor %}
@@ -133,59 +134,57 @@
             </table>
         </div>
 
-        <div class="bg-slate-100 dark:bg-slate-950 border-t border-slate-300 dark:border-slate-800 py-1.5 px-3 flex justify-between items-center text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors duration-300">
-            <p>Page {{ machines.number }} of {{ machines.paginator.num_pages }}</p>
+        <div class="bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 py-1.5 px-2 flex justify-between items-center text-[9px] font-black text-slate-500 uppercase tracking-widest flex-shrink-0">
+            <p>Page {{ machines.number }} / {{ machines.paginator.num_pages }}</p>
             <div class="flex items-center gap-1">
                 {% if machines.has_previous %}
-                    <a href="?{{ filter_params }}&page={{ machines.previous_page_number }}" class="border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 transition-colors">Prev</a>
+                    <a href="?{{ filter_params }}&page={{ machines.previous_page_number }}" class="border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 px-2 py-0.5 rounded-sm">Prev</a>
                 {% else %}
-                    <span class="border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 text-slate-300 dark:text-slate-700 px-2 py-0.5 cursor-not-allowed">Prev</span>
+                    <span class="border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 opacity-50 px-2 py-0.5 rounded-sm cursor-not-allowed">Prev</span>
                 {% endif %}
 
                 {% if machines.has_next %}
-                    <a href="?{{ filter_params }}&page={{ machines.next_page_number }}" class="border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 transition-colors">Next</a>
+                    <a href="?{{ filter_params }}&page={{ machines.next_page_number }}" class="border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 px-2 py-0.5 rounded-sm">Next</a>
                 {% else %}
-                    <span class="border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 text-slate-300 dark:text-slate-700 px-2 py-0.5 cursor-not-allowed">Next</span>
+                    <span class="border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 opacity-50 px-2 py-0.5 rounded-sm cursor-not-allowed">Next</span>
                 {% endif %}
             </div>
         </div>
     </div>
 </div>
 
-<div id="createModal" class="hidden fixed inset-0 bg-slate-900/80 dark:bg-slate-950/90 backdrop-blur-sm z-50 flex justify-center items-center p-4 transition-colors duration-300">
-    <div class="bg-white dark:bg-slate-900 border-t-4 border-indigo-700 dark:border-indigo-500 shadow-2xl w-full max-w-md flex flex-col overflow-hidden transition-colors duration-300">
+<div id="createModal" class="hidden fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex justify-center items-center p-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-xl w-full max-w-sm flex flex-col rounded-sm overflow-hidden">
         
-        <div class="px-4 py-3 border-b dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950 transition-colors">
-            <h2 class="text-[11px] font-black text-indigo-900 dark:text-indigo-400 uppercase tracking-widest flex items-center gap-1.5">
-                <i data-lucide="file-plus" class="w-4 h-4 text-indigo-600 dark:text-indigo-500"></i> Register New Asset
+        <div class="px-3 py-2 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950">
+            <h2 class="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
+                <i data-lucide="cpu" class="w-3.5 h-3.5 text-indigo-500"></i> Register New Asset
             </h2>
-            <button type="button" onclick="document.getElementById('createModal').classList.add('hidden')" class="text-slate-400 hover:text-rose-600 transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
+            <button type="button" onclick="document.getElementById('createModal').classList.add('hidden')" class="text-slate-400 hover:text-rose-500"><i data-lucide="x" class="w-4 h-4"></i></button>
         </div>
 
-        <form method="POST" action="{% url 'machine_create' %}" class="p-4 space-y-3">
+        <form method="POST" action="{% url 'assembly_dashboard' %}" class="p-3 space-y-2.5">
             {% csrf_token %}
             
             <div class="space-y-1">
-                <label class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Asset Code <span class="text-rose-500">*</span></label>
-                <input type="text" name="machine_code" required placeholder="MAC-001" class="w-full py-1.5 px-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-[10px] font-mono font-black uppercase text-indigo-900 dark:text-indigo-400 focus:border-indigo-500 outline-none h-8 transition-colors">
+                <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Asset Code <span class="text-rose-500">*</span></label>
+                <input type="text" name="machine_code" required placeholder="MAC-001" class="w-full py-1.5 px-2 bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-400 dark:border-yellow-600/50 text-xs font-mono font-black uppercase text-indigo-900 dark:text-indigo-400 focus:border-indigo-500 outline-none rounded-sm shadow-inner">
             </div>
 
             <div class="space-y-1">
-                <label class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Model / Name <span class="text-rose-500">*</span></label>
-                <input type="text" name="name" required placeholder="Conveyor V2" class="w-full py-1.5 px-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-[10px] font-bold text-slate-800 dark:text-slate-200 focus:border-indigo-500 outline-none h-8 uppercase transition-colors">
+                <label class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Model / Name <span class="text-rose-500">*</span></label>
+                <input type="text" name="name" required placeholder="Model Name" class="w-full py-1.5 px-2 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 font-bold focus:border-indigo-500 outline-none uppercase rounded-sm">
             </div>
 
             <div class="space-y-1">
-                <label class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">Notes (Optional)</label>
-                <textarea name="description" rows="2" placeholder="Build notes..." class="w-full py-1.5 px-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-[10px] font-bold text-slate-600 dark:text-slate-400 focus:border-indigo-500 outline-none transition-colors"></textarea>
+                <label class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Notes (Optional)</label>
+                <textarea name="description" rows="2" class="w-full py-1.5 px-2 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-[10px] text-slate-600 dark:text-slate-300 focus:border-indigo-500 outline-none rounded-sm"></textarea>
             </div>
 
-            <div class="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-2 transition-colors">
-                <button type="button" onclick="document.getElementById('createModal').classList.add('hidden')" class="bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-300 dark:border-slate-700 px-4 py-1.5 text-[9px] font-black uppercase tracking-widest hover:bg-slate-100 dark:hover:bg-slate-700 transition-all h-8">
-                    Cancel
-                </button>
-                <button type="submit" class="bg-indigo-700 dark:bg-indigo-600 text-white border border-indigo-900 dark:border-indigo-800 px-6 py-1.5 text-[9px] font-black uppercase tracking-widest hover:bg-indigo-800 dark:hover:bg-indigo-500 transition-all shadow-sm flex items-center gap-1.5 h-8">
-                    <i data-lucide="save" class="w-3 h-3"></i> Save & Open
+            <div class="mt-2 pt-2 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-1.5">
+                <button type="button" onclick="document.getElementById('createModal').classList.add('hidden')" class="bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-300 dark:border-slate-700 px-3 py-1 text-[9px] font-black uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-700 rounded-sm">Cancel</button>
+                <button type="submit" class="bg-indigo-600 text-white border border-indigo-700 px-4 py-1 text-[9px] font-black uppercase tracking-widest hover:bg-indigo-700 shadow-sm flex items-center gap-1.5 rounded-sm">
+                    <i data-lucide="save" class="w-3 h-3"></i> Save
                 </button>
             </div>
         </form>
