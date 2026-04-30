@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333333; line-height: 1.6; margin: 0; padding: 0; background-color: #f4f4f5; }
+        .email-container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 5px solid #10b981; }
+        .header { background-color: #ecfdf5; padding: 25px; text-align: center; border-bottom: 1px solid #d1fae5; }
+        .header h2 { color: #065f46; margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 1px; }
+        .content { padding: 30px; }
+        .content p { margin: 0 0 15px; font-size: 15px; }
+        .details-box { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 20px; margin: 20px 0; }
+        .details-box ul { list-style: none; padding: 0; margin: 0; }
+        .details-box li { margin-bottom: 10px; font-size: 14px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 8px; }
+        .details-box li:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .details-box strong { color: #475569; display: inline-block; width: 140px; }
+        .highlight-text { color: #10b981; font-weight: bold; }
+        .footer { background-color: #1e293b; color: #94a3b8; text-align: center; padding: 20px; font-size: 12px; }
+        .footer p { margin: 0; }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h2>📦 Order Delivered Successfully!</h2>
+        </div>
+        
+        <div class="content">
+            <p>Hello <strong>{{ customer_name }}</strong>,</p>
+            <p>Great news! We are writing to inform you that your order <span class="highlight-text">{{ order_no }}</span> has been successfully delivered to your location.</p>
+            
+            <div class="details-box">
+                <ul>
+                    <li><strong>Main Order No:</strong> {{ order_no }}</li>
+                    <li><strong>Received By:</strong> {{ receiver_name }}</li>
+                    <li><strong>Date & Time:</strong> {{ delivery_date }}</li>
+                    <li><strong>Transport Via:</strong> {{ transport_info }}</li>
+                    {% if notes %}
+                    <li><strong>Delivery Notes:</strong> <em>"{{ notes }}"</em></li>
+                    {% endif %}
+                </ul>
+            </div>
+            
+            <p>Thank you for trusting <strong>Asia Integrated Machine Inc.</strong> If you have any questions or concerns regarding your items, please don't hesitate to reply to this email.</p>
+        </div>
+        
+        <div class="footer">
+            <p>&copy; 2026 Asia Integrated Machine Inc. All rights reserved.</p>
+            <p>This is an automated notification. Please do not reply to this email directly if you require immediate assistance.</p>
+        </div>
+    </div>
+</body>
+</html>

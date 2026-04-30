@@ -1,0 +1,464 @@
+{% extends "Inventory/base.html" %}
+
+{% block title %}Fleet Master Dashboard | AIM{% endblock %}
+
+{% block content %}
+<div class="max-w-[100%] mx-auto mt-6 pb-20 px-4 text-slate-800 dark:text-slate-200 transition-colors duration-300">
+    
+    <div class="bg-zinc-800 dark:bg-zinc-900 border border-zinc-700 p-4 mb-6 shadow-sm flex items-center justify-between transition-colors rounded-sm">
+        <div class="flex items-center gap-3">
+            <div class="bg-zinc-700 p-2 rounded-sm text-white">
+                <i data-lucide="car-front" class="w-6 h-6 transition-colors"></i>
+            </div>
+            <div>
+                <h2 class="text-xl font-black text-white uppercase tracking-tighter transition-colors">Fleet Master Dashboard</h2>
+                <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest transition-colors">Manage Vehicles, Drivers, Expiries & Expenses</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- LEFT: REGISTRATION FORMS -->
+        <div class="lg:col-span-4 space-y-6">
+            
+            <!-- VEHICLE FORM -->
+            <div class="bg-white dark:bg-slate-900 p-5 shadow-sm border border-slate-300 dark:border-slate-700 rounded-sm">
+                <h4 class="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest mb-4 border-b border-slate-200 dark:border-slate-800 pb-2 flex items-center gap-2">
+                    <i data-lucide="plus-circle" class="w-4 h-4 text-emerald-500"></i> Register Vehicle
+                </h4>
+                <form id="fleetMasterForm" onsubmit="submitFleetForm(event)" class="space-y-4">
+                    {% csrf_token %}
+                    <!-- (Tandaan: Tinanggal ko na yung "Driver" input dito dahil sa table na sila mag-a-assign) -->
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest">Plate Number *</label>
+                        <input type="text" id="v_plate" required placeholder="ABC-1234" class="w-full p-2 border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-950 text-xs font-black uppercase text-slate-800 dark:text-slate-200 focus:outline-none focus:border-zinc-500 shadow-inner">
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="space-y-1">
+                            <label class="text-[9px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest">Type *</label>
+                            <select id="v_type" required class="w-full p-2 border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-950 text-xs font-black uppercase text-slate-800 dark:text-slate-200 focus:outline-none shadow-inner">
+                                <option value="Truck">Truck</option><option value="Van">Van</option><option value="Motorcycle">Motorcycle</option>
+                            </select>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[9px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest">Coding *</label>
+                            <select id="v_coding" required class="w-full p-2 border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-950 text-xs font-black uppercase text-slate-800 dark:text-slate-200 focus:outline-none shadow-inner">
+                                <option value="Monday">Monday (1, 2)</option><option value="Tuesday">Tuesday (3, 4)</option><option value="Wednesday">Wednesday (5, 6)</option><option value="Thursday">Thursday (7, 8)</option><option value="Friday">Friday (9, 0)</option><option value="None">Exempted</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-3 border-y border-slate-200 dark:border-slate-800 py-4 my-2">
+                        <div class="space-y-1">
+                            <label class="text-[9px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-widest">LTO Expiry</label>
+                            <input type="date" id="v_lto" class="w-full p-2 border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-950 text-[10px] font-bold text-slate-800 dark:text-slate-200 focus:outline-none shadow-inner">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[9px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest">Next PMS</label>
+                            <input type="date" id="v_pms" class="w-full p-2 border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-950 text-[10px] font-bold text-slate-800 dark:text-slate-200 focus:outline-none shadow-inner">
+                        </div>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest">Capacity (KG)</label>
+                        <input type="number" id="v_capacity" value="0" class="w-full p-2 border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-950 text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none shadow-inner text-right">
+                    </div>
+
+                    <button type="submit" class="w-full mt-4 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white font-black uppercase tracking-widest text-[11px] py-3 rounded-sm transition-transform active:scale-95 shadow-md flex items-center justify-center gap-2">
+                        <i data-lucide="save" class="w-4 h-4"></i> Save Vehicle
+                    </button>
+                </form>
+            </div>
+
+            <!-- 🚀 BAGO: ADD DRIVER FORM -->
+            <div class="bg-white dark:bg-slate-900 p-5 shadow-sm border border-slate-300 dark:border-slate-700 rounded-sm">
+                <h4 class="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest mb-4 border-b border-slate-200 dark:border-slate-800 pb-2 flex items-center gap-2">
+                    <i data-lucide="user-plus" class="w-4 h-4 text-indigo-500"></i> Register Driver
+                </h4>
+                <form onsubmit="submitDriverForm(event)" class="space-y-3">
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest">Driver Full Name *</label>
+                        <input type="text" id="d_name" required placeholder="Juan Dela Cruz" class="w-full p-2 border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-950 text-xs font-black uppercase text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 shadow-inner">
+                    </div>
+                    <button type="submit" class="w-full mt-2 bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase tracking-widest text-[10px] py-2.5 rounded-sm transition-transform active:scale-95 shadow-md flex items-center justify-center gap-2">
+                        <i data-lucide="save" class="w-4 h-4"></i> Add to Masterlist
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- RIGHT: FLEET MASTERLIST & EXPENSES -->
+        <div class="lg:col-span-8 flex flex-col gap-6">
+            
+            <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm overflow-hidden transition-colors rounded-sm">
+                <div class="bg-slate-100 dark:bg-slate-950 px-4 py-3 flex justify-between items-center border-b border-slate-200 dark:border-slate-800">
+                    <h3 class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest flex items-center gap-2">
+                        <i data-lucide="list" class="w-4 h-4 text-indigo-500"></i> Fleet Masterlist & Crew
+                    </h3>
+                </div>
+                <div class="overflow-x-auto min-h-[250px]">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead class="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 uppercase font-black text-[9px]">
+                            <tr>
+                                <th class="py-2 px-4 border-b border-slate-200 dark:border-slate-700">Plate No.</th>
+                                <th class="py-2 px-4 border-b border-slate-200 dark:border-slate-700">Crew / Assignment</th>
+                                <th class="py-2 px-4 border-b border-slate-200 dark:border-slate-700 text-center">Dates</th>
+                                <th class="py-2 px-4 text-center border-b border-slate-200 dark:border-slate-700">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                            {% for v in vehicles %}
+                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                <td class="py-3 px-4">
+                                    <span class="block font-black uppercase text-indigo-700 dark:text-indigo-400 text-sm">{{ v.plate_number }}</span>
+                                    <span class="block text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase mt-0.5">{{ v.vehicle_type }}</span>
+                                </td>
+                                
+                                <!-- 🚀 BAGO: QUICK ASSIGN CREW DISPLAY AT BUTTON -->
+                                <td class="py-3 px-4">
+                                    <div class="flex flex-col gap-0.5">
+                                        <span class="text-[10px] font-black text-slate-700 dark:text-slate-200 uppercase flex items-center gap-1.5">
+                                            <i data-lucide="steering-wheel" class="w-3 h-3 text-emerald-600 dark:text-emerald-500"></i> 
+                                            {{ v.assigned_driver.name|default:"<span class='text-rose-500'>NO DRIVER</span>"|safe }}
+                                        </span>
+                                        {% if v.assistant_name %}
+                                        <span class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase ml-4">
+                                            + {{ v.assistant_name }}
+                                        </span>
+                                        {% endif %}
+                                        <button onclick="openCrewModal({{ v.id }}, '{{ v.plate_number }}', '{{ v.assigned_driver.id|default:'' }}', '{{ v.assistant_name|default:'' }}')" class="mt-1.5 w-fit text-[8px] bg-slate-200 dark:bg-slate-700 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 hover:text-indigo-700 dark:hover:text-indigo-400 px-2 py-0.5 rounded-sm transition-colors uppercase font-black tracking-widest text-slate-600 dark:text-slate-300">
+                                            Edit Crew
+                                        </button>
+                                    </div>
+                                </td>
+
+                                <td class="py-3 px-4 text-center">
+                                    <span class="block text-[9px] font-bold uppercase {% if v.lto_expiry < today %}text-rose-600 dark:text-rose-400 animate-pulse{% else %}text-slate-600 dark:text-slate-400{% endif %}">LTO: {{ v.lto_expiry|date:"m/d/Y"|default:"N/A" }}</span>
+                                    <span class="block text-[9px] font-bold uppercase text-amber-600 dark:text-amber-500 mt-0.5">PMS: {{ v.pms_schedule|date:"m/d/Y"|default:"N/A" }}</span>
+                                </td>
+                                <td class="py-3 px-4 text-center">
+                                    {% if v.status == 'Available' %}
+                                        <span class="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 px-2 py-0.5 rounded-sm text-[9px] font-black uppercase">Available</span>
+                                    {% elif v.status == 'In Transit' %}
+                                        <!-- 🚀 BAGO: Nilagyan natin ng View Trip Button kapag In Transit -->
+                                        <div class="flex flex-col items-center gap-1.5">
+                                            <span class="bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400 px-2 py-0.5 rounded-sm text-[9px] font-black uppercase animate-pulse">In Transit</span>
+                                            <button onclick="viewActiveTrip({{ v.id }}, '{{ v.plate_number }}')" class="flex items-center gap-1 text-[8px] font-black uppercase tracking-widest text-sky-600 dark:text-sky-400 hover:text-sky-800 dark:hover:text-sky-300 transition-colors bg-sky-50 dark:bg-sky-900/20 px-2 py-1 rounded-sm border border-sky-200 dark:border-sky-800">
+                                                <i data-lucide="map-pin" class="w-3 h-3"></i> Trip Info
+                                            </button>
+                                        </div>
+                                    {% else %}
+                                        <span class="bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400 px-2 py-0.5 rounded-sm text-[9px] font-black uppercase">{{ v.status }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="py-10 text-center text-slate-400 italic font-bold">No registered vehicles.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TRIP EXPENSES LOG -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm overflow-hidden transition-colors rounded-sm mt-6">
+                <div class="bg-rose-50 dark:bg-rose-950/40 px-4 py-3 flex justify-between items-center border-b border-rose-200 dark:border-rose-900/50">
+                    <h3 class="text-xs font-black text-rose-800 dark:text-rose-400 uppercase tracking-widest flex items-center gap-2">
+                        <i data-lucide="receipt" class="w-4 h-4"></i> Recent Logistics Expenses
+                    </h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead class="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 uppercase font-black text-[9px]">
+                            <tr>
+                                <th class="py-2 px-4 border-b border-slate-200 dark:border-slate-700">Date / User</th>
+                                <th class="py-2 px-4 border-b border-slate-200 dark:border-slate-700">Order Batch</th>
+                                <th class="py-2 px-4 border-b border-slate-200 dark:border-slate-700">Vehicle</th>
+                                <th class="py-2 px-4 text-right border-b border-slate-200 dark:border-slate-700">Fuel Cost</th>
+                                <th class="py-2 px-4 text-right border-b border-slate-200 dark:border-slate-700">Toll Fee</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-bold">
+                            {% for exp in recent_expenses %}
+                            <tr class="hover:bg-rose-50/50 dark:hover:bg-rose-900/20">
+                                <td class="py-3 px-4">
+                                    <span class="block text-slate-700 dark:text-slate-300">{{ exp.date_recorded|date:"M d, Y" }}</span>
+                                    <span class="block text-[8px] text-slate-400 uppercase mt-0.5">By: {{ exp.recorded_by.username|default:"System" }}</span>
+                                </td>
+                                <td class="py-3 px-4 text-indigo-700 dark:text-indigo-400 font-black uppercase">
+                                    {{ exp.order_batch_no }}
+                                </td>
+                                <td class="py-3 px-4 text-slate-600 dark:text-slate-400 uppercase">{{ exp.vehicle.plate_number|default:"Deleted Vehicle" }}</td>
+                                <td class="py-3 px-4 text-right text-rose-700 dark:text-rose-400">₱ {{ exp.fuel_cost|floatformat:2 }}</td>
+                                <td class="py-3 px-4 text-right text-amber-600 dark:text-amber-500">₱ {{ exp.toll_fee|floatformat:2 }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="5" class="py-10 text-center text-slate-400 italic font-bold">No expenses recorded yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 🚀 BAGO: ASSIGN CREW MODAL -->
+<div id="crewModal" class="hidden fixed inset-0 z-[300] bg-slate-900/80 dark:bg-slate-950/90 backdrop-blur-sm flex justify-center items-center p-4 transition-colors duration-300">
+    <div class="bg-white dark:bg-slate-900 border-t-8 border-indigo-600 dark:border-indigo-500 shadow-2xl w-full max-w-sm rounded-sm overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-indigo-50 dark:bg-slate-950">
+            <h3 class="text-sm font-black text-indigo-800 dark:text-indigo-400 uppercase tracking-widest flex items-center gap-2">
+                <i data-lucide="users" class="w-5 h-5"></i> Assign Crew: <span id="crew_plate_display" class="text-indigo-900 dark:text-indigo-300"></span>
+            </h3>
+            <button type="button" onclick="closeCrewModal()" class="text-slate-400 hover:text-rose-500 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+        <form onsubmit="submitCrewForm(event)" class="p-6 space-y-4">
+            <input type="hidden" id="crew_vehicle_id">
+            <div class="space-y-1">
+                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Select Driver *</label>
+                <select id="crew_driver_id" required class="w-full p-2 border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-950 text-xs font-black uppercase text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 shadow-inner">
+                    <option value="">-- No Driver --</option>
+                    {% for d in drivers %}
+                        <option value="{{ d.id }}">{{ d.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="space-y-1">
+                <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Assistant / Pahinante (Optional)</label>
+                <input type="text" id="crew_assistant" placeholder="Name of assistant..." class="w-full p-2 border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-950 text-xs font-black uppercase text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 shadow-inner">
+            </div>
+            <button type="submit" class="w-full mt-2 bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase tracking-widest text-[11px] py-3 rounded-sm transition-transform active:scale-95 shadow-md">Save Assignment</button>
+        </form>
+    </div>
+</div>
+
+<div id="tripModal" class="hidden fixed inset-0 z-[400] bg-slate-900/80 dark:bg-slate-950/90 backdrop-blur-sm flex justify-center items-center p-4 transition-colors duration-300">
+    <div class="bg-white dark:bg-slate-900 border-t-8 border-sky-600 dark:border-sky-500 shadow-2xl w-full max-w-2xl rounded-sm overflow-hidden animate-in fade-in zoom-in duration-200">
+        
+        <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-sky-50 dark:bg-slate-950">
+            <h3 class="text-sm font-black text-sky-800 dark:text-sky-400 uppercase tracking-widest flex items-center gap-2">
+                <i data-lucide="navigation" class="w-5 h-5"></i> Active Trip: <span id="trip_plate_display" class="text-slate-900 dark:text-white"></span>
+            </h3>
+            <button type="button" onclick="closeTripModal()" class="text-slate-400 hover:text-rose-500 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+
+        <div class="p-6">
+            <!-- 🗺️ Ang Mapa -->
+            <div class="w-full h-48 bg-slate-200 dark:bg-slate-800 rounded-sm mb-4 border border-slate-300 dark:border-slate-700 overflow-hidden relative">
+                <iframe id="trip_map_iframe" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+            </div>
+
+            <!-- 📝 Detalye ng Trip -->
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div class="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-sm border border-slate-200 dark:border-slate-800">
+                    <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Customer / Client</span>
+                    <span id="trip_customer" class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase">Loading...</span>
+                </div>
+                <div class="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-sm border border-slate-200 dark:border-slate-800">
+                    <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Main PO No.</span>
+                    <span id="trip_po" class="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase">Loading...</span>
+                </div>
+                <div class="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-sm border border-slate-200 dark:border-slate-800">
+                    <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Contact Person</span>
+                    <span id="trip_contact" class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">Loading...</span>
+                </div>
+                <div class="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-sm border border-slate-200 dark:border-slate-800 flex justify-between items-center">
+                    <div>
+                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Items on Board</span>
+                        <span id="trip_items" class="text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase">Loading...</span>
+                    </div>
+                    <i data-lucide="package" class="w-6 h-6 text-emerald-500/50"></i>
+                </div>
+            </div>
+
+            <div class="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-sm border border-slate-200 dark:border-slate-800">
+                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Exact Delivery Address</span>
+                <span id="trip_address" class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">Loading...</span>
+            </div>
+
+            <!-- 🚀 BAGO: DETAILED ITEMS TABLE -->
+            <div class="border border-slate-200 dark:border-slate-800 rounded-sm overflow-hidden shadow-sm mb-4">
+                <div class="bg-slate-100 dark:bg-slate-900 px-3 py-2 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
+                    <h4 class="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest flex items-center gap-2">
+                        <i data-lucide="package-open" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-500"></i> Items to Deliver
+                    </h4>
+                    <span id="trip_total_qty" class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded-sm">0 Total Qty</span>
+                </div>
+                <div class="max-h-32 overflow-y-auto">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 uppercase font-black text-[9px] sticky top-0">
+                            <tr>
+                                <th class="py-1.5 px-3 border-b border-slate-200 dark:border-slate-700">Item Code / Description</th>
+                                <th class="py-1.5 px-3 border-b border-slate-200 dark:border-slate-700 text-center w-24">Qty</th>
+                            </tr>
+                        </thead>
+                        <tbody id="trip_items_tbody" class="divide-y divide-slate-100 dark:divide-slate-800 font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-950">
+                            <!-- JS will inject rows here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="mt-5 flex gap-3">
+                <a id="trip_route_btn" href="#" target="_blank" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-black uppercase tracking-widest text-[10px] py-3 rounded-sm transition-transform active:scale-95 shadow-md flex items-center justify-center gap-2">
+                    <i data-lucide="map" class="w-4 h-4"></i> Get Route Directions
+                </a>
+                <button type="button" onclick="closeTripModal()" class="w-1/3 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-black uppercase tracking-widest text-[10px] py-3 rounded-sm transition-colors">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    });
+
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+
+    // MAG-ADD NG VEHICLE
+    async function submitFleetForm(e) {
+        e.preventDefault();
+        let capValue = document.getElementById('v_capacity').value;
+        const payload = {
+            action: 'add',
+            plate_number: document.getElementById('v_plate').value,
+            vehicle_type: document.getElementById('v_type').value,
+            coding_day: document.getElementById('v_coding').value,
+            capacity_kg: capValue ? capValue : 0,
+            lto_expiry: document.getElementById('v_lto').value, 
+            pms_schedule: document.getElementById('v_pms').value 
+        };
+        postAPI(payload);
+    }
+
+    // MAG-ADD NG DRIVER
+    async function submitDriverForm(e) {
+        e.preventDefault();
+        const payload = {
+            action: 'add_driver',
+            name: document.getElementById('d_name').value
+        };
+        postAPI(payload);
+    }
+
+    // MAG-ASSIGN NG CREW SA SASAKYAN
+    function openCrewModal(v_id, plate, d_id, assist) {
+        document.getElementById('crew_vehicle_id').value = v_id;
+        document.getElementById('crew_plate_display').innerText = plate;
+        document.getElementById('crew_driver_id').value = d_id;
+        document.getElementById('crew_assistant').value = assist;
+        document.getElementById('crewModal').classList.remove('hidden');
+    }
+
+    function closeCrewModal() {
+        document.getElementById('crewModal').classList.add('hidden');
+    }
+
+    async function submitCrewForm(e) {
+        e.preventDefault();
+        const payload = {
+            action: 'assign_crew',
+            vehicle_id: document.getElementById('crew_vehicle_id').value,
+            driver_id: document.getElementById('crew_driver_id').value,
+            assistant_name: document.getElementById('crew_assistant').value
+        };
+        postAPI(payload);
+    }
+
+    // REUSABLE API CALLER
+    async function postAPI(payload) {
+        try {
+            const response = await fetch('/api/fleet-management/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            if (data.success) {
+                window.location.reload(); 
+            } else {
+                alert("Error: " + data.error);
+            }
+        } catch (err) {
+            alert("Network error: Hindi ma-contact ang server.");
+        }
+    }
+
+    async function viewActiveTrip(vehicleId, plateNumber) {
+        document.getElementById('tripModal').classList.remove('hidden');
+        document.getElementById('trip_plate_display').innerText = plateNumber;
+        
+        // Reset Text while loading
+        document.getElementById('trip_customer').innerText = "Loading...";
+        document.getElementById('trip_po').innerText = "Loading...";
+        document.getElementById('trip_contact').innerText = "Loading...";
+        document.getElementById('trip_address').innerText = "Loading...";
+        document.getElementById('trip_items').innerText = "Loading...";
+        
+        const tbody = document.getElementById('trip_items_tbody');
+        tbody.innerHTML = '<tr><td colspan="2" class="text-center py-4 text-slate-400 text-[10px] uppercase tracking-widest font-bold">Loading items... <i data-lucide="loader-2" class="w-3 h-3 inline animate-spin"></i></td></tr>';
+        document.getElementById('trip_total_qty').innerText = 'Loading...';
+
+        try {
+            const response = await fetch(`/api/active-trip/${vehicleId}/`);
+            const data = await response.json();
+
+            if (data.success) {
+                document.getElementById('trip_customer').innerText = data.customer;
+                document.getElementById('trip_po').innerText = data.po_no;
+                document.getElementById('trip_contact').innerText = data.contact_person;
+                document.getElementById('trip_address').innerText = data.address;
+                document.getElementById('trip_items').innerText = data.item_count + " Line Item(s)";
+
+                // 🚀 BAGO: I-LOOP ANG MGA ITEMS PARA ILAGAY SA TABLE
+                tbody.innerHTML = '';
+                let totalQty = 0;
+                
+                if (data.items_list && data.items_list.length > 0) {
+                    data.items_list.forEach(item => {
+                        totalQty += item.quantity;
+                        tbody.innerHTML += `
+                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
+                                <td class="py-1.5 px-3 border-r border-slate-100 dark:border-slate-800 text-indigo-700 dark:text-indigo-400 uppercase">${item.item_code}</td>
+                                <td class="py-1.5 px-3 text-center">${item.quantity}</td>
+                            </tr>
+                        `;
+                    });
+                    document.getElementById('trip_total_qty').innerText = `${totalQty} Total Qty`;
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="2" class="text-center py-4 text-rose-400 text-[10px] uppercase font-bold tracking-widest">No detailed items found.</td></tr>';
+                    document.getElementById('trip_total_qty').innerText = `0 Total Qty`;
+                }
+
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+
+                // 🗺️ I-setup ang MAPA!
+                const safeAddress = encodeURIComponent(data.address);
+                const iframeSrc = `https://maps.google.com/maps?q=${safeAddress}&t=&z=14&ie=UTF8&iwloc=&output=embed`;
+                document.getElementById('trip_map_iframe').src = iframeSrc;
+
+                // 🗺️ I-setup ang Get Directions Button
+                const warehouseAddress = "Mandaluyong+City,+Philippines"; 
+                const routeUrl = `https://www.google.com/maps/dir/${warehouseAddress}/${safeAddress}`;
+                document.getElementById('trip_route_btn').href = routeUrl;
+
+            } else {
+                alert("Could not fetch trip details: " + data.error);
+                closeTripModal();
+            }
+        } catch (err) {
+            alert("Network Error!");
+            closeTripModal();
+        }
+    }
+
+    function closeTripModal() {
+        document.getElementById('tripModal').classList.add('hidden');
+        // I-clear ang iframe para di kumain ng internet memory
+        document.getElementById('trip_map_iframe').src = "";
+    }
+</script>
+{% endblock %}

@@ -575,3 +575,91 @@ class UserAccess(models.Model):
 
     def __str__(self):
         return self.user.username
+
+class FleetDriver(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    contact_no = models.CharField(max_length=20, blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.name
+
+class Vehicle(models.Model):
+    VEHICLE_TYPES = [
+        ('Truck', 'Truck'),
+        ('Van', 'Van'),
+        ('Motorcycle', 'Motorcycle'),
+    ]
+    STATUS_CHOICES = [
+        ('Available', 'Available'),
+        ('In Transit', 'In Transit'),
+        ('Maintenance', 'Maintenance'),
+    ]
+    CODING_DAYS = [
+        ('Monday', 'Monday (1, 2)'),
+        ('Tuesday', 'Tuesday (3, 4)'),
+        ('Wednesday', 'Wednesday (5, 6)'),
+        ('Thursday', 'Thursday (7, 8)'),
+        ('Friday', 'Friday (9, 0)'),
+        ('None', 'None (Exempted)'),
+    ]
+
+    plate_number = models.CharField(max_length=20, unique=True)
+    vehicle_type = models.CharField(max_length=50, choices=VEHICLE_TYPES)
+    capacity_kg = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    coding_day = models.CharField(max_length=20, choices=CODING_DAYS)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Available')
+    driver_name = models.CharField(max_length=100, blank=True, null=True)
+    last_updated = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.plate_number} ({self.vehicle_type})"
+
+class Vehicle(models.Model):
+    VEHICLE_TYPES = [
+        ('Truck', 'Truck'),
+        ('Van', 'Van'),
+        ('Motorcycle', 'Motorcycle'),
+    ]
+    STATUS_CHOICES = [
+        ('Available', 'Available'),
+        ('In Transit', 'In Transit'),
+        ('Maintenance', 'Maintenance'),
+    ]
+    CODING_DAYS = [
+        ('Monday', 'Monday (1, 2)'),
+        ('Tuesday', 'Tuesday (3, 4)'),
+        ('Wednesday', 'Wednesday (5, 6)'),
+        ('Thursday', 'Thursday (7, 8)'),
+        ('Friday', 'Friday (9, 0)'),
+        ('None', 'None (Exempted)'),
+    ]
+
+    plate_number = models.CharField(max_length=20, unique=True)
+    vehicle_type = models.CharField(max_length=50, choices=VEHICLE_TYPES)
+    capacity_kg = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    coding_day = models.CharField(max_length=20, choices=CODING_DAYS)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Available')
+    driver_name = models.CharField(max_length=100, blank=True, null=True)
+    lto_expiry = models.DateField(null=True, blank=True)
+    pms_schedule = models.DateField(null=True, blank=True)
+    assigned_driver = models.ForeignKey(FleetDriver, on_delete=models.SET_NULL, null=True, blank=True)
+    assistant_name = models.CharField(max_length=100, blank=True, null=True)
+    
+    
+    last_updated = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.plate_number} ({self.vehicle_type})"
+
+# 🚀 BAGO: Tracker para sa Gas at Toll
+class TripExpense(models.Model):
+    vehicle = models.ForeignKey(Vehicle, on_delete=models.SET_NULL, null=True)
+    order_batch_no = models.CharField(max_length=50) # Main PO No.
+    fuel_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    toll_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    recorded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    date_recorded = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Expense for {self.order_batch_no} - {self.vehicle}"

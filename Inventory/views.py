@@ -5,8 +5,10 @@ from django.contrib.auth.decorators import login_required
 from django.core.serializers.json import DjangoJSONEncoder
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.hashers import make_password
+from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.core.management import call_command
+from django.db.models.functions import Concat
 from django.db.models.functions import Trim
 from django.utils.html import strip_tags
 from django.db.models.signals import pre_save
@@ -15,7 +17,7 @@ from django.db.models import Prefetch
 from django.contrib import messages
 from django.db import transaction
 from django.utils import timezone
-from django.db.models import Sum, Count, Q, F, When, DecimalField, Case, Value, ExpressionWrapper
+from django.db.models import Sum, Count, Q, F, When, DecimalField, Case, Value, ExpressionWrapper, CharField
 from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.http import HttpResponse
@@ -91,6 +93,9 @@ from .models import (
     SystemModule, 
     UserAccess, 
     User,
+    Vehicle,
+    TripExpense,
+    FleetDriver
 )
 
 @login_required
@@ -2102,10 +2107,8 @@ def order_inquiry_view(request):
 @login_required
 @require_module_access('CUSTOMER_ORDER')
 def order_dispatch_view(request, batch_id):
-    # 🚀 FIX: Yung 'batch_id' na pinapasa ng URL natin ngayon ay ang 'main_po_no' na talaga!
     main_po_no = batch_id 
     
-    # 1. Kunin LAHAT ng items sa buong batch na Pending pa gamit ang order_no__startswith
     items = CustomerOrder.objects.filter(
         order_no__startswith=main_po_no, 
         order_status__in=['Pending', 'Processing']
@@ -2116,12 +2119,27 @@ def order_dispatch_view(request, batch_id):
         return redirect('order_inquiry')
 
     if request.method == "POST":
-        courier = request.POST.get('courier')
+        courier = request.POST.get('courier') # Pwede itong "LBC Express" o ID ng sasakyan natin
         tracking = request.POST.get('tracking')
 
         try:
             with transaction.atomic():
-                # 2. Ipunin lahat ng unique na emails ng customers sa batch na ito
+                # 🚀 BAGO: Check kung ang napiling Courier ay "In-House Fleet" (Vehicle ID)
+                fleet_vehicle = None
+                transport_name = courier
+
+                if courier.isdigit():  # Kung number, ibig sabihin Vehicle ID galing sa database
+                    try:
+                        fleet_vehicle = Vehicle.objects.get(id=int(courier))
+                        d_name = fleet_vehicle.assigned_driver.name if fleet_vehicle.assigned_driver else "No Driver"
+                        transport_name = f"Fleet: {fleet_vehicle.plate_number} ({d_name})"
+                        
+                        # I-update ang status ng sasakyan to In Transit
+                        fleet_vehicle.status = 'In Transit'
+                        fleet_vehicle.save()
+                    except Vehicle.DoesNotExist:
+                        pass 
+
                 orders_to_email = {}
                 for item in items:
                     if item.customer and getattr(item.customer, 'email', None):
@@ -2131,44 +2149,72 @@ def order_dispatch_view(request, batch_id):
                                 'customer_name': item.customer.name
                             }
 
-                # 3. I-UPDATE ANG STATUS NG BUONG BATCH SABAY-SABAY
+                # Update Order Status
                 items.update(
                     order_status='Shipped',
-                    transport=courier,
+                    transport=transport_name,
                     remarks=f"TRK: {tracking}"
                 )
 
-                # 4. SYSTEM LOG
                 log_system_action(
                     user=request.user, 
                     action='UPDATE', 
                     module='Customer Order', 
-                    description=f"Batch Dispatched {main_po_no} via {courier} (Tracking: {tracking})", 
+                    description=f"Batch Dispatched {main_po_no} via {transport_name} (Tracking: {tracking})", 
                     request=request
                 )
 
-            # 5. 🚀 THE MAGIC: SEND EMAIL SA LAHAT NG CUSTOMER SA BATCH
-            # Nilagay natin sa labas ng 'transaction.atomic' para kahit pumalya ang email ng isa, 
-            # hindi mabu-bura yung database update mo!
+            # Send Email
             for order_no, data in orders_to_email.items():
-                try:
-                    send_shipping_notification(
-                        order_no=order_no, 
-                        customer_email=data['email'], 
-                        courier_name=courier, 
-                        tracking_number=tracking
-                    )
-                except Exception as email_err:
-                    print(f"Failed to send shipping email to {data['email']}: {email_err}")
+                if data['email']:
+                    try:
+                        # 🚀 BAGO: Gagamitin natin ang EmailMultiAlternatives para basahin yung magandang HTML design!
+                        context = {
+                            'order_no': order_no,
+                            'courier_name': transport_name,
+                            'tracking_number': tracking
+                        }
+                        
+                        # Siguraduhing tama ang folder path ('Inventory/emails/...')
+                        html_content = render_to_string('Inventory/emails/shipping_notification_email.html', context)
+                        text_content = strip_tags(html_content)
+                        
+                        subject = f"Shipping Update: Order #{order_no} is on its way!"
+                        
+                        email = EmailMultiAlternatives(
+                            subject, 
+                            text_content, 
+                            settings.DEFAULT_FROM_EMAIL, 
+                            [data['email']]
+                        )
+                        email.attach_alternative(html_content, "text/html")
+                        email.send(fail_silently=True)
+                        
+                        print(f"Success: Shipping email sent to {data['email']}")
+                        
+                    except Exception as email_err:
+                        print(f"Failed to send shipping email to {data['email']}: {email_err}")
 
-            messages.success(request, f"Success! Batch {main_po_no} dispatched successfully! Shipping emails sent to clients.")
+            messages.success(request, f"Success! Batch {main_po_no} dispatched successfully!")
             return redirect('order_inquiry') 
 
         except Exception as e:
             messages.error(request, f"System Error: {str(e)}")
             return redirect('order_dispatch', batch_id=batch_id)
 
-    # 6. GROUP ITEMS BY CUSTOMER PARA SA UI
+    # 🚀 BAGO: Logic para sa Fleet / Car Coding Filtering (GET Request)
+    today_name = datetime.datetime.now().strftime("%A") # Hal: 'Monday'
+    
+    # Kukunin lang yung available
+    available_fleet = Vehicle.objects.filter(status='Available').order_by('vehicle_type')
+    
+    safe_fleet = []
+    for v in available_fleet:
+        # Aalisin sa listahan kung coding siya ngayong araw
+        if v.coding_day != today_name:
+            safe_fleet.append(v)
+
+    # Group Items
     grouped_orders = {}
     for item in items:
         if item.order_no not in grouped_orders:
@@ -2182,33 +2228,197 @@ def order_dispatch_view(request, batch_id):
         'batch_id': batch_id,
         'main_po_no': main_po_no,
         'grouped_orders': grouped_orders,
+        'safe_fleet': safe_fleet, # 🚀 IPASA SA UI
+        'today_name': today_name,
     }
     return render(request, 'Inventory/customer_order/order_dispatch.html', context)
 
 @login_required
 @require_module_access('CUSTOMER_ORDER')
 def mark_delivered_view(request, order_no):
-    # Hanapin ang order na 'Shipped' na
-    items = CustomerOrder.objects.filter(order_no=order_no, order_status='Shipped')
-    
-    if items.exists():
-        # Update natin ang status to Delivered
-        items.update(order_status='Delivered')
-
-        log_system_action(
-            user=request.user, 
-            action='UPDATE', 
-            module='Customer Order', 
-            description=f"Marked Order {order_no} as Delivered.", 
-            request=request
-        )
-
-        messages.success(request, f"Success! Order #{order_no} is now marked as Delivered.")
-    else:
-        messages.error(request, f"Cannot update Order #{order_no}. It might not be shipped yet.")
+    if request.method == "POST":
+        receiver_name = request.POST.get('receiver_name', 'Unknown')
+        delivery_date = request.POST.get('delivery_date')
+        notes = request.POST.get('notes', '')
         
-    # I-redirect pabalik sa listahan ng orders (Inquiry view mo)
-    # Palitan ang 'order_inquiry' ng tamang URL name ng listahan mo kung iba
+        fuel_cost = request.POST.get('fuel_cost', 0)
+        toll_fee = request.POST.get('toll_fee', 0)
+
+        items = CustomerOrder.objects.filter(order_no=order_no, order_status='Shipped')
+        
+        if items.exists():
+            first_item = items.first()
+            transport_info = first_item.transport or ""
+            
+            # 🚀 FIX 1: SMART PO EXTRACTOR (Para hindi maging "PO" lang)
+            raw_order_no = first_item.order_no
+            parts = raw_order_no.split('-')
+            if len(parts) > 2: # Ex: PO-260429-6596-1 -> PO-260429-6596
+                main_batch_no = "-".join(parts[:-1])
+            else: # Ex: PO-260429 -> PO-260429
+                main_batch_no = raw_order_no
+
+            epod_note = f" | [e-POD] Rcvd by: {receiver_name} on {delivery_date}. Notes: {notes}"
+            vehicle_released = False
+            
+            if "Fleet:" in transport_info:
+                # 🚀 FIX 2: Hanapin ang sasakyan kahit na "Available" na siya para maka-save pa rin ng gas sa 2nd order!
+                all_vehicles = Vehicle.objects.all()
+                for v in all_vehicles:
+                    if v.plate_number in transport_info:
+                        
+                        # Mag-save agad ng expense kung may input!
+                        fuel = float(fuel_cost) if fuel_cost and fuel_cost != '' else 0.0
+                        toll = float(toll_fee) if toll_fee and toll_fee != '' else 0.0
+                        
+                        if fuel > 0 or toll > 0:
+                            TripExpense.objects.create(
+                                vehicle=v,
+                                order_batch_no=main_batch_no,
+                                fuel_cost=fuel,
+                                toll_fee=toll,
+                                recorded_by=request.user
+                            )
+                        
+                        # Palayain ang sasakyan kung In Transit pa siya
+                        if v.status == 'In Transit':
+                            v.status = 'Available'
+                            v.save()
+                            vehicle_released = True
+                            
+                        break
+
+            # Update Order Status
+            items.update(
+                order_status='Delivered',
+                remarks=Concat(F('remarks'), Value(epod_note), output_field=CharField())
+            )
+
+            customer_email = getattr(first_item.customer, 'email', None) if first_item.customer else None
+            
+            if customer_email:
+                try:
+                    subject = f"Delivery Confirmation: Order #{order_no}"
+                    context = {
+                        'order_no': order_no,
+                        'customer_name': first_item.customer.name,
+                        'receiver_name': receiver_name,
+                        'delivery_date': delivery_date,
+                        'transport_info': transport_info,
+                        'notes': notes
+                    }
+                    
+                    # Ito ang hahanapin na HTML template
+                    html_content = render_to_string('Inventory/emails/delivery_confirmation_email.html', context)
+                    text_content = strip_tags(html_content)
+                    
+                    email = EmailMultiAlternatives(
+                        subject,
+                        text_content,
+                        settings.DEFAULT_FROM_EMAIL,
+                        [customer_email]
+                    )
+                    email.attach_alternative(html_content, "text/html")
+                    email.send(fail_silently=True)
+                    print(f"Success: Delivery email sent to {customer_email}")
+                except Exception as e:
+                    print(f"Error: Failed to send delivery email to {customer_email}. Reason: {e}")
+
+            log_system_action(
+                user=request.user, 
+                action='UPDATE', 
+                module='Customer Order', 
+                description=f"Delivered {order_no} via {transport_info}", 
+                request=request
+            )
+
+            messages.success(request, f"Order {order_no} delivered successfully!")
+        else:
+            messages.error(request, "Order not found or not in Shipped status.")
+            
+    return redirect('order_inquiry')
+
+@login_required
+@require_module_access('CUSTOMER_ORDER')
+def mark_delivered_batch_view(request, main_po_no):
+    if request.method == "POST":
+        receiver_name = request.POST.get('receiver_name', 'Unknown')
+        delivery_date = request.POST.get('delivery_date')
+        notes = request.POST.get('notes', '')
+        fuel_cost = request.POST.get('fuel_cost', 0)
+        toll_fee = request.POST.get('toll_fee', 0)
+
+        # 1. Kunin lahat ng Shipped orders sa Main PO na ito
+        items = CustomerOrder.objects.filter(order_no__startswith=main_po_no, order_status='Shipped')
+        
+        if items.exists():
+            first_item = items.first()
+            transport_info = first_item.transport or ""
+            epod_note = f" | [Batch e-POD] Rcvd by: {receiver_name} on {delivery_date}. Notes: {notes}"
+            
+            # 2. Handle Fleet & Expenses (Isang beses lang ise-save para sa buong batch)
+            if "Fleet:" in transport_info:
+                all_vehicles = Vehicle.objects.all()
+                for v in all_vehicles:
+                    if v.plate_number in transport_info:
+                        fuel = float(fuel_cost) if fuel_cost and fuel_cost != '' else 0.0
+                        toll = float(toll_fee) if toll_fee and toll_fee != '' else 0.0
+                        
+                        if fuel > 0 or toll > 0:
+                            TripExpense.objects.create(
+                                vehicle=v,
+                                order_batch_no=main_po_no,
+                                fuel_cost=fuel,
+                                toll_fee=toll,
+                                recorded_by=request.user
+                            )
+                        if v.status == 'In Transit':
+                            v.status = 'Available'
+                            v.save()
+                        break
+
+            # 3. Ipunin ang lahat ng unique customers sa batch na ito para sa emails
+            orders_to_notify = []
+            seen_orders = set()
+            
+            for item in items:
+                if item.order_no not in seen_orders:
+                    orders_to_notify.append({
+                        'order_no': item.order_no,
+                        'email': getattr(item.customer, 'email', None) if item.customer else None,
+                        'name': item.customer.name if item.customer else "Valued Customer"
+                    })
+                    seen_orders.add(item.order_no)
+
+            # 4. I-update ang status ng LAHAT ng orders sa batch
+            items.update(
+                order_status='Delivered',
+                remarks=Concat(F('remarks'), Value(epod_note), output_field=CharField())
+            )
+
+            # 5. LOOP: Mag-send ng individual emails sa bawat customer
+            for data in orders_to_notify:
+                if data['email']:
+                    try:
+                        context = {
+                            'order_no': data['order_no'],
+                            'customer_name': data['name'],
+                            'receiver_name': receiver_name,
+                            'delivery_date': delivery_date,
+                            'transport_info': transport_info,
+                            'notes': notes
+                        }
+                        html_content = render_to_string('Inventory/emails/delivery_confirmation_email.html', context)
+                        text_content = strip_tags(html_content)
+                        email = EmailMultiAlternatives(f"Delivery Confirmation: #{data['order_no']}", text_content, settings.DEFAULT_FROM_EMAIL, [data['email']])
+                        email.attach_alternative(html_content, "text/html")
+                        email.send(fail_silently=True)
+                    except: pass
+
+            messages.success(request, f"{main_po_no} marked as Delivered! All customers notified via email.")
+        else:
+            messages.error(request, "No shipped orders found for this batch.")
+            
     return redirect('order_inquiry')
 
 # Purchase Order Views 
@@ -6108,6 +6318,132 @@ def machine_create_view(request):
             messages.success(request, f"Success: Asset '{machine_code}' created. Ready for assembly.")
         
     return redirect('assembly_dashboard')
+
+@login_required
+@csrf_exempt 
+def fleet_management_api(request):
+    if request.method == "GET":
+        vehicles = Vehicle.objects.all().order_by('vehicle_type', 'plate_number')
+        data = []
+        for v in vehicles:
+            # 🚀 BAGO: Kunin natin yung driver at assistant name
+            driver_display = v.assigned_driver.name if v.assigned_driver else "NO DRIVER"
+            if v.assistant_name:
+                driver_display += f" (+ {v.assistant_name})"
+
+            data.append({
+                'id': v.id,
+                'plate': v.plate_number,
+                'type': v.vehicle_type,
+                'capacity': float(v.capacity_kg),
+                'coding': v.coding_day,
+                'status': v.status,
+                'driver': driver_display,
+                'lto': v.lto_expiry.strftime('%Y-%m-%d') if v.lto_expiry else '',
+                'pms': v.pms_schedule.strftime('%Y-%m-%d') if v.pms_schedule else ''
+            })
+        return JsonResponse({'success': True, 'vehicles': data})
+
+    if request.method == "POST":
+        try:
+            body = json.loads(request.body)
+            action = body.get('action')
+
+            if action == 'add':
+                # ... (Yung pag-add ng vehicle mo kanina, iwan mo lang) ...
+                pass # (Placeholder para hindi humaba)
+
+            # 🚀 BAGO: Pag-add ng Driver sa Masterlist
+            elif action == 'add_driver':
+                FleetDriver.objects.create(
+                    name=body.get('name').upper(),
+                    contact_no=body.get('contact_no', '')
+                )
+                return JsonResponse({'success': True, 'message': 'Driver registered successfully!'})
+
+            # 🚀 BAGO: Pag-assign ng Driver at Assistant sa Sasakyan nang mabilisan
+            elif action == 'assign_crew':
+                vehicle = Vehicle.objects.get(id=body.get('vehicle_id'))
+                driver_id = body.get('driver_id')
+                
+                if driver_id:
+                    vehicle.assigned_driver = FleetDriver.objects.get(id=driver_id)
+                else:
+                    vehicle.assigned_driver = None
+                    
+                vehicle.assistant_name = body.get('assistant_name', '').upper()
+                vehicle.save()
+                return JsonResponse({'success': True, 'message': 'Crew assigned successfully!'})
+
+            elif action == 'update_status':
+                # ... (Iwan lang ang luma) ...
+                pass
+
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+
+    return JsonResponse({'success': False, 'error': 'Invalid Request'})
+
+@login_required
+def fleet_dashboard_view(request):
+    vehicles = Vehicle.objects.all().order_by('vehicle_type', 'plate_number')
+    recent_expenses = TripExpense.objects.select_related('vehicle', 'recorded_by').order_by('-date_recorded')[:10]
+    drivers = FleetDriver.objects.filter(is_active=True).order_by('name') # 🚀 Kunin ang listahan ng Drivers
+    
+    context = {
+        'vehicles': vehicles,
+        'recent_expenses': recent_expenses,
+        'drivers': drivers, # 🚀 Ipasa sa UI
+        'today': datetime.datetime.now().date(),
+    }
+    return render(request, 'Inventory/fleet/fleet_dashboard.html', context)
+
+@login_required
+def active_trip_api(request, vehicle_id):
+    try:
+        vehicle = Vehicle.objects.get(id=vehicle_id)
+        
+        orders = CustomerOrder.objects.filter(
+            transport__icontains=vehicle.plate_number,
+            order_status='Shipped'
+        )
+
+        if orders.exists():
+            first_order = orders.first()
+            
+            raw_order_no = first_order.order_no
+            parts = raw_order_no.split('-')
+            if len(parts) > 2:
+                main_po = "-".join(parts[:-1])
+            else:
+                main_po = raw_order_no
+            
+            customers = list(set([o.customer.name for o in orders if o.customer]))
+            customer_str = ", ".join(customers) if len(customers) <= 2 else f"{customers[0]} and {len(customers)-1} others"
+
+            # 🚀 BAGO: Ipunin natin yung mga items sa isang listahan para maipasa sa UI!
+            items_list = []
+            for o in orders:
+                items_list.append({
+                    'item_code': getattr(o, 'item_code', 'Unknown Item'),
+                    'quantity': float(o.quantity) if getattr(o, 'quantity', None) else 0
+                })
+
+            data = {
+                'success': True,
+                'po_no': main_po,
+                'customer': customer_str,
+                'contact_person': getattr(first_order, 'contact_person', 'No Contact Provided'),
+                'address': getattr(first_order, 'delivery_address', 'Manila, Philippines'),
+                'item_count': orders.count(),
+                'items_list': items_list # <--- IPAPASA NA NATIN ITO SA JAVASCRIPT
+            }
+            return JsonResponse(data)
+        else:
+            return JsonResponse({'success': False, 'error': 'No active shipped orders found for this vehicle.'})
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
 
     
 

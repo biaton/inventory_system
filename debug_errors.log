@@ -1331,3 +1331,77 @@ Traceback (most recent call last):
     raise NoReverseMatch(msg)
 django.urls.exceptions.NoReverseMatch: Reverse for 'print_pick_list' not found. 'print_pick_list' is not a valid view function or pattern name.
 "GET /request/process/25/ HTTP/1.1" 500 222721
+Internal Server Error: /api/fleet-management/
+Traceback (most recent call last):
+  File "C:\Users\aimde\Desktop\inventory_system\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\aimde\Desktop\inventory_system\venv\Lib\site-packages\django\core\handlers\base.py", line 198, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\aimde\Desktop\inventory_system\venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\aimde\Desktop\inventory_system\venv\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\aimde\Desktop\inventory_system\Inventory\views.py", line 6116, in fleet_management_api
+    vehicles = Vehicle.objects.all().order_by('vehicle_type', 'plate_number')
+               ^^^^^^^
+NameError: name 'Vehicle' is not defined
+"GET /api/fleet-management/ HTTP/1.1" 500 91341
+Internal Server Error: /api/fleet-management/
+Traceback (most recent call last):
+  File "C:\Users\aimde\Desktop\inventory_system\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\aimde\Desktop\inventory_system\venv\Lib\site-packages\django\core\handlers\base.py", line 198, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\aimde\Desktop\inventory_system\venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\aimde\Desktop\inventory_system\venv\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\aimde\Desktop\inventory_system\Inventory\views.py", line 6116, in fleet_management_api
+    vehicles = Vehicle.objects.all().order_by('vehicle_type', 'plate_number')
+               ^^^^^^^
+NameError: name 'Vehicle' is not defined
+"GET /api/fleet-management/ HTTP/1.1" 500 91345
+Internal Server Error: /api/fleet-management/
+Traceback (most recent call last):
+  File "C:\Users\aimde\Desktop\inventory_system\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\aimde\Desktop\inventory_system\venv\Lib\site-packages\django\core\handlers\base.py", line 198, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\aimde\Desktop\inventory_system\venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\aimde\Desktop\inventory_system\venv\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\aimde\Desktop\inventory_system\Inventory\views.py", line 6116, in fleet_management_api
+    vehicles = Vehicle.objects.all().order_by('vehicle_type', 'plate_number')
+               ^^^^^^^
+NameError: name 'Vehicle' is not defined
+"GET /api/fleet-management/ HTTP/1.1" 500 91345
+Internal Server Error: /api/fleet-management/
+Traceback (most recent call last):
+  File "C:\Users\aimde\Desktop\inventory_system\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\aimde\Desktop\inventory_system\venv\Lib\site-packages\django\core\handlers\base.py", line 198, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\aimde\Desktop\inventory_system\venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\aimde\Desktop\inventory_system\venv\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\aimde\Desktop\inventory_system\Inventory\views.py", line 6116, in fleet_management_api
+    vehicles = Vehicle.objects.all().order_by('vehicle_type', 'plate_number')
+               ^^^^^^^
+NameError: name 'Vehicle' is not defined
+"GET /api/fleet-management/ HTTP/1.1" 500 91345
+Internal Server Error: /fleet-dashboard/
+Traceback (most recent call last):
+  File "C:\Users\aimde\Desktop\inventory_system\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\aimde\Desktop\inventory_system\venv\Lib\site-packages\django\core\handlers\base.py", line 198, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\aimde\Desktop\inventory_system\venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\aimde\Desktop\inventory_system\Inventory\views.py", line 6235, in fleet_dashboard_view
+    recent_expenses = TripExpense.objects.select_related('vehicle', 'recorded_by').order_by('-date_recorded')[:10]
+                      ^^^^^^^^^^^
+NameError: name 'TripExpense' is not defined
+"GET /fleet-dashboard/ HTTP/1.1" 500 88336
+"GET /fleet-dashboard/ HTTP/1.1" 500 88568

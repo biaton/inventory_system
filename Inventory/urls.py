@@ -171,6 +171,11 @@ urlpatterns = [
     
     path('system-audit/', views.system_audit_logs_view, name='system_audit_logs'),
 
+    path('api/fleet-management/', views.fleet_management_api, name='fleet_management_api'),
+    path('fleet-dashboard/', views.fleet_dashboard_view, name='fleet_dashboard'),
+    path('api/active-trip/<int:vehicle_id>/', views.active_trip_api, name='active_trip_api'),
+    path('mark-delivered-batch/<str:main_po_no>/', views.mark_delivered_batch_view, name='mark_delivered_batch'),
+
 
     path('system/test-email/', views.test_all_email_templates_view, name='test_email_system'),
 ]
