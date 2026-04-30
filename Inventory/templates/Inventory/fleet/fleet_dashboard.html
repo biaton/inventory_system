@@ -128,7 +128,7 @@
                                             + {{ v.assistant_name }}
                                         </span>
                                         {% endif %}
-                                        <button onclick="openCrewModal({{ v.id }}, '{{ v.plate_number }}', '{{ v.assigned_driver.id|default:'' }}', '{{ v.assistant_name|default:'' }}')" class="mt-1.5 w-fit text-[8px] bg-slate-200 dark:bg-slate-700 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 hover:text-indigo-700 dark:hover:text-indigo-400 px-2 py-0.5 rounded-sm transition-colors uppercase font-black tracking-widest text-slate-600 dark:text-slate-300">
+                                        <button onclick="openCrewModal(`{{ v.id }}`, `{{ v.plate_number }}`, `{{ v.assigned_driver.id|default:'' }}`, `{{ v.assistant_name|default:'' }}`)" class="mt-1.5 w-fit text-[8px] bg-slate-200 dark:bg-slate-700 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 hover:text-indigo-700 dark:hover:text-indigo-400 px-2 py-0.5 rounded-sm transition-colors uppercase font-black tracking-widest text-slate-600 dark:text-slate-300">
                                             Edit Crew
                                         </button>
                                     </div>
@@ -142,10 +142,9 @@
                                     {% if v.status == 'Available' %}
                                         <span class="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 px-2 py-0.5 rounded-sm text-[9px] font-black uppercase">Available</span>
                                     {% elif v.status == 'In Transit' %}
-                                        <!-- 🚀 BAGO: Nilagyan natin ng View Trip Button kapag In Transit -->
                                         <div class="flex flex-col items-center gap-1.5">
                                             <span class="bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400 px-2 py-0.5 rounded-sm text-[9px] font-black uppercase animate-pulse">In Transit</span>
-                                            <button onclick="viewActiveTrip({{ v.id }}, '{{ v.plate_number }}')" class="flex items-center gap-1 text-[8px] font-black uppercase tracking-widest text-sky-600 dark:text-sky-400 hover:text-sky-800 dark:hover:text-sky-300 transition-colors bg-sky-50 dark:bg-sky-900/20 px-2 py-1 rounded-sm border border-sky-200 dark:border-sky-800">
+                                            <button onclick="viewActiveTrip(`{{ v.id }}`, `{{ v.plate_number }}`)" class="flex items-center gap-1 text-[8px] font-black uppercase tracking-widest text-sky-600 dark:text-sky-400 hover:text-sky-800 dark:hover:text-sky-300 transition-colors bg-sky-50 dark:bg-sky-900/20 px-2 py-1 rounded-sm border border-sky-200 dark:border-sky-800">
                                                 <i data-lucide="map-pin" class="w-3 h-3"></i> Trip Info
                                             </button>
                                         </div>

@@ -7,7 +7,11 @@
             <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
                 
                 <tr>
-                    <td style="background-color: {% if status == 'Approved' %}#059669{% else %}#dc2626{% endif %}; padding: 20px; text-align: center;">
+                    {% if status == 'Approved' %}
+                    <td style="background-color: #059669; padding: 20px; text-align: center;">
+                    {% else %}
+                    <td style="background-color: #dc2626; padding: 20px; text-align: center;">
+                    {% endif %}
                         <h2 style="margin: 0; color: #ffffff; font-size: 20px; letter-spacing: 2px; text-transform: uppercase;">
                             P.O. Status: {{ status }}
                         </h2>
@@ -21,8 +25,13 @@
                             The management has finished reviewing your Purchase Order. Below is the final decision:
                         </p>
                         
-                        <table width="100%" cellpadding="15" cellspacing="0" style="background-color: #f8fafc; border-left: 4px solid {% if status == 'Approved' %}#059669{% else %}#dc2626{% endif %}; border-radius: 4px; margin-bottom: 25px;">
-                            <tr><td>
+                        {% if status == 'Approved' %}
+                        <table width="100%" cellpadding="15" cellspacing="0" style="background-color: #f8fafc; border-left: 4px solid #059669; border-radius: 4px; margin-bottom: 25px;">
+                        {% else %}
+                        <table width="100%" cellpadding="15" cellspacing="0" style="background-color: #f8fafc; border-left: 4px solid #dc2626; border-radius: 4px; margin-bottom: 25px;">
+                        {% endif %}
+                            <tr>
+                                <td>
                                 <table width="100%" cellpadding="5" cellspacing="0" style="font-size: 14px;">
                                     <tr>
                                         <td width="40%" style="color: #64748b;"><strong>P.O. Number:</strong></td>
@@ -34,7 +43,11 @@
                                     </tr>
                                     <tr>
                                         <td style="color: #64748b;"><strong>Status:</strong></td>
-                                        <td style="color: {% if status == 'Approved' %}#059669{% else %}#dc2626{% endif %}; font-weight: bold; text-transform: uppercase;">
+                                        {% if status == 'Approved' %}
+                                        <td style="color: #059669; font-weight: bold; text-transform: uppercase;">
+                                        {% else %}
+                                        <td style="color: #dc2626; font-weight: bold; text-transform: uppercase;">
+                                        {% endif %}
                                             {{ status }}
                                         </td>
                                     </tr>

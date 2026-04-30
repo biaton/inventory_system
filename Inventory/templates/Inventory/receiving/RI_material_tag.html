@@ -143,6 +143,13 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script type="application/json" id="items-data">
+        {
+            {% for item in all_items %}
+            "{{ item.item_code|escapejs }}": "{{ item.description|default:''|escapejs }}"{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        }
+    </script>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         lucide.createIcons();
@@ -163,11 +170,12 @@
         }
     });
 
-    const masterItemDatabase = {
-        {% for item in all_items %}
-        "{{ item.item_code|upper|escapejs }}": "{{ item.description|default:''|escapejs }}"{% if not forloop.last %},{% endif %}
-        {% endfor %}
-    };
+    let masterItemDatabase = {};
+    try {
+        masterItemDatabase = JSON.parse(document.getElementById('items-data').textContent);
+    } catch (e) {
+        console.error("Error loading master item database:", e);
+    }
 
     function updateFileName(input) {
         const displaySpan = document.getElementById('file_name_display');

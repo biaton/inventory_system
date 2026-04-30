@@ -198,8 +198,8 @@
     </form>
 </div>
 
-<script>
-    const itemMasterDatabase = {
+<script type="text/template" id="item-data">
+    {
         {% for item in items %}
         "{{ item.item_code|upper|escapejs }}": {
             "description": "{{ item.description|default:''|escapejs }}",
@@ -207,7 +207,34 @@
             "uom": "{{ item.uom|default:'PCS'|escapejs }}"
         }{% if not forloop.last %},{% endif %}
         {% endfor %}
-    };
+    }
+</script>
+
+<!-- 🚀 LIGTAS NA LALAGYAN NG DATA PARA SA CUSTOMERS -->
+<script type="text/template" id="customer-data">
+    {
+        {% for c in customers %}
+        "{{ c.name|upper|escapejs }}": {
+            "contact": "{{ c.contact_person|default:''|escapejs }}", 
+            "address": "{{ c.address|default:''|escapejs }}"
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    }
+</script>
+
+<!-- 🚀 ANG MAIN JAVASCRIPT MO (Malinis na at walang red lines) -->
+<script>
+    // 1. I-declare ang mga variables
+    let itemMasterDatabase = {};
+    let customerDatabase = {};
+
+    // 2. Ligtas na kunin ang data mula sa HTML templates sa taas
+    try {
+        itemMasterDatabase = JSON.parse(document.getElementById('item-data').textContent);
+        customerDatabase = JSON.parse(document.getElementById('customer-data').textContent);
+    } catch (e) {
+        console.error("Error parsing databases:", e);
+    }
 
     document.addEventListener("DOMContentLoaded", function() {
         lucide.createIcons();
@@ -284,15 +311,6 @@
             document.getElementById('order_date').valueAsDate = new Date();
         }
     }
-
-    const customerDatabase = {
-        {% for c in customers %}
-        "{{ c.name|upper|escapejs }}": {
-            "contact": "{{ c.contact_person|default:''|escapejs }}", 
-            "address": "{{ c.address|default:''|escapejs }}"
-        }{% if not forloop.last %},{% endif %}
-        {% endfor %}
-    };
 
     function autoFillCustomer() {
         const selectedCustomer = document.getElementById('customer_name_id').value.toUpperCase();

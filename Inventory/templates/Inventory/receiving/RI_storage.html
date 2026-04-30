@@ -417,7 +417,17 @@
             console.error("Failed to fetch location stock:", error);
         }
     }
-    const allLocations = {{ locations_json|safe }};
+    </script>
+    <script type="text/template" id="locations-data">
+        {{ locations_json|safe }}
+    </script>
+    <script>
+    let allLocations = [];
+    try {
+        allLocations = JSON.parse(document.getElementById('locations-data').textContent);
+    } catch (e) {
+        console.error("Error parsing locations JSON:", e);
+    }
 
     document.addEventListener("DOMContentLoaded", function() {
         if (typeof lucide !== 'undefined') lucide.createIcons();

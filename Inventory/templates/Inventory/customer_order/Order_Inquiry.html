@@ -214,7 +214,7 @@
 
                     <div class="text-right">
                         {% if po.main_order.header.status == 'Shipped' %}
-                            <button type="button" onclick="openEPODModal('{{ po.main_po_no }}', '{% url 'mark_delivered_batch' po.main_po_no %}', '{{ po.main_order.header.transport }}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-[10px] font-black uppercase tracking-widest shadow-md flex items-center justify-end gap-2 rounded-sm transition-all transform active:scale-95 ml-auto">
+                            <button type="button" onclick="openEPODModal('{{ po.main_po_no }}', `{% url 'mark_delivered_batch' po.main_po_no %}`, '{{ po.main_order.header.transport }}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-[10px] font-black uppercase tracking-widest shadow-md flex items-center justify-end gap-2 rounded-sm transition-all transform active:scale-95 ml-auto">
                                 <i data-lucide="check-circle" class="w-4 h-4"></i> Mark Batch Delivered
                             </button>
                         {% elif po.main_order.header.status == 'Delivered' %}

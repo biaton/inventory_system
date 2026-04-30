@@ -300,16 +300,63 @@
     {% endfor %}
 </datalist>
 
+<script type="text/template" id="customer-data">
+    {
+        {% for c in customers %}
+        "{{ c.name|upper|escapejs }}": {
+            "contact": "{{ c.contact_person|default:''|escapejs }}",
+            "address": "{{ c.address|default:''|escapejs }}"
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    }
+</script>
+
+<!-- 🚀 LIGTAS NA LALAGYAN NG DATA PARA SA ITEMS -->
+<script type="text/template" id="item-data">
+    {
+        {% for item in items %}
+        "{{ item.item_code|upper|escapejs }}": {
+            "description": "{{ item.description|default:''|escapejs }}",
+            "unit_price": "{{ item.unit_price|default:'0.00' }}",
+            "uom": "{{ item.uom|default:'PCS'|escapejs }}"
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    }
+</script>
+
+<script type="text/template" id="item-data">
+    {
+        {% for item in items %}
+        "{{ item.item_code|upper|escapejs }}": {
+            "description": "{{ item.description|default:''|escapejs }}",
+            "unit_price": "{{ item.unit_price|default:'0.00' }}",
+            "uom": "{{ item.uom|default:'PCS'|escapejs }}"
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    }
+</script>
+
+<!-- 🚀 ANG MAIN JAVASCRIPT MO -->
 <script>
     let blockCounter = 0;
+    let customerDatabase = {};
+    let itemMasterDatabase = {};
 
     document.addEventListener("DOMContentLoaded", function() {
         lucide.createIcons();
         
+        // 🚀 BAGO: Kunin ang data nang ligtas galing sa tagong templates!
+        try {
+            customerDatabase = JSON.parse(document.getElementById('customer-data').textContent);
+            itemMasterDatabase = JSON.parse(document.getElementById('item-data').textContent);
+        } catch (e) {
+            console.error("Error parsing databases:", e);
+        }
+        
         const dateInput = document.getElementById('main_delivery_date');
         if (dateInput && !dateInput.value) {
             let defaultDate = new Date();
-            defaultDate.setDate(defaultDate.getDate() + 3); // Let's give it +3 days default
+            defaultDate.setDate(defaultDate.getDate() + 3); // +3 days default
             dateInput.valueAsDate = defaultDate;
         }
 
@@ -349,15 +396,6 @@
         input.value = `${prefix}-${year}${month}${day}-${random}`;
     }
 
-    const customerDatabase = {
-        {% for c in customers %}
-        "{{ c.name|upper|escapejs }}": {
-            "contact": "{{ c.contact_person|default:''|escapejs }}",
-            "address": "{{ c.address|default:''|escapejs }}"
-        }{% if not forloop.last %},{% endif %}
-        {% endfor %}
-    };
-
     function autoFillCustomer(inputElement) {
         const selectedCustomer = inputElement.value.toUpperCase();
         const container = inputElement.closest('.dynamic-order-block'); 
@@ -373,16 +411,6 @@
         }
         updateSummaryTable();
     }
-
-    const itemMasterDatabase = {
-        {% for item in items %}
-        "{{ item.item_code|upper|escapejs }}": {
-            "description": "{{ item.description|default:''|escapejs }}",
-            "unit_price": "{{ item.unit_price|default:'0.00' }}",
-            "uom": "{{ item.uom|default:'PCS'|escapejs }}"
-        }{% if not forloop.last %},{% endif %}
-        {% endfor %}
-    };
 
     function autoFillItemRow(inputElement) {
         const itemCode = inputElement.value.trim().toUpperCase();
@@ -424,7 +452,6 @@
         updateCustomerBlockNumbers();
     }
 
-    // 🚀 BAGO: Magic Re-Indexer para sa Customer Labels
     function removeCustomerBlock(btn) {
         btn.closest('.dynamic-order-block').remove();
         updateCustomerBlockNumbers();
@@ -500,7 +527,6 @@
         updateGrandTotal();
     }
 
-    // 🚀 BAGO: Function para sa Live Summary Table
     function updateSummaryTable() {
         const summaryTbody = document.getElementById('summary-table-body');
         if(!summaryTbody) return;

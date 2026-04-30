@@ -335,11 +335,44 @@
     {% for item in items %}<option value="{{ item.item_code }}">{{ item.description }}</option>{% endfor %}
 </datalist>
 
+<script type="text/template" id="supplier-data">
+    {
+        {% for s in suppliers %}
+        "{{ s.name|upper|escapejs }}": {
+            "contact": "{{ s.contact_name|default:''|escapejs }}"
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    }
+</script>
+
+<script type="text/template" id="item-data">
+    {
+        {% for item in items %}
+        "{{ item.item_code|upper|escapejs }}": {
+            "description": "{{ item.description|default:''|escapejs }}",
+            "unit_price": "{{ item.unit_price|default:'0.00' }}",
+            "uom": "{{ item.uom|default:'PCS'|escapejs }}"
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    }
+</script>
+
 <script>
     let blockCounter = 0;
+    let supplierDatabase = {};
+    let itemMasterDatabase = {};
 
     document.addEventListener("DOMContentLoaded", function() {
         lucide.createIcons();
+        
+        // 🚀 BAGO: Kinukuha natin nang ligtas yung data galing sa templates sa taas
+        try {
+            supplierDatabase = JSON.parse(document.getElementById('supplier-data').textContent);
+            itemMasterDatabase = JSON.parse(document.getElementById('item-data').textContent);
+        } catch (e) {
+            console.error("Error parsing databases:", e);
+        }
+
         const mainDelDate = document.getElementById('main_delivery_date');
         if (mainDelDate && !mainDelDate.value) {
             let defaultDate = new Date();
@@ -372,14 +405,6 @@
         });
     });
 
-    const supplierDatabase = {
-        {% for s in suppliers %}
-        "{{ s.name|upper|escapejs }}": {
-            "contact": "{{ s.contact_name|default:''|escapejs }}"
-        }{% if not forloop.last %},{% endif %}
-        {% endfor %}
-    };
-
     function autoFillSupplier(inputElement) {
         const selectedSupplier = inputElement.value.toUpperCase();
         const container = inputElement.closest('.dynamic-po-block'); 
@@ -392,16 +417,6 @@
         }
         updateSummaryTable();
     }
-
-    const itemMasterDatabase = {
-        {% for item in items %}
-        "{{ item.item_code|upper|escapejs }}": {
-            "description": "{{ item.description|default:''|escapejs }}",
-            "unit_price": "{{ item.unit_price|default:'0.00' }}",
-            "uom": "{{ item.uom|default:'PCS'|escapejs }}"
-        }{% if not forloop.last %},{% endif %}
-        {% endfor %}
-    };
 
     function autoFillItemRow(inputElement) {
         const itemCode = inputElement.value.trim().toUpperCase();
@@ -457,7 +472,6 @@
         updateSupplierBlockNumbers();
     }
 
-    // 🚀 BAGO: Magic Re-Indexer para sa Supplier Labels
     function removeSupplierBlock(btn) {
         btn.closest('.dynamic-po-block').remove();
         updateSupplierBlockNumbers();
@@ -548,7 +562,6 @@
         updateSummaryTable();
     }
 
-    // 🚀 BAGO: Function para sa Live Summary Table
     function updateSummaryTable() {
         const summaryTbody = document.getElementById('summary-table-body');
         summaryTbody.innerHTML = '';
