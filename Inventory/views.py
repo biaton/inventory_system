@@ -95,7 +95,8 @@ from .models import (
     User,
     Vehicle,
     TripExpense,
-    FleetDriver
+    FleetDriver,
+    PasswordResetOTP
 )
 
 @login_required
@@ -206,6 +207,92 @@ def custom_logout_view(request):
 
     logout(request) # Ito ang magbubura ng session
     return redirect('login') # Babalik siya sa custom login page natin
+
+def password_reset_request(request):
+    if request.method == "POST":
+        email = request.POST.get('email')
+        try:
+            user = User.objects.get(email=email)
+            otp_obj, created = PasswordResetOTP.objects.get_or_create(user=user)
+            otp_obj.generate_otp()
+
+            # I-send ang OTP sa Email
+            subject = "AIM Security: Password Reset Code"
+            context = {'otp': otp_obj.otp, 'user': user}
+            html_content = render_to_string('Inventory/emails/otp_reset_email.html', context)
+            text_content = strip_tags(html_content)
+
+            email_msg = EmailMultiAlternatives(subject, text_content, settings.DEFAULT_FROM_EMAIL, [user.email])
+            email_msg.attach_alternative(html_content, "text/html")
+            email_msg.send(fail_silently=True)
+
+            # I-save ang email sa session para maalala natin sa susunod na page
+            request.session['reset_email'] = user.email 
+            return redirect('password_reset_verify')
+            
+        except User.DoesNotExist:
+            # Kahit walang account, ididirekta pa rin natin para hindi malaman ng hacker kung sino ang may account
+            request.session['reset_email'] = email
+            return redirect('password_reset_verify')
+
+    return render(request, 'Inventory/auth/password_reset_form.html')
+
+
+def password_reset_verify(request):
+    email = request.session.get('reset_email')
+    if not email:
+        return redirect('password_reset')
+
+    if request.method == "POST":
+        otp_input = request.POST.get('otp')
+        try:
+            user = User.objects.get(email=email)
+            otp_obj = PasswordResetOTP.objects.get(user=user)
+
+            if otp_obj.otp == otp_input and otp_obj.is_valid():
+                request.session['otp_verified'] = True
+                messages.success(request, "Code verified! Enter your new password.")
+                return redirect('password_reset_confirm')
+            else:
+                messages.error(request, "Invalid or expired 5-digit code.")
+        except (User.DoesNotExist, PasswordResetOTP.DoesNotExist):
+            messages.error(request, "Invalid request or code.")
+
+    return render(request, 'Inventory/auth/password_reset_verify.html', {'email': email})
+
+
+def password_reset_confirm(request):
+    if not request.session.get('otp_verified'):
+        return redirect('password_reset')
+
+    email = request.session.get('reset_email')
+
+    if request.method == "POST":
+        pwd1 = request.POST.get('new_password1')
+        pwd2 = request.POST.get('new_password2')
+
+        if pwd1 == pwd2:
+            try:
+                user = User.objects.get(email=email)
+                user.set_password(pwd1)
+                user.save()
+
+                # Linisin ang database at session
+                PasswordResetOTP.objects.filter(user=user).delete()
+                del request.session['reset_email']
+                del request.session['otp_verified']
+
+                return redirect('password_reset_complete')
+            except User.DoesNotExist:
+                messages.error(request, "System error. User not found.")
+        else:
+            messages.error(request, "Passwords do not match!")
+
+    return render(request, 'Inventory/auth/password_reset_confirm.html')
+
+
+def password_reset_complete_view(request):
+    return render(request, 'Inventory/auth/password_reset_complete.html')
 
 @login_required
 def view_profile(request):

@@ -40,7 +40,7 @@
                     <tr>
                         <th class="px-4 py-2 border-r border-slate-300 dark:border-slate-700 transition-colors">P.O. Number</th>
                         <th class="px-4 py-2 border-r border-slate-300 dark:border-slate-700 transition-colors">Order Date</th>
-                        <th class="px-4 py-2 border-r border-slate-300 dark:border-slate-700 text-center transition-colors">Batch Count</th>
+                        <th class="px-4 py-2 border-r border-slate-300 dark:border-slate-700 text-center transition-colors">Order Count</th>
                         <th class="px-4 py-2 border-r border-slate-300 dark:border-slate-700 transition-colors">Main Supplier</th>
                         <th class="px-4 py-2 border-r border-slate-300 dark:border-slate-700 text-right transition-colors">Grand Total</th>
                         <th class="px-4 py-2 border-r border-slate-300 dark:border-slate-700 text-center transition-colors">Status</th>
@@ -127,23 +127,23 @@
             
             <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-4 shadow-sm rounded-sm transition-colors duration-300">
                 <h3 class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest border-b border-slate-200 dark:border-slate-800 pb-2 mb-3 flex items-center gap-2 transition-colors">
-                    <i data-lucide="globe" class="w-3 h-3 text-teal-600 dark:text-teal-500"></i> Global P.O. Settings
+                    <i data-lucide="globe" class="w-3 h-3 text-teal-600 dark:text-teal-500"></i> Purchase Order Details
                 </h3>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div>
-                        <span class="text-[9px] font-bold text-slate-400 uppercase block transition-colors">System Batch ID</span>
+                        <span class="text-[9px] font-bold text-slate-400 uppercase block transition-colors">Main PO</span>
                         <span class="text-sm font-black text-indigo-700 dark:text-indigo-400 transition-colors">{{ batch.batch_id }}</span>
                     </div>
                     <div>
-                        <span class="text-[9px] font-bold text-slate-400 uppercase block transition-colors">Global Status</span>
+                        <span class="text-[9px] font-bold text-slate-400 uppercase block transition-colors">Status</span>
                         <span class="text-sm font-black text-slate-700 dark:text-slate-200 uppercase transition-colors">{{ batch.main_po.ordering_status }}</span>
                     </div>
                     <div>
-                        <span class="text-[9px] font-bold text-slate-400 uppercase block transition-colors">Global Delivery Date</span>
+                        <span class="text-[9px] font-bold text-slate-400 uppercase block transition-colors">Delivery Date</span>
                         <span class="text-sm font-black text-rose-600 dark:text-rose-400 uppercase transition-colors">{{ batch.main_po.delivery_date|date:"Y-m-d"|default:"-" }}</span>
                     </div>
                     <div>
-                        <span class="text-[9px] font-bold text-slate-400 uppercase block transition-colors">Transport Method</span>
+                        <span class="text-[9px] font-bold text-slate-400 uppercase block transition-colors">Transport</span>
                         <span class="text-sm font-black text-slate-700 dark:text-slate-200 uppercase transition-colors">{{ batch.main_po.transport }}</span>
                     </div>
                 </div>
@@ -162,7 +162,7 @@
                             <i data-lucide="building" class="w-4 h-4 text-indigo-600 dark:text-indigo-400 transition-colors"></i> Supplier: <span class="text-indigo-900 dark:text-indigo-300 transition-colors">{{ po.supplier.name }}</span>
                         </h3>
                         <div class="flex items-center gap-4 mt-1">
-                            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase transition-colors">Sub PO Number: <span class="text-indigo-600 dark:text-indigo-400 font-black transition-colors">{{ po.po_no }}</span></span>
+                            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase transition-colors">PO Number: <span class="text-indigo-600 dark:text-indigo-400 font-black transition-colors">{{ po.po_no }}</span></span>
                         </div>
                     </div>
                 </div>
@@ -231,7 +231,7 @@
                         </tbody>
                     </table>
                     <div class="bg-indigo-50 dark:bg-indigo-900/20 p-2 text-right mt-auto border-x border-b border-slate-200 dark:border-slate-700 transition-colors">
-                        <span class="text-[9px] font-black uppercase text-slate-500 dark:text-slate-400 mr-2 transition-colors">Sub-PO Total (with Tax/Disc):</span>
+                        <span class="text-[9px] font-black uppercase text-slate-500 dark:text-slate-400 mr-2 transition-colors">PO Total (with Tax/Disc):</span>
                         <span class="text-sm font-black text-indigo-800 dark:text-indigo-400 transition-colors">₱{{ po.grand_total|floatformat:2 }}</span>
                     </div>
                 </div>
@@ -241,7 +241,7 @@
         
         <div class="p-4 bg-slate-100 dark:bg-slate-900/80 border-t dark:border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4 transition-colors">
             <div class="flex flex-col">
-                <span class="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 transition-colors">Total Batch Amount to Authorize</span>
+                <span class="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 transition-colors">Total Amount to Authorize</span>
                 <span class="text-2xl font-black text-indigo-900 dark:text-indigo-400 tracking-tighter transition-colors">₱{{ batch.batch_grand_total|floatformat:2 }}</span>
             </div>
             

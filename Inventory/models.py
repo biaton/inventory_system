@@ -1,9 +1,26 @@
 from django.db import models
 from django.utils import timezone
+from datetime import timedelta
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+import random
 
+class PasswordResetOTP(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    otp = models.CharField(max_length=5)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def is_valid(self):
+        # 10 minutes validity
+        return self.created_at >= timezone.now() - timedelta(minutes=10)
+
+    def generate_otp(self):
+        # Gagawa ng random 5-digit number (e.g., 49201)
+        self.otp = str(random.randint(10000, 99999))
+        self.created_at = timezone.now()
+        self.save()
+        
 class Item(models.Model):
     UOM_CHOICES = [
         ('PCS', 'Pieces'),
@@ -354,7 +371,6 @@ class Profile(models.Model):
     ]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    # Default natin is WH_STAFF para safe kung may bagong user na maligaw
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='WH_STAFF')
     company_name = models.CharField(max_length=255, blank=True, null=True)
     contact_number = models.CharField(max_length=20, blank=True, null=True)
@@ -483,9 +499,6 @@ class SystemNotification(models.Model):
 # models.py (Idagdag sa dulo)
 
 class MachineAsset(models.Model):
-    """
-    Ito yung Master Record ng Makina na binubuo o binebenta ninyo.
-    """
     STATUS_CHOICES = [
         ('Building', 'Building / Incomplete'),
         ('Available', 'Available / Complete'),
@@ -515,9 +528,6 @@ class MachineAsset(models.Model):
 
 
 class MachineComponent(models.Model):
-    """
-    Ito ang 'Ledger' o Event Movement ng mga piyesa na ikinakabit sa Makina.
-    """
     ACTION_CHOICES = [
         ('Assemble', 'Assemble (Install to Machine)'),
         ('Dismantle', 'Dismantle (Remove from Machine)')
@@ -539,9 +549,6 @@ class MachineComponent(models.Model):
         return f"{self.action} {self.qty}x {self.material_tag.item_code} on {self.machine.machine_code}"
 
 class SystemModule(models.Model):
-    """
-    Ito ang listahan ng lahat ng pahina/modules sa system mo.
-    """
     MODULE_CHOICES = [
         ('CUSTOMER_ORDER', 'Customer Order'),
         ('PURCHASE_ORDER', 'Purchase Order'),

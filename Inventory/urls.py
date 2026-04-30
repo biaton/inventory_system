@@ -157,10 +157,10 @@ urlpatterns = [
 
     # PASSWORD RESET PATHS
     
-    path('reset_password/', auth_views.PasswordResetView.as_view(template_name='Inventory/auth/password_reset_form.html'), name='password_reset'),
-    path('reset_password_sent/', auth_views.PasswordResetDoneView.as_view(template_name='Inventory/auth/password_reset_done.html'), name='password_reset_done'),
-    path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(template_name='Inventory/auth/password_reset_confirm.html'), name='password_reset_confirm'),
-    path('reset_password_complete/', auth_views.PasswordResetCompleteView.as_view(template_name='Inventory/auth/password_reset_complete.html'), name='password_reset_complete'),
+    path('reset_password/', views.password_reset_request, name='password_reset'),
+    path('reset_password/verify/', views.password_reset_verify, name='password_reset_verify'),
+    path('reset_password/confirm/', views.password_reset_confirm, name='password_reset_confirm'),
+    path('reset_password/complete/', views.password_reset_complete_view, name='password_reset_complete'),
 
     #email route management
     path('item/<int:item_id>/stock-out/', views.stock_out_item, name='stock_out_item'),

@@ -11,12 +11,8 @@ urlpatterns = [
     path('', RedirectView.as_view(pattern_name='login', permanent=False), name='root'),
 ]
 
+# Ibinalik natin ito pero TANGGAL na ang debug_toolbar para gumana ang mga pictures at colors!
 if settings.DEBUG:
-    import debug_toolbar
-    # Debug Toolbar URLs
-    urlpatterns += [
-        path('__debug__/', include(debug_toolbar.urls)),
-    ] + urlpatterns
-    # Static at Media files (Para lumabas ang AIM-LOGO.jpg at iba pa)
+    # Static at Media files (Para lumabas ang AIM-LOGO.jpg, CSS, at iba pa)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
