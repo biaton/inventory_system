@@ -100,6 +100,7 @@ from .models import (
 )
 
 @login_required
+@require_module_access('USER_MASTER')
 def user_access_view(request):
     # Auto-populate modules kung walang laman
     if not SystemModule.objects.exists():
@@ -424,12 +425,22 @@ def change_password_view(request):
         )
         
         messages.success(request, "Success! Your password has been updated securely.")
-        return redirect('settings_master') 
+        return redirect('change_password') 
 
     return render(request, 'Inventory/master/change_password.html')
 
 @login_required
 def dashboard_view(request):
+    # ==========================================
+    # get access module
+    # ==========================================
+    user_allowed_modules = []
+    is_super_admin = False
+    
+    if hasattr(request.user, 'access_rights'):
+        is_super_admin = request.user.access_rights.is_super_admin
+        # Kukunin nito yung purong 'codes' (e.g. ['CUSTOMER_ORDER', 'RECEIVING'])
+        user_allowed_modules = list(request.user.access_rights.allowed_modules.values_list('code', flat=True))
     # ---------------------------------------------------------
     # 1. TOTAL INVENTORY VALUE & ACTIVE LOTS
     # ---------------------------------------------------------
@@ -619,6 +630,8 @@ def dashboard_view(request):
         'pending_req_count': pending_req_count,
         'inbound_count': inbound_count,
         'recent_inbound': recent_inbound,
+        'user_allowed_modules': user_allowed_modules,
+        'is_super_admin': is_super_admin,
     }
 
     
@@ -825,6 +838,33 @@ def user_master_view(request):
                         profile.company_name = company_name
                         profile.contact_number = contact_number
                         profile.save()
+
+                        ROLE_MODULE_MAPPING = {
+                            'WH_STAFF': ['RECEIVING', 'INV_REQUEST', 'INV_PROCESSING', 'INV_INQUIRY'],
+                            'INV_MANAGER': ['RECEIVING', 'INV_REQUEST', 'INV_PROCESSING', 'INV_INQUIRY', 'ASSET_WIP', 'SYSTEM_ANALYTICS'],
+                            'SUPPLY_CHAIN': ['PURCHASE_ORDER', 'CUSTOMER_ORDER', 'RECEIVING', 'INV_INQUIRY'],
+                            'PURCHASING': ['PURCHASE_ORDER', 'INV_INQUIRY'],
+                            'SALES': ['CUSTOMER_ORDER', 'INV_INQUIRY'],
+                            'ACCOUNTING': ['SYSTEM_ANALYTICS', 'PURCHASE_ORDER', 'CUSTOMER_ORDER'],
+                        }
+
+                        if not SystemModule.objects.exists():
+                            for code, name in SystemModule.MODULE_CHOICES:
+                                SystemModule.objects.get_or_create(code=code, defaults={'name': name})
+
+                        access_rights, created = UserAccess.objects.get_or_create(user=new_user)
+                        
+                        if role in ['SYSTEM_ADMIN', 'OWNER']:
+                            access_rights.is_super_admin = True
+                            access_rights.save()
+                        else:
+                            access_rights.is_super_admin = False
+                            access_rights.save()
+                            
+                            allowed_module_codes = ROLE_MODULE_MAPPING.get(role, [])
+                            if allowed_module_codes:
+                                modules_to_add = SystemModule.objects.filter(code__in=allowed_module_codes)
+                                access_rights.allowed_modules.add(*modules_to_add)
 
                         log_system_action(request.user, 'CREATE', 'USER_MASTER', f"Created new user account: {username} ({role})", request)
 

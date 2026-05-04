@@ -41,6 +41,14 @@
         outline: 2px dashed #f43f5e !important; /* Subtle na kulay red/rose na dashed */
         outline-offset: 4px;
     }
+    .preview-page {
+        background-color: white;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        border: 1px solid #94a3b8;
+        position: relative;
+        overflow: hidden;
+        flex-shrink: 0; /* Para hindi ma-squish kapag marami */
+    }
 </style>
 
 <div class="w-full px-2 sm:px-4 mt-4 text-slate-800 dark:text-slate-200 font-sans transition-colors duration-300 h-[calc(100vh-80px)] flex flex-col">
@@ -568,6 +576,70 @@
     </div>
 </div>
 
+<div id="inPagePrintPreviewModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[200] hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+    <div class="bg-white dark:bg-slate-900 w-full max-w-6xl rounded-sm shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col h-[90vh] transform scale-95 transition-transform duration-300" id="inPagePrintPreviewModalContent">
+        
+        <!-- Header -->
+        <div class="px-5 py-3 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950">
+            <h3 class="font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest text-[12px] flex items-center gap-2">
+                <i data-lucide="printer" class="w-4 h-4 text-sky-500"></i> Print Job Configuration
+            </h3>
+            <button onclick="closePrintPreview()" class="text-slate-400 hover:text-rose-500 transition-colors outline-none">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <!-- Body Split Layout -->
+        <div class="flex-1 overflow-hidden flex flex-col md:flex-row">
+            
+            <!-- Left: Preview Canvas Background -->
+            <div class="flex-1 bg-slate-200 dark:bg-slate-950/50 overflow-y-auto p-8 flex flex-col items-center gap-8 relative designer-bg" id="modal-preview-container">
+                <!-- Dynamic Label Preview goes here -->
+            </div>
+
+            <!-- Right: Print Configuration Sidebar -->
+            <div class="w-full md:w-80 bg-white dark:bg-slate-900 border-l border-slate-300 dark:border-slate-700 p-5 flex flex-col shadow-[-10px_0_15px_rgba(0,0,0,0.05)] z-10">
+                <h4 class="text-[10px] font-black uppercase text-slate-500 tracking-widest border-b border-slate-200 dark:border-slate-700 pb-2 mb-4">Job Summary</h4>
+                
+                <div class="space-y-3 flex-1">
+                    <div class="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-sm border border-slate-200 dark:border-slate-700">
+                        <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-1">Target Printer</label>
+                        <div class="text-[11px] font-black text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                            <i data-lucide="printer" class="w-3.5 h-3.5 text-sky-500"></i> <span id="summary-printer">BLP-410</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-sm border border-slate-200 dark:border-slate-700">
+                        <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-1">Paper Dimensions</label>
+                        <div class="text-[11px] font-black text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                            <i data-lucide="scaling" class="w-3.5 h-3.5 text-amber-500"></i> <span id="summary-size">400 x 300 px</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-sm border border-slate-200 dark:border-slate-700">
+                        <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-1">Total Labels to Print</label>
+                        <div class="text-[14px] font-black text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                            <i data-lucide="copy-check" class="w-4 h-4"></i> <span id="summary-qty">1</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-200 dark:border-slate-700 pt-4 mt-4 space-y-2">
+                    <button onclick="executeInPagePrint()" class="w-full bg-sky-600 hover:bg-sky-700 text-white py-3 rounded-sm text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-md border border-sky-800">
+                        <i data-lucide="printer" class="w-4 h-4"></i> Send to Printer
+                    </button>
+                    <button onclick="closePrintPreview()" class="w-full bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 py-2.5 rounded-sm text-[10px] font-black uppercase tracking-widest transition-colors border border-slate-300 dark:border-slate-700">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 🚀 BAGO: Invisible Iframe para sa silent printing -->
+<iframe id="hiddenPrintIframe" style="position: absolute; top: -9999px; left: -9999px; width: 0; height: 0; border: none;"></iframe>
+
 <script>
     // --- STATE MANAGEMENT ---
     let activeElement = null;
@@ -1007,84 +1079,158 @@
 
     // --- PRINT & EXPORT ---
     async function printCustomLabel() {
+        // Tanggalin selection outlines
         document.querySelectorAll('.draggable-item').forEach(d => {
             d.classList.remove('is-selected');
-            d.style.outline = "none"; // Tanggalin ang red border ng mga naka-lock sa print
+            d.style.outline = "none";
         });
         
         const paper = document.getElementById('paper-canvas');
         const wPx = parseInt(paper.style.width);
         const hPx = parseInt(paper.style.height);
-        const widthIn = (wPx / 100) + 'in';
-        const heightIn = (hPx / 100) + 'in';
         
         let pages = '';
+        let totalCount = 0;
         const csvFile = document.getElementById('csvFile') ? document.getElementById('csvFile').files[0] : null;
 
         if (csvFile) {
-            // ================= BULK IMPORT LOGIC =================
+            // BULK CSV LOGIC
             const text = await csvFile.text();
-            // Basahin ang bawat row, tanggalin ang blank lines
             const rows = text.split('\n').map(r => r.split(',')).filter(r => r.length > 1);
-            
-            // I-save ang original data para ibalik mamaya
             const origTitle = document.getElementById('inputTitle').value;
             const origCode = document.getElementById('inputCode').value;
             const origCompany = document.getElementById('inputCompany').value;
             
-            // Mag-loop sa bawat item sa CSV (Assuming Column 0 = Title, Col 1 = Code, Col 2 = Company)
-            // Nagsisimula tayo sa i=1 para i-skip ang header row ng Excel/CSV
+            totalCount = rows.length - 1;
+
             for (let i = 1; i < rows.length; i++) { 
                 const row = rows[i];
                 document.getElementById('inputTitle').value = row[0] ? row[0].trim() : origTitle;
                 document.getElementById('inputCode').value = row[1] ? row[1].trim() : origCode;
                 document.getElementById('inputCompany').value = row[2] ? row[2].trim() : origCompany;
                 
-                updateLiveLabel(); // I-render ang bagong barcode/QR
-                
-                // Bigyan ng 50 milliseconds ang browser para i-draw ang SVG Barcode bago i-screenshot
+                updateLiveLabel(); 
                 await new Promise(r => setTimeout(r, 50)); 
-                pages += `<div class="page">${paper.innerHTML}</div>`;
+                // Balutin ng .preview-page class para maganda sa modal
+                pages += `<div class="preview-page" style="width:${wPx}px; height:${hPx}px;">${paper.innerHTML}</div>`;
             }
             
-            // Ibalik ang original na text sa screen pagkatapos mag-generate
             document.getElementById('inputTitle').value = origTitle;
             document.getElementById('inputCode').value = origCode;
             document.getElementById('inputCompany').value = origCompany;
             updateLiveLabel();
             
-            addAuditLog('BULK PRINT CSV'); // Kung idinagdag mo yung Audit Log natin
-            
         } else {
-            // ================= STANDARD / BATCH LOGIC =================
+            // STANDARD / SEQUENCE LOGIC
             const seqTot = document.getElementById('enableSequence').checked ? parseInt(document.getElementById('seqTotal').value) : 1;
+            totalCount = seqTot;
             const html = paper.innerHTML;
             for(let i=1; i<=seqTot; i++) {
                 let pContent = html;
                 if(seqTot > 1) { pContent = pContent.replace(`${document.getElementById('seqCurrent').value}/${seqTot}`, `${i}/${seqTot}`); }
-                pages += `<div class="page">${pContent}</div>`;
+                pages += `<div class="preview-page" style="width:${wPx}px; height:${hPx}px;">${pContent}</div>`;
             }
-            addAuditLog('PRINT'); // Kung idinagdag mo yung Audit Log natin
         }
 
-        // ================= OPEN PRINT PREVIEW =================
-        const win = window.open('', '_blank');
-        win.document.write(`
-            <html><head><title>Print Labels</title>
-            <style>
-                @page { margin: 0; size: ${widthIn} ${heightIn}; }
-                body { margin: 0; background: #fff; }
-                .page { position: relative; width: ${wPx}px; height: ${hPx}px; overflow: hidden; page-break-after: always; border: none; background: #fff; }
-                .draggable-item { position: absolute; white-space: nowrap; transform-origin: center center; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
-                .flex { display: flex } .flex-col { flex-direction: column } .gap-1 { gap: 4px; } .gap-2 { gap: 8px; } .w-16 { width: 64px; } .hidden { display: none !important } img { object-fit: contain } .tracking-widest { letter-spacing: 0.1em } .uppercase { text-transform: uppercase } .font-bold { font-weight: 700 } .font-black { font-weight: 900 }
-            </style>
-            </head><body>
-            ${pages}
-            <script>setTimeout(()=>{window.print();window.close()},500)<\/script>
-            </body></html>
+        // I-set ang data sa summary sidebar ng Modal
+        document.getElementById('summary-printer').innerText = document.getElementById('printerModel').value || "System Default";
+        document.getElementById('summary-size').innerText = `${wPx} x ${hPx} px`;
+        document.getElementById('summary-qty').innerText = totalCount;
+
+        // I-render ang HTML preview sa gitna ng modal
+        document.getElementById('modal-preview-container').innerHTML = pages;
+        
+        // I-save ang HTML sa memory window para mamaya sa actual printing
+        window.rawPrintHTML = pages;
+
+        // Buksan ang Modal nang smooth
+        const modal = document.getElementById('inPagePrintPreviewModal');
+        const content = document.getElementById('inPagePrintPreviewModalContent');
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            modal.classList.remove('opacity-0');
+            content.classList.remove('scale-95');
+        }, 10);
+
+        if(typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    function closePrintPreview() {
+        const modal = document.getElementById('inPagePrintPreviewModal');
+        const content = document.getElementById('inPagePrintPreviewModalContent');
+        modal.classList.add('opacity-0');
+        content.classList.add('scale-95');
+        setTimeout(() => { modal.classList.add('hidden'); }, 300);
+    }
+
+    function executeInPagePrint() {
+        const wPx = parseInt(document.getElementById('paper-canvas').style.width);
+        const hPx = parseInt(document.getElementById('paper-canvas').style.height);
+
+        // 🚀 THE MAGIC MATH: Dahil 100px = 1 inch ang scale ng UI mo,
+        // Iko-convert natin ito sa totoong INCHES para sakto sa thermal printer papel mo!
+        const physicalWidth = (wPx / 100) + 'in';
+        const physicalHeight = (hPx / 100) + 'in';
+
+        // Papalitan natin yung shadow preview box ng pure white print box
+        let printHTML = window.rawPrintHTML.replace(/preview-page/g, 'print-page');
+
+        const iframe = document.getElementById('hiddenPrintIframe');
+        const doc = iframe.contentWindow.document;
+
+        doc.open();
+        doc.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    /* 🚀 FIX: Physical Inches na ang ibabato natin para saktong-sakto ang margin! */
+                    @page { 
+                        size: ${physicalWidth} ${physicalHeight}; 
+                        margin: 0; 
+                    }
+                    html, body { 
+                        margin: 0; 
+                        padding: 0; 
+                        width: ${wPx}px; 
+                        height: ${hPx}px;
+                        background: white; 
+                        -webkit-print-color-adjust: exact; 
+                        print-color-adjust: exact;
+                    }
+                    .print-page { 
+                        position: relative; 
+                        width: ${wPx}px; 
+                        height: ${hPx}px; 
+                        overflow: hidden; 
+                        page-break-after: always; 
+                        page-break-inside: avoid;
+                        background: white; 
+                        margin: 0;
+                    }
+                    
+                    /* Important Utilities */
+                    .draggable-item { position: absolute; white-space: nowrap; transform-origin: center center; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
+                    .flex { display: flex } .flex-col { flex-direction: column } .gap-1 { gap: 4px; } .gap-2 { gap: 8px; } .hidden { display: none !important } img { object-fit: contain } .tracking-widest { letter-spacing: 0.1em } .uppercase { text-transform: uppercase } .font-bold { font-weight: 700 } .font-black { font-weight: 900 }
+                </style>
+            </head>
+            <body>
+                ${printHTML}
+            </body>
+            </html>
         `);
-        win.document.close();
-        if(typeof openAuditLogs === "function") openAuditLogs(); // Buksan ang modal kung existing
+        doc.close();
+
+        // Maglagay ng Audit Log dahil nag-confirm na talaga mag-print
+        const isCSV = document.getElementById('csvFile') && document.getElementById('csvFile').files[0];
+        addAuditLog(isCSV ? 'BULK PRINT CSV' : 'PRINT');
+
+        // Bigyan ng 500ms para mag-load ang SVG at Fonts sa iframe bago tawagin ang print box
+        setTimeout(() => {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+            closePrintPreview(); // Isasara ang modal pagkatapos mag-print
+        }, 500);
     }
 
     function exportLabelToImage() {

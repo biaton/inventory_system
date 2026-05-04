@@ -583,6 +583,10 @@ class UserAccess(models.Model):
     def __str__(self):
         return self.user.username
 
+    @property
+    def active_module_codes(self):
+        return [m.code for m in self.allowed_modules.all()]
+
 class FleetDriver(models.Model):
     name = models.CharField(max_length=100, unique=True)
     contact_no = models.CharField(max_length=20, blank=True, null=True)

@@ -5,14 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}{% endblock %} | AIM Inc.</title>
+    <link rel="icon" type="image/png" href="{% static 'images/asia-no-bg.png' %}">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        // Configure Tailwind
-        tailwind.config = {
-            darkMode: 'class',
-        }
-        
-        // CHECK LOCAL STORAGE IMMEDIATELY PARA WALANG FLICKER
+        tailwind.config = { darkMode: 'class' }
         if (localStorage.getItem('theme') === 'dark') {
             document.documentElement.classList.add('dark');
         } else {
@@ -21,51 +17,51 @@
     </script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        /* ERP Style Grid Background */
         .bg-grid-pattern {
             background-image: linear-gradient(to right, #334155 1px, transparent 1px),
                 linear-gradient(to bottom, #334155 1px, transparent 1px);
             background-size: 40px 40px;
         }
+        input:-webkit-autofill {
+            -webkit-box-shadow: 0 0 0 30px #f8fafc inset !important;
+        }
+        html.dark input:-webkit-autofill {
+            -webkit-box-shadow: 0 0 0 30px #020617 inset !important;
+            -webkit-text-fill-color: white !important;
+        }
     </style>
 </head>
 
-<body class="bg-slate-200 dark:bg-slate-950 min-h-screen flex items-center justify-center p-4 transition-colors duration-300">
+<body class="bg-slate-200 dark:bg-slate-950 min-h-screen flex items-center justify-center p-0 md:p-4 transition-colors duration-300">
 
-    <button onclick="toggleDarkMode()" class="fixed top-4 right-4 p-3 rounded-full bg-slate-800 dark:bg-white text-white dark:text-slate-900 shadow-xl opacity-50 hover:opacity-100 transition-opacity z-50">
-        <i data-lucide="moon" id="themeIcon" class="w-5 h-5"></i>
-    </button>
-
-    <div class="max-w-4xl w-full bg-white dark:bg-slate-900 border border-slate-400 dark:border-slate-700 shadow-xl flex flex-col md:flex-row min-h-[500px] transition-colors duration-300">
+    <div class="max-w-4xl w-full bg-white dark:bg-slate-900 md:border border-slate-400 dark:border-slate-700 shadow-xl flex flex-col md:flex-row min-h-screen md:min-h-[500px] transition-colors duration-300">
         
-        <div class="md:w-5/12 bg-slate-900 border-r border-slate-800 dark:border-slate-700 p-8 text-white flex flex-col justify-between relative overflow-hidden bg-grid-pattern">
+        <!-- LEFT PANEL (BRANDING) -->
+        <div class="w-full md:w-5/12 bg-slate-900 border-b md:border-b-0 md:border-r border-slate-800 dark:border-slate-700 p-6 pt-10 pb-16 md:p-8 text-white flex flex-col justify-between relative overflow-hidden bg-grid-pattern items-center md:items-start text-center md:text-left">
 
             <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-slate-800 via-sky-700 to-cyan-600 z-20"></div>
-
             <div class="absolute inset-0 bg-slate-900/80 pointer-events-none"></div>
 
-            <div class="relative z-10 mt-2">
-                <div class="flex items-center gap-4 mb-8 border-b border-slate-800 dark:border-slate-700 pb-6">
-
-                    <div class="w-20 h-24 bg-white dark:bg-white flex items-center justify-center p-1.5 shadow-md rounded-sm border-2 border-slate-700 dark:border-slate-600 transition-colors duration-300">
+            <div class="relative z-10 w-full">
+                <div class="flex flex-col md:flex-row items-center md:items-start gap-4 mb-6 md:mb-8 md:border-b border-slate-800 dark:border-slate-700 pb-4 md:pb-6">
+                    <div class="w-20 h-20 md:w-22 md:h-24 bg-white flex items-center justify-center p-1.5 shadow-md rounded-sm border-2 border-slate-700 dark:border-slate-600 transition-colors duration-300 shrink-0">
                         <img src="{% static 'images/asia-no-bg.png' %}" alt="AIM Logo" class="w-full h-full object-contain">
                     </div>
-
                     <div>
-                        <h1 class="text-2xl md:text-3xl font-black tracking-tighter uppercase leading-none text-slate-100 mb-1">
+                        <h1 class="text-2xl md:text-3xl font-black tracking-tighter uppercase leading-none text-slate-100 mb-1 mt-2 md:mt-0">
                             Asia Integrated
                         </h1>
-                        <span class="text-[13px] md:text-[15px] font-black text-sky-500 uppercase tracking-[0.2em]">Machine Inc.</span>
+                        <span class="text-[12px] md:text-[15px] font-black text-sky-500 uppercase tracking-[0.2em] block">Machine Inc.</span>
                     </div>
                 </div>
 
-                <div class="space-y-6">
+                <div class="hidden md:block space-y-6">
                     <div>
                         <p class="text-[10px] font-bold text-sky-500 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
                             <i data-lucide="warehouse" class="w-3.5 h-3.5"></i> System Module
                         </p>
                         <p class="text-sm font-black text-slate-200 uppercase tracking-widest border-l-2 border-sky-600 pl-3">
-                            Warehouse Inventory Management System
+                            Warehouse Management System
                         </p>
                     </div>
                     <div>
@@ -79,7 +75,7 @@
                 </div>
             </div>
 
-            <div class="relative z-10 mt-12 md:mt-0 pt-6">
+            <div class="relative z-10 mt-8 md:mt-0 pt-0 md:pt-6 w-full hidden md:block">
                 <div class="bg-slate-950/50 border border-slate-800 p-3 rounded-sm mb-5 shadow-inner">
                     <div class="flex items-center gap-2 text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">
                         <span class="relative flex h-2 w-2">
@@ -92,24 +88,29 @@
                         Authentication Required
                     </p>
                 </div>
-
                 <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest leading-relaxed">
                     &copy; 2026 ASIA Integrated Machine Inc.<br>All Rights Reserved.
                 </p>
             </div>
         </div>
 
-        <div class="md:w-7/12 p-8 md:p-12 flex flex-col justify-center bg-white dark:bg-slate-900 transition-colors duration-300">
-            {% block auth_content %}{% endblock %}
-        </div>
+        <!-- RIGHT PANEL (CONTENT BOX) -->
+        <div class="w-full md:w-7/12 p-6 sm:p-10 md:p-12 flex flex-col justify-center bg-white dark:bg-slate-900 -mt-8 md:mt-0 rounded-t-3xl md:rounded-none relative z-30 shadow-[0_-15px_25px_rgba(0,0,0,0.2)] md:shadow-none transition-colors duration-300 flex-1">
+            
+            <div class="w-12 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto mb-6 md:hidden"></div>
 
+            {% block auth_content %}{% endblock %}
+
+        </div>
     </div>
 
+    <button onclick="toggleDarkMode()" class="fixed top-3 right-3 md:top-4 md:right-4 p-2.5 md:p-3 rounded-full bg-slate-800 dark:bg-white text-white dark:text-slate-900 shadow-xl opacity-50 hover:opacity-100 transition-opacity z-50">
+        <i data-lucide="moon" id="themeIcon" class="w-4 h-4 md:w-5 h-5"></i>
+    </button>
+
     <script>
-        // Init Lucide Icons
         lucide.createIcons();
 
-        // I-set ang tamang icon sa button pagka-load ng page
         document.addEventListener('DOMContentLoaded', () => {
             const themeIcon = document.getElementById('themeIcon');
             if (localStorage.getItem('theme') === 'dark') {
@@ -120,11 +121,9 @@
             lucide.createIcons();
         });
 
-        // Dark Mode Toggle Logic
         function toggleDarkMode() {
             const htmlClass = document.documentElement.classList;
             const themeIcon = document.getElementById('themeIcon');
-            
             if (htmlClass.contains('dark')) {
                 htmlClass.remove('dark');
                 localStorage.setItem('theme', 'light');

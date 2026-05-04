@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}AIM | Inventory Control System{% endblock %}</title>
-
+    <link rel="icon" type="image/png" href="{% static 'images/asia-no-bg.png' %}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -121,7 +121,7 @@
             </button>
         </div>
         <div class="border-t border-slate-200 dark:border-slate-800 p-2 bg-slate-50/50 dark:bg-slate-900/50 rounded-b-lg text-center transition-colors">
-            <p class="text-[7px] md:text-[8px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">AIM WMS v2.0</p>
+            <p class="text-[7px] md:text-[8px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">Warehouse Management System</p>
         </div>
     </div>
 
@@ -137,7 +137,7 @@
                             <span class="hidden sm:inline">Asia Integrated Machine Inc.</span>
                             <span class="sm:hidden">AIM Inc.</span>
                         </span>
-                        <span class="text-[8px] sm:text-[9px] font-bold text-sky-700 dark:text-sky-500 tracking-[0.2em] uppercase leading-none">Inventory Control System</span>
+                        <span class="text-[8px] sm:text-[9px] font-bold text-sky-700 dark:text-sky-500 tracking-[0.2em] uppercase leading-none">Warehouse Management System</span>
                     </div>
                 </div>
 
@@ -146,14 +146,18 @@
                         class="h-full flex items-center px-4 text-[11px] font-black uppercase tracking-widest transition-all relative
                         {% if request.resolver_match.url_name == 'dashboard' %} text-sky-700 dark:text-sky-400 bg-sky-50/50 dark:bg-sky-900/20 {% else %} text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-800 dark:hover:text-slate-200 {% endif %}">
                         <i data-lucide="house" class="w-3.5 h-3.5 mr-1.5"></i> Dashboard
-                        {% if request.resolver_match.url_name == 'dashboard' %}<div class="absolute bottom-0 left-0 w-full h-0.5 bg-sky-600 dark:bg-sky-500"></div>{% endif %}
+                        {% if request.resolver_match.url_name == 'dashboard' %}
+                        <div class="absolute bottom-0 left-0 w-full h-0.5 bg-sky-600 dark:bg-sky-500"></div>
+                        {% endif %}
                     </a>
 
                     <a href="{% url 'shipment_calendar' %}"
                         class="h-full flex items-center px-4 text-[11px] font-black uppercase tracking-widest transition-all relative
                         {% if request.resolver_match.url_name == 'shipment_calendar' %} text-sky-700 dark:text-sky-400 bg-sky-50/50 dark:bg-sky-900/20 {% else %} text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-800 dark:hover:text-slate-200 {% endif %}">
                         <i data-lucide="calendar-range" class="w-3.5 h-3.5 mr-1.5"></i> Calendar
-                        {% if request.resolver_match.url_name == 'shipment_calendar' %}<div class="absolute bottom-0 left-0 w-full h-0.5 bg-sky-600 dark:bg-sky-500"></div>{% endif %}
+                        {% if request.resolver_match.url_name == 'shipment_calendar' %}
+                        <div class="absolute bottom-0 left-0 w-full h-0.5 bg-sky-600 dark:bg-sky-500"></div>
+                            {% endif %}
                     </a>
                     
                     <div class="relative h-full">
@@ -166,15 +170,56 @@
                             <div class="px-4 py-1 mb-1 border-b border-slate-50 dark:border-slate-700/50">
                                 <span class="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Inventory Management</span>
                             </div>
+                           <!-- CUSTOMER ORDER -->
+                            {% if request.user.is_superuser or request.user.access_rights.is_super_admin or "CUSTOMER_ORDER" in request.user.access_rights.active_module_codes %}
                             <a href="{% url 'order_manual' %}" class="px-4 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:bg-sky-50 dark:hover:bg-sky-900/20 hover:text-sky-700 dark:hover:text-sky-400 flex items-center gap-3 transition-colors uppercase tracking-wider"><i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i> Customer Order</a>
+                            {% endif %}
+
+                            <!-- PURCHASE ORDER -->
+                            {% if request.user.is_superuser or request.user.access_rights.is_super_admin or "PURCHASE_ORDER" in request.user.access_rights.active_module_codes %}
                             <a href="{% url 'make_po' %}" class="px-4 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:bg-sky-50 dark:hover:bg-sky-900/20 hover:text-sky-700 dark:hover:text-sky-400 flex items-center gap-3 transition-colors uppercase tracking-wider"><i data-lucide="FileText" class="w-3.5 h-3.5"></i> Purchase Order</a>
+                            {% endif %}
+
+                            <!-- RECEIVING -->
+                            {% if request.user.is_superuser or request.user.access_rights.is_super_admin or "RECEIVING" in request.user.access_rights.active_module_codes %}
                             <a href="{% url 'receive_item' %}" class="px-4 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:bg-sky-50 dark:hover:bg-sky-900/20 hover:text-sky-700 dark:hover:text-sky-400 flex items-center gap-3 transition-colors uppercase tracking-wider"><i data-lucide="clipboard-check" class="w-3.5 h-3.5"></i> Receiving & Inspection</a>
+                            {% endif %}
+
+                            <!-- INVENTORY REQUEST -->
+                            {% if request.user.is_superuser or request.user.access_rights.is_super_admin or "INV_REQUEST" in request.user.access_rights.active_module_codes %}
                             <a href="{% url 'new_request' %}" class="px-4 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:bg-sky-50 dark:hover:bg-sky-900/20 hover:text-sky-700 dark:hover:text-sky-400 flex items-center gap-3 transition-colors uppercase tracking-wider"><i data-lucide="PackagePlus" class="w-3.5 h-3.5"></i> Inventory Request</a>
+                            {% endif %}
+
+                            <!-- INVENTORY PROCESSING -->
+                            {% if request.user.is_superuser or request.user.access_rights.is_super_admin or "INV_PROCESSING" in request.user.access_rights.active_module_codes %}
                             <a href="{% url 'stock_move' %}" class="px-4 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:bg-sky-50 dark:hover:bg-sky-900/20 hover:text-sky-700 dark:hover:text-sky-400 flex items-center gap-3 transition-colors uppercase tracking-wider"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Inventory Processing</a>
+                            {% endif %}
+
+                            <!-- INVENTORY INQUIRY -->
+                            {% if request.user.is_superuser or request.user.access_rights.is_super_admin or "INV_INQUIRY" in request.user.access_rights.active_module_codes %}
                             <a href="{% url 'stock_inquiry' %}" class="px-4 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:bg-sky-50 dark:hover:bg-sky-900/20 hover:text-sky-700 dark:hover:text-sky-400 flex items-center gap-3 transition-colors uppercase tracking-wider"><i data-lucide="search" class="w-3.5 h-3.5"></i> Inventory Inquiry</a>
+                            {% endif %}
+
+                            <!-- ASSET & WIP -->
+                            {% if request.user.is_superuser or request.user.access_rights.is_super_admin or "ASSET_WIP" in request.user.access_rights.active_module_codes %}
                             <a href="{% url 'assembly_dashboard' %}" class="px-4 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:bg-sky-50 dark:hover:bg-sky-900/20 hover:text-sky-700 dark:hover:text-sky-400 flex items-center gap-3 transition-colors uppercase tracking-wider"><i data-lucide="workflow" class="w-3.5 h-3.5"></i> Asset & WIP Management</a>
+                            {% endif %}
+                            
+                            <!-- USER MASTER -->
+                            {% if request.user.is_superuser or request.user.access_rights.is_super_admin or "USER_MASTER" in request.user.access_rights.active_module_codes %}
+                            <a href="{% url 'user_master' %}" class="px-4 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:bg-sky-50 dark:hover:bg-sky-900/20 hover:text-sky-700 dark:hover:text-sky-400 flex items-center gap-3 transition-colors uppercase tracking-wider"><i data-lucide="book-user" class="w-3.5 h-3.5"></i> User Master</a>
+                            {% endif %}
+
+                            <!-- SYSTEM CONFIGURATION -->
+                            {% if request.user.is_superuser or request.user.access_rights.is_super_admin or "SYS_CONFIG" in request.user.access_rights.active_module_codes %}
+                            <a href="{% url 'settings_master' %}" class="px-4 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:bg-sky-50 dark:hover:bg-sky-900/20 hover:text-sky-700 dark:hover:text-sky-400 flex items-center gap-3 transition-colors uppercase tracking-wider"><i data-lucide="triangle-alert" class="w-3.5 h-3.5"></i> System Config</a>
+                            {% endif %}
+
+                            <!-- SYSTEM ANALYTICS -->
+                            {% if request.user.is_superuser or request.user.access_rights.is_super_admin or "SYSTEM_ANALYTICS" in request.user.access_rights.active_module_codes %}
                             <div class="border-t border-slate-100 dark:border-slate-700 my-1"></div>
                             <a href="{% url 'analytics_board' %}" class="px-4 py-2 text-[10px] font-black text-slate-800 dark:text-slate-200 hover:bg-slate-900 dark:hover:bg-slate-700 hover:text-white flex items-center gap-3 transition-colors uppercase tracking-wider"><i data-lucide="chart-spline" class="w-3.5 h-3.5"></i> System Analytics</a>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -271,14 +316,45 @@
                         <span class="px-4 text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Inventory Modules</span>
                     </div>
                     <div class="grid grid-cols-1 gap-1">
+                        {% if request.user.is_superuser or request.user.access_rights.is_super_admin or "CUSTOMER_ORDER" in request.user.access_rights.active_module_codes %}
                         <a href="{% url 'order_manual' %}" class="flex items-center gap-3 px-4 py-2.5 text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider hover:bg-sky-50 dark:hover:bg-slate-700">Customer Order</a>
+                        {% endif %}
+
+                        {% if request.user.is_superuser or request.user.access_rights.is_super_admin or "PURCHASE_ORDER" in request.user.access_rights.active_module_codes %}
                         <a href="{% url 'make_po' %}" class="flex items-center gap-3 px-4 py-2.5 text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider hover:bg-sky-50 dark:hover:bg-slate-700">Purchase Order</a>
+                        {% endif %}
+
+                        {% if request.user.is_superuser or request.user.access_rights.is_super_admin or "RECEIVING" in request.user.access_rights.active_module_codes %}
                         <a href="{% url 'receive_item' %}" class="flex items-center gap-3 px-4 py-2.5 text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider hover:bg-sky-50 dark:hover:bg-slate-700">Receiving & Inspection</a>
+                        {% endif %}
+
+                        {% if request.user.is_superuser or request.user.access_rights.is_super_admin or "INV_REQUEST" in request.user.access_rights.active_module_codes %}
                         <a href="{% url 'new_request' %}" class="flex items-center gap-3 px-4 py-2.5 text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider hover:bg-sky-50 dark:hover:bg-slate-700">Inventory Request</a>
+                        {% endif %}
+
+                        {% if request.user.is_superuser or request.user.access_rights.is_super_admin or "INV_PROCESSING" in request.user.access_rights.active_module_codes %}
                         <a href="{% url 'stock_move' %}" class="flex items-center gap-3 px-4 py-2.5 text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider hover:bg-sky-50 dark:hover:bg-slate-700">Inventory Processing</a>
+                        {% endif %}
+
+                        {% if request.user.is_superuser or request.user.access_rights.is_super_admin or "INV_INQUIRY" in request.user.access_rights.active_module_codes %}
                         <a href="{% url 'stock_inquiry' %}" class="flex items-center gap-3 px-4 py-2.5 text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider hover:bg-sky-50 dark:hover:bg-slate-700">Inventory Inquiry</a>
+                        {% endif %}
+
+                        {% if request.user.is_superuser or request.user.access_rights.is_super_admin or "ASSET_WIP" in request.user.access_rights.active_module_codes %}
                         <a href="{% url 'assembly_dashboard' %}" class="flex items-center gap-3 px-4 py-2.5 text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider hover:bg-sky-50 dark:hover:bg-slate-700">Asset & WIP Management</a>
+                        {% endif %}
+
+                        {% if request.user.is_superuser or request.user.access_rights.is_super_admin or "USER_MASTER" in request.user.access_rights.active_module_codes %}
+                        <a href="{% url 'user_master' %}" class="flex items-center gap-3 px-4 py-2.5 text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider hover:bg-sky-50 dark:hover:bg-slate-700">User Master</a>
+                        {% endif %}
+
+                        {% if request.user.is_superuser or request.user.access_rights.is_super_admin or "SYS_CONFIG" in request.user.access_rights.active_module_codes %}
+                        <a href="{% url 'settings_master' %}" class="flex items-center gap-3 px-4 py-2.5 text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider hover:bg-sky-50 dark:hover:bg-slate-700">System Config</a>
+                        {% endif %}
+
+                        {% if request.user.is_superuser or request.user.access_rights.is_super_admin or "SYSTEM_ANALYTICS" in request.user.access_rights.active_module_codes %}
                         <a href="{% url 'analytics_board' %}" class="flex items-center gap-3 px-4 py-2.5 text-[10px] font-black text-sky-700 dark:text-sky-400 uppercase tracking-wider hover:bg-sky-50 dark:hover:bg-slate-700">System Analytics</a>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -802,6 +878,85 @@
             alert("Error updating status.");
         }
     }
+    document.addEventListener("DOMContentLoaded", function() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 32;
+            canvas.height = 32;
+            const ctx = canvas.getContext('2d');
+
+            const img = new Image();
+            img.src = "{% static 'images/asia-no-bg.png' %}"; // Ang AIM Logo
+
+            let link = document.querySelector("link[rel~='icon']");
+            if (!link) {
+                link = document.createElement('link');
+                link.rel = 'icon';
+                document.head.appendChild(link);
+            }
+
+            const fullTitle = "Asia Integrated Machine Inc. | WMS";
+            const scrollText = "ASIA INTEGRATED MACHINE INC.";
+
+            img.onload = function() {
+                // 1. SETUP PARA SA TYPEWRITER TITLE (Mas mabagal)
+                let titleIndex = 0;
+                const titleInterval = setInterval(() => {
+                    if (titleIndex <= fullTitle.length) {
+                        document.title = fullTitle.substring(0, titleIndex) + "|";
+                        titleIndex++;
+                    } else {
+                        document.title = fullTitle; 
+                        clearInterval(titleInterval); 
+                    }
+                }, 150); 
+
+                // 2. SETUP PARA SA SLIDING FAVICON ICON
+                // 🚀 FIX: Ginawang 900 (Extra Bold) at 28px para sakop yung 32px na icon
+                ctx.font = "900 20px 'Inter', Arial, sans-serif"; 
+                const textWidth = ctx.measureText(scrollText).width;
+                let textX = 32; // Magsisimula sa labas ng kanan
+                const gap = 15; // Space sa pagitan ng dulo ng text at ng logo
+
+                const logoDrawSize = 46; // Gawin mong 40, 46, o 50 para ma-adjust ang laki
+                const offset = (logoDrawSize - 32) / 2; // Formula para laging nasa gitna kahit palakihin
+
+                const iconInterval = setInterval(() => {
+                    ctx.clearRect(0, 0, 32, 32);
+
+                    ctx.fillStyle = "#ffffff"; 
+                    ctx.fillRect(0, 0, 32, 32);
+
+                    // Compute kung nasaan ang logo (nakabuntot sa text)
+                    let logoX = textX + textWidth + gap;
+
+                    // 3. STOP CONDITION: Kapag pumwesto na sa gitna ang logo (X = 0)
+                    if (logoX <= 0) {
+                        // I-lock ang logo sa gitna at tapusin ang animation
+                        ctx.drawImage(img, 0, 0, 32, 32);
+                        link.href = canvas.toDataURL('image/png');
+                        clearInterval(iconInterval); 
+                        return; // Para hindi na ituloy ang code sa ibaba
+                    }
+            
+                    // 4. DRAW GRADIENT TEXT
+                    const gradient = ctx.createLinearGradient(0, 0, 32, 0);
+                    gradient.addColorStop(0, "#0ea5e9"); // Sky Blue
+                    gradient.addColorStop(1, "#38bdf8"); // Lighter Sky Blue
+
+                    ctx.fillStyle = gradient; 
+                    ctx.textAlign = "left";
+                    ctx.textBaseline = "middle"; 
+                    ctx.fillText(scrollText, textX, 16); 
+
+                    // 5. DRAW LOGO (Nakadikit sa dulo ng text)
+                    ctx.drawImage(img, logoX - offset, -offset, logoDrawSize, logoDrawSize);
+
+                    textX -= 2; // Bilis ng andar pa-kaliwa (2 pixels per frame)
+                    link.href = canvas.toDataURL('image/png');
+
+                }, 50); 
+            };
+        });
 </script>
 </body>
 </html>

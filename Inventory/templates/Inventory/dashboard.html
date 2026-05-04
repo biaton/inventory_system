@@ -6,6 +6,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dashboard | Asia Integrated Machines</title>
+    <link rel="icon" type="image/png" href="{% static 'images/asia-no-bg.png' %}">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -152,7 +153,7 @@
                         Asia Integrated <span class="text-sky-500">Machine Inc.</span>
                     </h1>
                     <p class="text-[11px] md:text-xs font-bold text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
-                        <i data-lucide="database" class="w-3.5 h-3.5 text-sky-600"></i> Inventory Control System
+                        <i data-lucide="database" class="w-3.5 h-3.5 text-sky-600"></i> Warehouse Management System
                  </p>
                 </div>
             </div>
@@ -361,85 +362,116 @@
             </h2>
 
             <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2.5 w-full">
-                <a href="{% url 'order_manual' %}"
-                    class="group relative bg-blue-50 dark:bg-blue-950/20 border border-blue-300 dark:border-blue-900/50 p-3 hover:border-blue-500 dark:hover:border-blue-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
-                    <div class="absolute top-0 left-0 w-1 h-full bg-blue-600 transition-all group-hover:w-1.5"></div>
-                    <i data-lucide="ShoppingCart"
-                        class="w-7 h-7 text-slate-500 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors mb-auto"></i>
-                    <span class="text-[13px] md:text-[13px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-tight group-hover:text-blue-700 dark:group-hover:text-blue-400 leading-tight transition-colors">Customer<br />Order</span>
-                </a>
 
-                <a href="{% url 'make_po' %}"
-                    class="group relative bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-300 dark:border-indigo-900/50 p-3 hover:border-indigo-500 dark:hover:border-indigo-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
-                    <div class="absolute top-0 left-0 w-1 h-full bg-indigo-600 transition-all group-hover:w-1.5"></div>
-                    <i data-lucide="FileText"
-                        class="w-7 h-7 text-slate-500 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors mb-auto"></i>
-                    <span class="text-[13px] md:text-[13px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-tight group-hover:text-indigo-700 dark:group-hover:text-indigo-400 leading-tight transition-colors">Purchase<br />Order</span>
-                </a>
+                <!-- CUSTOMER ORDER -->
+                {% if is_super_admin or "CUSTOMER_ORDER" in user_allowed_modules %}
+                <a href="{% url 'order_manual' %}" class="group relative bg-blue-50 dark:bg-blue-950/20 border border-blue-300 dark:border-blue-900/50 p-3 hover:border-blue-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
+                {% else %}
+                <div class="group relative bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 p-3 opacity-50 grayscale cursor-not-allowed flex flex-col h-24 overflow-hidden" title="Access Denied">
+                {% endif %}
+                    <div class="absolute top-0 left-0 w-1 h-full bg-blue-600 transition-all {% if is_super_admin or 'CUSTOMER_ORDER' in user_allowed_modules %}group-hover:w-1.5{% endif %}"></div>
+                    <i data-lucide="ShoppingCart" class="w-7 h-7 text-slate-500 transition-colors mb-auto {% if is_super_admin or 'CUSTOMER_ORDER' in user_allowed_modules %}group-hover:text-blue-600{% endif %}"></i>
+                    <span class="text-[13px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-tight leading-tight transition-colors">Customer<br />Order</span>
+                {% if is_super_admin or "CUSTOMER_ORDER" in user_allowed_modules %}</a>{% else %}</div>{% endif %}
 
-                <a href="{% url 'receive_item' %}"
-                    class="group relative bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-300 dark:border-emerald-900/50 p-3 hover:border-emerald-500 dark:hover:border-emerald-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
-                    <div class="absolute top-0 left-0 w-1 h-full bg-emerald-600 transition-all group-hover:w-1.5"></div>
-                    <i data-lucide="ClipboardCheck"
-                        class="w-7 h-7 text-slate-500 dark:text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors mb-auto"></i>
-                    <span class="text-[13px] md:text-[13px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-tight group-hover:text-emerald-700 dark:group-hover:text-emerald-400 leading-tight transition-colors">Receiving<br />& Inspection</span>
-                </a>
+                <!-- PURCHASE ORDER -->
+                {% if is_super_admin or "PURCHASE_ORDER" in user_allowed_modules %}
+                <a href="{% url 'make_po' %}" class="group relative bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-300 dark:border-indigo-900/50 p-3 hover:border-indigo-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
+                {% else %}
+                <div class="group relative bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 p-3 opacity-50 grayscale cursor-not-allowed flex flex-col h-24 overflow-hidden" title="Access Denied">
+                {% endif %}
+                    <div class="absolute top-0 left-0 w-1 h-full bg-indigo-600 transition-all {% if is_super_admin or 'PURCHASE_ORDER' in user_allowed_modules %}group-hover:w-1.5{% endif %}"></div>
+                    <i data-lucide="FileText" class="w-7 h-7 text-slate-500 transition-colors mb-auto {% if is_super_admin or 'PURCHASE_ORDER' in user_allowed_modules %}group-hover:text-indigo-600{% endif %}"></i>
+                    <span class="text-[13px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-tight leading-tight transition-colors">Purchase<br />Order</span>
+                {% if is_super_admin or "PURCHASE_ORDER" in user_allowed_modules %}</a>{% else %}</div>{% endif %}
 
-                <a href="{% url 'new_request' %}"
-                    class="group relative bg-orange-50 dark:bg-orange-950/20 border border-orange-300 dark:border-orange-900/50 p-3 hover:border-orange-500 dark:hover:border-orange-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
-                    <div class="absolute top-0 left-0 w-1 h-full bg-orange-600 transition-all group-hover:w-1.5"></div>
-                    <i data-lucide="PackagePlus"
-                        class="w-7 h-7 text-slate-500 dark:text-slate-400 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors mb-auto"></i>
-                    <span class="text-[13px] md:text-[13px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-tight group-hover:text-orange-700 dark:group-hover:text-orange-400 leading-tight transition-colors">Inventory<br />Request</span>
-                </a>
+                <!-- RECEIVING -->
+                {% if is_super_admin or "RECEIVING" in user_allowed_modules %}
+                <a href="{% url 'receive_item' %}" class="group relative bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-300 dark:border-emerald-900/50 p-3 hover:border-emerald-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
+                {% else %}
+                <div class="group relative bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 p-3 opacity-50 grayscale cursor-not-allowed flex flex-col h-24 overflow-hidden" title="Access Denied">
+                {% endif %}
+                    <div class="absolute top-0 left-0 w-1 h-full bg-emerald-600 transition-all {% if is_super_admin or 'RECEIVING' in user_allowed_modules %}group-hover:w-1.5{% endif %}"></div>
+                    <i data-lucide="ClipboardCheck" class="w-7 h-7 text-slate-500 transition-colors mb-auto {% if is_super_admin or 'RECEIVING' in user_allowed_modules %}group-hover:text-emerald-600{% endif %}"></i>
+                    <span class="text-[13px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-tight leading-tight transition-colors">Receiving<br />& Inspection</span>
+                {% if is_super_admin or "RECEIVING" in user_allowed_modules %}</a>{% else %}</div>{% endif %}
 
-                <a href="{% url 'stock_move' %}"
-                    class="group relative bg-teal-50 dark:bg-teal-950/20 border border-teal-300 dark:border-teal-900/50 p-3 hover:border-teal-500 dark:hover:border-teal-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
-                    <div class="absolute top-0 left-0 w-1 h-full bg-teal-600 transition-all group-hover:w-1.5"></div>
-                    <i data-lucide="refresh-cw"
-                        class="w-7 h-7 text-slate-500 dark:text-slate-400 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors mb-auto"></i>
-                    <span class="text-[13px] md:text-[13px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-tight group-hover:text-teal-700 dark:group-hover:text-teal-400 leading-tight transition-colors">Inventory<br />Processing</span>
-                </a>
+                <!-- INVENTORY REQUEST -->
+                {% if is_super_admin or "INV_REQUEST" in user_allowed_modules %}
+                <a href="{% url 'new_request' %}" class="group relative bg-orange-50 dark:bg-orange-950/20 border border-orange-300 dark:border-orange-900/50 p-3 hover:border-orange-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
+                {% else %}
+                <div class="group relative bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 p-3 opacity-50 grayscale cursor-not-allowed flex flex-col h-24 overflow-hidden" title="Access Denied">
+                {% endif %}
+                    <div class="absolute top-0 left-0 w-1 h-full bg-orange-600 transition-all {% if is_super_admin or 'INV_REQUEST' in user_allowed_modules %}group-hover:w-1.5{% endif %}"></div>
+                    <i data-lucide="PackagePlus" class="w-7 h-7 text-slate-500 transition-colors mb-auto {% if is_super_admin or 'INV_REQUEST' in user_allowed_modules %}group-hover:text-orange-600{% endif %}"></i>
+                    <span class="text-[13px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-tight leading-tight transition-colors">Inventory<br />Request</span>
+                {% if is_super_admin or "INV_REQUEST" in user_allowed_modules %}</a>{% else %}</div>{% endif %}
 
-                <a href="{% url 'stock_inquiry' %}"
-                    class="group relative bg-sky-50 dark:bg-sky-950/20 border border-sky-300 dark:border-sky-900/50 p-3 hover:border-sky-500 dark:hover:border-sky-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
-                    <div class="absolute top-0 left-0 w-1 h-full bg-sky-600 transition-all group-hover:w-1.5"></div>
-                    <i data-lucide="search"
-                        class="w-7 h-7 text-slate-500 dark:text-slate-400 group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors mb-auto"></i>
-                    <span class="text-[13px] md:text-[13px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-tight group-hover:text-sky-700 dark:group-hover:text-sky-400 leading-tight transition-colors">Inventory<br />Inquiry</span>
-                </a>
+                <!-- INVENTORY PROCESSING -->
+                {% if is_super_admin or "INV_PROCESSING" in user_allowed_modules %}
+                <a href="{% url 'stock_move' %}" class="group relative bg-teal-50 dark:bg-teal-950/20 border border-teal-300 dark:border-teal-900/50 p-3 hover:border-teal-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
+                {% else %}
+                <div class="group relative bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 p-3 opacity-50 grayscale cursor-not-allowed flex flex-col h-24 overflow-hidden" title="Access Denied">
+                {% endif %}
+                    <div class="absolute top-0 left-0 w-1 h-full bg-teal-600 transition-all {% if is_super_admin or 'INV_PROCESSING' in user_allowed_modules %}group-hover:w-1.5{% endif %}"></div>
+                    <i data-lucide="refresh-cw" class="w-7 h-7 text-slate-500 transition-colors mb-auto {% if is_super_admin or 'INV_PROCESSING' in user_allowed_modules %}group-hover:text-teal-600{% endif %}"></i>
+                    <span class="text-[13px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-tight leading-tight transition-colors">Inventory<br />Processing</span>
+                {% if is_super_admin or "INV_PROCESSING" in user_allowed_modules %}</a>{% else %}</div>{% endif %}
 
-                <a href="{% url 'assembly_dashboard' %}"
-                    class="group relative bg-amber-50 dark:bg-amber-950/20 border border-amber-300 dark:border-amber-900/50 p-3 hover:border-amber-500 dark:hover:border-amber-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
-                    <div class="absolute top-0 left-0 w-1 h-full bg-amber-600 transition-all group-hover:w-1.5"></div>
-                    <i data-lucide="workflow"
-                        class="w-7 h-7 text-slate-500 dark:text-slate-400 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors mb-auto"></i>
-                    <span class="text-[13px] md:text-[13px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-tight group-hover:text-amber-700 dark:group-hover:text-amber-400 leading-tight transition-colors">Asset &<br />WIP Management</span>
-                </a>
+                <!-- INVENTORY INQUIRY -->
+                {% if is_super_admin or "INV_INQUIRY" in user_allowed_modules %}
+                <a href="{% url 'stock_inquiry' %}" class="group relative bg-sky-50 dark:bg-sky-950/20 border border-sky-300 dark:border-sky-900/50 p-3 hover:border-sky-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
+                {% else %}
+                <div class="group relative bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 p-3 opacity-50 grayscale cursor-not-allowed flex flex-col h-24 overflow-hidden" title="Access Denied">
+                {% endif %}
+                    <div class="absolute top-0 left-0 w-1 h-full bg-sky-600 transition-all {% if is_super_admin or 'INV_INQUIRY' in user_allowed_modules %}group-hover:w-1.5{% endif %}"></div>
+                    <i data-lucide="search" class="w-7 h-7 text-slate-500 transition-colors mb-auto {% if is_super_admin or 'INV_INQUIRY' in user_allowed_modules %}group-hover:text-sky-600{% endif %}"></i>
+                    <span class="text-[13px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-tight leading-tight transition-colors">Inventory<br />Inquiry</span>
+                {% if is_super_admin or "INV_INQUIRY" in user_allowed_modules %}</a>{% else %}</div>{% endif %}
 
-                <a href="{% url 'user_master' %}"
-                    class="group relative bg-slate-50 dark:bg-slate-800 border border-slate-800 dark:border-slate-700 p-3 hover:border-slate-800 dark:hover:border-slate-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
-                    <div class="absolute top-0 left-0 w-1 h-full bg-slate-700 transition-all group-hover:w-1.5"></div>
-                    <i data-lucide="book-user"
-                        class="w-7 h-7 text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-300 transition-colors mb-auto"></i>
-                    <span class="text-[13px] md:text-[13px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-tight group-hover:text-slate-900 dark:group-hover:text-slate-100 leading-tight transition-colors">User<br />Master</span>
-                </a>
+                <!-- ASSET & WIP -->
+                {% if is_super_admin or "ASSET_WIP" in user_allowed_modules %}
+                <a href="{% url 'assembly_dashboard' %}" class="group relative bg-amber-50 dark:bg-amber-950/20 border border-amber-300 dark:border-amber-900/50 p-3 hover:border-amber-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
+                {% else %}
+                <div class="group relative bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 p-3 opacity-50 grayscale cursor-not-allowed flex flex-col h-24 overflow-hidden" title="Access Denied">
+                {% endif %}
+                    <div class="absolute top-0 left-0 w-1 h-full bg-amber-600 transition-all {% if is_super_admin or 'ASSET_WIP' in user_allowed_modules %}group-hover:w-1.5{% endif %}"></div>
+                    <i data-lucide="workflow" class="w-7 h-7 text-slate-500 transition-colors mb-auto {% if is_super_admin or 'ASSET_WIP' in user_allowed_modules %}group-hover:text-amber-600{% endif %}"></i>
+                    <span class="text-[13px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-tight leading-tight transition-colors">Asset &<br />WIP Management</span>
+                {% if is_super_admin or "ASSET_WIP" in user_allowed_modules %}</a>{% else %}</div>{% endif %}
 
-                <a href="{% url 'analytics_board' %}"
-                    class="group relative bg-rose-50 dark:bg-rose-950/20 border border-rose-300 dark:border-rose-900/50 p-3 hover:border-rose-500 dark:hover:border-rose-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
-                    <div class="absolute top-0 left-0 w-1 h-full bg-rose-600 transition-all group-hover:w-1.5"></div>
-                    <i data-lucide="chart-spline"
-                        class="w-7 h-7 text-slate-500 dark:text-slate-400 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors mb-auto"></i>
-                    <span class="text-[13px] md:text-[13px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-tight group-hover:text-rose-700 dark:group-hover:text-rose-400 leading-tight transition-colors">System<br />Analytics</span>
-                </a>
+                <!-- USER MASTER -->
+                {% if is_super_admin or "USER_MASTER" in user_allowed_modules %}
+                <a href="{% url 'user_master' %}" class="group relative bg-slate-50 dark:bg-slate-800 border border-slate-800 dark:border-slate-700 p-3 hover:border-slate-800 hover:border-slate-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
+                {% else %}
+                <div class="group relative bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 p-3 opacity-50 grayscale cursor-not-allowed flex flex-col h-24 overflow-hidden" title="Access Denied">
+                {% endif %}
+                    <div class="absolute top-0 left-0 w-1 h-full bg-slate-700 transition-all {% if is_super_admin or 'USER_MASTER' in user_allowed_modules %}group-hover:w-1.5{% endif %}"></div>
+                    <i data-lucide="book-user" class="w-7 h-7 text-slate-500 transition-colors mb-auto {% if is_super_admin or 'USER_MASTER' in user_allowed_modules %}group-hover:text-slate-800 dark:group-hover:text-white{% endif %}"></i>
+                    <span class="text-[13px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-tight leading-tight transition-colors">User<br />Master</span>
+                {% if is_super_admin or "USER_MASTER" in user_allowed_modules %}</a>{% else %}</div>{% endif %}
 
-                <a href="{% url 'settings_master' %}"
-                    class="group relative bg-slate-100 dark:bg-slate-800/50 border border-slate-400 dark:border-slate-700 p-3 hover:border-slate-500 dark:hover:border-slate-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
-                    <div class="absolute top-0 left-0 w-1 h-full bg-slate-500 transition-all group-hover:w-1.5"></div>
-                    <i data-lucide="triangle-alert"
-                        class="w-7 h-7 text-slate-500 dark:text-slate-400 group-hover:text-slate-500 dark:group-hover:text-slate-300 transition-colors mb-auto"></i>
-                    <span class="text-[13px] md:text-[13px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-tight group-hover:text-slate-500 dark:group-hover:text-slate-300 leading-tight transition-colors">System<br/>configuration</span>
-                </a>
+                <!-- SYSTEM ANALYTICS -->
+                {% if is_super_admin or "SYSTEM_ANALYTICS" in user_allowed_modules %}
+                <a href="{% url 'analytics_board' %}" class="group relative bg-rose-50 dark:bg-rose-950/20 border border-rose-300 dark:border-rose-900/50 p-3 hover:border-rose-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
+                {% else %}
+                <div class="group relative bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 p-3 opacity-50 grayscale cursor-not-allowed flex flex-col h-24 overflow-hidden" title="Access Denied">
+                {% endif %}
+                    <div class="absolute top-0 left-0 w-1 h-full bg-rose-600 transition-all {% if is_super_admin or 'SYSTEM_ANALYTICS' in user_allowed_modules %}group-hover:w-1.5{% endif %}"></div>
+                    <i data-lucide="chart-spline" class="w-7 h-7 text-slate-500 transition-colors mb-auto {% if is_super_admin or 'SYSTEM_ANALYTICS' in user_allowed_modules %}group-hover:text-rose-600{% endif %}"></i>
+                    <span class="text-[13px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-tight leading-tight transition-colors">System<br />Analytics</span>
+                {% if is_super_admin or "SYSTEM_ANALYTICS" in user_allowed_modules %}</a>{% else %}</div>{% endif %}
+
+                <!-- SYSTEM CONFIGURATION -->
+                {% if is_super_admin or "SYS_CONFIG" in user_allowed_modules %}
+                <a href="{% url 'settings_master' %}" class="group relative bg-slate-100 dark:bg-slate-800/50 border border-slate-400 dark:border-slate-700 p-3 hover:border-slate-500 hover:shadow-md transition-all flex flex-col h-24 overflow-hidden">
+                {% else %}
+                <div class="group relative bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 p-3 opacity-50 grayscale cursor-not-allowed flex flex-col h-24 overflow-hidden" title="Access Denied">
+                {% endif %}
+                    <div class="absolute top-0 left-0 w-1 h-full bg-slate-500 transition-all {% if is_super_admin or 'SYS_CONFIG' in user_allowed_modules %}group-hover:w-1.5{% endif %}"></div>
+                    <i data-lucide="triangle-alert" class="w-7 h-7 text-slate-500 transition-colors mb-auto {% if is_super_admin or 'SYS_CONFIG' in user_allowed_modules %}group-hover:text-slate-700 dark:group-hover:text-white{% endif %}"></i>
+                    <span class="text-[13px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-tight leading-tight transition-colors">System<br/>Configuration</span>
+                {% if is_super_admin or "SYS_CONFIG" in user_allowed_modules %}</a>{% else %}</div>{% endif %}
             </div>
         </div>
 
@@ -1018,6 +1050,79 @@
             alert("Error updating status.");
         }
     }
+    document.addEventListener("DOMContentLoaded", function() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 32;
+        canvas.height = 32;
+        const ctx = canvas.getContext('2d');
+
+        const img = new Image();
+        img.src = "{% static 'images/asia-no-bg.png' %}"; // Ang AIM Logo
+
+        let link = document.querySelector("link[rel~='icon']");
+        if (!link) {
+            link = document.createElement('link');
+            link.rel = 'icon';
+            document.head.appendChild(link);
+        }
+
+        const fullTitle = "Asia Integrated Machine Inc. | WMS";
+        const scrollText = "ASIA INTEGRATED MACHINE INC.";
+
+        img.onload = function() {
+            // 1. SETUP PARA SA TYPEWRITER TITLE (Mas mabagal)
+            let titleIndex = 0;
+            const titleInterval = setInterval(() => {
+                if (titleIndex <= fullTitle.length) {
+                    document.title = fullTitle.substring(0, titleIndex) + "|";
+                    titleIndex++;
+                } else {
+                    document.title = fullTitle; 
+                    clearInterval(titleInterval); 
+                }
+            }, 150); 
+
+            // 2. SETUP PARA SA SLIDING FAVICON ICON
+            // 🚀 FIX: Ginawang 900 (Extra Bold) at 28px para sakop yung 32px na icon
+            ctx.font = "900 20px 'Inter', Arial, sans-serif"; 
+            const textWidth = ctx.measureText(scrollText).width;
+            let textX = 32; // Magsisimula sa labas ng kanan
+            const gap = 15; // Space sa pagitan ng dulo ng text at ng logo
+
+            const logoDrawSize = 46; // Gawin mong 40, 46, o 50 para ma-adjust ang laki
+            const offset = (logoDrawSize - 32) / 2; // Formula para laging nasa gitna kahit palakihin
+
+            const iconInterval = setInterval(() => {
+                ctx.clearRect(0, 0, 32, 32);
+                ctx.fillStyle = "#ffffff"; 
+                ctx.fillRect(0, 0, 32, 32);
+                // Compute kung nasaan ang logo (nakabuntot sa text)
+                let logoX = textX + textWidth + gap;
+
+                // 3. STOP CONDITION: Kapag pumwesto na sa gitna ang logo (X = 0)
+                if (logoX <= 0) {
+                    // I-lock ang logo sa gitna at tapusin ang animation
+                    ctx.drawImage(img, 0, 0, 32, 32);
+                    link.href = canvas.toDataURL('image/png');
+                    clearInterval(iconInterval); 
+                    return; // Para hindi na ituloy ang code sa ibaba
+                }
+            
+                // 4. DRAW GRADIENT TEXT
+                const gradient = ctx.createLinearGradient(0, 0, 32, 0);
+                gradient.addColorStop(0, "#0ea5e9"); // Sky Blue
+                gradient.addColorStop(1, "#38bdf8"); // Lighter Sky Blue
+                ctx.fillStyle = gradient; 
+                ctx.textAlign = "left";
+                ctx.textBaseline = "middle"; 
+                ctx.fillText(scrollText, textX, 16); 
+                // 5. DRAW LOGO (Nakadikit sa dulo ng text)
+                ctx.drawImage(img, logoX - offset, -offset, logoDrawSize, logoDrawSize);
+                textX -= 2; // Bilis ng andar pa-kaliwa (2 pixels per frame)
+                link.href = canvas.toDataURL('image/png');
+            }, 50); 
+        };
+    });
     </script>
 </body>
 

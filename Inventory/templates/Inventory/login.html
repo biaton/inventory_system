@@ -6,14 +6,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ASIA Integrated machine Inc.</title>
+    <link rel="icon" type="image/png" href="{% static 'images/asia-no-bg.png' %}">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        // Configure Tailwind
-        tailwind.config = {
-            darkMode: 'class',
-        }
-        
-        // CHECK LOCAL STORAGE IMMEDIATELY PARA WALANG FLICKER
+        tailwind.config = { darkMode: 'class' }
         if (localStorage.getItem('theme') === 'dark') {
             document.documentElement.classList.add('dark');
         } else {
@@ -22,47 +18,55 @@
     </script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        /* ERP Style Grid Background */
         .bg-grid-pattern {
             background-image: linear-gradient(to right, #334155 1px, transparent 1px),
                 linear-gradient(to bottom, #334155 1px, transparent 1px);
             background-size: 40px 40px;
         }
+        input:-webkit-autofill {
+            -webkit-box-shadow: 0 0 0 30px #f8fafc inset !important;
+        }
+        html.dark input:-webkit-autofill {
+            -webkit-box-shadow: 0 0 0 30px #020617 inset !important;
+            -webkit-text-fill-color: white !important;
+        }
     </style>
 </head>
 
+<!-- 🚀 FIX: Nilagyan ng p-4 sa body para may espasyo sa gilid at hindi dikit sa screen -->
 <body class="bg-slate-200 dark:bg-slate-950 min-h-screen flex items-center justify-center p-4 transition-colors duration-300">
 
-    <div class="max-w-4xl w-full bg-white dark:bg-slate-900 border border-slate-400 dark:border-slate-700 shadow-xl flex flex-col md:flex-row min-h-[500px] transition-colors duration-300">
+    <!-- 🚀 FIX: Tinanggal ang 'min-h-screen' dito sa card at ginawang 'rounded-xl' para maging compact floating box -->
+    <div class="max-w-4xl w-full bg-white dark:bg-slate-900 border border-slate-400 dark:border-slate-700 shadow-2xl flex flex-col md:flex-row md:min-h-[500px] transition-colors duration-300 rounded-xl overflow-hidden">
 
-        <div class="md:w-5/12 bg-slate-900 border-r border-slate-800 dark:border-slate-700 p-8 text-white flex flex-col justify-between relative overflow-hidden bg-grid-pattern">
+        <!-- LEFT PANEL (BRANDING) -->
+        <div class="w-full md:w-5/12 bg-slate-900 border-b md:border-b-0 md:border-r border-slate-800 dark:border-slate-700 p-6 pt-8 pb-12 md:p-8 text-white flex flex-col justify-between relative overflow-hidden bg-grid-pattern items-center md:items-start text-center md:text-left">
 
             <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-slate-800 via-sky-700 to-cyan-600 z-20"></div>
-
             <div class="absolute inset-0 bg-slate-900/80 pointer-events-none"></div>
 
-            <div class="relative z-10 mt-2">
-                <div class="flex items-center gap-4 mb-8 border-b border-slate-800 dark:border-slate-700 pb-6">
+            <div class="relative z-10 w-full">
+                <div class="flex flex-col md:flex-row items-center md:items-start gap-4 mb-6 md:mb-8 md:border-b border-slate-800 dark:border-slate-700 pb-4 md:pb-6">
 
-                    <div class="w-20 h-24 bg-white dark:bg-slate-800 flex items-center justify-center p-1.5 shadow-md rounded-sm border-2 border-slate-700 dark:border-slate-600 transition-colors duration-300">
+                    <div class="w-20 h-20 md:w-22 md:h-24 bg-white flex items-center justify-center p-1.5 shadow-md rounded-sm border-2 border-slate-700 dark:border-slate-600 transition-colors duration-300 shrink-0">
                         <img src="{% static 'images/asia-no-bg.png' %}" alt="AIM Logo" class="w-full h-full object-contain">
                     </div>
 
                     <div>
-                        <h1 class="text-2xl md:text-3xl font-black tracking-tighter uppercase leading-none text-slate-100 mb-1">
+                        <h1 class="text-2xl md:text-3xl font-black tracking-tighter uppercase leading-none text-slate-100 mb-1 mt-2 md:mt-0">
                             Asia Integrated
                         </h1>
-                        <span class="text-[13px] md:text-[15px] font-black text-sky-500 uppercase tracking-[0.2em]">Machine Inc.</span>
+                        <span class="text-[12px] md:text-[15px] font-black text-sky-500 uppercase tracking-[0.2em] block">Machine Inc.</span>
                     </div>
                 </div>
 
-                <div class="space-y-6">
+                <div class="hidden md:block space-y-6">
                     <div>
                         <p class="text-[10px] font-bold text-sky-500 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
                             <i data-lucide="warehouse" class="w-3.5 h-3.5"></i> System Module
                         </p>
                         <p class="text-sm font-black text-slate-200 uppercase tracking-widest border-l-2 border-sky-600 pl-3">
-                            Warehouse Inventory Management System
+                            Warehouse Management System
                         </p>
                     </div>
                     <div>
@@ -76,7 +80,7 @@
                 </div>
             </div>
 
-            <div class="relative z-10 mt-12 md:mt-0 pt-6">
+            <div class="relative z-10 mt-8 md:mt-0 pt-0 md:pt-6 w-full hidden md:block">
                 <div class="bg-slate-950/50 border border-slate-800 p-3 rounded-sm mb-5 shadow-inner">
                     <div class="flex items-center gap-2 text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">
                         <span class="relative flex h-2 w-2">
@@ -89,18 +93,22 @@
                         Authentication Required
                     </p>
                 </div>
-
                 <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest leading-relaxed">
                     &copy; 2026 ASIA Integrated Machine Inc.<br>All Rights Reserved.
                 </p>
             </div>
         </div>
 
-        <div class="md:w-7/12 p-8 md:p-12 flex flex-col justify-center bg-white dark:bg-slate-900 transition-colors duration-300">
-            <div class="w-full max-w-sm mx-auto">
+        <!-- RIGHT PANEL (LOGIN FORM) -->
+        <!-- 🚀 FIX: Tinanggal ang 'justify-center' para sumiksik pataas at mawala ang gap sa baba -->
+        <div class="w-full md:w-7/12 p-6 pb-8 sm:p-10 md:p-12 flex flex-col bg-white dark:bg-slate-900 -mt-6 md:mt-0 md:rounded-none relative z-30 shadow-[0_-15px_25px_rgba(0,0,0,0.2)] md:shadow-none transition-colors duration-300">
+            
+            <div class="w-12 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto mb-6 md:hidden"></div>
 
-                <div class="mb-8 border-b-2 border-slate-800 dark:border-slate-700 pb-2 transition-colors duration-300">
-                    <h2 class="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tighter uppercase flex items-center gap-2 transition-colors duration-300">
+            <div class="w-full max-w-sm mx-auto text-center md:text-left">
+
+                <div class="mb-6 md:mb-8 border-b-2 border-slate-800 dark:border-slate-700 pb-2 transition-colors duration-300">
+                    <h2 class="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tighter uppercase flex items-center justify-center md:justify-start gap-2 transition-colors duration-300">
                         <i data-lucide="lock-keyhole" class="w-5 h-5 text-sky-700 dark:text-sky-500"></i> Authentication
                     </h2>
                     <p class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">Provide valid credentials to proceed</p>
@@ -109,21 +117,21 @@
                 {% if messages %}
                 {% for message in messages %}
                 <div class="mb-6 p-3 text-[10px] font-black uppercase tracking-widest border border-rose-300 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 flex items-start gap-2 shadow-sm transition-colors duration-300">
-                    <i data-lucide="shield-alert" class="w-4 h-4 shrink-0"></i>
-                    <span>{{ message }}</span>
+                    <i data-lucide="shield-alert" class="w-4 h-4 shrink-0 mt-0.5"></i>
+                    <span class="text-left">{{ message }}</span>
                 </div>
                 {% endfor %}
                 {% endif %}
 
-                <form method="POST" action="{% url 'login' %}" class="space-y-5">
+                <form method="POST" action="{% url 'login' %}" class="space-y-4 md:space-y-5 text-left">
                     {% csrf_token %}
 
                     <div class="space-y-1">
                         <label class="text-[10px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest transition-colors duration-300">Registered Email Address</label>
                         <div class="relative">
                             <i data-lucide="mail" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500"></i>
-                            <input type="email" name="email" required autofocus autocomplete="off" placeholder="user@company.com" 
-                                class="w-full p-2.5 pl-9 bg-slate-50 dark:bg-slate-950 border border-slate-400 dark:border-slate-600 text-xs font-black text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-sky-700 dark:focus:ring-sky-500 outline-none shadow-inner lowercase transition-colors duration-300 placeholder-slate-400 dark:placeholder-slate-600">
+                            <input type="email" name="email" required autofocus autocomplete="email" placeholder="user@company.com" 
+                                class="w-full p-2.5 pl-9 bg-slate-50 dark:bg-slate-950 border border-slate-400 dark:border-slate-600 text-xs font-black text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-sky-700 dark:focus:ring-sky-500 outline-none shadow-inner lowercase transition-colors duration-300 placeholder-slate-400 dark:placeholder-slate-600 rounded-none">
                         </div>
                     </div>
 
@@ -136,40 +144,38 @@
                         </div>
                         <div class="relative">
                             <i data-lucide="key" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500"></i>
-                            <input type="password" id="passwordInput" name="password" required placeholder="Enter Password..."
-                                class="w-full p-2.5 pl-9 pr-10 bg-slate-50 dark:bg-slate-950 border border-slate-400 dark:border-slate-600 text-xs font-black text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-sky-700 dark:focus:ring-sky-500 outline-none shadow-inner transition-colors duration-300 placeholder-slate-400 dark:placeholder-slate-600">
+                            <input type="password" id="passwordInput" name="password" required autocomplete="current-password" placeholder="Enter Password..."
+                                class="w-full p-2.5 pl-9 pr-12 bg-slate-50 dark:bg-slate-950 border border-slate-400 dark:border-slate-600 text-xs font-black text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-sky-700 dark:focus:ring-sky-500 outline-none shadow-inner transition-colors duration-300 placeholder-slate-400 dark:placeholder-slate-600 rounded-none">
                             
-                            <button type="button" onclick="togglePassword()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-sky-700 dark:hover:text-sky-400 transition-colors focus:outline-none">
+                            <button type="button" onclick="togglePassword()" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 dark:text-slate-500 hover:text-sky-700 dark:hover:text-sky-400 transition-colors focus:outline-none">
                                 <i data-lucide="eye" id="toggleIcon" class="w-4 h-4"></i>
                             </button>
                         </div>
                     </div>
 
-                    <button type="submit" class="w-full bg-slate-800 dark:bg-sky-700 text-white border border-slate-900 dark:border-sky-800 py-3 font-black text-[11px] uppercase tracking-widest hover:bg-sky-700 dark:hover:bg-sky-600 transition-colors flex justify-center items-center gap-2 mt-6 shadow-sm">
+                    <button type="submit" class="w-full bg-slate-800 dark:bg-sky-700 text-white border border-slate-900 dark:border-sky-800 py-3 font-black text-[11px] uppercase tracking-widest hover:bg-sky-700 dark:hover:bg-sky-600 transition-colors flex justify-center items-center gap-2 mt-5 shadow-sm rounded-none">
                         <i data-lucide="log-in" class="w-4 h-4"></i> Authenticate Session
                     </button>
                 </form>
 
-                <div class="mt-8 text-center border-t border-slate-200 dark:border-slate-800 pt-4 transition-colors duration-300">
+                <!-- 🚀 FIX: Pinaikling margin-top (mt-6) at siksik na footer padding para maayos tignan -->
+                <div class="mt-6 text-center border-t border-slate-200 dark:border-slate-800 pt-4 transition-colors duration-300">
                     <p class="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-                        Need technical support? <a href="#" class="text-slate-600 dark:text-slate-400 hover:text-sky-700 dark:hover:text-sky-400 font-black transition-colors">Contact IT Dept</a>
+                        Need technical support? <br class="block sm:hidden"><a href="#" class="text-slate-600 dark:text-slate-400 hover:text-sky-700 dark:hover:text-sky-400 font-black transition-colors inline-block mt-1 sm:mt-0">Contact IT Dept</a>
                     </p>
                 </div>
 
             </div>
         </div>
-
     </div>
 
-    <button onclick="toggleDarkMode()" class="fixed top-4 right-4 p-3 rounded-full bg-slate-800 dark:bg-white text-white dark:text-slate-900 shadow-xl opacity-50 hover:opacity-100 transition-opacity z-50">
-        <i data-lucide="moon" id="themeIcon" class="w-5 h-5"></i>
+    <button onclick="toggleDarkMode()" class="fixed top-3 right-3 md:top-4 md:right-4 p-2.5 md:p-3 rounded-full bg-slate-800 dark:bg-white text-white dark:text-slate-900 shadow-xl opacity-50 hover:opacity-100 transition-opacity z-50">
+        <i data-lucide="moon" id="themeIcon" class="w-4 h-4 md:w-5 h-5"></i>
     </button>
 
     <script>
-        // Init Lucide Icons
         lucide.createIcons();
 
-        // I-set ang tamang icon sa button pagka-load ng page depende sa localStorage
         document.addEventListener('DOMContentLoaded', () => {
             const themeIcon = document.getElementById('themeIcon');
             if (localStorage.getItem('theme') === 'dark') {
@@ -183,7 +189,6 @@
         function togglePassword() {
             const pwdInput = document.getElementById('passwordInput');
             const icon = document.getElementById('toggleIcon');
-            
             if (pwdInput.type === "password") {
                 pwdInput.type = "text";
                 icon.setAttribute('data-lucide', 'eye-off'); 
@@ -191,27 +196,92 @@
                 pwdInput.type = "password";
                 icon.setAttribute('data-lucide', 'eye'); 
             }
-            
             lucide.createIcons();
         }
 
-        // Updated Dark Mode Toggle Logic with Local Storage
         function toggleDarkMode() {
             const htmlClass = document.documentElement.classList;
             const themeIcon = document.getElementById('themeIcon');
-            
             if (htmlClass.contains('dark')) {
                 htmlClass.remove('dark');
-                localStorage.setItem('theme', 'light'); // Save as light
+                localStorage.setItem('theme', 'light'); 
                 themeIcon.setAttribute('data-lucide', 'moon');
             } else {
                 htmlClass.add('dark');
-                localStorage.setItem('theme', 'dark'); // Save as dark
+                localStorage.setItem('theme', 'dark'); 
                 themeIcon.setAttribute('data-lucide', 'sun');
             }
             lucide.createIcons();
         }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 32;
+            canvas.height = 32;
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            img.src = "{% static 'images/asia-no-bg.png' %}"; 
+
+            let link = document.querySelector("link[rel~='icon']");
+            if (!link) {
+                link = document.createElement('link');
+                link.rel = 'icon';
+                document.head.appendChild(link);
+            }
+
+            const fullTitle = "Asia Integrated Machine Inc. | WMS";
+            const scrollText = "ASIA INTEGRATED MACHINE INC.";
+
+            img.onload = function() {
+                let titleIndex = 0;
+                const titleInterval = setInterval(() => {
+                    if (titleIndex <= fullTitle.length) {
+                        document.title = fullTitle.substring(0, titleIndex) + "|";
+                        titleIndex++;
+                    } else {
+                        document.title = fullTitle; 
+                        clearInterval(titleInterval); 
+                    }
+                }, 150); 
+
+                ctx.font = "900 20px 'Inter', Arial, sans-serif"; 
+                const textWidth = ctx.measureText(scrollText).width;
+                let textX = 32; 
+                const gap = 15; 
+                const logoDrawSize = 46; 
+                const offset = (logoDrawSize - 32) / 2; 
+
+                const iconInterval = setInterval(() => {
+                    ctx.clearRect(0, 0, 32, 32);
+                    ctx.fillStyle = "#ffffff"; 
+                    ctx.fillRect(0, 0, 32, 32);
+
+                    let logoX = textX + textWidth + gap;
+
+                    if (logoX <= 0) {
+                        ctx.drawImage(img, 0, 0, 32, 32);
+                        link.href = canvas.toDataURL('image/png');
+                        clearInterval(iconInterval); 
+                        return; 
+                    }
+            
+                    const gradient = ctx.createLinearGradient(0, 0, 32, 0);
+                    gradient.addColorStop(0, "#0ea5e9"); 
+                    gradient.addColorStop(1, "#38bdf8"); 
+
+                    ctx.fillStyle = gradient; 
+                    ctx.textAlign = "left";
+                    ctx.textBaseline = "middle"; 
+                    ctx.fillText(scrollText, textX, 16); 
+
+                    ctx.drawImage(img, logoX - offset, -offset, logoDrawSize, logoDrawSize);
+
+                    textX -= 2; 
+                    link.href = canvas.toDataURL('image/png');
+
+                }, 50); 
+            };
+        });
     </script>
 </body>
-
 </html>
