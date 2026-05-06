@@ -1,0 +1,103 @@
+{% extends "Inventory/base.html" %}
+
+{% block content %}
+<div class="max-w-[100%] mx-auto mt-2 px-2 sm:px-4 text-slate-800 dark:text-slate-200 pb-12 transition-colors duration-300">
+
+    <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-end border-b-2 border-violet-800 dark:border-violet-700 pb-2 gap-4 transition-colors duration-300">
+        <div>
+            <h2 class="text-2xl font-black text-violet-900 dark:text-violet-400 uppercase tracking-tighter flex items-center gap-2 transition-colors duration-300">
+                <i data-lucide="award" class="w-7 h-7 text-violet-700 dark:text-violet-500"></i> Vendor Rating & Scorecard
+            </h2>
+            <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1 transition-colors duration-300">Advanced Supplier Performance Analytics</p>
+        </div>
+        <div class="flex gap-2">
+            <a href="{% url 'analytics_board' %}" class="bg-slate-800 dark:bg-slate-700 text-white px-4 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-slate-700 dark:hover:bg-slate-600 transition-colors flex items-center gap-2 rounded-sm shadow-sm">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Analytics
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for score in scorecard %}
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden relative group">
+            <div class="h-2 w-full bg-{{ score.color }}-500"></div>
+
+            <div class="p-5">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex-1">
+                        <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">{{ score.supplier.vendor_code }}</span>
+                        <h3 class="text-sm font-black text-slate-800 dark:text-slate-200 uppercase leading-tight truncate pr-2" title="{{ score.supplier.name }}">
+                            {{ score.supplier.name }}
+                        </h3>
+                    </div>
+                    
+                    <div class="flex-shrink-0 w-12 h-12 rounded-full border-4 border-{{ score.color }}-100 dark:border-{{ score.color }}-900/50 bg-{{ score.color }}-50 dark:bg-{{ score.color }}-900/20 flex items-center justify-center">
+                        <span class="text-xl font-black text-{{ score.color }}-600 dark:text-{{ score.color }}-400">{{ score.grade }}</span>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <!-- Progress Bar: Quality (30%) -->
+                    <div>
+                        <div class="flex justify-between items-end mb-1">
+                            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><i data-lucide="microscope" class="w-3 h-3 text-emerald-500"></i> QA Pass Rate</span>
+                            <span class="text-xs font-black text-slate-700 dark:text-slate-300">{{ score.quality_rate }}%</span>
+                        </div>
+                        <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                            <div class="bg-emerald-500 h-1.5 rounded-full" style="width: {{ score.quality_rate }}%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar: Delivery (30%) -->
+                    <div>
+                        <div class="flex justify-between items-end mb-1">
+                            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><i data-lucide="truck" class="w-3 h-3 text-sky-500"></i> On-Time Delivery</span>
+                            <span class="text-xs font-black text-slate-700 dark:text-slate-300">{{ score.on_time_rate }}%</span>
+                        </div>
+                        <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                            <div class="bg-sky-500 h-1.5 rounded-full" style="width: {{ score.on_time_rate }}%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar: Fulfillment (20%) -->
+                    <div>
+                        <div class="flex justify-between items-end mb-1">
+                            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><i data-lucide="boxes" class="w-3 h-3 text-indigo-500"></i> Fulfillment Rate</span>
+                            <span class="text-xs font-black text-slate-700 dark:text-slate-300">{{ score.fulfillment_rate }}%</span>
+                        </div>
+                        <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                            <div class="bg-indigo-500 h-1.5 rounded-full" style="width: {{ score.fulfillment_rate }}%"></div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                        <div class="bg-slate-50 dark:bg-slate-800/50 p-2 rounded-sm text-center border border-slate-100 dark:border-slate-700">
+                            <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Price Stability</p>
+                            <p class="text-[11px] font-black text-slate-700 dark:text-slate-300">{{ score.price_score }}%</p>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-800/50 p-2 rounded-sm text-center border border-slate-100 dark:border-slate-700">
+                            <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Avg Lead Time</p>
+                            <p class="text-[11px] font-black text-slate-700 dark:text-slate-300">{{ score.avg_lead_time }} Days</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Stats -->
+            <div class="bg-slate-50 dark:bg-slate-950/50 p-3 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Total Orders: <span class="text-slate-700 dark:text-slate-300">{{ score.total_orders }}</span></span>
+                <span class="text-[10px] font-black text-{{ score.color }}-600 dark:text-{{ score.color }}-400 bg-{{ score.color }}-100 dark:bg-{{ score.color }}-900/30 px-2 py-0.5 rounded shadow-inner border border-{{ score.color }}-200 dark:border-{{ score.color }}-800">
+                    Score: {{ score.overall_score }}
+                </span>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full py-12 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg">
+            <i data-lucide="folder-search" class="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3"></i>
+            <h3 class="text-sm font-black text-slate-500 uppercase tracking-widest">No Supplier Data</h3>
+            <p class="text-xs text-slate-400 mt-1">Start receiving items and processing POs to generate scores.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

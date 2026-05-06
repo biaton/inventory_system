@@ -378,6 +378,15 @@ class Profile(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.get_role_display()}"
 
+class NotificationSubscription(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_subscriptions")
+    route = models.ForeignKey('EmailRoute', on_delete=models.CASCADE)
+    notify_email = models.BooleanField(default=True, verbose_name="Receive Email")
+    notify_web = models.BooleanField(default=True, verbose_name="Receive Web Alert")
+
+    class Meta:
+        unique_together = ('user', 'route')
+
 class EmailRoute(models.Model):
     # (Yung EVENT_CHOICES mo, same lang, walang babaguhin dito)
     EVENT_CHOICES = [
@@ -402,23 +411,23 @@ class EmailRoute(models.Model):
     
     event_name = models.CharField(max_length=50, choices=EVENT_CHOICES, unique=True, verbose_name="Notification Event")
     
-    # 🚀 BAGO: Ito na yung papalit sa target_emails
     target_users = models.ManyToManyField(
         User, 
+        through='NotificationSubscription', 
         blank=True, 
-        related_name='email_subscriptions',
-        help_text="Select users who should receive this notification."
+        related_name='email_subscriptions'
     )
     
-    is_active = models.BooleanField(default=True, help_text="Uncheck this to temporarily disable sending emails for this event.")
+    is_active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.get_event_name_display()} Routing"
 
     # 🚀 BAGO: Kukunin niya yung email ng bawat user na naka-check sa system natin
     def get_email_list(self):
-        # I-exclude natin yung mga users na walang naka-set na email para iwas error sa sending
-        return list(self.target_users.exclude(email__exact='').values_list('email', flat=True))
+        # Kukunin lang yung mga users na naka-check ang "notify_email=True"
+        subs = NotificationSubscription.objects.filter(route=self, notify_email=True).exclude(user__email__exact='')
+        return list(subs.values_list('user__email', flat=True))
 
 def send_shipping_notification(order_no, customer_email, courier_name, tracking_number):
     if not customer_email:

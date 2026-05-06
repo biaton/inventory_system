@@ -4,7 +4,7 @@ from .models import (
     Profile, Item, Location, Supplier, Contact, 
     CustomerOrder, PurchaseOrder, PurchaseOrderItem, 
     MaterialTag, DeliveryRequest, DeliveryRequestItem, 
-    StockLog, ShipmentSchedule, SystemSetting, EmailRoute, LocationMaster, SystemAuditLog
+    StockLog, ShipmentSchedule, SystemSetting, EmailRoute, LocationMaster, SystemAuditLog, NotificationSubscription
 )
 
 @admin.register(Profile)
@@ -110,19 +110,15 @@ class ShipmentScheduleAdmin(admin.ModelAdmin):
 class SystemSettingAdmin(admin.ModelAdmin):
     list_display = ('warehouse_name', 'low_stock_threshold', 'enable_email_alerts')
 
+# 🚀 BAGO: Inline config para sa Email at Web checkboxes sa Admin Panel
+class NotificationSubscriptionInline(admin.TabularInline):
+    model = NotificationSubscription
+    extra = 1  # Magbibigay ng 1 blank row pang-add ng user sa event
+    autocomplete_fields = ['user'] # Optional: Para madali mag-search ng user kung marami na
+    
 @admin.register(EmailRoute)
 class EmailRouteAdmin(admin.ModelAdmin):
-    # Pinalitan natin yung 'target_emails' ng custom function natin na 'get_target_users'
-    list_display = ('event_name', 'get_target_users', 'is_active')
-    
-    # 🚀 BAGO: Pampaganda ng UI sa Django Admin para madali mag-select ng users
-    filter_horizontal = ('target_users',) 
-
-    # Function para pagsama-samahin yung pangalan ng mga naka-assign na users
-    def get_target_users(self, obj):
-        users = obj.target_users.all()
-        if users:
-            return ", ".join([user.username for user in users])
-        return "No Users Assigned"
-    
-    get_target_users.short_description = 'Target Users'
+    list_display = ('event_name', 'is_active')
+    list_filter = ('is_active',)
+    # 🚀 BAGO: Dito natin ilalagay yung Inline para ma-edit mo kung sino mga users na naka-subscribe per route
+    inlines = [NotificationSubscriptionInline]

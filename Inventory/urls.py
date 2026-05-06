@@ -175,6 +175,8 @@ urlpatterns = [
     path('fleet-dashboard/', views.fleet_dashboard_view, name='fleet_dashboard'),
     path('api/active-trip/<int:vehicle_id>/', views.active_trip_api, name='active_trip_api'),
     path('mark-delivered-batch/<str:main_po_no>/', views.mark_delivered_batch_view, name='mark_delivered_batch'),
+    path('tools/supplier-scorecard/', views.supplier_scorecard_view, name='supplier_scorecard'),
+    path('tools/customer-scorecard/', views.customer_scorecard_view, name='customer_scorecard'),
 
 
     path('system/test-email/', views.test_all_email_templates_view, name='test_email_system'),

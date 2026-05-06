@@ -116,6 +116,16 @@
                     <span class="text-[8px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest text-center leading-tight">Fleet<br/>Status</span>
                 </a>
 
+                <a href="{% url 'supplier_scorecard' %}" class="flex flex-col items-center justify-center p-3 rounded-md bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-violet-50 dark:hover:bg-violet-900/30 hover:border-violet-300 dark:hover:border-violet-700 transition-colors group">
+                    <i data-lucide="award" class="w-5 h-5 text-slate-500 dark:text-slate-400 group-hover:text-violet-600 dark:group-hover:text-violet-400 mb-1.5 transition-colors"></i>
+                    <span class="text-[8px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest text-center leading-tight">Vendor<br/>Rating</span>
+                </a>
+
+                <a href="{% url 'customer_scorecard' %}" class="flex flex-col items-center justify-center p-3 rounded-md bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-yellow-50 dark:hover:bg-yellow-900/30 hover:border-yellow-300 dark:hover:border-yellow-700 transition-colors group">
+                    <i data-lucide="gem" class="w-5 h-5 text-slate-500 dark:text-slate-400 group-hover:text-yellow-600 dark:group-hover:text-yellow-400 mb-1.5 transition-colors"></i>
+                    <span class="text-[8px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest text-center leading-tight">VIP<br/>Clients</span>
+                </a>
+
             </div>
         </div>
 
@@ -1066,7 +1076,7 @@
             document.head.appendChild(link);
         }
 
-        const fullTitle = "Asia Integrated Machine Inc. | WMS";
+        const fullTitle = "Dashboard | Asia Integrated Machines Inc.";
         const scrollText = "ASIA INTEGRATED MACHINE INC.";
 
         img.onload = function() {
@@ -1118,7 +1128,7 @@
                 ctx.fillText(scrollText, textX, 16); 
                 // 5. DRAW LOGO (Nakadikit sa dulo ng text)
                 ctx.drawImage(img, logoX - offset, -offset, logoDrawSize, logoDrawSize);
-                textX -= 2; // Bilis ng andar pa-kaliwa (2 pixels per frame)
+                textX -= 4; // Bilis ng andar pa-kaliwa (2 pixels per frame)
                 link.href = canvas.toDataURL('image/png');
             }, 50); 
         };

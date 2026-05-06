@@ -66,6 +66,12 @@ from .utils import (
     send_assembly_completed_alert, scan_pending_qc, 
     scan_aging_requests, scan_pending_pos, 
     scan_dead_stock,
+    notify_web_users_for_event,
+    scan_and_alert_late_deliveries,
+    scan_and_alert_low_stock,
+    check_and_alert_low_stock,
+    alert_new_po_created,
+    scan_and_alert_expiring_items
     )
 from .models import (
     Profile, 
@@ -96,7 +102,8 @@ from .models import (
     Vehicle,
     TripExpense,
     FleetDriver,
-    PasswordResetOTP
+    PasswordResetOTP,
+    NotificationSubscription
 )
 
 @login_required
@@ -3435,27 +3442,23 @@ def ri_delivery_request_view(request):
 @login_required
 def movement_slip_print_view(request, req_no):
     try:
-        # 1. Kunin ang Main Header ng Request
-        # Gagamit tayo ng get_object_or_404 para safe
         header = get_object_or_404(DeliveryRequest, request_no=req_no)
-
-        # 2. Kunin lahat ng Items na nakadikit sa Request na ito
-        # 'items' ang default related_name kung hindi mo binago sa models.py
-        # Kung nag-error dito, i-check ang related_name sa ForeignKey ng items model mo
         items = header.items.all()
 
-        # 3. I-prepare ang data na ipapasa sa HTML
+        # 🚀 BAGONG DAGDAG: Computed Totals para sa Summary
+        total_skus = items.count()
+        total_qty = sum(item.request_qty for item in items) if items else 0
+
         context = {
             'header': header,
             'items': items,
-            'now': datetime.datetime.now(),  # Para sa 'Printed Date' sa slip
+            'total_skus': total_skus,
+            'total_qty': total_qty,
+            'now': timezone.now(), 
         }
-
-        # 4. I-render ang printable template
         return render(request, 'Inventory/receiving/movement_slip_print.html', context)
 
     except Exception as e:
-        # Kung may error (hal: hindi mahanap ang REQ), babalik sa main page
         messages.error(request, f"Error generating movement slip: {str(e)}")
         return redirect('delivery_request')
 
@@ -4716,6 +4719,45 @@ def stock_item_inquiry_view(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
+    today = timezone.now().date()
+    thirty_days_ago = today - timedelta(days=30)
+    OUT_ACTIONS = ['OUT', 'DISPATCH', 'DEDUCT', 'SALE', 'FIFO', 'MINUS', 'SHIPPED', 'CONSUME']
+
+    # Kukunin natin ang consumption data ng lahat ng items sa page na ito para hindi mabagal
+    page_item_codes = [item['item_code'] for item in page_obj.object_list]
+    
+    consumption_map = StockLog.objects.filter(
+        material_tag__item_code__in=page_item_codes,
+        timestamp__gte=thirty_days_ago,
+        action_type__in=OUT_ACTIONS
+    ).values('material_tag__item_code').annotate(
+        total_out=Sum('change_qty')
+    )
+    
+    # Gawing dictionary para madaling hanapin: {'ITEM-01': 300}
+    usage_dict = {c['material_tag__item_code']: abs(float(c['total_out'] or 0)) for c in consumption_map}
+
+    # Idagdag ang DOS sa bawat item object sa page
+    for item in page_obj.object_list:
+        code = item['item_code']
+        stock = float(item['total_stock'] or 0)
+        total_usage = usage_dict.get(code, 0)
+        
+        adc = total_usage / 30.0 # Average Daily Consumption
+        
+        if adc > 0:
+            dos = int(stock / adc)
+            item['adc'] = round(adc, 2)
+            item['dos'] = dos
+            item['health_color'] = 'emerald' if dos > 15 else ('amber' if dos > 7 else 'rose')
+        else:
+            item['adc'] = 0
+            item['dos'] = None # Ibig sabihin walang galaw ang stock
+            item['health_color'] = 'slate'
+
+    sys_settings = SystemSetting.objects.first()
+    actual_threshold = sys_settings.low_stock_threshold if sys_settings else 50
+
     context = {
         'items': page_obj,
         'search_query': search_query,
@@ -5705,9 +5747,12 @@ def analytics_view(request):
     critical_count = 0
     healthy_count = 0
 
+    current_stocks_dict = {}
+
     for item in inventory_grouped:
         code = item['item_code']
         qty = item['total_stock'] or 0
+        current_stocks_dict[code] = qty
         i_min = master_mins.get(code, 0)
         threshold_to_use = i_min if i_min > 0 else default_threshold
 
@@ -5849,6 +5894,71 @@ def analytics_view(request):
     expiring_count = expiring_items_query.count()
     expiring_items = expiring_items_query[:5]
 
+    # 🚀 10. TOP 5 CUSTOMERS BY LTV (For CRM Chart)
+    top_customers_qs = CustomerOrder.objects.filter(order_status='Delivered', customer__isnull=False).values('customer__name').annotate(
+        ltv=Sum('amount')
+    ).order_by('-ltv')[:5]
+    cust_labels = [c['customer__name'] for c in top_customers_qs]
+    cust_ltv_data = [float(c['ltv'] or 0) for c in top_customers_qs]
+
+    # 🚀 11. TOP 5 SUPPLIERS BY ORDER VOLUME (For SRM Chart)
+    top_suppliers_qs = PurchaseOrder.objects.filter(supplier__isnull=False).values('supplier__name').annotate(
+        total_orders=Count('id')
+    ).order_by('-total_orders')[:5]
+    supp_labels = [s['supplier__name'] for s in top_suppliers_qs]
+    supp_order_data = [s['total_orders'] for s in top_suppliers_qs]
+
+    # 🚀 12. SMART DEMAND FORECASTING (Predictive Restocking)
+    thirty_days_ago_forecast = today - timedelta(days=30)
+    
+    # Kukunin natin ang lahat ng nabawas sa stock sa nakalipas na 30 araw
+    consumption_data = StockLog.objects.filter(
+        timestamp__gte=thirty_days_ago_forecast,
+        action_type__in=OUT_ACTIONS
+    ).values('material_tag__item_code', 'material_tag__description').annotate(
+        total_consumed=Sum('change_qty')
+    )
+    
+    smart_reorder_list = []
+
+    for data in consumption_data:
+        code = data['material_tag__item_code']
+        desc = data['material_tag__description']
+        # Dahil negative ang records pag Stock Out, gagamitin natin ang abs()
+        consumed = abs(float(data['total_consumed'] or 0)) 
+        
+        if consumed > 0:
+            adc = consumed / 30.0 # Average Daily Consumption
+            current_qty = float(current_stocks_dict.get(code, 0))
+            
+            # Days of Supply (DOS) = Ilang araw bago mag-zero ang stock?
+            dos = current_qty / adc if adc > 0 else 999
+            
+            # I-set natin na 7 days ang default average lead time mula sa supplier, 
+            # at 3 days na buffer = 10 days
+            reorder_point_days = 10 
+
+            # Kapag ang Days of Supply ay mas maliit na sa Reorder Point, I-ALERT NA NATIN!
+            if dos <= reorder_point_days:
+                run_out_date = today + timedelta(days=int(dos))
+                
+                # I-suggest natin kung ilan ang bibilhin para magkaroon ulit ng 30-day stock
+                suggested_qty = int(adc * 30)
+                
+                smart_reorder_list.append({
+                    'item_code': code,
+                    'description': desc,
+                    'current_stock': int(current_qty),
+                    'adc': round(adc, 1),
+                    'dos': int(dos),
+                    'run_out_date': run_out_date,
+                    'suggested_qty': suggested_qty if suggested_qty > 0 else 1
+                })
+
+    # I-sort para yung pinakamalapit maubos ang nasa taas
+    smart_reorder_list.sort(key=lambda x: x['dos'])
+    smart_reorder_list = smart_reorder_list[:5] # Kunin ang top 5 pinaka-urgent
+
     context = {
         'total_skus': total_skus,
         'pending_shipments': pending_shipments,
@@ -5873,6 +5983,11 @@ def analytics_view(request):
         'expiring_items': expiring_items,
         'expiring_count': expiring_count,
         'today': today,
+        'cust_labels': json.dumps(cust_labels),
+        'cust_ltv_data': json.dumps(cust_ltv_data),
+        'supp_labels': json.dumps(supp_labels),
+        'supp_order_data': json.dumps(supp_order_data),
+        'smart_reorder_list': smart_reorder_list,
     }
     
     return render(request, 'Inventory/analytics_board.html', context)
@@ -6166,7 +6281,7 @@ def all_notifications_view(request):
     
     # Optional: Paginator kung sakaling umabot na sa libo yung alerts
     from django.core.paginator import Paginator
-    paginator = Paginator(notifs, 50) # 50 alerts per page
+    paginator = Paginator(notifs, 15) # 50 alerts per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
@@ -6572,108 +6687,187 @@ def active_trip_api(request, vehicle_id):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
+@login_required
+@require_module_access('SYSTEM_ANALYTICS')
+def supplier_scorecard_view(request):
+    suppliers = Supplier.objects.filter(is_active=True).order_by('name')
+    scorecard_data = []
+    today = timezone.now().date()
+
+    for supp in suppliers:
+        pos = PurchaseOrder.objects.filter(supplier=supp)
+        total_pos = pos.count()
+
+        # 1. On-Time Delivery Rate
+        late_pos = pos.filter(
+            delivery_date__lt=today, 
+            ordering_status__in=['Pending Approval', 'Pending', 'Approved', 'Shipped', 'In Transit']
+        ).count()
+        on_time_pos = total_pos - late_pos
+        on_time_rate = (on_time_pos / total_pos * 100) if total_pos > 0 else 100.0
+
+        # 2. Quality Rate (QA Pass Rate)
+        tags = MaterialTag.objects.filter(po_reference__supplier=supp)
+        total_inspected = tags.exclude(inspection_status='Pending').count()
+        failed_tags = tags.filter(inspection_status='Failed').count()
+        passed_tags = total_inspected - failed_tags
+        quality_rate = (passed_tags / total_inspected * 100) if total_inspected > 0 else 100.0
+
+        # 3. Order Fulfillment Rate (Quantity Accuracy)
+        po_items = PurchaseOrderItem.objects.filter(purchase_order__supplier=supp)
+        total_ordered_qty = sum(item.qty for item in po_items)
+        total_received_qty = sum(getattr(item, 'qty_received', 0) for item in po_items) 
+        fulfillment_rate = (total_received_qty / total_ordered_qty * 100) if total_ordered_qty > 0 else 100.0
+        fulfillment_rate = min(100.0, fulfillment_rate) # Cap at 100%
+
+        # 4. Price Stability (Cost Variance vs Standard Price)
+        price_variance_sum = 0
+        variance_count = 0
+        for item in po_items:
+            master_item = Item.objects.filter(item_code=item.item_code).first()
+            if master_item and master_item.unit_price > 0:
+                # (Standard - PO) / Standard. Negative means PO is more expensive.
+                variance = ((float(master_item.unit_price) - float(item.unit_price)) / float(master_item.unit_price)) * 100
+                price_variance_sum += variance
+                variance_count += 1
+        
+        avg_price_stability = (price_variance_sum / variance_count) if variance_count > 0 else 0.0
+        price_score = 100 + avg_price_stability 
+        price_score = max(0, min(100, price_score)) # Clamp between 0-100
+
+        # 5. Average Lead Time Speed
+        delivered_pos = pos.filter(ordering_status='Received', order_date__isnull=False)
+        total_lead_days = 0
+        for d_po in delivered_pos:
+            actual_date = getattr(d_po, 'actual_delivery_date', None) or getattr(d_po, 'updated_at', None)
+            if actual_date and d_po.order_date:
+                # Convert to date if it's datetime
+                if isinstance(actual_date, datetime.datetime): actual_date = actual_date.date()
+                lead = (actual_date - d_po.order_date).days
+                total_lead_days += lead if lead > 0 else 0
+        
+        avg_lead_time = (total_lead_days / delivered_pos.count()) if delivered_pos.count() > 0 else 0
+
+        # OVERALL WEIGHTED SCORE
+        # 30% Quality, 30% On-Time, 20% Fulfillment, 20% Price Stability
+        overall_score = (quality_rate * 0.3) + (on_time_rate * 0.3) + (fulfillment_rate * 0.2) + (price_score * 0.2)
+        
+        if total_pos == 0:
+            grade, color = 'N/A', 'slate'
+            overall_score = 0.0
+        elif overall_score >= 95:
+            grade, color = 'A+', 'emerald'
+        elif overall_score >= 85:
+            grade, color = 'A', 'teal'
+        elif overall_score >= 75:
+            grade, color = 'B', 'blue'
+        elif overall_score >= 60:
+            grade, color = 'C', 'amber'
+        else:
+            grade, color = 'F', 'rose'
+
+        scorecard_data.append({
+            'supplier': supp,
+            'total_orders': total_pos,
+            'on_time_rate': round(on_time_rate, 1),
+            'quality_rate': round(quality_rate, 1),
+            'fulfillment_rate': round(fulfillment_rate, 1),
+            'price_score': round(price_score, 1),
+            'avg_lead_time': round(avg_lead_time, 1),
+            'overall_score': round(overall_score, 1),
+            'grade': grade,
+            'color': color,
+        })
+
+    scorecard_data.sort(key=lambda x: x['overall_score'], reverse=True)
+
+    return render(request, 'Inventory/tools/supplier_scorecard.html', {
+        'scorecard': scorecard_data,
+    })
+
+
+@login_required
+@require_module_access('SYSTEM_ANALYTICS')
+def customer_scorecard_view(request):
+    customers = Contact.objects.filter(contact_type='Customer', is_active=True).order_by('name')
+    scorecard_data = []
+    today = timezone.now().date()
+    six_months_ago = today - timedelta(days=180)
+
+    for cust in customers:
+        orders = CustomerOrder.objects.filter(customer=cust)
+        total_orders = orders.count()
+
+        delivered_orders = orders.filter(order_status='Delivered')
+        cancelled_orders = orders.filter(order_status='Cancelled')
+
+        # 1. Customer Lifetime Value (LTV)
+        ltv = sum(float(o.amount or 0) for o in delivered_orders)
+
+        # 2. Average Order Value (AOV)
+        delivered_count = delivered_orders.count()
+        aov = (ltv / delivered_count) if delivered_count > 0 else 0.0
+
+        # 3. Order Reliability Rate (Delivered vs Cancelled)
+        resolved_orders = delivered_count + cancelled_orders.count()
+        reliability_rate = (delivered_count / resolved_orders * 100) if resolved_orders > 0 else 100.0
+
+        # 4. Active vs Dormant Status
+        last_order = orders.order_by('-order_date').first()
+        if last_order and last_order.order_date:
+            is_active = last_order.order_date >= six_months_ago
+            last_order_date = last_order.order_date
+        else:
+            is_active = False
+            last_order_date = None
+
+        status = 'Active' if is_active else 'Dormant'
+
+        # 5. Tiers (VIP Classification)
+        if reliability_rate < 50 and resolved_orders > 2:
+            tier, color, icon = 'Risk', 'rose', 'alert-triangle'
+        elif ltv >= 500000 and reliability_rate >= 80:
+            tier, color, icon = 'Diamond', 'sky', 'gem'
+        elif ltv >= 100000 and reliability_rate >= 80:
+            tier, color, icon = 'Gold', 'amber', 'medal'
+        elif ltv >= 20000:
+            tier, color, icon = 'Silver', 'slate', 'shield'
+        elif total_orders > 0:
+            tier, color, icon = 'Bronze', 'orange', 'award'
+        else:
+            tier, color, icon = 'New', 'teal', 'star'
+            
+        status_color = 'rose' if (not is_active and total_orders > 0) else 'emerald'
+
+        scorecard_data.append({
+            'customer': cust,
+            'total_orders': total_orders,
+            'ltv': ltv,
+            'aov': aov,
+            'reliability_rate': round(reliability_rate, 1),
+            'last_order_date': last_order_date,
+            'status': status,
+            'status_color': status_color,
+            'tier': tier,
+            'color': color,
+            'icon': icon
+        })
+
+    # Sort by Pinakamalaking Pera (LTV)
+    scorecard_data.sort(key=lambda x: x['ltv'], reverse=True)
+
+    return render(request, 'Inventory/tools/customer_scorecard.html', {
+        'scorecard': scorecard_data,
+    })
     
 
 
 # Email views
 
-def check_and_alert_low_stock(tag):
-    try:
-        system_settings = SystemSetting.objects.first()
-        
-        if not system_settings:
-            print("Error: No System Settings found in database.")
-            return
-
-        threshold = system_settings.low_stock_threshold
-        
-        if tag.total_pcs <= threshold:
-            notify_admins(
-                title="⚠️ Low Stock Alert",
-                message=f"Critical! Lot {tag.lot_no} ({tag.item_code}) is down to {tag.total_pcs} pcs.",
-                link="/inventory/inquiry/" 
-            )
-            
-            route = EmailRoute.objects.filter(event_name='LOW_STOCK', is_active=True).first()
-            
-            if route:
-                target_emails = route.get_email_list()
-                
-                if target_emails:
-                    subject = f"URGENT: Low Stock Alert - Lot No: {tag.lot_no}"
-                    
-                    # 🚀 ANG MAGIC: I-pack ang data na ipapasa sa HTML
-                    context = {
-                        'item_code': tag.item_code,
-                        'description': tag.description,
-                        'lot_no': tag.lot_no,
-                        'current_stock': tag.total_pcs,
-                        'threshold': threshold
-                    }
-                    
-                    # 🚀 I-render ang HTML design mo
-                    html_message = render_to_string('Inventory/emails/low_stock_email.html', context)
-                    
-                    # 🚀 Gumawa ng plain text fallback (Para sa mga lumang email clients)
-                    plain_message = strip_tags(html_message)
-                    
-                    # I-send ang email gamit ang html_message parameter
-                    send_mail(
-                        subject, 
-                        plain_message, # Fallback text
-                        django_settings.DEFAULT_FROM_EMAIL, 
-                        target_emails, 
-                        html_message=html_message, # Ang magandang design natin!
-                        fail_silently=False
-                    )
-                    print(f"Low stock HTML email sent successfully for {tag.lot_no}!")
-            else:
-                print("Notice: No active email route setup for LOW_STOCK event.")
-
-    except Exception as e:
-        print(f"Email sending failed: {str(e)}")
-
-def alert_new_po_created(po):
-    try:
-        route = EmailRoute.objects.get(event_name='PO_APPROVAL', is_active=True)
-        target_emails = route.get_email_list()
-        
-        if target_emails:
-            supplier_name = po.supplier.name if hasattr(po, 'supplier') and po.supplier else "N/A"
-            subject = f"NEW P.O. GENERATED: {po.po_no}"
-            
-            # 🚀 I-pack ang data papunta sa HTML
-            context = {
-                'po_no': po.po_no,
-                'supplier_name': supplier_name,
-                'order_date': po.order_date,
-            }
-            
-            # 🚀 I-render ang template
-            html_message = render_to_string('Inventory/emails/po_alert_email.html', context)
-            plain_message = strip_tags(html_message)
-            
-            send_mail(
-                subject, 
-                plain_message, 
-                django_settings.DEFAULT_FROM_EMAIL, 
-                target_emails, 
-                html_message=html_message, # 🚀 Ipasa ang design!
-                fail_silently=False
-            )
-            print(f"Success: New PO HTML email alert sent for {po.po_no}")
-            
-    except EmailRoute.DoesNotExist:
-        print("Notice: Walang naka-setup na email sa PO_APPROVAL route.")
-    except Exception as e:
-        print(f"Error sending PO email: {str(e)}")
-
 @login_required
 @require_module_access('SYS_CONFIG')
 def email_master_view(request):
     search_query = request.GET.get('q', '').strip()
-    
-    # Kunin lahat ng active users
     users = User.objects.filter(is_active=True).order_by('username')
     
     if search_query:
@@ -6682,8 +6876,15 @@ def email_master_view(request):
             Q(email__icontains=search_query)
         )
 
-    # Kunin lahat ng possible events para sa modal checkboxes
     all_routes = EmailRoute.objects.all().order_by('event_name')
+
+    # 🚀 BAGO: I-format as JSON ang mga settings per user para pumasang data attribute sa HTML
+    for u in users:
+        subs = NotificationSubscription.objects.filter(user=u)
+        # Gagawa ng dictionary: {"route_id": {"email": True, "web": False}}
+        sub_dict = {str(s.route.id): {"email": s.notify_email, "web": s.notify_web} for s in subs}
+        u.subs_json = json.dumps(sub_dict)
+        u.active_subs = subs # Ipasa rin as object para sa table display
 
     context = {
         'users': users,
@@ -6692,73 +6893,33 @@ def email_master_view(request):
     }
     return render(request, 'Inventory/master/email_master.html', context)
 
+
+# 🚀 BAGO: Function para i-save ang checkboxes mula sa Modal
 @login_required
 def update_user_subscriptions(request):
-    if request.method == "POST":
+    if request.method == 'POST':
         user_id = request.POST.get('user_id')
-        # Listahan ng mga Route IDs na pinili (naka-check)
-        selected_route_ids = request.POST.getlist('selected_routes')
+        email_routes = request.POST.getlist('email_routes') # Lahat ng naka-check na Email
+        web_routes = request.POST.getlist('web_routes')     # Lahat ng naka-check na Web
         
-        try:
-            target_user = User.objects.get(id=user_id)
+        user = User.objects.get(id=user_id)
+        
+        # 1. Burahin ang luma
+        NotificationSubscription.objects.filter(user=user).delete()
+        
+        # 2. Pagsamahin ang IDs para gumawa ng bagong record
+        all_selected_ids = set(email_routes + web_routes)
+        
+        for route_id in all_selected_ids:
+            NotificationSubscription.objects.create(
+                user=user,
+                route_id=int(route_id),
+                notify_email=(str(route_id) in email_routes),
+                notify_web=(str(route_id) in web_routes)
+            )
             
-            # Linisin muna lahat ng subscription ng user na ito para fresh start
-            all_routes = EmailRoute.objects.all()
-            for route in all_routes:
-                route.target_users.remove(target_user)
-            
-            # Idagdag ang user sa mga piniling routes
-            for route_id in selected_route_ids:
-                route = EmailRoute.objects.get(id=route_id)
-                route.target_users.add(target_user)
-
-            messages.success(request, f"Alert settings updated for {target_user.username}!")
-        except Exception as e:
-            messages.error(request, f"Error: {str(e)}")
-            
-    return redirect('email_master')
-
-def scan_and_alert_expiring_items():
-    today = timezone.now().date()
-    warning_limit = today + timedelta(days=30)
-
-    expiring_tags = MaterialTag.objects.filter(
-        total_pcs__gt=0,
-        expiration_date__lte=warning_limit,
-        expiration_date__gte=today
-    ).order_by('expiration_date')
-
-    if not expiring_tags.exists():
-        return 0 
-
-    try:
-        route = EmailRoute.objects.get(event_name='EXPIRING_STOCKS', is_active=True)
-        target_emails = route.get_email_list()
-
-        if target_emails:
-            # 🚀 I-pack ang data sa isang list para ma-loop ng HTML
-            items_data = []
-            for tag in expiring_tags:
-                days_left = (tag.expiration_date - today).days
-                items_data.append({
-                    'lot_no': tag.lot_no,
-                    'item_code': tag.item_code,
-                    'qty': tag.total_pcs,
-                    'days_left': days_left
-                })
-
-            subject = f"URGENT: {expiring_tags.count()} Materials Expiring Soon"
-            context = {'items': items_data, 'total_count': expiring_tags.count()}
-            
-            html_message = render_to_string('Inventory/emails/expiring_stocks_email.html', context)
-            plain_message = strip_tags(html_message)
-
-            send_mail(subject, plain_message, django_settings.DEFAULT_FROM_EMAIL, target_emails, html_message=html_message, fail_silently=False)
-            return expiring_tags.count()
-            
-    except Exception as e:
-        print(f"Error sending Expiry Alert: {str(e)}")
-    return 0
+        messages.success(request, f"Notification preferences updated for {user.username}.")
+        return redirect('email_master') # Palitan ng tamang url name
 
 # ==============================================================
 # ANG BUTTON TRIGGER (Para ma-test natin nang manual)
@@ -6836,30 +6997,6 @@ def alert_on_qc_failure(sender, instance, **kwargs):
     except MaterialTag.DoesNotExist:
         pass
 
-def scan_and_alert_late_deliveries():
-    today = timezone.now().date()
-    overdue_pos = PurchaseOrder.objects.filter(
-        ordering_status__in=['Approved', 'Pending Approval'], 
-        delivery_date__lt=today
-    ).order_by('delivery_date')
-
-    if not overdue_pos.exists():
-        return 0
-
-    po_data = []
-    for po in overdue_pos:
-        days_overdue = (today - po.delivery_date).days
-        supplier = po.supplier.name if hasattr(po, 'supplier') and po.supplier else "N/A"
-        po_data.append({
-            'po_no': po.po_no,
-            'supplier': supplier,
-            'days_late': days_overdue
-        })
-
-    # 🚀 TATAWAGIN NALANG NATIN YUNG NASA UTILS!
-    send_late_delivery_alert(po_data, overdue_pos.count())
-    return overdue_pos.count()
-
 def mark_order_shipped_view(request, order_id):
     if request.method == 'POST':
         order = get_object_or_404(CustomerOrder, id=order_id)
@@ -6889,130 +7026,117 @@ def mark_order_shipped_view(request, order_id):
 
         return redirect('some_order_list_view')
 
-def scan_and_alert_low_stock():
-    print("\n--- RUNNING LOW STOCK DEBUG (WMS STANDARD) ---") 
-    sys_settings = SystemSetting.objects.first()
-    default_threshold = sys_settings.low_stock_threshold if sys_settings else 50
-    
-    tag_stocks = MaterialTag.objects.values('item_code').annotate(total_stock=Sum('total_pcs'))
-    stock_dict = {str(tag['item_code']).strip().upper(): (tag['total_stock'] or 0) for tag in tag_stocks if tag['item_code']}
-
-    all_items = Item.objects.all()
-    low_stock_items = []
-    
-    for item in all_items:
-        safe_item_code = str(item.item_code).strip().upper()
-        total_stock = stock_dict.get(safe_item_code, 0)
-        item_min_stock = getattr(item, 'min_stock', 0)
-        threshold_to_use = item_min_stock if item_min_stock > 0 else default_threshold
-        
-        if total_stock <= threshold_to_use:
-            low_stock_items.append({
-                'item_code': safe_item_code,
-                'description': item.description,
-                'current_stock': total_stock,
-                'threshold': threshold_to_use
-            })
-            
-    print("-------------------------------\n")
-            
-    if low_stock_items:
-        # 🚀 TATAWAGIN NALANG NATIN YUNG NASA UTILS!
-        send_low_stock_email_alert(low_stock_items)
-            
-    return len(low_stock_items)
-
 @login_required
 def test_all_email_templates_view(request):
     try:
         route = EmailRoute.objects.get(event_name='TEST_ALERT', is_active=True)
         target_emails = route.get_email_list()
 
+        # Kahit walang email, itutuloy natin para ma-test ang Web Notification!
         if not target_emails:
-            messages.warning(request, "Test Failed: Walang nakalagay na email sa TEST_ALERT route mo.")
-            return redirect('email_master')
+            messages.warning(request, "Notice: Walang nakalagay na email sa TEST_ALERT, pero magse-send pa rin tayo ng Web Notifications para ma-test ang UI.")
 
-        # Gagawa tayo ng helper function para hindi paulit-ulit ang code sa pag-send
-        def send_test(subject, template_name, context):
-            html_msg = render_to_string(f'Inventory/emails/{template_name}', context)
-            send_mail(
-                subject=f"🧪 TEST: {subject}",
-                message=strip_tags(html_msg), 
-                from_email=django_settings.DEFAULT_FROM_EMAIL,
-                recipient_list=target_emails,
-                html_message=html_msg,
-                fail_silently=False
+        # 🚀 UPGRADED HELPER: Nag-a-accept na ng 'level' para mag-iba-iba ang kulay sa Bell Dropdown
+        def send_test(subject, template_name, context, level='INFO'):
+            # 1. SEND EMAIL (Kung may nakarehistrong email)
+            if target_emails:
+                html_msg = render_to_string(f'Inventory/emails/{template_name}', context)
+                send_mail(
+                    subject=f"🧪 TEST: {subject}",
+                    message=strip_tags(html_msg), 
+                    from_email=settings.DEFAULT_FROM_EMAIL, # Pinalitan ko ng settings.DEFAULT_FROM_EMAIL
+                    recipient_list=target_emails,
+                    html_message=html_msg,
+                    fail_silently=False
+                )
+            
+            # 2. 🚀 SEND WEB NOTIFICATION (Papasok sa Bell Icon ng mga naka-check ang Web App sa TEST_ALERT)
+            notify_web_users_for_event(
+                event_name='TEST_ALERT',
+                title=f"Test: {subject}",
+                message=f"This is an automated UI test for {subject}.",
+                level=level,
+                link="#"
             )
 
-        # 1. LOW STOCK ALERT
-        send_test("Low Stock Alert", "low_stock_email.html", {
-            'item_code': 'BOLT-M8-TEST', 'description': 'Stainless Steel Bolt',
-            'lot_no': 'LOT-TEST-001', 'current_stock': 5, 'threshold': 50
-        })
+        # 1. LOW STOCK ALERT (Warning)
+        send_test("Smart Low Stock Alert", "low_stock_email.html", {
+            'total_count': 1,
+            'items': [
+                {
+                    'item_code': 'BOLT-M8-TEST',
+                    'description': 'Stainless Steel Bolt',
+                    'current_stock': 5,
+                    'dos': 2,        # 🚀 Predictive: 2 days left
+                    'adc': 2.5,      # 🚀 Predictive: 2.5 pcs per day
+                    'threshold': 50
+                }
+            ]
+        }, level='WARNING')
 
-        # 2. P.O. GENERATED
+        # 2. P.O. GENERATED (Info)
         send_test("New P.O. Generated", "po_alert_email.html", {
             'po_no': 'PO-2026-TEST-999', 'supplier_name': 'Global Metals Inc.', 'order_date': 'March 24, 2026'
-        })
+        }, level='INFO')
 
-        # 3. QC REJECTED
+        # 3. QC REJECTED (Error)
         send_test("QC Inspection Failed", "qc_failed_email.html", {
             'item_code': 'SENSOR-X1', 'description': 'Proximity Sensor',
             'lot_no': 'LOT-QC-404', 'qty': 150, 'uom': 'PCS', 'remarks': 'Visible damages on packaging. Failed calibration.'
-        })
+        }, level='ERROR')
 
-        # 4. EXPIRING MATERIALS
+        # 4. EXPIRING MATERIALS (Warning)
         send_test("Expiring Materials (30 Days)", "expiring_stocks_email.html", {
             'items': [
                 {'lot_no': 'LOT-EXP-01', 'item_code': 'CHEMICAL-A', 'qty': 50, 'days_left': 12},
                 {'lot_no': 'LOT-EXP-02', 'item_code': 'PAINT-RED', 'qty': 20, 'days_left': 5}
             ], 'total_count': 2
-        })
+        }, level='WARNING')
 
-        # 5. LATE DELIVERIES
+        # 5. LATE DELIVERIES (Warning)
         send_test("Overdue Deliveries", "late_delivery_email.html", {
             'pos': [
                 {'po_no': 'PO-LATE-101', 'supplier': 'Fast Track Logistics', 'days_late': 7},
                 {'po_no': 'PO-LATE-102', 'supplier': 'Tech Parts Corp', 'days_late': 3}
             ], 'total_count': 2
-        })
+        }, level='WARNING')
 
-        # 6. SECURITY ALERT (Failed Logins)
+        # 6. SECURITY ALERT (Error)
         send_test("Security Alert (Multiple Failed Logins)", "security_alert_email.html", {
             'username': 'admin_test_acc', 'ip': '192.168.1.104', 'count': 5
-        })
+        }, level='ERROR')
 
-        # 7. NEW USER REGISTRATION
+        # 7. NEW USER REGISTRATION (Success)
         send_test("New User Registered", "user_welcome_email.html", {
             'username': 'juan_delacruz', 'role': 'Warehouse Staff', 'company_name': 'Receiving Department'
-        })
+        }, level='SUCCESS')
 
-        # 8. NEW DELIVERY REQUEST
+        # 8. NEW DELIVERY REQUEST (Info)
         send_test("New Movement Slip Requested", "new_delivery_request_email.html", {
             'req_no': 'REQ-2026-0001', 
             'destination': 'Production Line 1', 
             'requestor': 'Engr. Santos',
             'item_count': 5,
             'remarks': 'Urgent materials for project alpha.'
-        })
+        }, level='INFO')
 
-        # 9. PO STATUS UPDATE (Approved Sample)
+        # 9. PO STATUS UPDATE - Approved (Success)
         send_test("PO Status Approved", "po_status_update_email.html", {
             'status': 'Approved', 
             'po_no': 'PO-2026-0001', 
             'supplier': 'Steel Supply Co.',
             'manager': 'Manager.Santos'
-        })
+        }, level='SUCCESS')
 
-        # 10. PO STATUS UPDATE (Rejected Sample)
+        # 10. PO STATUS UPDATE - Rejected (Error)
         send_test("PO Status Rejected", "po_status_update_email.html", {
             'status': 'Rejected', 
             'po_no': 'PO-2026-0002', 
             'supplier': 'Plastic Moldings Inc.',
             'manager': 'Manager.Santos'
-        })
+        }, level='ERROR')
 
-        # 11. NEW MATERIAL REQUEST
+        # 11. NEW MATERIAL REQUEST (Info)
         class DummyItems:
             def count(self): return 5
 
@@ -7027,34 +7151,30 @@ def test_all_email_templates_view(request):
 
         send_test("New Material Request Submitted", "new_material_request.html", {
             'req': DummyRequest()
-        })
+        }, level='INFO')
 
-        # 12. ASSEMBLY COMPLETED
+        # 12. ASSEMBLY COMPLETED (Success)
         class DummyMachine:
             machine_code = "MAC-X900-TEST"
             name = "Industrial Conveyor Belt"
 
         send_test("Machine Assembly Completed", "assembly_completed.html", {
             'machine': DummyMachine()
-        })
+        }, level='SUCCESS')
 
-        # 13. SHIPPING NOTIFICATION
+        # 13. SHIPPING NOTIFICATION (Success)
         send_test("Shipment Dispatched", "shipping_notification_email.html", {
             'order_no': 'SO-2026-005', 'customer_name': 'Beta Tech Corp', 
             'courier': 'LBC Express', 'tracking': 'LBC-123456789'
-        })
+        }, level='SUCCESS')
 
-        # 14. STOCK CORRECTION
+        # 14. STOCK CORRECTION (Warning)
         send_test("Manual Stock Correction", "stock_correction_email.html", {
             'lot_no': 'LOT-1002', 'item_code': 'RAW-MAT-X', 
             'old_qty': 100, 'new_qty': 85, 'reason': 'Damaged items disposed.'
-        })
+        }, level='WARNING')
 
-        # ==========================================
-        # 🚀 ANG 3 BAGONG WMS HEALTH ALERTS
-        # ==========================================
-
-        # 15. AGING REQUESTS
+        # 15. AGING REQUESTS (Warning)
         send_test("Aging Material Requests", "aging_requests_email.html", {
             'count': 3,
             'requests': [
@@ -7062,18 +7182,18 @@ def test_all_email_templates_view(request):
                 {'request_no': 'REQ-2026-011', 'receiving_place': 'Assembly Line B', 'request_date': timezone.now() - timedelta(days=4), 'status': 'Processing'},
                 {'request_no': 'REQ-2026-012', 'receiving_place': 'Packaging Dept', 'request_date': timezone.now() - timedelta(days=3), 'status': 'Pending'},
             ]
-        })
+        }, level='WARNING')
 
-        # 16. PENDING P.O. APPROVALS
+        # 16. PENDING P.O. APPROVALS (Info)
         send_test("Pending PO Approvals", "pending_pos_email.html", {
             'count': 2,
             'pos': [
                 {'po_no': 'PO-2026-045', 'supplier': {'name': 'Asia Metals Corp'}, 'order_date': timezone.now() - timedelta(days=2)},
                 {'po_no': 'PO-2026-046', 'supplier': {'name': 'Global Electronics Ltd.'}, 'order_date': timezone.now() - timedelta(days=1)}
             ]
-        })
+        }, level='INFO')
 
-        # 17. DEAD / SLOW-MOVING STOCK
+        # 17. DEAD / SLOW-MOVING STOCK (Warning)
         send_test("Dead Stock Alert", "dead_stock_email.html", {
             'count': 4,
             'months': 6,
@@ -7083,14 +7203,13 @@ def test_all_email_templates_view(request):
                 {'item_code': 'MOTOR-AC', 'lot_no': 'LOT-OLD-003', 'arrival_date': timezone.now() - timedelta(days=185), 'total_pcs': 12},
                 {'item_code': 'GLUE-IND', 'lot_no': 'LOT-OLD-004', 'arrival_date': timezone.now() - timedelta(days=181), 'total_pcs': 50}
             ]
-        })
+        }, level='WARNING')
 
-        # Success! 
-        messages.success(request, f"MASSIVE SUCCESS! 17 Test Emails with HTML Designs were sent to: {', '.join(target_emails)}. Check your Inbox!")
+        messages.success(request, f"MASSIVE SUCCESS! 17 Test Alerts triggered for Web and Email. Check your Notification Bell and Inbox!")
 
     except EmailRoute.DoesNotExist:
         messages.error(request, "Test Failed: Please setup the 'TEST_ALERT' event in your Email Routes first.")
     except Exception as e:
-        messages.error(request, f"SMTP/Connection Error: {str(e)}")
+        messages.error(request, f"System Error: {str(e)}")
 
     return redirect('email_master')

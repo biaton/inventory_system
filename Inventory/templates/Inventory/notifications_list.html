@@ -1,4 +1,5 @@
 {% extends "Inventory/base.html" %}
+{% load static %}
 
 {% block content %}
 <div class="max-w-[100%] mx-auto mt-2 px-2 sm:px-4 text-slate-800 dark:text-slate-200 pb-12 transition-colors duration-300">
@@ -34,17 +35,62 @@
                 {% endif %}
 
                 <div class="flex flex-col sm:flex-row items-start gap-4">
-                    <div class="shrink-0 mt-1">
-                        {% if notif.level == 'SUCCESS' %}
-                            <div class="p-2 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-sm transition-colors duration-300"><i data-lucide="check-circle" class="w-5 h-5"></i></div>
-                        {% elif notif.level == 'WARNING' %}
-                            <div class="p-2 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-sm transition-colors duration-300"><i data-lucide="alert-triangle" class="w-5 h-5"></i></div>
-                        {% elif notif.level == 'ERROR' %}
-                            <div class="p-2 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-sm transition-colors duration-300"><i data-lucide="x-octagon" class="w-5 h-5"></i></div>
-                        {% else %}
-                            <div class="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-sm transition-colors duration-300"><i data-lucide="info" class="w-5 h-5"></i></div>
-                        {% endif %}
+                    
+                    <!-- 🚀 DITO NAGBAGO: Hiniwalay ang Kulay (Level) sa Icon (Title Keyword) -->
+                    <div class="relative shrink-0 mt-1">
+                        <!-- 1. COMPANY LOGO (Soft Background, Rounded Corners, Breathing Room) -->
+                        <div class="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-center shadow-sm p-1.5 transition-colors duration-300">
+                            <!-- object-contain para hindi ma-stretch, may padding para makahinga ang logo -->
+                            <img src="{% static 'images/asia-no-bg.png' %}" alt="Logo" class="w-full h-full object-contain drop-shadow-sm">
+                        </div>
+
+                        <!-- 2. CONTEXTUAL ICON BADGE (Perfectly centered, pop-out border) -->
+                        <div class="absolute -bottom-1 -right-1 flex items-center justify-center w-6 h-6 rounded-full border-[2.5px] border-white dark:border-slate-900 shadow-sm transition-colors duration-300
+                            {% if notif.level == 'SUCCESS' %}bg-emerald-500 text-white
+                            {% elif notif.level == 'WARNING' %}bg-amber-500 text-white
+                            {% elif notif.level == 'ERROR' %}bg-rose-500 text-white
+                            {% else %}bg-blue-500 text-white{% endif %}">
+                            
+                            <!-- 🚀 KEYWORD ICON MAPPER (Maliit na icon na naka-center) -->
+                            {% if 'PO' in notif.title or 'Purchase' in notif.title %}
+                                <i data-lucide="file-signature" class="w-3.5 h-3.5"></i>
+                            {% elif 'Stock Moved' in notif.title %}
+                                <i data-lucide="arrow-right-left" class="w-3.5 h-3.5"></i>
+                            {% elif 'Stock Override' in notif.title or 'Stock Deducted' in notif.title %}
+                                <i data-lucide="package-minus" class="w-3.5 h-3.5"></i>
+                            {% elif 'Low Stock' in notif.title %}
+                                <i data-lucide="trending-down" class="w-3.5 h-3.5"></i>
+                            {% elif 'Dead Stock' in notif.title %}
+                                <i data-lucide="archive" class="w-3.5 h-3.5"></i>
+                            {% elif 'Expiring' in notif.title %}
+                                <i data-lucide="calendar-off" class="w-3.5 h-3.5"></i>
+                            {% elif 'QC' in notif.title %}
+                                <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                            {% elif 'Movement Slip' in notif.title or 'Delivery' in notif.title or 'Shipping' in notif.title %}
+                                <i data-lucide="truck" class="w-3.5 h-3.5"></i>
+                            {% elif 'Material Request' in notif.title or 'Aging Request' in notif.title %}
+                                <i data-lucide="clipboard-list" class="w-3.5 h-3.5"></i>
+                            {% elif 'Assembly' in notif.title or 'Machine' in notif.title %}
+                                <i data-lucide="cpu" class="w-3.5 h-3.5"></i>
+                            {% elif 'Security' in notif.title %}
+                                <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i>
+                            {% elif 'User' in notif.title %}
+                                <i data-lucide="user-check" class="w-3.5 h-3.5"></i>
+                            {% else %}
+                                <!-- 🛡️ FALLBACK ICONS -->
+                                {% if notif.level == 'SUCCESS' %}
+                                    <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                                {% elif notif.level == 'WARNING' %}
+                                    <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i>
+                                {% elif notif.level == 'ERROR' %}
+                                    <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                                {% else %}
+                                    <i data-lucide="info" class="w-3.5 h-3.5"></i>
+                                {% endif %}
+                            {% endif %}
+                        </div>
                     </div>
+                    <!-- END OF AVATAR WITH ICON BADGE -->
 
                     <div class="flex-1 w-full">
                         <div class="flex flex-col sm:flex-row justify-between items-start gap-1">
@@ -90,4 +136,11 @@
     {% endif %}
 
 </div>
+
+<!-- Wag kalimutan tawagin ang script para mag-render ang mga bagong Lucide Icons -->
+<script>
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+</script>
 {% endblock %}

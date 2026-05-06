@@ -5,229 +5,464 @@
     <meta charset="UTF-8">
     <title>Batch_PO_{{ main_po_no }} - Asia Integrated Machine Inc.</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
         
-        body { font-family: 'Inter', sans-serif; background: #f1f5f9; color: #0f172a; }
+        :root {
+            /* Default Brand Color */
+            --brand-color: #3730a3; 
+            --brand-light: #e0e7ff; /* Lighter shade for backgrounds */
+        }
+
+        body { font-family: 'Inter', sans-serif; background: #f1f5f9; color: #0f172a; margin: 0; padding: 0; }
         
         @media print {
             @page { size: A4 portrait; margin: 10mm; }
-            body { background: white; margin: 0; padding: 0; }
+            body { background: white; }
             .no-print { display: none !important; }
-            .a4-container { 
-                box-shadow: none !important; 
-                margin: 0 !important; 
-                padding: 0 !important; 
-                width: 100% !important; 
-                height: auto !important;
-            }
-            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .main-wrapper { margin-left: 0 !important; padding: 0 !important; }
+            .a4-container { box-shadow: none !important; margin: 0 !important; padding: 0 !important; width: 100% !important; }
+            .page-break-active { page-break-before: always !important; break-before: page !important; }
+            .screen-cut-line { display: none !important; }
         }
         
         .a4-container {
             width: 210mm;
-            min-height: 297mm;
             background: white;
             margin: 2rem auto;
-            padding: 15mm 20mm;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            padding: 12mm 15mm;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
         }
         
-        .po-table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+        /* THEME CLASSES */
+        .theme-bg { background-color: var(--brand-color) !important; }
+        .theme-bg-light { background-color: var(--brand-light) !important; }
+        .theme-text { color: var(--brand-color) !important; }
+        .theme-border { border-color: var(--brand-color) !important; }
+
+        .print-layout { width: 100%; border-collapse: collapse; }
+        .print-header { display: table-header-group; }
+        .print-footer { display: table-footer-group; }
+        
+        /* 🚀 UPGRADED TABLE CSS: Borderless & Clean */
+        .po-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
         .po-table th { 
-            background-color: #1e293b; 
+            background-color: var(--brand-color); 
             color: white; 
             font-size: 9px; 
             text-transform: uppercase; 
             letter-spacing: 0.05em; 
-            padding: 6px; 
-            border: 1px solid #1e293b;
+            padding: 10px 8px; 
+            border: none; /* Inalis ang grid lines */
         }
+        .po-table th:first-child { border-top-left-radius: 4px; border-bottom-left-radius: 4px; }
+        .po-table th:last-child { border-top-right-radius: 4px; border-bottom-right-radius: 4px; }
+        
         .po-table td { 
-            font-size: 10px; 
-            padding: 6px; 
-            border: 1px solid #cbd5e1; 
-            border-bottom: 1px solid #e2e8f0;
+            font-size: 11px; 
+            padding: 10px 8px; 
+            border: none; /* Inalis ang vertical lines */
+            border-bottom: 1px solid #e2e8f0; /* Tanging bottom line lang */
         }
-        .po-table tbody tr:nth-child(even) { background-color: #f8fafc; }
+        /* Tinanggal ang alternate background color para mas malinis */
+        /* .po-table tbody tr:nth-child(even) { background-color: #f8fafc; } */
+
+        .page-break-active .screen-cut-line { border-top: 3px dashed #818cf8; margin-top: 2rem; padding-top: 2rem; position: relative; }
+        .page-break-active .screen-cut-line::after { content: "✂️ PAGE SPLIT HERE"; position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: #f1f5f9; padding: 0 10px; color: #6366f1; font-size: 10px; font-weight: 900; }
+
+        .blind-mode .col-price { display: none !important; }
+        .hide-signatures .print-footer { display: none !important; }
+        .hide-tc .tc-page { display: none !important; }
+        
+        .watermark-overlay {
+            display: none;
+            position: fixed;
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 140px; /* Pinalaki nang konti */
+            font-weight: 900; 
+            color: rgba(225, 29, 72, 0.18); /* Tinaasan ang opacity mula 0.08 to 0.18 para mas lutang */
+            white-space: nowrap; 
+            pointer-events: none; 
+            z-index: 9999; /* 🚀 INILAGAY SA PINAKA-IBABAW PARA HINDI MATAKPAN NG TABLE */
+        }
+        .show-watermark .watermark-overlay { display: block !important; }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
     </style>
 </head>
-<body>
+<body class="flex">
 
-    <div class="no-print bg-slate-900 text-white py-4 sticky top-0 z-50 shadow-xl border-b-4 border-indigo-500">
-        <div class="max-w-5xl mx-auto flex justify-between items-center px-6">
+    <!-- LEFT SIDEBAR: PRINT CONTROL PANEL (Same as before) -->
+    <div class="no-print w-72 bg-slate-900 text-white h-screen fixed left-0 top-0 overflow-y-auto shadow-2xl custom-scrollbar flex flex-col z-50">
+        <div class="p-5 border-b border-slate-800 bg-slate-950">
+            <h2 class="text-sm font-black uppercase tracking-widest flex items-center gap-2 text-indigo-400">
+                <i data-lucide="settings-2" class="w-5 h-5"></i> Print Settings
+            </h2>
+            <p class="text-[9px] text-slate-400 mt-1">Customize document appearance</p>
+        </div>
+
+        <div class="p-5 space-y-6 flex-1">
             <div>
-                <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">Official Print Preview</p>
-                <h1 class="text-xl font-black text-white flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                    PO No.: <span class="text-indigo-400">{{ main_po_no }}</span>
-                </h1>
+                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Theme Color</label>
+                <div class="flex items-center gap-3">
+                    <input type="color" id="colorPicker" value="#3730a3" class="w-10 h-10 rounded cursor-pointer bg-transparent border-0 p-0" onchange="updateBrandColor()">
+                    <span class="text-xs font-mono text-slate-300" id="colorHex">#3730a3</span>
+                </div>
             </div>
-            
-            <div class="flex items-center gap-3">
-                <button onclick="window.print()" class="bg-slate-700 hover:bg-slate-600 border border-slate-600 text-white px-6 py-2.5 text-xs font-bold uppercase tracking-widest transition-colors flex items-center gap-2 rounded shadow-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-                    Print Document
-                </button>
 
-                <button onclick="downloadPDF()" class="bg-indigo-600 hover:bg-indigo-500 border border-indigo-500 text-white px-6 py-2.5 text-xs font-bold uppercase tracking-widest transition-colors flex items-center gap-2 rounded shadow-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                    Save as PDF
-                </button>
+            <div class="border-t border-slate-800 pt-5">
+                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 flex justify-between">
+                    <span>QR Size</span>
+                    <span id="qrSizeLabel" class="text-indigo-400">70px</span>
+                </label>
+                <input type="range" id="qrSize" min="40" max="120" value="70" class="w-full accent-indigo-500 mb-4" oninput="updateQRSize()">
+                
+                <!-- 🚀 BAGONG DAGDAG: POSITION SELECTOR -->
+                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">QR Position</label>
+                <select id="qrPosition" onchange="updateQRPosition()" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-xs text-white outline-none focus:border-indigo-500 mb-4 transition-colors">
+                    <option value="top-right">Top Right (Header)</option>
+                    <option value="top-left">Top Left (Below Logo)</option>
+                    <option value="bottom-right">Bottom Right (Signatures)</option>
+                </select>
 
-                <a href="mailto:{{ main_po.supplier.email }}?subject=Purchase Order ({{ main_po.po_no }}) from Asia Integrated Machine Inc.&body=Hi,%0D%0A%0D%0AGood day!%0D%0A%0D%0APlease find attached our Purchase Order ({{ main_po.po_no }}).%0D%0A%0D%0AThank you,%0D%0AAsia Integrated Machine Inc." 
-                   class="bg-emerald-600 hover:bg-emerald-500 border border-emerald-500 text-white px-6 py-2.5 text-xs font-bold uppercase tracking-widest transition-colors flex items-center gap-2 rounded shadow-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                    Email P.O.
-                </a>
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-300">Show Tracking QR</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggleQR" class="sr-only peer" checked onchange="toggleElement('qrcode-container', this.checked)">
+                        <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-indigo-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
+                    </label>
+                </div>
             </div>
+
+            <div class="border-t border-slate-800 pt-5 space-y-4">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Visibility</p>
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-rose-400">Blind PO Mode</span>
+                    <label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="togglePrices" class="sr-only peer" onchange="toggleDocClass('blind-mode', this.checked)"><div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-rose-500 after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all"></div></label>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-300">Show Signatures</span>
+                    <label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="toggleSigs" class="sr-only peer" checked onchange="toggleDocClass('hide-signatures', !this.checked)"><div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-indigo-500 after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all"></div></label>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-300">Terms & Conditions</span>
+                    <label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="toggleTC" class="sr-only peer" checked onchange="toggleDocClass('hide-tc', !this.checked)"><div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-indigo-500 after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all"></div></label>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-300">"DRAFT" Watermark</span>
+                    <label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="toggleWatermark" class="sr-only peer" onchange="toggleDocClass('show-watermark', this.checked)"><div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-amber-500 after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all"></div></label>
+                </div>
+            </div>
+
+            <div class="border-t border-slate-800 pt-5">
+                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Custom Print Notice</label>
+                <input type="text" id="customNotice" placeholder="e.g. URGENT DELIVERY" oninput="updateCustomNotice()" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-xs text-white outline-none focus:border-indigo-500">
+            </div>
+        </div>
+
+        <div class="p-5 bg-slate-950 border-t border-slate-800 space-y-2">
+            <button onclick="window.print()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded text-xs font-black uppercase tracking-widest transition-colors flex items-center justify-center gap-2">
+                <i data-lucide="printer" class="w-4 h-4"></i> Print
+            </button>
+            <button onclick="downloadPDF()" class="w-full bg-slate-800 hover:bg-slate-700 text-white py-3 rounded text-xs font-black uppercase tracking-widest border border-slate-700 transition-colors flex items-center justify-center gap-2">
+                <i data-lucide="download" class="w-4 h-4"></i> PDF
+            </button>
         </div>
     </div>
 
-    <div id="po-document" class="a4-container">
+    <!-- MAIN RIGHT AREA -->
+    <div class="main-wrapper flex-1 ml-72 p-8 flex justify-center bg-slate-200 min-h-screen">
         
-        <div class="flex justify-between items-start border-b-4 border-slate-900 pb-4 mb-6">
-            <div class="flex items-center gap-5">
-                <div class="w-16 h-16 flex items-center justify-center">
-                     <img src="{% static 'images/asia-no-bg.png' %}" alt="Logo" class="max-w-full max-h-full object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                     <span style="display:none;" class="text-[10px] font-black text-slate-400">LOGO</span>
-                </div>
-                <div>
-                    <h1 class="text-xl font-black text-slate-900 tracking-tight uppercase leading-none mb-1">Asia Integrated Machine Inc.</h1>
-                    <p class="text-[9px] font-medium text-slate-600 leading-tight">128 Lopez-Rizal St., Brgy. Highway Hills, Mandaluyong City</p>
-                    <p class="text-[9px] font-medium text-slate-600 leading-tight mt-0.5"><span class="font-bold">TIN:</span> 000-123-456-000 &nbsp;|&nbsp; <span class="font-bold">Tel:</span> (02) 8532 5875</p>
-                </div>
-            </div>
-            <div class="text-right">
-                <h2 class="text-2xl font-black text-indigo-800 uppercase tracking-widest leading-none">Purchase Order</h2>
-                <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1">PO Reference No.</p>
-                <p class="text-base font-black text-slate-800 leading-none">{{ main_po_no }}</p>
-            </div>
-        </div>
-
-        <div class="text-[10px] font-bold bg-slate-100 p-2 mb-6 border border-slate-300 text-center uppercase tracking-widest text-slate-600">
-            Consolidated Order details for {{ pages_data|length }} Supplier(s)
-        </div>
-
-        {% for data in pages_data %}
-        <div class="mb-6 {% if not forloop.last %}border-b-2 border-dashed border-slate-300 pb-6{% endif %}">
+        <div id="po-document" class="a4-container">
+            <div class="watermark-overlay">DRAFT ONLY</div>
             
-            <div class="flex justify-between items-end mb-2">
-                <div>
-                    <h3 class="font-black text-sm uppercase text-slate-900 flex items-center gap-1">
-                        <span class="bg-indigo-800 text-white px-1.5 py-0.5 text-[9px] rounded-sm mr-1">{{ forloop.counter }}</span>
-                        {{ data.po.supplier.name|default:"UNKNOWN SUPPLIER" }}
-                    </h3>
-                    <p class="text-[9px] font-bold text-slate-600 uppercase mt-1">Attn: {{ data.po.supplier.contact_name|default:"Sales Rep" }} &nbsp;|&nbsp; Sub-PO: <span class="text-indigo-700 font-black">{{ data.po.po_no }}</span></p>
-                </div>
-                <div class="text-right text-[9px] text-slate-600 font-bold uppercase">
-                    <p>Order Date: <span class="text-slate-800">{{ data.po.order_date|date:"M d, Y" }}</span></p>
-                    <p>Del. Date: <span class="text-rose-700">{{ data.po.delivery_date|date:"M d, Y"|default:"ASAP" }}</span></p>
-                </div>
-            </div>
-
-            <table class="po-table">
-                <thead>
+            <table class="print-layout relative z-10">
+                <!-- HEADER -->
+                <thead class="print-header">
                     <tr>
-                        <th class="w-8 text-center">No.</th>
-                        <th class="w-24 text-left">Item Code</th>
-                        <th class="text-left">Description</th>
-                        <th class="w-12 text-center">Qty</th>
-                        <th class="w-20 text-right">Unit Price</th>
-                        <th class="w-24 text-right">Amount</th>
+                        <td>
+                            <!-- 🚀 UPGRADED HEADER -->
+                            <div class="flex justify-between items-start border-b-[3px] theme-border pb-6 mb-6">
+                                <div class="flex items-start gap-4">
+                                    <div class="flex flex-col gap-3">
+                                        <div class="w-20 h-20 flex items-center justify-center">
+                                             <img src="{% static 'images/asia-no-bg.png' %}" alt="Logo" class="max-w-full max-h-full object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                        </div>
+                                        <!-- 🚀 ANCHOR: TOP LEFT -->
+                                        <div id="qr-anchor-top-left" class="empty:hidden flex justify-center"></div>
+                                    </div>
+                                    <div class="mt-1">
+                                        <h1 class="text-2xl font-black text-slate-900 tracking-tighter uppercase leading-none mb-1.5">Asia Integrated <span class="theme-text">Machine Inc.</span></h1>
+                                        <p class="text-[10px] font-medium text-slate-500 leading-tight">128 Lopez-Rizal St., Brgy. Highway Hills, Mandaluyong City</p>
+                                        <p class="text-[10px] font-medium text-slate-500 leading-tight mt-0.5"><span class="font-bold text-slate-700">TIN:</span> 000-123-456-000 &nbsp;&nbsp;|&nbsp;&nbsp; <span class="font-bold text-slate-700">TEL:</span> (02) 8532 5875</p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-5 items-start">
+                                    <div class="text-right">
+                                        <h2 class="text-[28px] font-black theme-text uppercase tracking-tighter leading-none mb-1.5">Purchase Order</h2>
+                                        <div class="inline-block bg-slate-100 px-3 py-1 rounded-sm border border-slate-200">
+                                            <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">PO Number</p>
+                                            <p class="text-sm font-black text-slate-900 leading-none">{{ main_po_no }}</p>
+                                        </div>
+                                    </div>
+                                    <!-- 🚀 ANCHOR: TOP RIGHT (Default Location) -->
+                                    <div id="qr-anchor-top-right" class="empty:hidden">
+                                        <div id="qrcode-container" class="border border-slate-200 p-1 rounded-sm bg-white shadow-sm transition-all duration-300">
+                                            <div id="qrcode"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="customNoticeDisplay" class="text-center bg-rose-50 text-rose-700 font-black uppercase text-[10px] tracking-widest py-1 hidden mb-6 rounded-sm border border-rose-200"></div>
+                        </td>
                     </tr>
                 </thead>
+
+                <!-- BODY -->
                 <tbody>
-                    {% for item in data.items %}
-                    <tr>
-                        <td class="text-center text-slate-500 font-medium">{{ forloop.counter }}</td>
-                        <td class="font-black text-slate-800">{{ item.item_code }}</td>
-                        <td class="text-[9px] text-slate-700">{{ item.description }}</td>
-                        <td class="text-center font-black text-slate-800">{{ item.qty|floatformat:0 }}</td>
-                        <td class="text-right font-medium text-slate-700">{{ data.po.currency|default:"₱" }} {{ item.unit_price|floatformat:2 }}</td>
-                        <td class="text-right font-black text-slate-900">{{ data.po.currency|default:"₱" }} {{ item.amount|floatformat:2 }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="6" class="text-center py-4 text-slate-400 font-bold text-[9px] italic">No items recorded.</td>
+                    {% for data in pages_data %}
+                    <tr id="po-section-{{ forloop.counter }}" class="relative group bg-white">
+                        <td>
+                            <div class="screen-cut-line"></div>
+                            
+                            <div class="mb-10 relative">
+                                <!-- SCISSORS BUTTON -->
+                                {% if not forloop.first %}
+                                <div class="no-print absolute -left-[50px] top-0 opacity-10 group-hover:opacity-100 transition-all duration-300">
+                                    <button onclick="togglePageBreak('po-section-{{ forloop.counter }}', this)" class="bg-white border-2 border-slate-200 text-slate-600 p-2 rounded-full shadow-md hover:theme-bg hover:text-white transition-all">
+                                        <i data-lucide="scissors" class="w-4 h-4 pointer-events-none"></i>
+                                    </button>
+                                </div>
+                                {% endif %}
+
+                                <!-- 🚀 UPGRADED "TO" CARD -->
+                                <div class="flex justify-between items-stretch mb-4">
+                                    <div class="w-[60%]">
+                                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-2">
+                                            <span class="theme-bg text-white px-1.5 rounded-sm">{{ forloop.counter }}</span> Vendor Details
+                                        </p>
+                                        <div class="p-3 bg-slate-50 border border-slate-200 rounded-md">
+                                            <h3 class="font-black text-base uppercase text-slate-900 leading-tight mb-1">{{ data.po.supplier.name|default:"UNKNOWN SUPPLIER" }}</h3>
+                                            <p class="text-[10px] text-slate-600 uppercase"><span class="font-bold">Attn:</span> {{ data.po.supplier.contact_name|default:"Sales Rep" }}</p>
+                                            <p class="text-[10px] text-slate-600 uppercase mt-0.5"><span class="font-bold">Sub-PO:</span> <span class="theme-text font-black">{{ data.po.po_no }}</span></p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="w-[35%] text-right bg-slate-50 border border-slate-200 rounded-md p-3 h-full flex flex-col justify-center">
+                                        <div class="flex justify-between text-[10px] mb-1.5">
+                                            <span class="font-bold text-slate-500 uppercase">Order Date:</span>
+                                            <span class="font-black text-slate-800 uppercase">{{ data.po.order_date|date:"M d, Y" }}</span>
+                                        </div>
+                                        <div class="flex justify-between text-[10px]">
+                                            <span class="font-bold text-slate-500 uppercase">Est. Delivery:</span>
+                                            <span class="font-black text-rose-600 uppercase">{{ data.po.delivery_date|date:"M d, Y"|default:"ASAP" }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ITEMS TABLE -->
+                                <table class="po-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="w-8 text-center">No.</th>
+                                            <th class="w-28 text-left">Item Code</th>
+                                            <th class="text-left">Description</th>
+                                            <th class="w-16 text-center">Qty</th>
+                                            <th class="w-24 text-right col-price">Unit Price</th>
+                                            <th class="w-28 text-right col-price">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in data.items %}
+                                        <tr>
+                                            <td class="text-center text-slate-400 font-bold">{{ forloop.counter }}</td>
+                                            <td class="font-black text-slate-800">{{ item.item_code }}</td>
+                                            <td class="text-[10px] text-slate-600 font-medium">{{ item.description }}</td>
+                                            <td class="text-center font-black text-slate-800">{{ item.qty|floatformat:0 }}</td>
+                                            <td class="text-right font-bold text-slate-600 col-price">{{ data.po.currency|default:"₱" }} {{ item.unit_price|floatformat:2 }}</td>
+                                            <td class="text-right font-black text-slate-900 col-price">{{ data.po.currency|default:"₱" }} {{ item.amount|floatformat:2 }}</td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="6" class="text-center py-6 text-slate-400 font-bold text-[10px] uppercase tracking-widest italic border-b border-slate-200">No items recorded.</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+
+                                <!-- TOTALS & REMARKS -->
+                                <div class="flex justify-between items-start mt-4">
+                                    <div class="w-[50%]">
+                                        {% if data.po.remarks %}
+                                        <p class="text-[9px] text-slate-500 italic"><span class="font-black uppercase not-italic text-slate-700">Remarks:</span> {{ data.po.remarks }}</p>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <!-- 🚀 FINANCIAL SUMMARY BLOCK -->
+                                    <div class="w-[45%] text-[11px] col-price">
+                                        <div class="flex justify-between py-1 px-2">
+                                            <span class="font-bold text-slate-500 uppercase tracking-widest">Subtotal</span>
+                                            <span class="font-bold text-slate-800">{{ data.po.currency|default:"₱" }} {{ data.subtotal|floatformat:2 }}</span>
+                                        </div>
+                                        <div class="flex justify-between py-1 px-2 border-b border-slate-200">
+                                            <span class="font-bold text-slate-500 uppercase tracking-widest">Tax/Discount</span>
+                                            <span class="font-bold text-slate-800">{{ data.po.currency|default:"₱" }} {{ data.tax_amount|floatformat:2 }}</span>
+                                        </div>
+                                        <div class="flex justify-between items-center mt-2 theme-bg-light p-2 rounded-md border theme-border">
+                                            <span class="font-black theme-text uppercase tracking-widest text-[12px]">Grand Total</span>
+                                            <span class="font-black theme-text text-[14px]">{{ data.po.currency|default:"₱" }} {{ data.grand_total|floatformat:2 }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
+
+                <!-- 🚀 UPGRADED SIGNATURE FOOTER -->
+                <tfoot class="print-footer">
+                    <tr>
+                        <td>
+                            <div class="mt-8 pt-6 border-t-[3px] theme-border flex justify-between items-start">
+                                <div class="grid grid-cols-3 gap-8 px-4 w-full pr-8">
+                                    <div>
+                                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-6">Prepared By</p>
+                                        <p class="text-[11px] font-black uppercase text-slate-800 border-b border-slate-400 pb-1 mb-1">{{ request.user.get_full_name|default:"Purchasing Officer" }}</p>
+                                        <p class="text-[8px] font-bold text-slate-500 uppercase">Date: ____________________</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-6">Checked By</p>
+                                        <p class="text-[11px] font-black uppercase text-slate-800 border-b border-slate-400 pb-1 mb-1 text-transparent">.</p>
+                                        <p class="text-[8px] font-bold text-slate-500 uppercase">Date: ____________________</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-6">Approved By</p>
+                                        <p class="text-[11px] font-black uppercase text-slate-800 border-b border-slate-400 pb-1 mb-1 text-transparent">.</p>
+                                        <p class="text-[8px] font-bold text-slate-500 uppercase">Date: ____________________</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- 🚀 ANCHOR: BOTTOM RIGHT -->
+                                <div id="qr-anchor-bottom-right" class="empty:hidden shrink-0"></div>
+                            </div>
+                            
+                            <div class="text-center mt-8">
+                                <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
+                                    Asia Integrated Machine Inc. &bull; Official WMS Document &bull; Printed: {% now "M d, Y h:i A" %}
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+                </tfoot>
             </table>
 
-            <div class="flex justify-between items-start mt-2">
-                <div class="w-[60%]">
-                    {% if data.po.remarks %}
-                    <p class="text-[9px] text-slate-600 italic"><span class="font-bold uppercase not-italic text-slate-800">Note:</span> {{ data.po.remarks }}</p>
-                    {% endif %}
-                </div>
-                <div class="w-[40%] text-right text-[10px]">
-                    <div class="flex justify-end gap-4 mb-0.5">
-                        <span class="font-bold text-slate-500 uppercase">Subtotal:</span>
-                        <span class="font-bold text-slate-800 w-20">{{ data.po.currency|default:"₱" }} {{ data.subtotal|floatformat:2 }}</span>
-                    </div>
-                    <div class="flex justify-end gap-4 mb-0.5 border-b border-slate-200 pb-1">
-                        <span class="font-bold text-slate-500 uppercase">Tax/Disc:</span>
-                        <span class="font-bold text-slate-800 w-20">{{ data.po.currency|default:"₱" }} {{ data.tax_amount|floatformat:2 }}</span>
-                    </div>
-                    <div class="flex justify-end gap-4 mt-1">
-                        <span class="font-black text-indigo-900 uppercase">Total:</span>
-                        <span class="font-black text-indigo-900 w-20">{{ data.po.currency|default:"₱" }} {{ data.grand_total|floatformat:2 }}</span>
-                    </div>
-                </div>
+            <!-- TERMS AND CONDITIONS PAGE -->
+            <div class="tc-page page-break-active pt-10">
+                <h3 class="text-sm font-black theme-text uppercase tracking-widest mb-4 border-b-2 theme-border pb-2">Terms & Conditions of Purchase</h3>
+                <ol class="list-decimal pl-4 space-y-4 text-[10px] text-slate-700 font-medium leading-relaxed pr-8">
+                    <li><strong class="text-slate-900">Delivery Schedule:</strong> All deliveries must be made strictly between 8:00 AM and 4:00 PM, Monday to Friday. Deliveries outside these hours will be rejected unless authorized in writing.</li>
+                    <li><strong class="text-slate-900">Quality Assurance:</strong> Asia Integrated Machine Inc. reserves the right to reject any item that does not meet the specified quality standards. Rejected items must be replaced or refunded within 7 working days at the supplier's expense.</li>
+                    <li><strong class="text-slate-900">Required Documents:</strong> The supplier must provide an original Delivery Receipt (DR) and Sales Invoice (SI) matching the quantities and prices stated in this Purchase Order.</li>
+                    <li><strong class="text-slate-900">Payment Terms:</strong> Processing of payment shall commence only upon the complete delivery of goods and submission of all required correct documents.</li>
+                    <li><strong class="text-slate-900">Penalties:</strong> A penalty of 1% of the total PO value per day of delay shall be imposed for late deliveries without prior approved extension.</li>
+                </ol>
             </div>
 
         </div>
-        {% endfor %}
-
-        <div class="mt-8 pt-6 border-t-4 border-slate-800">
-            <div class="grid grid-cols-3 gap-8 px-4">
-                <div class="text-center">
-                    <div class="border-b border-slate-400 mb-2 h-10"></div>
-                    <p class="text-[10px] font-black uppercase text-slate-800">{{ request.user.get_full_name|default:"Purchasing Officer" }}</p>
-                    <p class="text-[9px] font-bold text-slate-500">Prepared By</p>
-                </div>
-                <div class="text-center">
-                    <div class="border-b border-slate-400 mb-2 h-10"></div>
-                    <p class="text-[10px] font-black uppercase text-slate-800">________________________</p>
-                    <p class="text-[9px] font-bold text-slate-500">Checked By</p>
-                </div>
-                <div class="text-center">
-                    <div class="border-b border-slate-400 mb-2 h-10"></div>
-                    <p class="text-[10px] font-black uppercase text-slate-800">________________________</p>
-                    <p class="text-[9px] font-bold text-slate-500">Approved By</p>
-                </div>
-            </div>
-            
-            <div class="text-center mt-8">
-                <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
-                    System Generated Document &bull; Asia Integrated Machine Inc. &bull; Date Printed: {{ request.user.last_login|date:"M d, Y" }}
-                </p>
-            </div>
-        </div>
-
     </div>
 
     <script>
+        lucide.createIcons();
+
+        // Hex to RGB converter for lighter background themes
+        function hexToRgb(hex) {
+            var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16)
+            } : null;
+        }
+
+        function updateBrandColor() {
+            const color = document.getElementById('colorPicker').value;
+            const rgb = hexToRgb(color);
+            
+            document.documentElement.style.setProperty('--brand-color', color);
+            
+            // Create a lighter version for the Total Box (using rgba)
+            if(rgb) {
+                document.documentElement.style.setProperty('--brand-light', `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.08)`);
+            }
+            
+            document.getElementById('colorHex').innerText = color;
+        }
+
+        const qrcode = new QRCode("qrcode", { text: "{{ main_po_no }}", width: 70, height: 70, colorDark : "#0f172a", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.M });
+
+        function updateQRSize() {
+            const size = document.getElementById('qrSize').value;
+            document.getElementById('qrSizeLabel').innerText = size + 'px';
+            document.getElementById("qrcode").innerHTML = "";
+            new QRCode("qrcode", { text: "{{ main_po_no }}", width: size, height: size, colorDark : "#0f172a", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.M });
+        }
+
+        function toggleElement(elementId, show) { document.getElementById(elementId).style.display = show ? 'block' : 'none'; }
+
+        function toggleDocClass(className, apply) {
+            const doc = document.getElementById('po-document');
+            apply ? doc.classList.add(className) : doc.classList.remove(className);
+        }
+
+        function updateCustomNotice() {
+            const input = document.getElementById('customNotice').value;
+            const display = document.getElementById('customNoticeDisplay');
+            if (input.trim() === '') { display.classList.add('hidden'); } 
+            else { display.classList.remove('hidden'); display.innerText = input; }
+        }
+
+        function togglePageBreak(sectionId, btn) {
+            const row = document.getElementById(sectionId);
+            const icon = btn.querySelector('i');
+            row.classList.toggle('page-break-active');
+            
+            if (row.classList.contains('page-break-active')) {
+                icon.setAttribute('data-lucide', 'unlink');
+                btn.classList.add('bg-rose-50', 'text-rose-600', 'border-rose-300');
+                btn.classList.remove('text-slate-600', 'border-slate-200');
+            } else {
+                icon.setAttribute('data-lucide', 'scissors');
+                btn.classList.remove('bg-rose-50', 'text-rose-600', 'border-rose-300');
+                btn.classList.add('text-slate-600', 'border-slate-200');
+            }
+            lucide.createIcons();
+        }
+
         function downloadPDF() {
             const element = document.getElementById('po-document');
-            const opt = {
-                margin:       0.2, 
-                // 🚀 PALITAN ITO
-                filename:     'Master_Batch_PO_{{ main_po_no }}.pdf',
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true },
-                jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
-            };
+            const opt = { margin: 0.2, filename: 'PO_{{ main_po_no }}.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' } };
+            html2pdf().set(opt).from(element).save();
+        }
+        
+        // Initial setup
+        updateBrandColor();
+
+        function updateQRPosition() {
+            const selectedPos = document.getElementById('qrPosition').value;
+            const qrContainer = document.getElementById('qrcode-container');
+            const targetAnchor = document.getElementById('qr-anchor-' + selectedPos);
             
-            const btn = document.querySelector('button[onclick="downloadPDF()"]');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = 'Generating...';
-            
-            html2pdf().set(opt).from(element).save().then(() => {
-                btn.innerHTML = originalText;
-            });
+            if (targetAnchor && qrContainer) {
+                targetAnchor.appendChild(qrContainer);
+            }
         }
     </script>
 </body>

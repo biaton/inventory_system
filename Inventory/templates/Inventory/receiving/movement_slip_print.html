@@ -1,184 +1,376 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Movement Slip - {{ header.request_no }}</title>
+    <title>Movement_Slip_{{ header.request_no }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    
+    <!-- QR at Barcode Engines -->
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <style>
-        body { font-family: Arial, sans-serif; color: black; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
         
-        /* SCREEN DISPLAY ONLY */
-        .paper-container {
-            background-color: white;
-            padding: 2rem;
-            margin-top: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            border: 1px solid #d1d5db;
-            width: 100%;
-            max-width: 800px;
+        :root {
+            --brand-color: #4f46e5; /* Default Indigo-600 */
+            --brand-light: #e0e7ff;
         }
 
-        /* PRINT LOGIC - DITO NATIN TINANGGAL ANG DESIGN */
+        body { font-family: 'Inter', sans-serif; background: #f1f5f9; color: #0f172a; margin: 0; padding: 0; }
+        
+        /* 🚀 MAGIC PRINT LOGIC PARA HINDI MAPUTOL ANG PAPEL */
         @media print {
+            @page { size: A4 portrait; margin: 10mm; }
+            body { background: white; }
             .no-print { display: none !important; }
-            
-            /* Tanggalin ang margins at headers/footers ng browser */
-            @page { 
-                margin: 0.5cm; 
-                size: portrait; 
-            }
-
-            body { 
-                background: white !important; 
-                padding: 0 !important; 
-                margin: 0 !important;
-            }
-
-            /* Gawing "plain" ang container sa papel */
-            .paper-container {
-                box-shadow: none !important;
-                border: none !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                max-width: none !important;
-                width: 100% !important;
-            }
-
-            .slip-table {
-                width: 100% !important;
-            }
+            .main-wrapper { margin-left: 0 !important; padding: 0 !important; }
+            .a4-container { box-shadow: none !important; border: none !important; margin: 0 !important; padding: 0 !important; width: 100% !important; }
         }
         
-        .slip-table th, .slip-table td {
-            border: 1px solid black;
-            padding: 6px;
+        .a4-container {
+            width: 210mm;
+            background: white;
+            margin: 2rem auto;
+            padding: 12mm 15mm;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            position: relative;
         }
+
+        /* 🚀 REPEATING TABLE STRUCTURE */
+        .print-layout { width: 100%; border-collapse: collapse; }
+        .print-header { display: table-header-group; }
+        .print-footer { display: table-footer-group; }
+
+        /* THEME CLASSES */
+        .theme-bg { background-color: var(--brand-color) !important; }
+        .theme-text { color: var(--brand-color) !important; }
+        .theme-border { border-color: var(--brand-color) !important; }
+        .theme-bg-light { background-color: var(--brand-light) !important; }
+
+        /* SLIP TABLE CSS */
+        .slip-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        .slip-table th { background-color: var(--brand-color); color: white; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; padding: 8px 10px; border: none; }
+        .slip-table th:first-child { border-top-left-radius: 4px; border-bottom-left-radius: 4px; }
+        .slip-table th:last-child { border-top-right-radius: 4px; border-bottom-right-radius: 4px; }
+        .slip-table td { font-size: 11px; padding: 8px 10px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
+
+        /* TOGGLE CLASSES */
+        .hide-barcodes .item-barcode-container { display: none !important; }
+        .hide-signatures .print-footer { display: none !important; }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
     </style>
 </head>
-<body class="bg-gray-100 p-8 flex justify-center text-sm">
+<body class="flex">
 
-    <div class="fixed top-4 right-4 no-print z-50">
-        <button onclick="window.print()" class="bg-indigo-600 text-white px-6 py-3 rounded-lg font-black flex items-center gap-2 shadow-xl hover:bg-indigo-700">
-            <i data-lucide="printer" class="w-5 h-5"></i> PRINT SLIP
-        </button>
+    <!-- 🚀 LEFT SIDEBAR: SETTINGS PANEL -->
+    <div class="no-print w-72 bg-slate-900 text-white h-screen fixed left-0 top-0 overflow-y-auto shadow-2xl custom-scrollbar flex flex-col z-50">
+        <div class="p-5 border-b border-slate-800 bg-slate-950">
+            <h2 class="text-sm font-black uppercase tracking-widest flex items-center gap-2 text-indigo-400">
+                <i data-lucide="settings-2" class="w-5 h-5"></i> Print Settings
+            </h2>
+            <p class="text-[9px] text-slate-400 mt-1">Movement Slip Preferences</p>
+        </div>
+
+        <div class="p-5 space-y-6 flex-1">
+            <!-- Theme Color -->
+            <div>
+                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Theme Color</label>
+                <div class="flex items-center gap-3">
+                    <input type="color" id="colorPicker" value="#4f46e5" class="w-10 h-10 rounded cursor-pointer bg-transparent border-0 p-0" onchange="updateBrandColor()">
+                    <span class="text-xs font-mono text-slate-300" id="colorHex">#4f46e5</span>
+                </div>
+            </div>
+
+            <!-- Header QR Code -->
+            <div class="border-t border-slate-800 pt-5">
+                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 flex justify-between">
+                    <span>Header QR Size</span>
+                    <span id="qrSizeLabel" class="text-indigo-400">60px</span>
+                </label>
+                <input type="range" id="qrSize" min="40" max="100" value="60" class="w-full accent-indigo-500 mb-4" oninput="updateQRSize()">
+                
+                <div class="flex items-center justify-between mt-2">
+                    <span class="text-xs font-bold text-slate-300">Show Top QR Code</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggleQR" class="sr-only peer" checked onchange="toggleElement('doc-qrcode-wrapper', this.checked)">
+                        <div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-indigo-500 after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Visibility Toggles -->
+            <div class="border-t border-slate-800 pt-5 space-y-4">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Document Display</p>
+                
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-300">Show Item Barcodes</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggleItemBarcodes" class="sr-only peer" checked onchange="toggleDocClass('hide-barcodes', !this.checked)">
+                        <div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-indigo-500 after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
+                    </label>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-300">Show Signatures</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggleSigs" class="sr-only peer" checked onchange="toggleDocClass('hide-signatures', !this.checked)">
+                        <div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-indigo-500 after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Custom Notice -->
+            <div class="border-t border-slate-800 pt-5">
+                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Custom Instruction</label>
+                <input type="text" id="customNotice" placeholder="e.g. URGENT TRANSFER" oninput="updateCustomNotice()" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-xs text-white outline-none focus:border-indigo-500">
+            </div>
+        </div>
+
+        <div class="p-5 bg-slate-950 border-t border-slate-800">
+            <button onclick="window.print()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2">
+                <i data-lucide="printer" class="w-4 h-4"></i> Print Slip
+            </button>
+        </div>
     </div>
 
-    <div class="bg-white p-8 shadow-2xl border border-gray-300 w-full max-w-[800px] min-h-[1050px] flex flex-col relative">
-        
-        <div class="mb-6 space-y-2">
-            <div class="flex justify-between items-end">
-                <p class="font-bold text-[11px] uppercase tracking-wider text-gray-500">Delivery date: <span class="text-black ml-1 text-sm">{{ header.delivery_date|date:'Y/m/d' }}</span></p>
-                <h1 class="text-2xl font-black uppercase tracking-tighter">Movement Slip</h1>
-            </div>
+    <!-- 🚀 MAIN RIGHT AREA (THE DOCUMENT) -->
+    <div class="main-wrapper flex-1 ml-72 p-8 flex justify-center bg-slate-200 min-h-screen">
+        <div id="movement-document" class="a4-container">
+            
+            <table class="print-layout">
+                <!-- 🚀 HEADER (Will repeat if multiple pages) -->
+                <thead class="print-header">
+                    <tr>
+                        <td>
+                            <div class="flex justify-between items-start border-b-[3px] theme-border pb-5 mb-5 mt-2">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-16 h-16 flex items-center justify-center bg-slate-50 rounded border border-slate-200">
+                                         <img src="{% static 'images/asia-no-bg.png' %}" alt="Logo" class="max-w-[90%] max-h-[90%] object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                    </div>
+                                    <div>
+                                        <h1 class="text-2xl font-black text-slate-900 tracking-tighter uppercase leading-none mb-1">Asia Integrated Machine Inc.</h1>
+                                        <p class="text-[10px] font-bold text-slate-500 tracking-widest uppercase">Inventory Movement Slip</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex gap-4 items-center">
+                                    <div class="text-right">
+                                        <p class="text-[9px] font-black theme-text uppercase tracking-widest mb-0.5">Slip Reference</p>
+                                        <h2 class="text-xl font-black text-slate-900 leading-none">{{ header.request_no }}</h2>
+                                        <p class="text-[9px] font-bold text-slate-500 uppercase mt-2">Input: {{ header.request_date|date:'Y-m-d' }}</p>
+                                    </div>
+                                    <!-- QR CODE -->
+                                    <div id="doc-qrcode-wrapper" class="p-1 border border-slate-200 rounded-sm bg-white shadow-sm">
+                                        <div id="doc-qrcode"></div>
+                                    </div>
+                                </div>
+                            </div>
 
-            <div class="text-center w-full">
-                <div class="text-lg font-black p-2 inline-block uppercase tracking-tight">
-                    {{ header.delivery_place }} &nbsp;&#10142;&nbsp; {{ header.receiving_place }}
-                </div>
-            </div>
+                            <!-- Custom Notice Display -->
+                            <div id="customNoticeDisplay" class="text-center bg-rose-50 text-rose-700 font-black uppercase text-[10px] tracking-widest py-1.5 hidden mb-4 rounded-sm border border-rose-200"></div>
 
-            <div class="flex justify-between items-end mt-2">
-                <p class="font-bold text-sm tracking-widest uppercase">{{ header.receiving_place }}</p>
-                <div class="text-[11px] font-bold text-right">
-                    <p>Input date: <span class="ml-2 font-normal">{{ header.request_date|date:'Y/m/d' }}</span></p>
-                    <p>Move date: <span class="ml-2 font-normal">{{ header.delivery_date|date:'Y/m/d' }}</span></p>
-                </div>
-            </div>
-        </div>
+                            <!-- 🚀 MOVEMENT FLOW -->
+                            <div class="flex items-stretch gap-4 mb-4">
+                                <!-- FROM -->
+                                <div class="flex-1 bg-slate-50 border border-slate-200 rounded-sm p-3 relative">
+                                    <span class="absolute -top-2 left-3 bg-slate-700 text-white text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-sm shadow-sm">Pull-Out From</span>
+                                    <div class="mt-1 flex items-center gap-3">
+                                        <div class="bg-slate-200 p-2 rounded text-slate-700"><i data-lucide="package-minus" class="w-5 h-5"></i></div>
+                                        <div>
+                                            <p class="font-black text-sm uppercase text-slate-800">{{ header.delivery_place }}</p>
+                                        </div>
+                                    </div>
+                                </div>
 
-        <div class="mb-1 font-black text-xs uppercase tracking-widest">
-            <span class="text-indigo-700">{{ header.request_no }}</span>
-        </div>
+                                <div class="flex flex-col justify-center items-center px-1 text-slate-400">
+                                    <i data-lucide="arrow-right" class="w-5 h-5 theme-text"></i>
+                                </div>
 
-        <div>
-            <table class="w-full text-center slip-table text-[10px]">
-                <thead>
-                    <tr class="bg-gray-200 uppercase font-black tracking-widest border-2 border-black">
-                        <th colspan="3" class="py-2">Product Warehouse</th>
-                        <th colspan="6" class="py-2">Warehouse Entry</th>
-                    </tr>
-                    <tr class="bg-gray-50 font-bold uppercase tracking-tighter text-[9px]">
-                        <th class="w-20">Item Code</th>
-                        <th class="w-40">Item Name</th>
-                        <th class="w-16">Order Qty</th>
-                        <th class="w-16">Stock Qty</th>
-                        <th class="w-16">Delivery Qty</th>
-                        <th class="w-16">Balance</th>
-                        <th class="w-12">Qty</th>
-                        <th class="w-20">Arrival</th>
-                        <th class="w-16">Plan Qty</th>
+                                <!-- TO -->
+                                <div class="flex-1 theme-bg-light border theme-border rounded-sm p-3 relative">
+                                    <span class="absolute -top-2 left-3 theme-bg text-white text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-sm shadow-sm">Deliver To</span>
+                                    <div class="mt-1 flex items-center gap-3">
+                                        <div class="bg-white p-2 rounded theme-text shadow-sm"><i data-lucide="package-plus" class="w-5 h-5"></i></div>
+                                        <div>
+                                            <p class="font-black text-sm uppercase text-slate-900">{{ header.receiving_place }}</p>
+                                            <p class="text-[9px] font-bold theme-text uppercase mt-0.5">Target: {{ header.delivery_date|date:'Y-m-d' }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
                     </tr>
                 </thead>
+
+                <!-- 🚀 BODY (Items Loop) -->
                 <tbody>
-                    {% for item in items %}
-                    <tr class="font-bold">
-                        <td class="py-3 font-black">{{ item.item_code }}</td>
-                        <td class="text-left px-2 leading-tight italic">{{ item.description }}</td>
-                        <td class="text-sm font-black">{{ item.request_qty }}</td>
-                        <td class="text-gray-400"></td>
-                        <td class="font-black">{{ item.stock_qty|default:"0" }}</td>
-                        <td class="text-gray-400"></td>
-                        <td> </td>
-                        <td class="text-[9px]">{{ header.delivery_date|date:'Y/m/d' }}</td>
-                        <td> </td>
+                    <tr>
+                        <td>
+                            <table class="slip-table">
+                                <thead>
+                                    <tr>
+                                        <th class="w-8 text-center">#</th>
+                                        <th class="text-left w-48">Item Details</th>
+                                        <th class="w-16 text-center">Bin/Lot</th>
+                                        <th class="w-16 text-center">Quantity</th>
+                                        <th class="w-32 text-center item-barcode-container">Scan to Pick</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in items %}
+                                    <tr>
+                                        <td class="text-center font-bold text-slate-400">{{ forloop.counter }}</td>
+                                        <td>
+                                            <p class="font-black text-slate-800 uppercase text-xs">{{ item.item_code }}</p>
+                                            <p class="text-[9px] text-slate-600 mt-0.5 leading-tight pr-4">{{ item.description }}</p>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="text-[9px] font-bold text-slate-300 italic border-b border-slate-300 px-4">___</span>
+                                        </td>
+                                        <td class="text-center font-black text-lg text-slate-800 bg-slate-50">{{ item.request_qty|floatformat:0 }}</td>
+                                        <td class="text-center align-middle item-barcode-container">
+                                            <svg class="item-barcode mx-auto h-[35px]" data-val="{{ item.item_code }}"></svg>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="text-center py-8 text-slate-400 font-bold text-[10px] uppercase tracking-widest italic border-b border-slate-200">No Items Included.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+
+                            <!-- SUMMARY BAR -->
+                            <div class="flex justify-between items-center bg-slate-50 border border-slate-200 p-2.5 mt-4 rounded-sm">
+                                <p class="text-[9px] font-black uppercase text-slate-400 tracking-widest">End of List</p>
+                                <div class="flex gap-6">
+                                    <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Total SKUs: <span class="font-black theme-text text-sm ml-1">{{ total_skus }}</span></p>
+                                    <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest border-l border-slate-300 pl-6">Total Pieces: <span class="font-black theme-text text-sm ml-1">{{ total_qty|floatformat:0 }}</span></p>
+                                </div>
+                            </div>
+                        </td>
                     </tr>
-                    {% empty %}
-                    <tr><td colspan="9" class="py-8 italic text-gray-400">No items found.</td></tr>
-                    {% endfor %}
                 </tbody>
+
+                <!-- 🚀 FOOTER (Signatures) -->
+                <tfoot class="print-footer">
+                    <tr>
+                        <td>
+                            <div class="mt-8 pt-6 border-t-[3px] theme-border">
+                                <div class="grid grid-cols-3 gap-6">
+                                    <!-- 1. Requested -->
+                                    <div class="border border-slate-200 rounded-sm p-3 relative bg-slate-50/50">
+                                        <span class="bg-slate-800 px-2 py-0.5 rounded-sm text-[8px] font-black uppercase tracking-widest text-white absolute -top-2 left-3">1. Requested By</span>
+                                        <p class="text-[10px] font-black uppercase text-slate-800 text-center border-b border-slate-400 pb-1 mt-3">{{ user.username|default:"Authorized User" }}</p>
+                                        <div class="mt-2 flex justify-between text-[8px] font-bold text-slate-400 uppercase">
+                                            <span>Date: __/__/____</span>
+                                            <span>Time: __:__</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 2. Picked/Issued -->
+                                    <div class="border border-slate-200 rounded-sm p-3 relative">
+                                        <span class="bg-white border border-slate-200 px-2 py-0.5 rounded-sm text-[8px] font-black uppercase tracking-widest text-slate-500 absolute -top-2 left-3">2. Picked & Issued By</span>
+                                        <p class="text-[10px] font-black uppercase text-slate-800 text-center border-b border-slate-400 pb-1 mt-3 text-transparent">.</p>
+                                        <div class="mt-2 flex justify-between text-[8px] font-bold text-slate-400 uppercase">
+                                            <span>Date: __/__/____</span>
+                                            <span>Time: __:__</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- 3. Received -->
+                                    <div class="border theme-border rounded-sm p-3 relative theme-bg-light">
+                                        <span class="theme-bg px-2 py-0.5 rounded-sm text-[8px] font-black uppercase tracking-widest text-white absolute -top-2 left-3 shadow-sm">3. Received & Confirmed</span>
+                                        <p class="text-[10px] font-black uppercase text-slate-800 text-center border-b border-slate-400 pb-1 mt-3 text-transparent">.</p>
+                                        <div class="mt-2 flex justify-between text-[8px] font-bold theme-text uppercase">
+                                            <span>Date: __/__/____</span>
+                                            <span>Time: __:__</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-center mt-6">
+                                    <p class="text-[8px] font-bold text-slate-400 uppercase tracking-[0.2em]">
+                                        Asia Integrated Machine Inc. &bull; WMS Movement Record &bull; {% now "M d, Y h:i A" %}
+                                    </p>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </tfoot>
             </table>
         </div>
-
-        <div class="mt-16">
-
-            <p class="text-[10px] font-black text-right mt-1 uppercase tracking-widest text-gray-600"><span class="text-black">{{ header.request_date|date:'Y/m/d' }}</span>
-            </p>
-
-            <table class="w-full text-center slip-table text-[10px] bg-white border-2 border-black">
-                <tr class="uppercase font-black bg-gray-100">
-                    <th class="w-[40%] text-left p-2 border-r-2 border-black border-b-2">Request No. (Scan)</th>
-                    <th class="w-[15%] py-1 border-r-2 border-black border-b-2">Receipt</th>
-                    <th class="w-[15%] py-1 border-r-2 border-black border-b-2">Delivery</th>
-                    <th class="w-[15%] py-1 border-r-2 border-black border-b-2">Confirm</th>
-                    <th class="w-[15%] py-1 border-b-2 border-black">Order User</th>
-                </tr>
-                <tr>
-                    <td class="h-20 align-middle text-center border-r-2 border-black py-2">
-                        <svg id="movement-barcode"></svg>
-                    </td>
-                    <td class="border-r-2 border-black"></td>
-                    <td class="border-r-2 border-black"></td>
-                    <td class="border-r-2 border-black"></td>
-                    <td class="align-bottom pb-2 font-bold text-gray-500">{{ user.username|upper }}</td>
-                </tr>
-            </table>
-
-            
-        </div>
-
     </div>
 
     <script>
         lucide.createIcons();
 
-        // GENERATE CODE 39
-        const reqNumber = "{{ header.request_no }}";
-        if(reqNumber) {
-            JsBarcode("#movement-barcode", reqNumber, {
-                format: "CODE39",
-                lineColor: "#000000",
-                width: 1.4,
-                height: 50,
-                displayValue: true,
-                fontSize: 12,
-                fontOptions: "bold",
-                margin: 0
+        // Hex to RGB
+        function hexToRgb(hex) {
+            var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null;
+        }
+
+        // Color Picker Logic
+        function updateBrandColor() {
+            const color = document.getElementById('colorPicker').value;
+            const rgb = hexToRgb(color);
+            document.documentElement.style.setProperty('--brand-color', color);
+            if(rgb) {
+                document.documentElement.style.setProperty('--brand-light', `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.08)`);
+            }
+            document.getElementById('colorHex').innerText = color;
+        }
+
+        // Header QR Code Logic
+        const qrcode = new QRCode("doc-qrcode", {
+            text: "{{ header.request_no }}", width: 60, height: 60, colorDark : "#0f172a", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.M
+        });
+
+        function updateQRSize() {
+            const size = document.getElementById('qrSize').value;
+            document.getElementById('qrSizeLabel').innerText = size + 'px';
+            document.getElementById("doc-qrcode").innerHTML = "";
+            new QRCode("doc-qrcode", {
+                text: "{{ header.request_no }}", width: size, height: size, colorDark : "#0f172a", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.M
             });
+        }
+
+        // Item-level Barcodes
+        document.addEventListener("DOMContentLoaded", function() {
+            const barcodeElements = document.querySelectorAll('.item-barcode');
+            barcodeElements.forEach(function(svg) {
+                const itemCode = svg.getAttribute('data-val');
+                if (itemCode) {
+                    JsBarcode(svg, itemCode, {
+                        format: "CODE128", height: 30, width: 1.2, displayValue: false, margin: 0, lineColor: "#0f172a"
+                    });
+                }
+            });
+        });
+
+        // Toggle elements and classes
+        function toggleElement(elementId, show) {
+            document.getElementById(elementId).style.display = show ? 'block' : 'none';
+        }
+
+        function toggleDocClass(className, apply) {
+            const doc = document.getElementById('movement-document');
+            apply ? doc.classList.add(className) : doc.classList.remove(className);
+        }
+
+        function updateCustomNotice() {
+            const input = document.getElementById('customNotice').value;
+            const display = document.getElementById('customNoticeDisplay');
+            if (input.trim() === '') {
+                display.classList.add('hidden');
+            } else {
+                display.classList.remove('hidden');
+                display.innerText = input;
+            }
         }
     </script>
 </body>

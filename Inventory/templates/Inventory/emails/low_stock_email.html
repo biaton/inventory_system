@@ -2,18 +2,19 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Low Stock Alert</title>
+    <title>Smart Low Stock Alert</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f8fafc; color: #334155;">
 
     <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 20px;">
         <tr>
             <td align="center">
-                <table width="650" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                <!-- Nilalakihan natin nang konti (750) ang table para magkasya ang bagong columns -->
+                <table width="750" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
                     
                     <tr>
                         <td style="background-color: #b91c1c; padding: 20px; text-align: center;">
-                            <h2 style="margin: 0; color: #ffffff; font-size: 20px; letter-spacing: 2px; text-transform: uppercase;">⚠️ Critical Stock Alert</h2>
+                            <h2 style="margin: 0; color: #ffffff; font-size: 20px; letter-spacing: 2px; text-transform: uppercase;">⚠️ Smart Inventory Alert</h2>
                         </td>
                     </tr>
 
@@ -21,32 +22,51 @@
                         <td style="padding: 30px;">
                             <p style="margin: 0 0 15px 0; font-size: 16px;">Hello Team,</p>
                             <p style="margin: 0 0 25px 0; font-size: 14px; line-height: 1.6;">
-                                The system has detected that <strong>{{ total_count }} item(s)</strong> breached the global minimum threshold. Immediate replenishment is highly recommended to avoid production delays.
+                                The system has analyzed your current inventory usage. The following <strong>{{ total_count }} item(s)</strong> are predicted to run out soon based on their <strong>Average Daily Consumption (ADC)</strong>.
                             </p>
 
                             <table width="100%" cellpadding="12" cellspacing="0" style="border-collapse: collapse; margin-bottom: 25px; border: 1px solid #e2e8f0; border-radius: 4px; overflow: hidden;">
                                 <thead>
-                                    <tr style="background-color: #f1f5f9; text-align: left; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px;">
-                                        <th style="border-bottom: 2px solid #cbd5e1; width: 25%;">Item Code</th>
-                                        <th style="border-bottom: 2px solid #cbd5e1; width: 35%;">Description</th>
-                                        <th style="border-bottom: 2px solid #cbd5e1; width: 20%; text-align: right;">Current Stock</th>
-                                        <th style="border-bottom: 2px solid #cbd5e1; width: 20%; text-align: right;">Threshold</th>
+                                    <tr style="background-color: #f1f5f9; text-align: left; font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 1px;">
+                                        <th style="border-bottom: 2px solid #cbd5e1;">Item Code</th>
+                                        <th style="border-bottom: 2px solid #cbd5e1;">Current Stock</th>
+                                        <!-- 🚀 BAGONG COLUMNS -->
+                                        <th style="border-bottom: 2px solid #cbd5e1; text-align: center; color: #b91c1c;">Days Left</th>
+                                        <th style="border-bottom: 2px solid #cbd5e1; text-align: center;">Daily Usage</th>
+                                        <th style="border-bottom: 2px solid #cbd5e1; text-align: right;">Threshold</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for item in items %}
                                     <tr style="border-bottom: 1px solid #e2e8f0;">
-                                        <td style="font-size: 13px; font-weight: bold; color: #0f172a;">{{ item.item_code }}</td>
-                                        <td style="font-size: 12px; color: #475569; line-height: 1.4;">{{ item.description|default:"No description" }}</td>
-                                        <td style="font-size: 14px; font-weight: bold; color: #b91c1c; text-align: right;">{{ item.current_stock }} PCS</td>
-                                        <td style="font-size: 12px; color: #64748b; text-align: right;">{{ item.threshold }} PCS</td>
+                                        <td style="font-size: 12px; font-weight: bold; color: #0f172a;">
+                                            {{ item.item_code }}<br>
+                                            <span style="font-size: 10px; font-weight: normal; color: #64748b;">{{ item.description|default:"No description" }}</span>
+                                        </td>
+                                        <td style="font-size: 13px; font-weight: bold; color: #334155;">{{ item.current_stock }} PCS</td>
+                                        
+                                        <!-- 🚀 DISPLAY DAYS LEFT (DOS) -->
+                                        <td style="font-size: 13px; font-weight: 800; color: #b91c1c; text-align: center; background-color: #fef2f2;">
+                                            {% if item.dos != "N/A" %}
+                                                {{ item.dos }} DAYS
+                                            {% else %}
+                                                CRITICAL
+                                            {% endif %}
+                                        </td>
+
+                                        <!-- 🚀 DISPLAY AVERAGE DAILY CONSUMPTION (ADC) -->
+                                        <td style="font-size: 12px; color: #475569; text-align: center;">
+                                            {{ item.adc }} / day
+                                        </td>
+
+                                        <td style="font-size: 11px; color: #94a3b8; text-align: right;">{{ item.threshold }} PCS</td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
 
                             <p style="margin: 0; font-size: 13px; color: #64748b; text-align: center; font-style: italic;">
-                                Please coordinate with the Purchasing Department to generate a new PO for the items listed above.
+                                <strong>Action Required:</strong> Please generate a new Purchase Order immediately for items with less than 7 days of supply.
                             </p>
                         </td>
                     </tr>
@@ -54,7 +74,7 @@
                     <tr>
                         <td style="background-color: #1e293b; padding: 15px; text-align: center;">
                             <p style="margin: 0; color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">
-                                ASIA Integrated Corp. • Automated WMS
+                                ASIA Integrated Machine Inc. | This is an automated system message. Please do not reply.
                             </p>
                         </td>
                     </tr>
