@@ -1,0 +1,149 @@
+{% extends "Inventory/base.html" %}
+{% load static %}
+
+{% block content %}
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<div class="p-4 md:p-6 w-full max-w-4xl mx-auto">
+    
+    <!-- HEADER -->
+    <div class="mb-4 flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-300 dark:border-slate-700 pb-3">
+        <div>
+            <h1 class="text-lg font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight flex items-center gap-2">
+                <i data-lucide="download-cloud" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i> Receiving & Put-Away
+            </h1>
+            <p class="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest mt-0.5">Inventory Arrival Processing</p>
+        </div>
+        <div class="mt-2 md:mt-0">
+            <span class="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700 px-2.5 py-1 rounded-sm text-[9px] font-black uppercase tracking-widest">Scanner Ready</span>
+        </div>
+    </div>
+
+    <!-- MAIN DENSE FORM -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-sm shadow-sm overflow-hidden transition-colors">
+        
+        <div class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 px-4 py-2.5">
+            <h2 class="text-[10px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
+                <i data-lucide="scan-barcode" class="w-3.5 h-3.5"></i> Scan Operation
+            </h2>
+        </div>
+
+        <form method="POST" class="m-0">
+            {% csrf_token %}
+            
+            <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-5">
+                
+                <!-- STEP 1: LOCATION -->
+                <div>
+                    <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 flex justify-between">
+                        <span>1. Target Location <span class="text-rose-500">*</span></span>
+                    </label>
+                    <div class="flex">
+                        <input type="text" id="loc_input" name="location_code" required placeholder="SCAN BIN / RACK BARCODE" 
+                               class="flex-1 w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100 rounded-l-sm px-3 py-2 text-xs font-black uppercase tracking-wider focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-400 focus:ring-1 focus:ring-emerald-500 transition-colors">
+                        <button type="button" onclick="openScanner('loc_input')" title="Open Camera Scanner"
+                                class="bg-slate-800 dark:bg-slate-700 hover:bg-slate-700 dark:hover:bg-slate-600 text-white px-3 rounded-r-sm border border-l-0 border-slate-800 dark:border-slate-700 transition-colors flex items-center justify-center">
+                            <i data-lucide="camera" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <p class="text-[9px] text-slate-400 dark:text-slate-500 mt-1 italic">Scan the physical rack or bin where the item will be stored.</p>
+                </div>
+
+                <!-- STEP 2: ITEM CODE -->
+                <div>
+                    <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 flex justify-between">
+                        <span>2. Item SKU / Barcode <span class="text-rose-500">*</span></span>
+                    </label>
+                    <div class="flex">
+                        <!-- 🚀 MAGIC AUTO-FILL: value="{{ scanned_barcode }}" -->
+                        <input type="text" id="item_input" name="item_code" value="{{ scanned_barcode }}" required placeholder="SCAN ITEM BARCODE" 
+                               class="flex-1 w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100 rounded-l-sm px-3 py-2 text-xs font-black uppercase tracking-wider focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-1 focus:ring-indigo-500 transition-colors">
+                        <button type="button" onclick="openScanner('item_input')" title="Open Camera Scanner"
+                                class="bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white px-3 rounded-r-sm border border-l-0 border-indigo-600 dark:border-indigo-500 transition-colors flex items-center justify-center">
+                            <i data-lucide="scan-line" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <p class="text-[9px] text-slate-400 dark:text-slate-500 mt-1 italic">Scan the product barcode to register into system.</p>
+                </div>
+
+                <!-- DETAILS -->
+                <div>
+                    <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Lot Number / Batch ID <span class="text-[9px] lowercase italic font-normal">(Optional)</span></label>
+                    <input type="text" name="lot_no" placeholder="e.g. LOT-2026-001" 
+                           class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100 rounded-sm px-3 py-2 text-xs font-black uppercase tracking-wider focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 transition-colors">
+                </div>
+
+                <div>
+                    <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Received Quantity <span class="text-rose-500">*</span></label>
+                    <input type="number" name="qty" required placeholder="0" min="1"
+                           class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100 rounded-sm px-3 py-2 text-xs font-black uppercase tracking-wider focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 transition-colors">
+                </div>
+            </div>
+
+            <!-- FOOTER ACTION -->
+            <div class="bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-700 px-4 py-3 flex justify-end gap-3">
+                <a href="{% url 'dashboard' %}" class="bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-5 py-2 rounded-sm text-[10px] font-black uppercase tracking-widest transition-colors flex items-center">
+                    Cancel
+                </a>
+                <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 text-white px-6 py-2 rounded-sm text-[10px] font-black uppercase tracking-widest shadow-sm flex justify-center items-center gap-2 transition-colors">
+                    <i data-lucide="save" class="w-3.5 h-3.5"></i> Register Item
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 🚀 COMPACT CAMERA MODAL (DARK MODE FRIENDLY) -->
+<div id="reader" class="hidden fixed inset-0 z-[200] bg-slate-900/80 dark:bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-sm shadow-2xl w-full max-w-sm border border-slate-200 dark:border-slate-700 overflow-hidden transform transition-all">
+        
+        <div class="px-4 py-2.5 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950">
+            <h3 class="text-[10px] font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest flex items-center gap-1.5">
+                <i data-lucide="camera" class="w-3.5 h-3.5 text-sky-500"></i> Hardware Scanner
+            </h3>
+            <button type="button" onclick="closeScanner()" class="text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 transition-colors">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+
+        <div class="p-4">
+            <div id="scanner-view" class="overflow-hidden rounded-sm border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-950"></div>
+            <p class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest text-center mt-3">Point camera at the barcode/QR</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    let activeInputId = '';
+    let html5QrcodeScanner = null;
+
+    function openScanner(inputId) {
+        activeInputId = inputId;
+        document.getElementById('reader').classList.remove('hidden');
+        
+        html5QrcodeScanner = new Html5QrcodeScanner("scanner-view", { 
+            fps: 10, 
+            qrbox: {width: 250, height: 250},
+            aspectRatio: 1.0
+        });
+        
+        html5QrcodeScanner.render(onScanSuccess);
+    }
+
+    function onScanSuccess(decodedText) {
+        document.getElementById(activeInputId).value = decodedText;
+        closeScanner();
+    }
+
+    function closeScanner() {
+        if (html5QrcodeScanner) {
+            html5QrcodeScanner.clear();
+        }
+        document.getElementById('reader').classList.add('hidden');
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        if (typeof lucide !== 'undefined') { lucide.createIcons(); }
+    });
+</script>
+{% endblock %}

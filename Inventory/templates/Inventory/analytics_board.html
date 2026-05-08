@@ -8,13 +8,16 @@
 <style>
     /* Custom Scrollbar para sa mga tables sa loob ng dashboard */
     .dash-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
-    .dash-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 2px; }
-    .dash-scroll:hover::-webkit-scrollbar-thumb { background: #64748b; }
+    .dash-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+    .dark .dash-scroll::-webkit-scrollbar-thumb { background: #475569; }
+    .dash-scroll:hover::-webkit-scrollbar-thumb { background: #94a3b8; }
+    .dark .dash-scroll:hover::-webkit-scrollbar-thumb { background: #64748b; }
     .tabular-nums { font-variant-numeric: tabular-nums; }
 </style>
 
 <div class="max-w-[100%] mx-auto mt-4 px-2 sm:px-4 text-slate-800 dark:text-slate-200 pb-12 transition-colors duration-300 font-sans">
     
+    <!-- 🚀 HEADER -->
     <div class="border-b border-slate-300 dark:border-slate-800 pb-3 mb-5 flex flex-col md:flex-row md:items-end md:justify-between transition-colors duration-300">
         <div>
             <h1 class="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter flex items-center gap-2">
@@ -38,8 +41,9 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-5">
-        <div class="bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-900/80 border border-slate-200 dark:border-slate-800 p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 rounded-sm relative overflow-hidden group transition-all duration-300">
+    <!-- 🚀 TOP FINANCIAL & INVENTORY KPIs -->
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-3">
+        <div class="bg-gradient-to-br from-white to-emerald-50/30 dark:from-slate-900 dark:to-slate-900/80 border border-slate-200 dark:border-slate-800 p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 rounded-sm relative overflow-hidden group transition-all duration-300">
             <div class="absolute right-0 top-0 w-1 h-full bg-emerald-500"></div>
             <div class="flex justify-between items-start mb-3">
                 <p class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Total Value</p>
@@ -50,7 +54,7 @@
             </h2>
         </div>
 
-        <div class="bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-900/80 border border-slate-200 dark:border-slate-800 p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 rounded-sm relative overflow-hidden group transition-all duration-300">
+        <div class="bg-gradient-to-br from-white to-sky-50/30 dark:from-slate-900 dark:to-slate-900/80 border border-slate-200 dark:border-slate-800 p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 rounded-sm relative overflow-hidden group transition-all duration-300">
             <div class="absolute right-0 top-0 w-1 h-full bg-sky-500"></div>
             <div class="flex justify-between items-start mb-3">
                 <p class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Overall Pcs</p>
@@ -59,7 +63,7 @@
             <h2 class="text-xl lg:text-2xl font-black text-slate-800 dark:text-slate-100 leading-none tabular-nums tracking-tight">{{ total_pcs }}</h2>
         </div>
         
-        <div class="bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-900/80 border border-slate-200 dark:border-slate-800 p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 rounded-sm relative overflow-hidden group transition-all duration-300">
+        <div class="bg-gradient-to-br from-white to-indigo-50/30 dark:from-slate-900 dark:to-slate-900/80 border border-slate-200 dark:border-slate-800 p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 rounded-sm relative overflow-hidden group transition-all duration-300">
             <div class="absolute right-0 top-0 w-1 h-full bg-indigo-500"></div>
             <div class="flex justify-between items-start mb-3">
                 <p class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Active SKU</p>
@@ -68,7 +72,7 @@
             <h2 class="text-xl lg:text-2xl font-black text-slate-800 dark:text-slate-100 leading-none tabular-nums tracking-tight">{{ total_skus }}</h2>
         </div>
 
-        <div class="bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-900/80 border border-slate-200 dark:border-slate-800 p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 rounded-sm relative overflow-hidden group transition-all duration-300">
+        <div class="bg-gradient-to-br from-white to-amber-50/30 dark:from-slate-900 dark:to-slate-900/80 border border-slate-200 dark:border-slate-800 p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 rounded-sm relative overflow-hidden group transition-all duration-300">
             <div class="absolute right-0 top-0 w-1 h-full bg-amber-500"></div>
             <div class="flex justify-between items-start mb-3">
                 <p class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Pending Dispatch</p>
@@ -87,8 +91,61 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-5">
+    <!-- 🚀 OPERATIONAL KPIs (Fleet, Inbound, RMA, Assembly) -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
         
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 shadow-sm hover:shadow-md rounded-sm flex items-center justify-between transition-colors">
+            <div>
+                <p class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Active Fleet</p>
+                <p class="text-lg font-black text-sky-600 dark:text-sky-400 leading-none">
+                    {{ fleet_in_transit|default:"0" }} <span class="text-[10px] text-slate-400 uppercase">On Trip</span>
+                </p>
+            </div>
+            <div class="bg-sky-50 dark:bg-sky-900/30 p-2 rounded-full border border-sky-100 dark:border-sky-800/50">
+                <i data-lucide="navigation" class="w-4 h-4 text-sky-500"></i>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 shadow-sm hover:shadow-md rounded-sm flex items-center justify-between transition-colors">
+            <div>
+                <p class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Incoming Today</p>
+                <p class="text-lg font-black text-teal-600 dark:text-teal-400 leading-none">
+                    {{ incoming_today_count|default:"0" }} <span class="text-[10px] text-slate-400 uppercase">Deliveries</span>
+                </p>
+            </div>
+            <div class="bg-teal-50 dark:bg-teal-900/30 p-2 rounded-full border border-teal-100 dark:border-teal-800/50">
+                <i data-lucide="truck-return" class="w-4 h-4 text-teal-500"></i>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 shadow-sm hover:shadow-md rounded-sm flex items-center justify-between transition-colors">
+            <div>
+                <p class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Active Returns</p>
+                <p class="text-lg font-black text-orange-600 dark:text-orange-400 leading-none">
+                    {{ active_rma_count|default:"0" }} <span class="text-[10px] text-slate-400 uppercase">Pending RMA</span>
+                </p>
+            </div>
+            <div class="bg-orange-50 dark:bg-orange-900/30 p-2 rounded-full border border-orange-100 dark:border-orange-800/50">
+                <i data-lucide="package-open" class="w-4 h-4 text-orange-500"></i>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 shadow-sm hover:shadow-md rounded-sm flex items-center justify-between transition-colors">
+            <div>
+                <p class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Assembly WIP</p>
+                <p class="text-lg font-black text-purple-600 dark:text-purple-400 leading-none">
+                    {{ building_machines_count|default:"0" }} <span class="text-[10px] text-slate-400 uppercase">Building</span>
+                </p>
+            </div>
+            <div class="bg-purple-50 dark:bg-purple-900/30 p-2 rounded-full border border-purple-100 dark:border-purple-800/50">
+                <i data-lucide="settings" class="w-4 h-4 text-purple-500"></i>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 🚀 CHARTS (Warehouse & Flow) -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-5">
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-sm flex flex-col w-full transition-colors duration-300">
             <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-800/80 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50">
                 <h3 class="text-[10px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-widest flex items-center gap-2">
@@ -110,12 +167,10 @@
                 <canvas id="flowChart"></canvas>
             </div>
         </div>
-
     </div>
 
+    <!-- 🚀 CHARTS (Suppliers & Customers) -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-5">
-        
-        <!-- Supplier Chart Card -->
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-sm flex flex-col w-full transition-colors duration-300 hover:shadow-md">
             <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-800/80 flex justify-between items-center bg-violet-50/50 dark:bg-violet-900/10 transition-colors">
                 <h3 class="text-[10px] font-black text-violet-700 dark:text-violet-400 uppercase tracking-widest flex items-center gap-2">
@@ -130,7 +185,6 @@
             </div>
         </div>
 
-        <!-- Customer Chart Card -->
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-sm flex flex-col w-full transition-colors duration-300 hover:shadow-md">
             <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-800/80 flex justify-between items-center bg-yellow-50/50 dark:bg-yellow-900/10 transition-colors">
                 <h3 class="text-[10px] font-black text-yellow-700 dark:text-yellow-500 uppercase tracking-widest flex items-center gap-2">
@@ -144,10 +198,10 @@
                 <canvas id="custChart"></canvas>
             </div>
         </div>
-
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <!-- 🚀 THE 6 MINI PANELS (Health, Low Stock, QC, Fast, Slow, Expiring) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-5">
         
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-sm flex flex-col h-[350px]">
             <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-800/80 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50">
@@ -311,7 +365,7 @@
                             <div class="min-w-0">
                                 <p class="text-[10px] font-black text-slate-800 dark:text-slate-200 uppercase truncate flex items-center gap-2">
                                     {{ item.item_code }}
-                                    <span class="text-[8px] font-bold bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded-sm text-slate-600 dark:text-slate-300">
+                                    <span class="text-[8px] font-bold bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded-sm text-slate-500 dark:text-slate-300 border border-slate-200 dark:border-slate-600">
                                         Lot: {{ item.lot_no|default:"N/A" }}
                                     </span>
                                 </p>
@@ -323,7 +377,6 @@
                                             Exp: {{ item.expiration_date|date:"Y-m-d" }}
                                         {% endif %}
                                     </p>
-                                    <span class="text-[8px] text-slate-400 dark:text-slate-500">| TAG-{{ item.id|stringformat:"05d" }}</span>
                                 </div>
                             </div>
                         </div>
@@ -341,54 +394,59 @@
                 </ul>
             </div>
         </div>
+    </div>
 
-        <div class="lg:col-span-2 bg-gradient-to-br from-indigo-900 to-slate-900 dark:from-indigo-950 dark:to-slate-950 border border-indigo-700 dark:border-indigo-800 shadow-xl rounded-sm flex flex-col min-h-[350px] relative overflow-hidden group">
+    <!-- 🚀 SIDE-BY-SIDE: SMART PURCHASING & ACTIVITY FEED (Naka-md:grid-cols-12 para magtabi lagi) -->
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+        
+        <!-- SMART PURCHASING ADVISOR -->
+        <div class="md:col-span-7 bg-white dark:bg-gradient-to-br dark:from-indigo-950 dark:to-slate-950 border border-slate-200 dark:border-indigo-800 shadow-sm dark:shadow-xl rounded-sm flex flex-col min-h-[350px] relative overflow-hidden group transition-colors">
             
-            <!-- Background Glow Effect -->
-            <div class="absolute -top-12 -right-12 w-40 h-40 bg-indigo-500 rounded-full blur-[80px] opacity-20 pointer-events-none group-hover:opacity-40 transition-opacity duration-700"></div>
+            <!-- Dark Mode Background Glow Effect -->
+            <div class="hidden dark:block absolute -top-12 -right-12 w-40 h-40 bg-indigo-500 rounded-full blur-[80px] opacity-20 pointer-events-none group-hover:opacity-40 transition-opacity duration-700"></div>
 
-            <div class="px-4 py-3 border-b border-indigo-800/50 flex items-center justify-between bg-indigo-950/30 backdrop-blur-sm z-10">
-                <h3 class="text-[10px] font-black text-indigo-300 uppercase tracking-widest flex items-center gap-2">
-                    <i data-lucide="bot" class="w-4 h-4 text-sky-400"></i> Smart Purchasing Advisor
+            <div class="px-4 py-3 border-b border-slate-100 dark:border-indigo-800/50 flex items-center justify-between bg-indigo-50/50 dark:bg-indigo-950/30 backdrop-blur-sm z-10 transition-colors">
+                <h3 class="text-[10px] font-black text-indigo-700 dark:text-indigo-300 uppercase tracking-widest flex items-center gap-2">
+                    <i data-lucide="bot" class="w-4 h-4 text-sky-500 dark:text-sky-400"></i> Smart Purchasing Advisor
                 </h3>
-                <span class="bg-indigo-800 text-indigo-200 text-[8px] px-2 py-0.5 font-black rounded-sm border border-indigo-700 uppercase tracking-widest flex items-center gap-1 shadow-inner">
-                    <span class="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse"></span> AI Forecast
+                <span class="bg-indigo-100 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-200 text-[8px] px-2 py-0.5 font-black rounded-sm border border-indigo-200 dark:border-indigo-700 uppercase tracking-widest flex items-center gap-1 shadow-inner transition-colors">
+                    <span class="w-1.5 h-1.5 rounded-full bg-sky-500 dark:bg-sky-400 animate-pulse"></span> AI Forecast
                 </span>
             </div>
             
             <div class="overflow-y-auto dash-scroll flex-1 p-3 z-10">
                 <div class="mb-3 px-1">
-                    <p class="text-[9px] font-bold text-indigo-400 uppercase tracking-widest leading-relaxed">
-                        System predicts these items will run out soon based on their <span class="text-white">Average Daily Consumption (ADC)</span>.
+                    <p class="text-[9px] font-bold text-slate-500 dark:text-indigo-400 uppercase tracking-widest leading-relaxed">
+                        System predicts these items will run out soon based on their <span class="text-slate-800 dark:text-white">Average Daily Consumption (ADC)</span>.
                     </p>
                 </div>
 
                 <div class="grid grid-cols-1 gap-2">
                     {% for item in smart_reorder_list %}
-                    <div class="bg-slate-800/40 border border-indigo-800/30 hover:border-indigo-500/50 hover:bg-slate-800/80 p-3 rounded-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 transition-all">
+                    <div class="bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-indigo-800/30 hover:border-indigo-300 dark:hover:border-indigo-500/50 hover:bg-white dark:hover:bg-slate-800/80 p-3 rounded-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 transition-all">
                         
                         <div class="flex items-start gap-3 w-full sm:w-auto">
-                            <div class="bg-indigo-900/50 p-2 rounded flex-shrink-0 border border-indigo-700/50 text-indigo-300">
+                            <div class="bg-indigo-100 dark:bg-indigo-900/50 p-2 rounded flex-shrink-0 border border-indigo-200 dark:border-indigo-700/50 text-indigo-600 dark:text-indigo-300 transition-colors">
                                 <i data-lucide="trending-down" class="w-5 h-5"></i>
                             </div>
                             <div>
-                                <h4 class="text-[11px] font-black text-white uppercase tracking-tight">{{ item.item_code }}</h4>
-                                <p class="text-[9px] text-indigo-300 truncate max-w-[150px] sm:max-w-[200px]">{{ item.description }}</p>
-                                <p class="text-[8px] font-bold text-sky-400 uppercase tracking-widest mt-1">Runs out in: {{ item.dos }} Days <span class="text-slate-500 mx-1">|</span> Date: {{ item.run_out_date|date:"M d, Y" }}</p>
+                                <h4 class="text-[11px] font-black text-slate-800 dark:text-white uppercase tracking-tight transition-colors">{{ item.item_code }}</h4>
+                                <p class="text-[9px] text-slate-600 dark:text-indigo-300 truncate max-w-[150px] sm:max-w-[200px] transition-colors">{{ item.description }}</p>
+                                <p class="text-[8px] font-bold text-sky-600 dark:text-sky-400 uppercase tracking-widest mt-1 transition-colors">Runs out in: {{ item.dos }} Days <span class="text-slate-300 dark:text-slate-500 mx-1">|</span> Date: {{ item.run_out_date|date:"M d, Y" }}</p>
                             </div>
                         </div>
 
-                        <div class="flex gap-4 w-full sm:w-auto justify-between sm:justify-end items-center bg-slate-900/50 sm:bg-transparent p-2 sm:p-0 rounded border border-slate-700/50 sm:border-none">
+                        <div class="flex gap-4 w-full sm:w-auto justify-between sm:justify-end items-center bg-white dark:bg-slate-900/50 sm:bg-transparent p-2 sm:p-0 rounded border border-slate-200 dark:border-slate-700/50 sm:border-none transition-colors">
                             <div class="text-left sm:text-right">
-                                <p class="text-[8px] font-bold text-indigo-400 uppercase tracking-widest">Curr. Stock</p>
-                                <p class="text-xs font-black text-slate-300 tabular-nums">{{ item.current_stock }}</p>
+                                <p class="text-[8px] font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-widest transition-colors">Curr. Stock</p>
+                                <p class="text-xs font-black text-slate-700 dark:text-slate-300 tabular-nums transition-colors">{{ item.current_stock }}</p>
                             </div>
-                            <div class="w-px h-6 bg-indigo-800/50 hidden sm:block"></div>
+                            <div class="w-px h-6 bg-slate-200 dark:bg-indigo-800/50 hidden sm:block transition-colors"></div>
                             <div class="text-right">
-                                <p class="text-[8px] font-bold text-sky-400 uppercase tracking-widest">Suggested P.O.</p>
+                                <p class="text-[8px] font-bold text-sky-600 dark:text-sky-400 uppercase tracking-widest transition-colors">Suggested P.O.</p>
                                 <div class="flex items-center gap-1 justify-end">
-                                    <i data-lucide="shopping-cart" class="w-3 h-3 text-sky-500"></i>
-                                    <p class="text-sm font-black text-sky-400 tabular-nums">+{{ item.suggested_qty }}</p>
+                                    <i data-lucide="shopping-cart" class="w-3 h-3 text-sky-500 dark:text-sky-500"></i>
+                                    <p class="text-sm font-black text-sky-600 dark:text-sky-400 tabular-nums transition-colors">+{{ item.suggested_qty }}</p>
                                 </div>
                             </div>
                         </div>
@@ -396,30 +454,32 @@
                     </div>
                     {% empty %}
                     <div class="h-full py-10 flex flex-col items-center justify-center text-center opacity-70">
-                        <div class="bg-indigo-900/50 p-4 rounded-full mb-3 shadow-[0_0_15px_rgba(99,102,241,0.2)]">
-                            <i data-lucide="check-check" class="w-8 h-8 text-sky-400"></i>
+                        <div class="bg-indigo-100 dark:bg-indigo-900/50 p-4 rounded-full mb-3 shadow-[0_0_15px_rgba(99,102,241,0.2)]">
+                            <i data-lucide="check-check" class="w-8 h-8 text-sky-500 dark:text-sky-400"></i>
                         </div>
-                        <h4 class="text-xs font-black text-indigo-200 uppercase tracking-widest mb-1">Inventory Optimized</h4>
-                        <p class="text-[9px] text-indigo-400 uppercase tracking-widest">No urgent reorders forecasted.</p>
+                        <h4 class="text-xs font-black text-indigo-800 dark:text-indigo-200 uppercase tracking-widest mb-1 transition-colors">Inventory Optimized</h4>
+                        <p class="text-[9px] text-indigo-600 dark:text-indigo-400 uppercase tracking-widest transition-colors">No urgent reorders forecasted.</p>
                     </div>
                     {% endfor %}
                 </div>
             </div>
             
-            <div class="bg-indigo-950/50 p-2 border-t border-indigo-800/50 text-center z-10">
-                <a href="{% url 'make_po' %}" class="inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-sky-400 hover:text-white transition-colors">
+            <div class="bg-slate-50 dark:bg-indigo-950/50 p-2 border-t border-slate-200 dark:border-indigo-800/50 text-center z-10 transition-colors">
+                <a href="{% url 'make_po' %}" class="inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-indigo-600 dark:text-sky-400 hover:text-indigo-800 dark:hover:text-white transition-colors">
                     Draft Purchase Order Now <i data-lucide="arrow-up-right" class="w-3 h-3"></i>
                 </a>
             </div>
         </div>
 
-        <div class="lg:col-span-3 md:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-sm flex flex-col min-h-[300px] mt-2">
-            <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
-                <h3 class="text-[10px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-widest flex items-center gap-2">
-                    <i data-lucide="activity-square" class="w-4 h-4 text-emerald-500"></i> Live Activity Feed
+        <!-- LIVE ACTIVITY FEED -->
+        <div class="md:col-span-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-sm flex flex-col min-h-[350px] transition-colors">
+            <div class="px-4 py-3 border-b border-emerald-100 dark:border-slate-800/80 flex items-center justify-between bg-emerald-50/50 dark:bg-slate-900/50 transition-colors">
+                <h3 class="text-[10px] font-black text-emerald-800 dark:text-slate-200 uppercase tracking-widest flex items-center gap-2 transition-colors">
+                    <i data-lucide="activity-square" class="w-4 h-4 text-emerald-600 dark:text-emerald-500"></i> Live Activity Feed
                 </h3>
             </div>
             <div class="overflow-y-auto dash-scroll flex-1 p-4 pl-5 relative">
+                <!-- Vertical Line -->
                 <div class="absolute left-[26px] top-4 bottom-4 w-px bg-slate-200 dark:bg-slate-700"></div>
 
                 <ul class="space-y-4">
@@ -427,24 +487,24 @@
                     <li class="relative flex items-start gap-4 group">
                         <div class="w-6 h-6 mt-0.5 shrink-0 flex items-center justify-center rounded-full relative z-10 
                             {% if log.action_type == 'IN' or log.action_type == 'REG' %} bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 ring-4 ring-white dark:ring-slate-900
-                            {% else %} bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 ring-4 ring-white dark:ring-slate-900 {% endif %}">
+                            {% else %} bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 ring-4 ring-white dark:ring-slate-900 {% endif %} transition-colors">
                             <i data-lucide="{% if log.action_type == 'IN' or log.action_type == 'REG' %}arrow-down-left{% else %}arrow-up-right{% endif %}" class="w-3.5 h-3.5 stroke-[3px]"></i>
                         </div>
                         
-                        <div class="flex-1 min-w-0 bg-slate-50/50 dark:bg-slate-800/30 p-3 rounded-sm border border-slate-100 dark:border-slate-800 group-hover:border-slate-300 dark:group-hover:border-slate-600 transition-colors">
+                        <div class="flex-1 min-w-0 bg-slate-50/80 dark:bg-slate-800/30 p-3 rounded-sm border border-slate-100 dark:border-slate-800 group-hover:border-slate-300 dark:group-hover:border-slate-600 transition-colors">
                             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-1 gap-2">
-                                <p class="text-[11px] font-black text-slate-800 dark:text-slate-200 uppercase truncate flex items-center gap-2">
+                                <p class="text-[11px] font-black text-slate-800 dark:text-slate-200 uppercase truncate flex items-center gap-2 transition-colors">
                                     {{ log.material_tag.item_code }}
-                                    <span class="text-[9px] font-bold bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded-sm text-slate-600 dark:text-slate-400">{{ log.material_tag.lot_no }}</span>
+                                    <span class="text-[9px] font-bold bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded-sm text-slate-600 dark:text-slate-400 transition-colors">{{ log.material_tag.lot_no }}</span>
                                 </p>
-                                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest shrink-0"><i data-lucide="clock" class="w-3 h-3 inline mr-1 opacity-50"></i> {{ log.timestamp|timesince }} ago</p>
+                                <p class="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest shrink-0 transition-colors"><i data-lucide="clock" class="w-3 h-3 inline mr-1 opacity-50"></i> {{ log.timestamp|timesince }} ago</p>
                             </div>
                             <div class="flex justify-between items-end mt-2">
-                                <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 leading-snug">
-                                    User <span class="text-slate-700 dark:text-slate-300 font-black">@{{ log.user.username|default:"SYSTEM" }}</span> 
+                                <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 leading-snug transition-colors">
+                                    User <span class="text-slate-700 dark:text-slate-300 font-black transition-colors">@{{ log.user.username|default:"SYSTEM" }}</span> 
                                     {% if log.action_type == 'OUT' %}deducted stock for fulfillment/scrap.{% else %}received/adjusted stock.{% endif %} 
                                 </p>
-                                <span class="font-black text-sm {% if log.action_type == 'OUT' or log.change_qty < 0 %}text-amber-600 dark:text-amber-400{% else %}text-emerald-600 dark:text-emerald-400{% endif %}">
+                                <span class="font-black text-sm {% if log.action_type == 'OUT' or log.change_qty < 0 %}text-amber-600 dark:text-amber-400{% else %}text-emerald-600 dark:text-emerald-400{% endif %} transition-colors">
                                     {% if log.change_qty > 0 %}+{% endif %}{{ log.change_qty }} pcs
                                 </span>
                             </div>
@@ -452,8 +512,8 @@
                     </li>
                     {% empty %}
                     <li class="py-8 text-center relative z-10">
-                        <i data-lucide="sleep" class="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2 opacity-50"></i>
-                        <p class="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">No recent activities recorded.</p>
+                        <i data-lucide="sleep" class="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2 opacity-50 transition-colors"></i>
+                        <p class="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest transition-colors">No recent activities recorded.</p>
                     </li>
                     {% endfor %}
                 </ul>
@@ -467,15 +527,58 @@
     document.addEventListener("DOMContentLoaded", function() {
         if (typeof lucide !== 'undefined') { lucide.createIcons(); }
 
-        // DARK MODE DETECTOR FOR CHART JS
-        const isDark = document.documentElement.classList.contains('dark');
-        const gridColor = isDark ? '#334155' : '#f1f5f9';
-        const tooltipBg = isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)';
-        const tooltipText = isDark ? '#f8fafc' : '#0f172a';
-        const chartTextColor = isDark ? '#94a3b8' : '#64748b';
+        // 🚀 BULLETPROOF DARK MODE DETECTOR & OBSERVER FOR CHARTS
+        function checkIsDark() {
+            return document.documentElement.classList.contains('dark') || 
+                   document.body.classList.contains('dark') || 
+                   document.querySelector('.dark') !== null;
+        }
 
+        // Initialize variables that will update
+        let isDark = checkIsDark();
+        let gridColor, tooltipBg, tooltipText, chartTextColor;
+
+        function updateChartThemeVariables() {
+            isDark = checkIsDark();
+            gridColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)';
+            tooltipBg = isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)';
+            tooltipText = isDark ? '#f8fafc' : '#0f172a';
+            
+            // 🎨 DITO MO PAPALITAN ANG KULAY NG TEXT NG CHART
+            // isDark ? 'KULAY_PAG_DARK_MODE' : 'KULAY_PAG_LIGHT_MODE'
+            chartTextColor = isDark ? '#f8fafc' : '#475569'; 
+            
+            Chart.defaults.color = chartTextColor;
+        }
+
+        // Run once on load
         Chart.defaults.font.family = "'Inter', sans-serif";
-        Chart.defaults.color = chartTextColor; 
+        updateChartThemeVariables();
+
+        // 🚀 DITO YUNG MAGIC: I-uupdate niya lahat ng text colors pagka-click ng Dark Mode!
+        const observer = new MutationObserver(() => {
+            updateChartThemeVariables();
+            
+            for (let id in Chart.instances) {
+                let chart = Chart.instances[id];
+                
+                // I-update ang lines at text color ng bawat axis (x at y)
+                if (chart.options.scales) {
+                    for (let scale in chart.options.scales) {
+                        if (chart.options.scales[scale].grid) {
+                            chart.options.scales[scale].grid.color = gridColor;
+                        }
+                        if (chart.options.scales[scale].ticks) {
+                            chart.options.scales[scale].ticks.color = chartTextColor;
+                        }
+                    }
+                }
+                chart.update(); // I-refresh ang itsura ng chart
+            }
+        });
+        
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+        observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
 
         // DATA PARSING
         let healthData = [1, 0];
@@ -495,14 +598,12 @@
             console.error("Error parsing chart data:", e);
         }
 
-        // TOOLTIP DESIGN
         const customTooltip = {
-            backgroundColor: tooltipBg, titleColor: tooltipText, bodyColor: tooltipText,
-            borderColor: isDark ? '#475569' : '#e2e8f0', borderWidth: 1, padding: 12, cornerRadius: 6,
+            backgroundColor: () => tooltipBg, titleColor: () => tooltipText, bodyColor: () => tooltipText,
+            borderColor: () => isDark ? '#475569' : '#cbd5e1', borderWidth: 1, padding: 12, cornerRadius: 6,
             titleFont: { size: 11, weight: '900' }, bodyFont: { size: 12, weight: 'bold' }
         };
 
-        // Helper para sa Gradients
         function createGradient(ctx, color1, color2, isHorizontal = false) {
             const gradient = isHorizontal ? ctx.createLinearGradient(0, 0, 400, 0) : ctx.createLinearGradient(0, 0, 0, 300);
             gradient.addColorStop(0, color1);
@@ -510,16 +611,15 @@
             return gradient;
         }
 
-        // 1. WAREHOUSE CAPACITY CHART (Horizontal Gradient Bar)
+        // 1. WAREHOUSE CAPACITY CHART
         const canvasSpace = document.getElementById('spaceChart');
         if (canvasSpace && whLabels.length > 0) { 
             const ctxSpace = canvasSpace.getContext('2d');
             
-            // Map colors para sa bawat bar depende sa utilization %
             const bgColors = whUtil.map(val => {
-                if (val >= 95) return createGradient(ctxSpace, '#f43f5e', '#be123c', true); // Red
-                if (val >= 75) return createGradient(ctxSpace, '#f59e0b', '#d97706', true); // Amber
-                return createGradient(ctxSpace, '#3b82f6', '#1d4ed8', true); // Blue
+                if (val >= 95) return createGradient(ctxSpace, '#f43f5e', '#be123c', true); 
+                if (val >= 75) return createGradient(ctxSpace, '#f59e0b', '#d97706', true); 
+                return createGradient(ctxSpace, '#3b82f6', '#1d4ed8', true); 
             });
 
             new Chart(ctxSpace, {
@@ -534,12 +634,12 @@
                             borderRadius: 4,
                             barThickness: 24,
                             borderWidth: 1,
-                            borderColor: isDark ? '#0f172a' : '#ffffff'
+                            borderColor: () => isDark ? '#0f172a' : '#ffffff'
                         },
                         {
                             label: 'Available Space',
                             data: whFree, 
-                            backgroundColor: isDark ? '#1e293b' : '#e2e8f0', 
+                            backgroundColor: () => isDark ? '#1e293b' : '#f1f5f9', 
                             borderRadius: 4,
                             barThickness: 24
                         }
@@ -549,8 +649,8 @@
                     indexAxis: 'y', 
                     responsive: true, maintainAspectRatio: false,
                     scales: {
-                        x: { stacked: true, grid: { color: gridColor, drawBorder: false }, ticks: { font: { size: 10, weight: 'bold' } } },
-                        y: { stacked: true, grid: { display: false }, ticks: { font: { size: 11, weight: '900' }, color: isDark ? '#f8fafc' : '#0f172a' } }
+                        x: { stacked: true, grid: { color: () => gridColor, drawBorder: false }, ticks: { font: { size: 10, weight: 'bold' } } },
+                        y: { stacked: true, grid: { display: false }, ticks: { font: { size: 11, weight: '900' } } }
                     },
                     plugins: {
                         legend: { position: 'top', align: 'end', labels: { usePointStyle: true, boxWidth: 8, font: { size: 10, weight: 'bold' } } },
@@ -560,15 +660,14 @@
             });
         }
 
-        // 2. INVENTORY FLOW TREND (GLOWING AREA CHART + BARS)
+        // 2. INVENTORY FLOW TREND
         const canvasFlow = document.getElementById('flowChart');
         if (canvasFlow) { 
             const ctxFlow = canvasFlow.getContext('2d');
             
-            // Gradients para sa Flow Chart
-            const fillGradient = createGradient(ctxFlow, 'rgba(14, 165, 233, 0.3)', 'rgba(14, 165, 233, 0.0)');
-            const inGradient = createGradient(ctxFlow, '#34d399', '#059669'); // Light to Dark Emerald
-            const outGradient = createGradient(ctxFlow, '#fb7185', '#e11d48'); // Light to Dark Rose
+            const fillGradient = createGradient(ctxFlow, 'rgba(14, 165, 233, 0.2)', 'rgba(14, 165, 233, 0.0)');
+            const inGradient = createGradient(ctxFlow, '#34d399', '#059669'); 
+            const outGradient = createGradient(ctxFlow, '#fb7185', '#e11d48'); 
 
             new Chart(ctxFlow, {
                 data: {
@@ -579,16 +678,16 @@
                             label: 'Net Trend',
                             data: flowNet, 
                             borderColor: '#0ea5e9', 
-                            backgroundColor: fillGradient, // Ito ang gagawa ng Area Chart (Glow effect sa ilalim)
+                            backgroundColor: fillGradient, 
                             fill: true,
                             borderWidth: 3,
-                            tension: 0.4, // Smooth curved line
-                            pointBackgroundColor: isDark ? '#0f172a' : '#ffffff',
+                            tension: 0.4, 
+                            pointBackgroundColor: () => isDark ? '#0f172a' : '#ffffff',
                             pointBorderColor: '#0ea5e9',
                             pointBorderWidth: 2,
                             pointRadius: 4,
                             pointHoverRadius: 6,
-                            order: 1 // Para laging nasa ibabaw ang line
+                            order: 1 
                         },
                         {
                             type: 'bar', 
@@ -613,8 +712,8 @@
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     scales: {
-                        y: { beginAtZero: true, grid: { color: gridColor, drawBorder: false }, border: { dash: [4, 4] }, ticks: { font: { size: 10, weight: 'bold' } } },
-                        x: { grid: { display: false }, ticks: { font: { size: 10, weight: 'bold' }, color: isDark ? '#cbd5e1' : '#475569' } }
+                        y: { beginAtZero: true, grid: { color: () => gridColor, drawBorder: false }, border: { dash: [4, 4] }, ticks: { font: { size: 10, weight: 'bold' } } },
+                        x: { grid: { display: false }, ticks: { font: { size: 10, weight: 'bold' } } }
                     },
                     plugins: {
                         legend: { position: 'top', align: 'end', labels: { usePointStyle: true, boxWidth: 8, font: { size: 10, weight: 'bold' } } },
@@ -625,13 +724,12 @@
             });
         }
 
-        // 3. STOCK HEALTH (3D-like Doughnut Chart)
+        // 3. STOCK HEALTH
         const canvasHealth = document.getElementById('healthChart');
         if (canvasHealth) { 
             const ctxHealth = canvasHealth.getContext('2d');
-            
-            const healthyGrad = createGradient(ctxHealth, '#34d399', '#059669'); // Vibrant Emerald
-            const criticalGrad = createGradient(ctxHealth, '#fb7185', '#e11d48'); // Vibrant Rose
+            const healthyGrad = createGradient(ctxHealth, '#34d399', '#059669'); 
+            const criticalGrad = createGradient(ctxHealth, '#fb7185', '#e11d48'); 
 
             new Chart(ctxHealth, {
                 type: 'doughnut',
@@ -640,13 +738,13 @@
                     datasets: [{
                         data: healthData, 
                         backgroundColor: [healthyGrad, criticalGrad],
-                        borderColor: isDark ? '#0f172a' : '#ffffff',
+                        borderColor: () => isDark ? '#0f172a' : '#ffffff',
                         borderWidth: 3, 
-                        hoverOffset: 8 // Luma-laki pag tinutok
+                        hoverOffset: 8 
                     }]
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: false, cutout: '80%', // Mas manipis na ring
+                    responsive: true, maintainAspectRatio: false, cutout: '80%',
                     plugins: {
                         legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20, font: { size: 10, weight: 'bold' } } },
                         tooltip: { ...customTooltip }
@@ -663,11 +761,11 @@
             suppData = JSON.parse('{{ supp_order_data|safe|default:"[]" }}');
         } catch (e) { console.error("Error parsing CRM/SRM chart data:", e); }
 
-        // 4. TOP SUPPLIERS CHART (Horizontal Bar)
+        // 4. TOP SUPPLIERS CHART
         const canvasSupp = document.getElementById('suppChart');
         if (canvasSupp && suppLabels.length > 0) {
             const ctxSupp = canvasSupp.getContext('2d');
-            const suppGradient = createGradient(ctxSupp, '#a855f7', '#7c3aed', true); // Violet Gradient
+            const suppGradient = createGradient(ctxSupp, '#a855f7', '#7c3aed', true); 
             
             new Chart(ctxSupp, {
                 type: 'bar',
@@ -682,11 +780,11 @@
                     }]
                 },
                 options: {
-                    indexAxis: 'y', // Makes it a horizontal bar chart
+                    indexAxis: 'y', 
                     responsive: true, maintainAspectRatio: false,
                     scales: {
-                        x: { grid: { color: gridColor, drawBorder: false }, ticks: { font: { size: 10, weight: 'bold' } } },
-                        y: { grid: { display: false }, ticks: { font: { size: 10, weight: '900' }, color: isDark ? '#f8fafc' : '#0f172a' } }
+                        x: { grid: { color: () => gridColor, drawBorder: false }, ticks: { font: { size: 10, weight: 'bold' } } },
+                        y: { grid: { display: false }, ticks: { font: { size: 10, weight: '900' } } }
                     },
                     plugins: {
                         legend: { display: false },
@@ -696,11 +794,11 @@
             });
         }
 
-        // 5. TOP VIP CUSTOMERS CHART (Bar)
+        // 5. TOP VIP CUSTOMERS CHART
         const canvasCust = document.getElementById('custChart');
         if (canvasCust && custLabels.length > 0) {
             const ctxCust = canvasCust.getContext('2d');
-            const custGradient = createGradient(ctxCust, '#facc15', '#ca8a04'); // Yellow/Gold Gradient
+            const custGradient = createGradient(ctxCust, '#facc15', '#ca8a04'); 
             
             new Chart(ctxCust, {
                 type: 'bar',
@@ -717,8 +815,8 @@
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     scales: {
-                        y: { beginAtZero: true, grid: { color: gridColor, drawBorder: false }, ticks: { font: { size: 10, weight: 'bold' }, callback: function(value) { return '₱' + value; } } },
-                        x: { grid: { display: false }, ticks: { font: { size: 10, weight: '900' }, color: isDark ? '#f8fafc' : '#0f172a' } }
+                        y: { beginAtZero: true, grid: { color: () => gridColor, drawBorder: false }, ticks: { font: { size: 10, weight: 'bold' }, callback: function(value) { return '₱' + value; } } },
+                        x: { grid: { display: false }, ticks: { font: { size: 10, weight: '900' } } }
                     },
                     plugins: {
                         legend: { display: false },

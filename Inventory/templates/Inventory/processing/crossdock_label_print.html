@@ -1,0 +1,64 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CrossDock_Label_{{ alloc.id }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.5/JsBarcode.all.min.js"></script>
+    <style>
+        @page { size: 4in 6in; margin: 0; }
+        body { width: 4in; height: 6in; font-family: 'Arial Black', sans-serif; padding: 10px; }
+        .border-heavy { border: 4px solid black; }
+    </style>
+</head>
+<body class="flex flex-col border-heavy">
+    <div class="bg-black text-white text-center py-2">
+        <h1 class="text-3xl font-black">CROSS-DOCK</h1>
+    </div>
+
+    <div class="flex-1 flex flex-col justify-center items-center border-b-2 border-black py-4">
+        <p class="text-[10px] uppercase font-bold">Target Customer / Order</p>
+        <h2 class="text-2xl font-black text-center uppercase leading-tight">
+            {% if alloc.so_item %}{{ alloc.so_item.customer.name }}{% else %}{{ alloc.rma_source.rma_request.customer.name }}{% endif %}
+        </h2>
+        <h3 class="text-4xl font-black mt-2">
+            {% if alloc.so_item %}{{ alloc.so_item.order_no }}{% else %}{{ alloc.rma_source.rma_request.rma_no }}{% endif %}
+        </h3>
+    </div>
+
+    <div class="p-2 border-b-2 border-black flex justify-between">
+        <div class="w-2/3">
+            <p class="text-[10px] font-bold uppercase">Item SKU:</p>
+            <p class="text-xl font-black">{{ alloc.po_item.item_code }}</p>
+        </div>
+        <div class="w-1/3 text-right">
+            <p class="text-[10px] font-bold uppercase">Qty:</p>
+            <p class="text-4xl font-black">{{ alloc.allocated_qty }}</p>
+        </div>
+    </div>
+
+    <div class="flex-1 p-2 bg-slate-100 flex flex-col justify-center">
+        <div class="flex justify-between items-center">
+            <div>
+                <p class="text-[10px] font-bold uppercase">Staging Area:</p>
+                <p class="text-2xl font-black">DOCK-OUT-A</p>
+            </div>
+            <div class="text-right">
+                <p class="text-[10px] font-bold uppercase">Route:</p>
+                <p class="text-xl font-black">{% if alloc.so_item %}{{ alloc.so_item.customer.route_code|default:"METRO" }}{% else %}RMA-REP{% endif %}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="py-2 flex justify-center bg-white">
+        <svg id="label-barcode"></svg>
+    </div>
+
+    <script>
+        JsBarcode("#label-barcode", "{% if alloc.so_item %}{{ alloc.so_item.order_no }}{% else %}{{ alloc.rma_source.rma_request.rma_no }}{% endif %}", {
+            format: "CODE128", width: 2, height: 40, displayValue: false
+        });
+        window.onload = function() { window.print(); }
+    </script>
+</body>
+</html>

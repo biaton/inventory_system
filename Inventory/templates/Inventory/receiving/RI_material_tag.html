@@ -154,7 +154,6 @@
     document.addEventListener("DOMContentLoaded", function () {
         lucide.createIcons();
         
-        // 🚀 BAGO: Automatic Load kapag nanggaling sa Receiving Page
         const urlParams = new URLSearchParams(window.location.search);
         const poNoFromUrl = urlParams.get('po_no');
         
@@ -162,7 +161,6 @@
             const poInput = document.getElementById('po_no_input');
             if (poInput) {
                 poInput.value = poNoFromUrl;
-                // Lagyan ng konting delay para mag-render muna yung page bago mag-fetch ng data
                 setTimeout(() => {
                     loadPoData();
                 }, 300);
@@ -191,7 +189,7 @@
         }
     }
 
-    // 🚀 ITO YUNG NAGCO-COMPUTE NG TOTAL
+    // ORIGINAL CALCULATOR NA IBINALIK
     function calcTotal(inputElement) {
         const row = inputElement.closest('.item-row');
         const container = parseFloat(row.querySelector('.calc-container').value) || 0;
@@ -207,7 +205,6 @@
         const row = btnElement.closest('.item-row');
         const inputField = row.querySelector('.lot-input');
         
-        // 🚀 FIX: Gamitin ang Local Time ng computer para iwas timezone error
         const today = new Date();
         const yy = String(today.getFullYear()).slice(-2);
         const mm = String(today.getMonth() + 1).padStart(2, '0');
@@ -263,15 +260,20 @@
         }
     }
 
-    // 🚀 DITO YUNG HTML NA DINADAGDAG SA TABLE
     function appendNewRow(item) {
         const tbody = document.getElementById('table_body');
         const emptyState = document.getElementById('empty_state');
         if (emptyState) emptyState.remove();
 
-        // Siguraduhing may default value ang qty para hindi maging "undefined" sa input box
         const safeQty = item.qty || 1;
         const inspStatus = item.inspection_status || 'Pending';
+
+        // 🚀 BAGO: CROSS-DOCK BADGE (Isisingit sa tabi ng Item Code)
+        const crossDockBadge = item.is_crossdock 
+            ? `<div class="mt-1 bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-400 px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest flex items-center gap-1 border border-rose-300 dark:border-rose-700 w-fit animate-pulse">
+                <i data-lucide="alert-triangle" class="w-3 h-3"></i> Cross-Dock: ${item.crossdock_qty} pcs
+               </div>` 
+            : '';
 
         const rowHtml = `
             <tr class="item-row hover:bg-teal-50/40 transition-colors group border-b-4 border-slate-200">
@@ -281,6 +283,7 @@
                         <div>
                             <label class="text-[8px] font-black text-slate-400 uppercase tracking-widest">Item Code</label>
                             <input type="text" name="item_code[]" value="${item.item_code}" class="w-full p-1 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-xs font-black uppercase text-teal-900 dark:text-teal-400 focus:bg-emerald-50 dark:focus:bg-emerald-900/20 outline-none transition-colors">
+                            ${crossDockBadge}
                         </div>
                         <div>
                             <label class="text-[8px] font-black text-slate-400 uppercase tracking-widest">Description</label>
@@ -404,7 +407,6 @@
             const data = await response.json();
 
             if (data.success) {
-                // 🚀 FIX: Linisin muna natin ang table bago mag-load para walang ma-doble!
                 const tbody = document.getElementById('table_body');
                 if (tbody) tbody.innerHTML = ''; 
 
@@ -417,7 +419,9 @@
                         qty: item.qty,
                         arrival_date: item.arrival_date,
                         revision: "-",  
-                        inspection_status: item.inspection_status 
+                        inspection_status: item.inspection_status,
+                        is_crossdock: item.is_crossdock,   // 🚀 BAGO: Pass to HTML
+                        crossdock_qty: item.crossdock_qty  // 🚀 BAGO: Pass to HTML
                     });
                 });
                 document.getElementById('po_no_input').value = '';
@@ -430,6 +434,7 @@
         }
     }
 
+    // ... (The rest is your original import and print tags logic) ...
     function processImport() {
         const fileInput = document.getElementById('file_import');
         if (fileInput.files.length === 0) return alert("Select a file first.");
@@ -473,12 +478,8 @@
         }
 
         if (confirm(`Save and process ${count} material tags?`)) {
-            // 1. I-submit ang form (pupunta ito sa bagong tab dahil sa target="_blank")
             document.getElementById('material_tag_form').submit();
-            
-            // 🚀 BAGO: 2. Linisin ang kasalukuyang screen pagkalipas ng 1 second
             setTimeout(() => {
-                // Ire-reload ang page nang walang laman para pwede ka na ulit mag-scan ng bago
                 window.location.href = window.location.pathname; 
             }, 1000);
         }

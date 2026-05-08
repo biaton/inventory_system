@@ -1,0 +1,103 @@
+{% extends 'Inventory/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="p-4 max-w-full mx-auto">
+    <div class="mb-4 flex justify-between items-end border-b-2 border-indigo-600 dark:border-indigo-500 pb-2">
+        <h1 class="text-xl font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight flex items-center gap-2"><i data-lucide="microscope" class="w-5 h-5 text-indigo-600 dark:text-indigo-500"></i> QC Disposition: {{ rma.rma_no }}</h1>
+        <a href="{% url 'rma_dashboard' %}" class="text-[10px] font-bold text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 uppercase tracking-widest"><i data-lucide="arrow-left" class="w-3 h-3 inline"></i> Back</a>
+    </div>
+
+    <form method="POST" class="bg-white dark:bg-slate-900 rounded-sm shadow-sm border border-slate-300 dark:border-slate-700">
+        {% csrf_token %}
+        <div class="p-0 overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-800 dark:bg-slate-950 text-white text-[9px] uppercase tracking-widest">
+                        <th class="p-2 border-r border-slate-700 dark:border-slate-800 w-48">Material Info</th>
+                        <th class="p-2 border-r border-slate-700 dark:border-slate-800 w-16 text-center">Qty</th>
+                        <th class="p-2 border-r border-slate-700 dark:border-slate-800 w-40">Physical Action</th>
+                        <th class="p-2 border-r border-slate-700 dark:border-slate-800 w-40">Financial Action</th>
+                        <th class="p-2 border-r border-slate-700 dark:border-slate-800 w-40">Restock Bin</th>
+                        <th class="p-2">QC Remarks</th>
+                    </tr>
+                </thead>
+                <tbody class="text-[11px]">
+                    {% for item in rma.rma_items.all %}
+                    <tr class="border-b border-slate-200 dark:border-slate-700 {% if item.disposition != 'Pending' %}bg-slate-50 dark:bg-slate-800 opacity-70{% endif %}">
+                        <td class="p-2 border-r border-slate-200 dark:border-slate-700">
+                            <p class="font-black text-slate-800 dark:text-slate-100">{{ item.item_code }}</p>
+                            <span class="text-[9px] text-slate-500 dark:text-slate-400 uppercase bg-slate-200 dark:bg-slate-700 px-1 rounded-sm">Lot: {{ item.material_tag.lot_no|default:"N/A" }}</span>
+                        </td>
+                        <td class="p-2 border-r border-slate-200 dark:border-slate-700 text-center font-black text-slate-800 dark:text-slate-100">{{ item.qty_returned }}</td>
+                        
+                        <!-- PHYSICAL DISPOSITION -->
+                        <td class="p-2 border-r border-slate-200 dark:border-slate-700">
+                            {% if item.disposition == 'Pending' %}
+                                <select name="disposition_{{ item.id }}" id="disp_{{ item.id }}" onchange="toggleLocation(this, 'loc_{{ item.id }}')" class="w-full border border-slate-300 dark:border-slate-700 rounded-sm px-1 py-1 text-[10px] bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-bold focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-400">
+                                    <option value="Pending">-- SELECT --</option>
+                                    <option value="Restock">RESTOCK (Good)</option>
+                                    <option value="Scrap">SCRAP (Dispose)</option>
+                                    <option value="RTV">RTV (Supplier)</option>
+                                </select>
+                            {% else %}
+                                <span class="font-black uppercase tracking-widest text-[9px]">{{ item.disposition }}</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- 🚀 BAGO: FINANCIAL DISPOSITION -->
+                        <td class="p-2 border-r border-slate-200 dark:border-slate-700">
+                            {% if item.disposition == 'Pending' %}
+                                <select name="financial_resolution_{{ item.id }}" class="w-full border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-sm px-1 py-1 text-[10px] font-bold focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-400">
+                                    <option value="Pending">-- SELECT --</option>
+                                    <option value="Refund">Refund Customer</option>
+                                    <option value="Replace">Replace Item</option>
+                                    <option value="Credit Memo">Credit Memo (Supp)</option>
+                                    <option value="Write-Off">Write-Off (Loss)</option>
+                                </select>
+                            {% else %}
+                                <span class="font-black uppercase tracking-widest text-[9px] text-slate-500 dark:text-slate-400">{{ item.financial_resolution }}</span>
+                            {% endif %}
+                        </td>
+
+                        <td class="p-2 border-r border-slate-200 dark:border-slate-700">
+                            {% if item.disposition == 'Pending' %}
+                                <select name="restock_loc_{{ item.id }}" id="loc_{{ item.id }}" class="w-full border border-slate-300 dark:border-slate-700 rounded-sm px-1 py-1 text-[10px] hidden focus:outline-none">
+                                    <option value="">Select Bin...</option>
+                                    {% for loc in locations %}
+                                        <option value="{{ loc.location_code }}">{{ loc.location_code }}</option>
+                                    {% endfor %}
+                                </select>
+                            {% endif %}
+                        </td>
+                        <td class="p-2">
+                            {% if item.disposition == 'Pending' %}
+                                <input type="text" name="remarks_{{ item.id }}" placeholder="Notes..." class="w-full border border-slate-300 dark:border-slate-700 rounded-sm px-2 py-1 text-[10px] focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-400 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100">
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="p-2 bg-slate-100 dark:bg-slate-900 border-t border-slate-300 dark:border-slate-700 flex justify-end">
+            <button type="submit" class="bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white px-6 py-1.5 rounded-sm text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
+                <i data-lucide="check" class="w-3 h-3"></i> Apply Decisions
+            </button>
+        </div>
+    </form>
+</div>
+<script>
+    lucide.createIcons();
+    function toggleLocation(sel, locId) {
+        let locDrop = document.getElementById(locId);
+        if (sel.value === 'Restock') {
+            locDrop.classList.remove('hidden');
+            locDrop.setAttribute('required', 'true');
+        } else {
+            locDrop.classList.add('hidden');
+            locDrop.removeAttribute('required');
+        }
+    }
+</script>
+{% endblock %}

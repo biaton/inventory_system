@@ -105,6 +105,7 @@ class CustomerOrder(models.Model):
     item_code = models.CharField(max_length=100)
     cust_item_code = models.CharField(max_length=100, blank=True, null=True)
     quantity = models.IntegerField(default=0)
+    picked_qty = models.IntegerField(default=0)
     unit_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     amount = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     transport = models.CharField(max_length=50, choices=TRANSPORT_MODES, default='Motorcycle')
@@ -683,3 +684,101 @@ class TripExpense(models.Model):
 
     def __str__(self):
         return f"Expense for {self.order_batch_no} - {self.vehicle}"
+
+class RMARequest(models.Model):
+    RMA_TYPE_CHOICES = [
+        ('CUSTOMER_RETURN', 'Customer Return (Inbound)'),
+        ('SUPPLIER_RETURN', 'Return to Vendor (Outbound)'),
+    ]
+    STATUS_CHOICES = [
+        ('Pending', 'Pending Authorization'),
+        ('Received', 'Received in Quarantine'), # Pag dumating na sa warehouse
+        ('Inspected', 'Inspected (QC Done)'),
+        ('Resolved', 'Resolved (Closed)'),
+        ('Cancelled', 'Cancelled'),
+    ]
+
+    rma_no = models.CharField(max_length=50, unique=True)
+    rma_type = models.CharField(max_length=20, choices=RMA_TYPE_CHOICES)
+    
+    # Reference para alam natin kung saang P.O. o Sales Order ito galing
+    reference_no = models.CharField(max_length=100, blank=True, null=True) 
+    
+    # Naka-link either sa Customer o Supplier
+    customer = models.ForeignKey('Contact', on_delete=models.SET_NULL, null=True, blank=True, related_name='rma_returns')
+    supplier = models.ForeignKey('Supplier', on_delete=models.SET_NULL, null=True, blank=True, related_name='rtv_returns')
+    
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
+    remarks = models.TextField(blank=True, null=True)
+    
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.rma_no} ({self.get_status_display()})"
+
+class RMAItem(models.Model):
+    CONDITION_CHOICES = [
+        ('Good', 'Good Condition (Wrong Delivery)'),
+        ('Defective', 'Defective / Damaged'),
+        ('Expired', 'Expired / Near Expiry'),
+    ]
+    DISPOSITION_CHOICES = [
+        ('Pending', 'Pending QC Decision'),
+        ('Restock', 'Restock to Main Warehouse'),
+        ('Scrap', 'Scrap / Dispose'),
+        ('RTV', 'Return to Vendor / Supplier'),
+    ]
+    FINANCE_CHOICES = [
+        ('Pending', 'Pending Resolution'),
+        ('Refund', 'Refund to Customer'),
+        ('Replace', 'Replace Item (Zero Cost)'),
+        ('Credit Memo', 'Credit Memo (For Supplier)'),
+        ('Write-Off', 'Write-Off (Company Loss)'),
+    ]
+
+    rma_request = models.ForeignKey(RMARequest, on_delete=models.CASCADE, related_name='rma_items')
+    item_code = models.CharField(max_length=50)
+    description = models.CharField(max_length=255, blank=True, null=True)
+    
+    qty_returned = models.IntegerField(default=0)
+    
+    unit_price = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    refund_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0.00) # <--- ITO ANG KULANG KAYA NAG-ERROR!
+    
+    reason = models.CharField(max_length=255) 
+    condition = models.CharField(max_length=20, choices=CONDITION_CHOICES, default='Defective')
+    disposition = models.CharField(max_length=20, choices=DISPOSITION_CHOICES, default='Pending') 
+    financial_resolution = models.CharField(max_length=30, choices=FINANCE_CHOICES, default='Pending')
+    
+    material_tag = models.ForeignKey('MaterialTag', on_delete=models.SET_NULL, null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.item_code} - {self.qty_returned} pcs"
+
+class CrossDockAllocation(models.Model):
+    STATUS_CHOICES = [
+        ('Pending', 'Pending Arrival (On the way)'),
+        ('Arrived', 'Arrived at Dock (Ready for Dispatch)'),
+        ('Dispatched', 'Dispatched to Customer'),
+        ('Cancelled', 'Cancelled'),
+    ]
+    
+    # Ang item na paparating galing sa Supplier
+    po_item = models.ForeignKey('PurchaseOrderItem', on_delete=models.CASCADE, related_name='crossdock_allocations')
+    
+    # Ang order ng Customer na naghihintay ng stock
+    so_item = models.ForeignKey('CustomerOrder', on_delete=models.CASCADE, related_name='crossdock_sources')
+    rma_source = models.ForeignKey('RMAItem', on_delete=models.SET_NULL, null=True, blank=True, related_name='replacement_allocs')
+    allocated_qty = models.IntegerField(default=0)
+    
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
+    remarks = models.CharField(max_length=255, blank=True, null=True)
+    
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"CROSS-DOCK: {self.allocated_qty}pcs of {self.po_item.item_code} -> {self.so_item.order_no}"

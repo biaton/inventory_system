@@ -1,0 +1,223 @@
+{% extends "Inventory/processing/processing_base.html" %}
+{% load static %}
+{% block processing_content %}
+<div class="max-w-[100%] mx-auto pb-5 mt-2 text-slate-800 dark:text-slate-200 transition-colors duration-300">
+    
+    <!-- HEADER -->
+    <div class="mb-4 flex flex-col md:flex-row justify-between items-start md:items-end border-b-2 border-indigo-600 pb-2">
+        <div>
+            <h1 class="text-xl font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight flex items-center gap-2">
+                <i data-lucide="arrow-right-left" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i> Cross-Docking Planner
+            </h1>
+            <p class="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest mt-0.5">Match Inbound POs directly to Outbound SOs</p>
+        </div>
+    </div>
+
+    <!-- 🚀 THE MATCHING CONSOLE (Form) -->
+    <form method="POST" class="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-sm shadow-sm p-4 mb-6 transition-colors">
+        {% csrf_token %}
+        <div class="grid grid-cols-1 md:grid-cols-7 gap-4 items-center">
+            
+            <!-- Inbound Selection -->
+            <div class="md:col-span-3">
+                <label class="text-[9px] font-black text-indigo-800 dark:text-indigo-300 uppercase tracking-widest mb-1.5 block">1. Selected Inbound (PO Item)</label>
+                <div class="bg-white dark:bg-slate-900 border border-indigo-300 dark:border-indigo-700 p-2 rounded-sm flex items-center justify-between">
+                    <div>
+                        <input type="hidden" name="po_item_id" id="po_item_id" required>
+                        <p id="po_display_code" class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase">-- SELECT FROM TABLE --</p>
+                        <p id="po_display_ref" class="text-[9px] text-slate-500 font-bold uppercase">No PO Selected</p>
+                    </div>
+                    <span id="po_display_qty" class="text-lg font-black text-indigo-600 dark:text-indigo-400">0</span>
+                </div>
+            </div>
+
+            <!-- Direction Icon -->
+            <div class="md:col-span-1 flex justify-center text-indigo-400 dark:text-indigo-600">
+                <i data-lucide="arrow-right" class="w-6 h-6 animate-pulse hidden md:block"></i>
+                <i data-lucide="arrow-down" class="w-6 h-6 animate-pulse md:hidden"></i>
+            </div>
+
+            <!-- Outbound Selection -->
+            <div class="md:col-span-3">
+                <label class="text-[9px] font-black text-indigo-800 dark:text-indigo-300 uppercase tracking-widest mb-1.5 block">2. Target Outbound (SO Item)</label>
+                <div class="bg-white dark:bg-slate-900 border border-indigo-300 dark:border-indigo-700 p-2 rounded-sm flex items-center justify-between">
+                    <div>
+                        <input type="hidden" name="so_item_id" id="so_item_id" required>
+                        <p id="so_display_code" class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase">-- SELECT FROM TABLE --</p>
+                        <p id="so_display_ref" class="text-[9px] text-slate-500 font-bold uppercase">No Order Selected</p>
+                    </div>
+                    <span id="so_display_qty" class="text-lg font-black text-indigo-600 dark:text-indigo-400">0</span>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="mt-4 flex justify-between items-end border-t border-indigo-200 dark:border-indigo-800/50 pt-4">
+            <div>
+                <label class="text-[9px] font-black text-indigo-800 dark:text-indigo-300 uppercase tracking-widest mb-1.5 block">3. Cross-Dock Quantity</label>
+                <input type="number" name="allocated_qty" id="allocated_qty" required min="1" placeholder="Enter Qty..." class="w-48 border border-indigo-300 dark:border-indigo-600 bg-white dark:bg-slate-950 rounded-sm px-3 py-1.5 text-sm font-black text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors">
+            </div>
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white px-8 py-2.5 rounded-sm text-[10px] font-black uppercase tracking-widest shadow-sm flex items-center gap-2 transition-colors">
+                <i data-lucide="link" class="w-3.5 h-3.5"></i> Create Link
+            </button>
+        </div>
+    </form>
+
+    <!-- 🚀 THE SPLIT DATA TABLES -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        
+        <!-- LEFT: INCOMING POs -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-sm shadow-sm overflow-hidden flex flex-col h-[400px]">
+            <div class="bg-slate-800 dark:bg-slate-950 p-2 flex justify-between items-center border-b border-slate-700">
+                <h3 class="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-1.5"><i data-lucide="truck" class="w-3.5 h-3.5 text-teal-400"></i> Incoming Stock (POs)</h3>
+            </div>
+            <div class="overflow-y-auto flex-1 custom-scrollbar">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-100 dark:bg-slate-800/50 text-[9px] uppercase tracking-widest text-slate-500 dark:text-slate-400 sticky top-0">
+                        <tr>
+                            <th class="p-2 border-b border-slate-300 dark:border-slate-700">PO Ref & Supplier</th>
+                            <th class="p-2 border-b border-slate-300 dark:border-slate-700">Item Code</th>
+                            <th class="p-2 border-b border-slate-300 dark:border-slate-700 text-center">Incoming</th>
+                            <th class="p-2 border-b border-slate-300 dark:border-slate-700 text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-[10px]">
+                        {% for po in incoming_pos %}
+                        <tr class="border-b border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                            <td class="p-2">
+                                <span class="font-black text-slate-800 dark:text-slate-200 block">{{ po.purchase_order.po_no }}</span>
+                                <span class="text-[8px] font-bold text-slate-500 uppercase">{{ po.purchase_order.supplier.name|truncatechars:20 }}</span>
+                            </td>
+                            <td class="p-2 font-black text-indigo-600 dark:text-indigo-400">{{ po.item_code }}</td>
+                            <td class="p-2 text-center font-black text-sm">{{ po.qty }}</td>
+                            <td class="p-2 text-center">
+                                <button type="button" onclick="selectPO('{{ po.id }}', '{{ po.item_code }}', '{{ po.purchase_order.po_no }}', {{ po.qty }})" class="bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 px-3 py-1 rounded-sm font-black uppercase tracking-widest transition-colors">Select</button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="p-4 text-center font-bold text-slate-400 uppercase italic">No incoming shipments available.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- RIGHT: PENDING SOs -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-sm shadow-sm overflow-hidden flex flex-col h-[400px]">
+            <div class="bg-slate-800 dark:bg-slate-950 p-2 flex justify-between items-center border-b border-slate-700">
+                <h3 class="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-1.5"><i data-lucide="shopping-cart" class="w-3.5 h-3.5 text-rose-400"></i> Waiting Orders (SOs)</h3>
+            </div>
+            <div class="overflow-y-auto flex-1 custom-scrollbar">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-100 dark:bg-slate-800/50 text-[9px] uppercase tracking-widest text-slate-500 dark:text-slate-400 sticky top-0">
+                        <tr>
+                            <th class="p-2 border-b border-slate-300 dark:border-slate-700">SO Ref & Customer</th>
+                            <th class="p-2 border-b border-slate-300 dark:border-slate-700">Item Code</th>
+                            <th class="p-2 border-b border-slate-300 dark:border-slate-700 text-center">Needed</th>
+                            <th class="p-2 border-b border-slate-300 dark:border-slate-700 text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-[10px]">
+                        {% for so in pending_sos %}
+                        <tr class="border-b border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                            <td class="p-2">
+                                <span class="font-black text-slate-800 dark:text-slate-200 block">{{ so.order_no }}</span>
+                                <span class="text-[8px] font-bold text-slate-500 uppercase">{{ so.customer.name|truncatechars:20 }}</span>
+                            </td>
+                            <td class="p-2 font-black text-rose-600 dark:text-rose-400">{{ so.item_code }}</td>
+                            <td class="p-2 text-center font-black text-sm">{{ so.quantity }}</td>
+                            <td class="p-2 text-center">
+                                <button type="button" onclick="selectSO('{{ so.id }}', '{{ so.item_code }}', '{{ so.order_no }}', {{ so.quantity }})" class="bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 px-3 py-1 rounded-sm font-black uppercase tracking-widest transition-colors">Select</button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="p-4 text-center font-bold text-slate-400 uppercase italic">No pending orders available.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🚀 THE ACTIVE ALLOCATIONS LIST -->
+    <h2 class="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 border-b border-slate-300 dark:border-slate-700 pb-1">Scheduled Cross-Docks</h2>
+    <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-sm shadow-sm overflow-x-auto transition-colors">
+        <table class="w-full text-left border-collapse">
+            <thead class="bg-slate-800 dark:bg-slate-950 text-white text-[9px] uppercase tracking-widest">
+                <tr>
+                    <th class="p-2.5 border-r border-slate-700 text-center w-24">Status</th>
+                    <th class="p-2.5 border-r border-slate-700 w-32">Item Code</th>
+                    <th class="p-2.5 border-r border-slate-700 w-48 text-center">From (PO)</th>
+                    <th class="p-2.5 border-r border-slate-700 w-20 text-center bg-indigo-600">Cross Qty</th>
+                    <th class="p-2.5 border-r border-slate-700 w-48 text-center">To (SO)</th>
+                    <th class="p-2.5 text-center">Action</th>
+                </tr>
+            </thead>
+            <tbody class="text-[11px]">
+                {% for alloc in allocations %}
+                <tr class="border-b border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                    <td class="p-2.5 border-r border-slate-200 dark:border-slate-800 text-center">
+                        {% if alloc.status == 'Pending' %}
+                            <span class="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-400 px-2 py-0.5 rounded-sm text-[8px] font-black uppercase tracking-widest border border-amber-200 dark:border-amber-800">Waiting</span>
+                        {% elif alloc.status == 'Arrived' %}
+                            <span class="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-400 px-2 py-0.5 rounded-sm text-[8px] font-black uppercase tracking-widest border border-emerald-200 dark:border-emerald-800">At Dock</span>
+                        {% else %}
+                            <span class="bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-sm text-[8px] font-black uppercase tracking-widest border border-slate-300 dark:border-slate-700">{{ alloc.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="p-2.5 border-r border-slate-200 dark:border-slate-800 font-black text-slate-800 dark:text-slate-200">{{ alloc.po_item.item_code }}</td>
+                    <td class="p-2.5 border-r border-slate-200 dark:border-slate-800 text-center text-slate-600 dark:text-slate-400 font-bold">{{ alloc.po_item.purchase_order.po_no }}</td>
+                    <td class="p-2.5 border-r border-slate-200 dark:border-slate-800 text-center font-black text-indigo-600 dark:text-indigo-400 text-sm bg-indigo-50 dark:bg-indigo-900/10">{{ alloc.allocated_qty }}</td>
+                    <td class="p-2.5 border-r border-slate-200 dark:border-slate-800 text-center text-slate-600 dark:text-slate-400 font-bold">{{ alloc.so_item.order_no }}</td>
+                    <td class="p-2.5 text-center">
+                        {% if alloc.status == 'Pending' %}
+                        <button class="text-[9px] font-bold text-rose-500 hover:text-rose-700 dark:hover:text-rose-400 uppercase tracking-widest underline transition-colors">Cancel</button>
+                        {% else %}
+                        <span class="text-[9px] text-slate-400 italic">Locked</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="p-6 text-center font-bold text-slate-400 uppercase italic text-[10px]">No active cross-docking plans.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<script>
+    lucide.createIcons();
+
+    // The Selection Logic for Clickable Tables
+    let maxPoQty = 0;
+    let reqSoQty = 0;
+
+    function selectPO(id, code, ref, qty) {
+        document.getElementById('po_item_id').value = id;
+        document.getElementById('po_display_code').innerText = code;
+        document.getElementById('po_display_ref').innerText = "FROM: " + ref;
+        document.getElementById('po_display_qty').innerText = qty;
+        maxPoQty = parseInt(qty);
+        autoFillQty();
+    }
+
+    function selectSO(id, code, ref, qty) {
+        document.getElementById('so_item_id').value = id;
+        document.getElementById('so_display_code').innerText = code;
+        document.getElementById('so_display_ref').innerText = "TARGET: " + ref;
+        document.getElementById('so_display_qty').innerText = qty;
+        reqSoQty = parseInt(qty);
+        autoFillQty();
+    }
+
+    function autoFillQty() {
+        const input = document.getElementById('allocated_qty');
+        // Kukunin niya yung mas mababa sa dalawa (Kung ilan ang kailangan vs Kung ilan ang parating)
+        if (maxPoQty > 0 && reqSoQty > 0) {
+            input.value = Math.min(maxPoQty, reqSoQty);
+            input.max = maxPoQty; // Bawal sumobra sa dumating!
+        }
+    }
+</script>
+{% endblock %}

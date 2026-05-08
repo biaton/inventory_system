@@ -1,0 +1,158 @@
+{% extends 'Inventory/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="p-4 max-w-6xl mx-auto">
+    
+    <div class="mb-4 flex justify-between items-end border-b-2 border-indigo-600 dark:border-indigo-500 pb-2">
+        <div>
+            <h1 class="text-xl font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight flex items-center gap-2">
+                <i data-lucide="rotate-ccw" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i> New RMA Ticket
+            </h1>
+        </div>
+        <a href="{% url 'rma_dashboard' %}" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 uppercase tracking-widest transition-colors"><i data-lucide="x-circle" class="w-3 h-3 inline"></i> Cancel</a>
+    </div>
+
+    <form method="POST" class="bg-white rounded-sm shadow-sm border border-slate-300 dark:border-slate-700">
+        {% csrf_token %}
+        
+        <!-- HIGH DENSITY HEADER -->
+        <div class="bg-slate-100 dark:bg-slate-900 p-3 border-b border-slate-300 dark:border-slate-700 grid grid-cols-4 gap-4 items-end">
+            <div>
+                <label class="text-[9px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-1 block">Return Type <span class="text-rose-500">*</span></label>
+                <select name="rma_type" id="rma_type" required class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-sm px-2 py-1.5 text-[11px] font-bold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-400">
+                    <option value="CUSTOMER_RETURN">Customer Return (Inbound)</option>
+                    <option value="SUPPLIER_RETURN">Return to Vendor (Outbound)</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-[9px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-1 block">Reference Order No. <span class="text-rose-500 dark:text-rose-400">*</span></label>
+                <div class="flex">
+                    <input type="text" name="reference_no" id="reference_no" required placeholder="e.g. SO-2026-001" class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-l-sm px-2 py-1.5 text-[11px] font-bold uppercase focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-400">
+                    <button type="button" onclick="fetchOrderDetails()" class="bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white px-3 py-1.5 rounded-r-sm text-[10px] font-black uppercase transition-colors" title="Fetch Items">
+                        <i data-lucide="search" class="w-3 h-3"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="col-span-2">
+                <label class="text-[9px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-1 block">General Remarks</label>
+                <input type="text" name="remarks" placeholder="Brief description..." class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-sm px-2 py-1.5 text-[11px] focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-400">
+            </div>
+        </div>
+
+        <!-- ITEMS DATA GRID -->
+        <div class="p-0 overflow-x-auto">
+            <table class="w-full text-left border-collapse" id="rmaTable">
+                <thead>
+                    <tr class="bg-slate-800 dark:bg-slate-950 text-white dark:text-slate-300 text-[9px] uppercase tracking-widest">
+                        <th class="p-2 border-r border-slate-700 dark:border-slate-800 w-8 text-center">Inc</th>
+                        <th class="p-2 border-r border-slate-700 dark:border-slate-800 w-40">Item Code</th>
+                        <th class="p-2 border-r border-slate-700 dark:border-slate-800">Description</th>
+                        <th class="p-2 border-r border-slate-700 dark:border-slate-800 w-24 text-center">Max Qty</th>
+                        <th class="p-2 border-r border-slate-700 dark:border-slate-800 w-24 text-center">Return Qty</th>
+                        <th class="p-2 border-r border-slate-700 dark:border-slate-800 w-32 text-center">Condition</th>
+                        <th class="p-2 w-48">Specific Reason</th>
+                    </tr>
+                </thead>
+                <tbody id="rmaTableBody" class="text-[11px]">
+                    <tr>
+                        <td colspan="7" class="p-6 text-center text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800 font-bold text-[10px] uppercase tracking-widest italic">
+                            Enter Reference Number and click Search to load items.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="p-3 bg-slate-50 dark:bg-slate-800 border-t border-slate-300 dark:border-slate-700 flex justify-end">
+            <button type="submit" class="bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white px-6 py-2 rounded-sm text-[10px] font-black uppercase tracking-widest shadow-sm flex items-center gap-2">
+                <i data-lucide="save" class="w-3 h-3"></i> Generate RMA
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    lucide.createIcons();
+
+    function fetchOrderDetails() {
+        const refNo = document.getElementById('reference_no').value.trim();
+        const rmaType = document.getElementById('rma_type').value;
+        const tbody = document.getElementById('rmaTableBody');
+
+        if (!refNo) {
+            alert("Please enter a Reference Order No.");
+            return;
+        }
+
+        tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-indigo-600 dark:text-indigo-500 text-[10px] font-bold uppercase"><i data-lucide="loader" class="w-4 h-4 animate-spin mx-auto mb-1"></i> Fetching Data...</td></tr>`;
+        lucide.createIcons();
+
+        fetch(`/api/rma/fetch-order/?ref=${refNo}&type=${rmaType}`)
+            .then(response => response.json())
+            .then(data => {
+                tbody.innerHTML = ""; // Clear loader
+                if (data.success && data.items.length > 0) {
+                    data.items.forEach((item, index) => {
+                        const tr = document.createElement('tr');
+                        tr.className = "border-b border-slate-200 hover:bg-slate-50";
+                        tr.innerHTML = `
+                            <td class="p-2 border-r border-slate-200 text-center">
+                                <input type="checkbox" name="include_${index}" class="w-3 h-3 cursor-pointer" onchange="toggleRow(${index})">
+                            </td>
+                            <td class="p-2 border-r border-slate-200 font-black text-slate-800">
+                                <input type="hidden" name="item_code[]" value="${item.item_code}" id="code_${index}" disabled>
+                                <!-- 🚀 BAGO: Nakatago ang presyo dito para maipasa sa backend -->
+                                <input type="hidden" name="unit_price[]" value="${item.unit_price}" id="price_${index}" disabled>
+                                ${item.item_code}
+                            </td>
+                            <td class="p-2 border-r border-slate-200">
+                                <input type="hidden" name="description[]" value="${item.description}" id="desc_${index}" disabled>
+                                ${item.description}
+                            </td>
+                            <td class="p-2 border-r border-slate-200 text-center font-bold text-slate-500">${item.qty_bought}</td>
+                            <td class="p-2 border-r border-slate-200">
+                                <input type="number" name="qty_returned[]" id="qty_${index}" max="${item.qty_bought}" min="1" disabled required class="w-full text-center border border-slate-300 bg-slate-100 rounded-sm px-1 py-1 text-[11px] font-bold focus:outline-none focus:border-indigo-500">
+                            </td>
+                            <td class="p-2 border-r border-slate-200">
+                                <select name="condition[]" id="cond_${index}" disabled class="w-full border border-slate-300 bg-slate-100 rounded-sm px-1 py-1 text-[10px] font-bold focus:outline-none focus:border-indigo-500">
+                                    <option value="Defective" class="text-rose-600">Defective</option>
+                                    <option value="Good" class="text-emerald-600">Good</option>
+                                </select>
+                            </td>
+                            <td class="p-2">
+                                <input type="text" name="reason[]" id="reason_${index}" disabled required placeholder="Reason..." class="w-full border border-slate-300 bg-slate-100 rounded-sm px-2 py-1 text-[11px] focus:outline-none focus:border-indigo-500">
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-rose-500 text-[10px] font-bold uppercase tracking-widest">${data.error || 'No items found.'}</td></tr>`;
+                }
+            })
+            .catch(err => {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-rose-500 dark:text-rose-400 text-[10px] font-bold uppercase tracking-widest">Connection Error.</td></tr>`;
+            });
+    }
+
+    // Papatayin ang inputs kung hindi naka-check yung checkbox para i-ignore sa POST
+    function toggleRow(index) {
+        const checkbox = document.querySelector(`input[name="include_${index}"]`);
+        const isChecked = checkbox.checked;
+        
+        ['code_', 'desc_', 'price_', 'qty_', 'cond_', 'reason_'].forEach(prefix => {
+            const el = document.getElementById(prefix + index);
+            if(el) {
+                el.disabled = !isChecked;
+                if(isChecked && (prefix === 'qty_' || prefix === 'cond_' || prefix === 'reason_')) {
+                    el.classList.remove('bg-slate-100');
+                    el.classList.add('bg-white');
+                } else if (!isChecked && (prefix === 'qty_' || prefix === 'cond_' || prefix === 'reason_')) {
+                    el.classList.add('bg-slate-100');
+                    el.classList.remove('bg-white');
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}

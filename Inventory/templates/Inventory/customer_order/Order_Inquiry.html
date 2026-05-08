@@ -117,6 +117,9 @@
                         <td class="py-2.5 px-3 text-center border-r border-slate-100 dark:border-slate-800 transition-colors">
                             {% if po.main_order.header.status == 'Pending' %}
                                 <span class="bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-2 py-0.5 text-[9px] uppercase tracking-widest border border-amber-200 dark:border-amber-800 transition-colors">Pending</span>
+                            {% elif po.main_order.header.status == 'Processing' %}
+                                <span class="bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-400 px-2 py-0.5 text-[9px] uppercase tracking-widest border border-sky-200 dark:border-sky-800 transition-colors">Processing</span>
+
                             {% elif po.main_order.header.status == 'Shipped' %}
                                 <span class="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 px-2 py-0.5 text-[9px] uppercase tracking-widest border border-indigo-200 dark:border-indigo-800 transition-colors">Shipped</span>
                             {% elif po.main_order.header.status == 'Delivered' %}
@@ -246,7 +249,8 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-2">
-                        {% if order_data.header.status == 'Pending' %}
+                        <!-- 🚀 FIX: Idinagdag natin ang Processing para pwede i-dispatch yung mga tapos nang i-pick! -->
+                        {% if order_data.header.status == 'Pending' or order_data.header.status == 'Processing' %}
                             <a href="{% url 'order_dispatch' po.main_po_no %}" class="bg-indigo-600 text-white px-3 py-1 text-[9px] font-black uppercase tracking-widest">Dispatch</a>
                         {% else %}
                             <span class="text-[9px] font-black uppercase text-slate-400">{{ order_data.header.status }}</span>
@@ -305,7 +309,12 @@
             <div class="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 transition-colors">
                 Total Main PO Amount: <span class="text-xl text-indigo-900 dark:text-indigo-400 border-b-2 border-indigo-300 dark:border-indigo-700 ml-2 transition-colors">₱{{ po.po_grand_total|floatformat:2 }}</span>
             </div>
-            <button type="button" onclick="closePOModal('{{ po.html_id }}')" class="bg-slate-800 dark:bg-slate-700 text-white px-8 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-slate-700 dark:hover:bg-slate-600 transition-colors shadow-sm rounded-sm">Close View</button>
+            <div class="flex items-center gap-2">
+                <a href="{% url 'print_so' po.main_po_no %}" target="_blank" class="bg-indigo-600 text-white px-6 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-colors shadow-sm rounded-sm flex items-center gap-2">
+                    <i data-lucide="printer" class="w-3.5 h-3.5"></i> Print Document
+                </a>
+                <button type="button" onclick="closePOModal('{{ po.html_id }}')" class="bg-slate-800 dark:bg-slate-700 text-white px-8 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-slate-700 dark:hover:bg-slate-600 transition-colors shadow-sm rounded-sm">Close View</button>
+            </div>
         </div>
     </div>
 </div>

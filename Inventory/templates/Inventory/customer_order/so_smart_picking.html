@@ -1,0 +1,156 @@
+{% extends "Inventory/customer_order/order_base.html" %}
+{% load static %}
+
+{% block order_content %}
+<div class="max-w-[100%] mx-auto pb-20 mt-4 text-slate-800 dark:text-slate-200 transition-colors duration-300">
+    
+    <!-- 🚀 HEADER -->
+    <div class="mb-4 flex flex-col md:flex-row justify-between items-start md:items-end border-b-2 border-indigo-600 pb-3">
+        <div>
+            <h1 class="text-xl font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight flex items-center gap-2">
+                <i data-lucide="package-check" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i> Smart Order Picking
+            </h1>
+            <p class="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest mt-0.5">FIFO Enforced Outbound Fulfillment</p>
+        </div>
+    </div>
+
+    <!-- 🚀 SELECT ORDER PANEL -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-sm shadow-sm p-4 mb-6 transition-colors">
+        <form method="GET" class="m-0 flex flex-col md:flex-row gap-4 items-end">
+            <div class="flex-1 w-full">
+                <label class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Select Pending Customer Order</label>
+                <div class="relative">
+                    <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                    <select name="order_no" onchange="this.form.submit()" class="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-600 rounded-sm text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer appearance-none">
+                        <option value="">-- CLICK TO SELECT ORDER --</option>
+                        {% for order in pending_orders %}
+                            <option value="{{ order.order_no }}" {% if search_order == order.order_no %}selected{% endif %}>
+                                {{ order.order_no }} &nbsp;&nbsp;|&nbsp;&nbsp; {{ order.customer__name|default:"Walk-in"|upper }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            {% if search_order %}
+            <div>
+                <a href="{% url 'so_smart_picking' %}" class="bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-4 py-2 rounded-sm text-[10px] font-black uppercase tracking-widest transition-colors flex items-center h-full">
+                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5 mr-1.5"></i> Reset
+                </a>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- 🚀 PICKING WORKSPACE -->
+    {% if pick_list %}
+    <form method="POST" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-sm shadow-xl overflow-hidden transition-colors">
+        {% csrf_token %}
+        <input type="hidden" name="order_no" value="{{ search_order }}">
+        
+        <div class="bg-slate-800 dark:bg-slate-950 px-4 py-3 flex justify-between items-center border-b border-slate-700">
+            <div>
+                <h2 class="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2">
+                    <i data-lucide="clipboard-list" class="w-4 h-4 text-sky-400"></i> Picking Manifest
+                </h2>
+                <p class="text-[9px] text-slate-400 uppercase mt-0.5">Order No: <span class="text-white font-bold">{{ search_order }}</span> &bull; Client: <span class="text-white font-bold">{{ customer_name }}</span></p>
+            </div>
+            <div>
+                <button type="button" onclick="fillAllMax()" class="text-[9px] font-black text-slate-800 bg-sky-400 hover:bg-sky-300 px-3 py-1.5 rounded-sm uppercase tracking-widest transition-colors shadow-sm">
+                    Auto-Fill Qty
+                </button>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-slate-100 dark:bg-slate-800/50 text-[9px] uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                    <tr>
+                        <th class="p-3 border-b border-slate-300 dark:border-slate-700 w-32">Item Code</th>
+                        <th class="p-3 border-b border-slate-300 dark:border-slate-700">Description</th>
+                        <th class="p-3 border-b border-slate-300 dark:border-slate-700 text-center w-24">Ordered</th>
+                        <th class="p-3 border-b border-slate-300 dark:border-slate-700 text-center w-24">Picked</th>
+                        <th class="p-3 border-b border-slate-300 dark:border-slate-700 w-64">System Suggestion (FIFO)</th>
+                        <th class="p-3 border-b border-slate-300 dark:border-slate-700 text-center w-32 bg-indigo-50 dark:bg-indigo-900/10">Action: Pick Qty</th>
+                    </tr>
+                </thead>
+                <tbody class="text-xs">
+                    {% for item in pick_list %}
+                    <tr class="border-b border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors {% if item.needed == 0 %}opacity-50 grayscale{% endif %}">
+                        
+                        <td class="p-3 font-black text-slate-800 dark:text-slate-200">{{ item.so_item.item_code }}</td>
+                        <td class="p-3 text-[10px] text-slate-600 dark:text-slate-400 font-bold uppercase">{{ item.so_item.description|truncatechars:40 }}</td>
+                        <td class="p-3 text-center font-black text-slate-800 dark:text-slate-200">{{ item.so_item.quantity }}</td>
+                        <td class="p-3 text-center font-black text-teal-600 dark:text-teal-400">{{ item.so_item.picked_qty }}</td>
+                        
+                        <!-- 🚀 THE MAGIC: SMART SUGGESTION ENGINE -->
+                        <td class="p-3">
+                            {% if item.needed == 0 %}
+                                <span class="inline-block bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 border border-teal-200 dark:border-teal-800 px-2 py-1 rounded-sm text-[8px] font-black uppercase tracking-widest"><i data-lucide="check-circle" class="w-3 h-3 inline mr-1 -mt-0.5"></i> Fully Picked</span>
+                            {% else %}
+                                <div class="space-y-1">
+                                    {% for sug in item.suggestions %}
+                                        {% if "SHORTAGE" in sug %}
+                                            <div class="bg-rose-50 dark:bg-rose-900/20 border-l-2 border-rose-500 p-1.5 text-[9px] font-black text-rose-700 dark:text-rose-400 uppercase tracking-tight flex items-center gap-1.5">
+                                                <i data-lucide="alert-triangle" class="w-3 h-3"></i> {{ sug }}
+                                            </div>
+                                        {% else %}
+                                            <div class="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 px-2 py-1.5 rounded-sm text-[9px] font-black text-emerald-800 dark:text-emerald-400 uppercase tracking-tight flex items-center gap-1.5 shadow-sm">
+                                                <i data-lucide="map-pin" class="w-3 h-3 text-emerald-500"></i> {{ sug }}
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </td>
+
+                        <!-- 🚀 ACTION FIELD -->
+                        <td class="p-3 bg-indigo-50 dark:bg-indigo-900/10 text-center">
+                            {% if item.needed > 0 %}
+                                <input type="number" name="pick_qty_{{ item.so_item.id }}" min="1" max="{{ item.needed }}" 
+                                       class="pick-input w-full text-center border-2 border-indigo-300 dark:border-indigo-600 bg-white dark:bg-slate-950 rounded-sm py-1.5 text-sm font-black text-indigo-700 dark:text-indigo-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors shadow-inner" 
+                                       data-max="{{ item.needed }}">
+                                <p class="text-[8px] text-slate-400 font-bold uppercase mt-1">Needed: {{ item.needed }}</p>
+                            {% else %}
+                                <span class="text-[10px] font-black text-slate-400 uppercase italic">Done</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="p-4 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-300 dark:border-slate-700 flex justify-between items-center">
+            <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                <i data-lucide="info" class="w-3.5 h-3.5"></i> Inventory will be automatically deducted via FIFO method.
+            </p>
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-sm text-[10px] font-black uppercase tracking-widest shadow-md flex items-center gap-2 transition-colors">
+                <i data-lucide="check-square" class="w-4 h-4"></i> Confirm Picking
+            </button>
+        </div>
+    </form>
+    {% else %}
+        {% if search_order %}
+        <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-sm p-10 text-center">
+            <i data-lucide="package-search" class="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3"></i>
+            <h3 class="text-sm font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">No items found</h3>
+            <p class="text-[10px] text-slate-400 mt-1">Order {{ search_order }} might be fully picked or does not exist.</p>
+        </div>
+        {% endif %}
+    {% endif %}
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    });
+
+    // 🚀 QUICK TOOL: I-fi-fill niya lahat ng input boxes gamit yung max needed qty!
+    function fillAllMax() {
+        const inputs = document.querySelectorAll('.pick-input');
+        inputs.forEach(input => {
+            input.value = input.getAttribute('data-max');
+        });
+    }
+</script>
+{% endblock %}

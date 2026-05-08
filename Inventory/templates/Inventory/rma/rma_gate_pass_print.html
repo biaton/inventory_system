@@ -1,0 +1,328 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>RMA_GatePass_{{ rma.rma_no }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: #cbd5e1; 
+            color: #0f172a; 
+            margin: 0; 
+            padding: 0; 
+            -webkit-print-color-adjust: exact !important; 
+            print-color-adjust: exact !important;
+        }
+        
+        /* 🚀 STRICT PRINT STYLES */
+        @media print {
+            @page { size: A4 portrait; margin: 10mm 15mm; }
+            body { background: white; }
+            .no-print { display: none !important; }
+            .main-wrapper { margin-left: 0 !important; padding: 0 !important; display: block !important; }
+            .a4-container { 
+                box-shadow: none !important; 
+                border: none !important; 
+                margin: 0 !important; 
+                width: 100% !important; 
+                padding: 0 !important; 
+            }
+            tr { page-break-inside: avoid; }
+        }
+        
+        .a4-container {
+            width: 210mm;
+            min-height: 297mm;
+            background: white;
+            margin: 2rem auto;
+            padding: 15mm;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        /* 🚀 CLEAN ERP TABLE (No side boxes) */
+        .doc-table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; }
+        .doc-table th { 
+            background-color: #0f172a; 
+            color: white; 
+            font-size: 10px; 
+            text-transform: uppercase; 
+            letter-spacing: 0.05em; 
+            padding: 8px 10px; 
+            text-align: left;
+        }
+        .doc-table td { 
+            font-size: 11px; 
+            padding: 10px; 
+            border-bottom: 1px solid #cbd5e1; 
+            vertical-align: top; 
+        }
+
+        /* Box para sa sulat ng Guard */
+        .write-box { display: block; width: 100%; height: 20px; border-bottom: 1px dashed #64748b; margin-top: 2px; }
+        
+        /* Table Layout Engine */
+        .print-layout { width: 100%; border-collapse: collapse; }
+        .print-header { display: table-header-group; }
+        .print-footer { display: table-footer-group; }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+    </style>
+</head>
+<body class="flex">
+
+    <!-- 🚀 SIDEBAR SETTINGS (HINDI LALABAS SA PRINT) -->
+    <div class="no-print w-72 bg-slate-900 text-white h-screen fixed left-0 top-0 overflow-y-auto shadow-2xl custom-scrollbar flex flex-col z-50">
+        <div class="p-5 border-b border-slate-800 bg-slate-950">
+            <h2 class="text-sm font-black uppercase tracking-widest flex items-center gap-2 text-indigo-400">
+                <i data-lucide="settings-2" class="w-5 h-5"></i> Print Settings
+            </h2>
+        </div>
+
+        <div class="p-5 space-y-6 flex-1">
+            <div>
+                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 flex justify-between">
+                    <span>QR Code Size</span>
+                    <span id="qrSizeLabel" class="text-indigo-400">65px</span>
+                </label>
+                <input type="range" id="qrSize" min="40" max="100" value="65" class="w-full accent-indigo-500" oninput="updateQRSize()">
+                
+                <div class="flex items-center justify-between mt-4">
+                    <span class="text-xs font-bold text-slate-300">Show Tracking QR</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggleQR" checked onchange="toggleElement('qrcode-wrapper', this.checked)" class="sr-only peer">
+                        <div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-indigo-500 after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="border-t border-slate-800 pt-5 space-y-4">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Signatory Names</p>
+                <div>
+                    <label class="text-[9px] text-slate-500 uppercase">Delivered By (Driver)</label>
+                    <input type="text" id="inDriver" placeholder="Leave blank to write manually" oninput="syncNames()" class="w-full bg-slate-800 border border-slate-700 rounded-sm p-2 text-xs text-white focus:border-indigo-500 outline-none">
+                </div>
+                <div>
+                    <label class="text-[9px] text-slate-500 uppercase">Guard on Duty</label>
+                    <input type="text" id="inGuard" placeholder="e.g. SG. Dela Cruz" oninput="syncNames()" class="w-full bg-slate-800 border border-slate-700 rounded-sm p-2 text-xs text-white focus:border-indigo-500 outline-none">
+                </div>
+                <div>
+                    <label class="text-[9px] text-slate-500 uppercase">WH Receiver</label>
+                    <input type="text" id="inReceiver" value="{{ request.user.get_full_name|default:request.user.username }}" oninput="syncNames()" class="w-full bg-slate-800 border border-slate-700 rounded-sm p-2 text-xs text-white focus:border-indigo-500 outline-none">
+                </div>
+            </div>
+
+            <div class="border-t border-slate-800 pt-5">
+                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Special Instruction</label>
+                <input type="text" id="inNotice" placeholder="e.g. URGENT PROCESSING" oninput="syncNotice()" class="w-full bg-slate-800 border border-slate-700 rounded-sm p-2 text-xs text-white outline-none focus:border-indigo-500">
+            </div>
+        </div>
+
+        <div class="p-5 bg-slate-950 border-t border-slate-800">
+            <button onclick="window.print()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-sm text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg">
+                <i data-lucide="printer" class="w-4 h-4"></i> Print Gate Pass
+            </button>
+        </div>
+    </div>
+
+    <!-- 🚀 MAIN DOCUMENT -->
+    <div class="main-wrapper flex-1 ml-72 p-8 flex justify-center min-h-screen">
+        <div id="rma-document" class="a4-container">
+            
+            <table class="print-layout">
+                <!-- 🚀 HEADER (Uulitin sa bawat pahina kapag mahaba ang items) -->
+                <thead class="print-header">
+                    <tr>
+                        <td>
+                            <!-- Top Brand Row -->
+                            <div class="flex justify-between items-center border-b-2 border-slate-900 pb-4 mb-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-12 h-12 flex items-center justify-center">
+                                         <img src="{% static 'images/asia-no-bg.png' %}" alt="Logo" class="max-w-full max-h-full object-contain">
+                                    </div>
+                                    <div>
+                                        <h1 class="text-xl font-black text-slate-900 tracking-tighter uppercase leading-none mb-1">Asia Integrated Machine Inc.</h1>
+                                        <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Reverse Logistics &bull; Gate Pass</p>
+                                    </div>
+                                </div>
+                                <div id="qrcode-wrapper" class="bg-white">
+                                    <div id="qrcode"></div>
+                                </div>
+                            </div>
+
+                            <!-- User Custom Notice -->
+                            <div id="outNotice" class="text-center bg-slate-100 text-slate-800 font-black uppercase text-[10px] tracking-widest py-1.5 hidden mb-4 border border-slate-300"></div>
+
+                            <!-- Document Metadata (Clean 4-Column Grid) -->
+                            <div class="grid grid-cols-4 gap-4 mb-2 pb-4 border-b border-slate-200">
+                                <div>
+                                    <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">RMA Number</p>
+                                    <p class="text-sm font-black text-slate-900 uppercase">{{ rma.rma_no }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Reference Order</p>
+                                    <p class="text-sm font-black text-slate-900 uppercase">{{ rma.reference_no|default:"N/A" }}</p>
+                                </div>
+                                <div class="col-span-2">
+                                    <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Entity / Source</p>
+                                    <p class="text-sm font-black text-slate-900 uppercase">
+                                        {% if rma.customer %}{{ rma.customer.name }}{% elif rma.supplier %}{{ rma.supplier.name }}{% else %}UNKNOWN RECORD{% endif %}
+                                    </p>
+                                    <p class="text-[9px] text-slate-500 uppercase mt-0.5 font-bold">{{ rma.get_rma_type_display }}</p>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </thead>
+
+                <!-- 🚀 BODY (Ang listahan ng mga ibabalik) -->
+                <tbody>
+                    <tr>
+                        <td>
+                            <table class="doc-table">
+                                <thead>
+                                    <tr>
+                                        <th class="w-8 text-center rounded-tl-sm">No.</th>
+                                        <th class="w-32">Item Code</th>
+                                        <th>Description & Condition</th>
+                                        <th class="w-20 text-center">Auth Qty</th>
+                                        <th class="w-32 text-center bg-slate-600 rounded-tr-sm text-slate-100">Rcvd Qty (Guard)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in rma.rma_items.all %}
+                                    <tr>
+                                        <td class="text-center font-bold text-slate-400">{{ forloop.counter }}</td>
+                                        <td class="font-black text-slate-900">{{ item.item_code }}</td>
+                                        <td>
+                                            <p class="text-[11px] font-medium text-slate-800">{{ item.description }}</p>
+                                            <p class="text-[9px] text-slate-500 font-bold mt-1 uppercase">Expected Cond: <span class="text-slate-800">{{ item.condition }}</span></p>
+                                        </td>
+                                        <td class="text-center font-black text-sm text-slate-900">{{ item.qty_returned }}</td>
+                                        <td class="px-4">
+                                            <!-- Ito ang susulatan ng Guardiya -->
+                                            <span class="write-box"></span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+
+                            <!-- 🚀 MODERN ENTERPRISE WARNING BLOCK (Hindi na Red Box) -->
+                            <div class="mt-6 pl-4 border-l-[4px] border-slate-800 py-1">
+                                <p class="text-[10px] font-black text-slate-900 uppercase tracking-widest mb-1">Security & Routing Instruction</p>
+                                <p class="text-[10px] text-slate-700 leading-relaxed font-medium">
+                                    Guard on duty must verify the physical count against the authorized quantity before allowing entry. 
+                                    <strong>DO NOT MIX</strong> these items with good inventory. Route directly to the <strong>QUARANTINE AREA</strong> 
+                                    and endorse this document to the Warehouse Receiver for system recording.
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+
+                <!-- 🚀 FOOTER (Signatures) -->
+                <tfoot class="print-footer">
+                    <tr>
+                        <td>
+                            <div class="mt-12 pt-8">
+                                <div class="grid grid-cols-3 gap-10 px-6 text-center">
+                                    
+                                    <!-- Driver -->
+                                    <div>
+                                        <p id="outDriver" class="text-[11px] font-black uppercase text-slate-900 text-transparent border-b border-slate-400 pb-1 mb-1">.</p>
+                                        <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Delivered By (Driver)</p>
+                                        <p class="text-[8px] font-medium text-slate-400 mt-1 uppercase">Date: _________ Time: _____</p>
+                                    </div>
+                                    
+                                    <!-- Guard -->
+                                    <div>
+                                        <p id="outGuard" class="text-[11px] font-black uppercase text-slate-900 text-transparent border-b border-slate-400 pb-1 mb-1">.</p>
+                                        <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Guard on Duty</p>
+                                        <p class="text-[8px] font-medium text-slate-400 mt-1 uppercase">Date: _________ Time: _____</p>
+                                    </div>
+
+                                    <!-- WH Receiver -->
+                                    <div>
+                                        <p id="outReceiver" class="text-[11px] font-black uppercase text-slate-900 border-b border-slate-400 pb-1 mb-1">{{ request.user.get_full_name|default:request.user.username }}</p>
+                                        <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">WH Receiver</p>
+                                        <p class="text-[8px] font-medium text-slate-400 mt-1 uppercase">Date: _________ Time: _____</p>
+                                    </div>
+
+                                </div>
+                                <div class="text-center mt-10 border-t border-slate-200 pt-3 text-slate-400">
+                                    <p class="text-[8px] font-bold uppercase tracking-widest">
+                                        Asia Integrated Machine Inc. &bull; Official Document &bull; Generated: {% now "Y-m-d H:i" %}
+                                    </p>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        
+        // Generate initial QR code
+        const qrcode = new QRCode("qrcode", { 
+            text: "{{ rma.rma_no }}", 
+            width: 65, height: 65, 
+            colorDark : "#0f172a", colorLight : "#ffffff", 
+            correctLevel : QRCode.CorrectLevel.M 
+        });
+
+        function updateQRSize() {
+            const size = document.getElementById('qrSize').value;
+            document.getElementById('qrSizeLabel').innerText = size + 'px';
+            document.getElementById("qrcode").innerHTML = "";
+            new QRCode("qrcode", { 
+                text: "{{ rma.rma_no }}", 
+                width: size, height: size, 
+                colorDark : "#0f172a", colorLight : "#ffffff", 
+                correctLevel : QRCode.CorrectLevel.M 
+            });
+        }
+
+        function toggleElement(id, show) { 
+            document.getElementById(id).style.display = show ? 'block' : 'none'; 
+        }
+
+        // Real-time Signature Sync
+        function syncNames() {
+            const d = document.getElementById('inDriver').value.trim();
+            const g = document.getElementById('inGuard').value.trim();
+            const r = document.getElementById('inReceiver').value.trim();
+
+            const outD = document.getElementById('outDriver');
+            const outG = document.getElementById('outGuard');
+            const outR = document.getElementById('outReceiver');
+
+            if(d) { outD.innerText = d; outD.classList.remove('text-transparent'); } 
+            else { outD.innerText = "."; outD.classList.add('text-transparent'); }
+            
+            if(g) { outG.innerText = g; outG.classList.remove('text-transparent'); } 
+            else { outG.innerText = "."; outG.classList.add('text-transparent'); }
+            
+            if(r) { outR.innerText = r; outR.classList.remove('text-transparent'); } 
+            else { outR.innerText = "."; outR.classList.add('text-transparent'); }
+        }
+
+        function syncNotice() {
+            const val = document.getElementById('inNotice').value.trim();
+            const out = document.getElementById('outNotice');
+            if(val === "") { out.classList.add('hidden'); } 
+            else { out.classList.remove('hidden'); out.innerText = val; }
+        }
+    </script>
+</body>
+</html>

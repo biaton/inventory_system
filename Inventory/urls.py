@@ -68,6 +68,7 @@ urlpatterns = [
     path('dispatch/<str:batch_id>/', views.order_dispatch_view, name='order_dispatch'),
     path('order/delivered/<str:order_no>/', views.mark_delivered_view, name='mark_delivered'),
     path('inquiry/', views.order_inquiry_view, name='order_inquiry'),
+    path('order/print/<str:main_po_no>/', views.print_so_view, name='print_so'),
 
     # Purchase Orders 
     path('purchase-order/make/', views.make_po_view, name='make_po'),
@@ -117,6 +118,8 @@ urlpatterns = [
     path('processing/out/', views.stock_out_view, name='stock_out'),
     path('processing/get-tag/', views.get_tag_info, name='get_tag_info'),
     path('inventory-request/get-tag/', views.get_tag_info, name='get_tag_info'),
+    path('processing/cross-dock/', views.cross_dock_planning_view, name='cross_dock_planning'),
+    path('processing/print-label/<int:alloc_id>/', views.print_crossdock_label_view, name='print_crossdock_label'),
 
     # INVENTORY INQUIRY MODULE
     path('inventory-inquiry/stock/', views.stock_inquiry_view, name='stock_inquiry'),
@@ -144,8 +147,6 @@ urlpatterns = [
     path('inbound/print-grn/<str:po_no>/', views.shipment_print_doc_view, name='shipment_print_doc'),
 
     path('master/locations/', views.location_master_view, name='location_master'),
-    path('receive/scan/', views.receive_item_scan_view, name='receive_item_scan'), 
-    path('receive/print/<int:tag_id>/', views.print_tag_view, name='print_tag'),
 
     # Assembly & Asset Management
     path('assembly/dashboard/', views.assembly_dashboard_view, name='assembly_dashboard'),
@@ -155,8 +156,15 @@ urlpatterns = [
     path('api/assembly/action/', views.api_assembly_action, name='api_assembly_action'),
     path('api/assembly/complete/', views.api_assembly_complete, name='api_assembly_complete'),
 
+    #RMA Module
+    path('rma/dashboard/', views.rma_dashboard_view, name='rma_dashboard'),
+    path('rma/create/', views.create_rma_view, name='create_rma'),
+    path('rma/receive/<int:rma_id>/', views.receive_rma_view, name='receive_rma'),
+    path('rma/disposition/<int:rma_id>/', views.rma_disposition_view, name='rma_disposition'),
+    path('api/rma/fetch-order/', views.api_fetch_order_details, name='api_fetch_order_details'),
+    path('rma/print/<int:rma_id>/', views.print_rma_gate_pass_view, name='print_rma_gate_pass'),
+
     # PASSWORD RESET PATHS
-    
     path('reset_password/', views.password_reset_request, name='password_reset'),
     path('reset_password/verify/', views.password_reset_verify, name='password_reset_verify'),
     path('reset_password/confirm/', views.password_reset_confirm, name='password_reset_confirm'),
@@ -177,6 +185,12 @@ urlpatterns = [
     path('mark-delivered-batch/<str:main_po_no>/', views.mark_delivered_batch_view, name='mark_delivered_batch'),
     path('tools/supplier-scorecard/', views.supplier_scorecard_view, name='supplier_scorecard'),
     path('tools/customer-scorecard/', views.customer_scorecard_view, name='customer_scorecard'),
+    path('tools/scan/', views.receive_item_scan_view, name='receive_item_scan'), 
+    path('tools/print/<int:tag_id>/', views.print_tag_view, name='print_tag'),
+    path('order-picking/', views.so_smart_picking_view, name='so_smart_picking'),
+
+    # user manual
+    path('user-manual/', views.user_manual_view, name='user_manual'),
 
 
     path('system/test-email/', views.test_all_email_templates_view, name='test_email_system'),

@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Batch_PO_{{ main_po_no }} - Asia Integrated Machine Inc.</title>
+    <title>Dispatch_Manifest_{{ main_po_no }} - Asia Integrated Machine Inc.</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -13,9 +13,8 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
         
         :root {
-            /* Default Brand Color */
             --brand-color: #3730a3; 
-            --brand-light: #e0e7ff; /* Lighter shade for backgrounds */
+            --brand-light: #e0e7ff; 
         }
 
         body { font-family: 'Inter', sans-serif; background: #f1f5f9; color: #0f172a; margin: 0; padding: 0; }
@@ -40,7 +39,6 @@
             overflow: hidden;
         }
         
-        /* THEME CLASSES */
         .theme-bg { background-color: var(--brand-color) !important; }
         .theme-bg-light { background-color: var(--brand-light) !important; }
         .theme-text { color: var(--brand-color) !important; }
@@ -50,7 +48,6 @@
         .print-header { display: table-header-group; }
         .print-footer { display: table-footer-group; }
         
-        /* 🚀 UPGRADED TABLE CSS: Borderless & Clean */
         .po-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
         .po-table th { 
             background-color: var(--brand-color); 
@@ -108,8 +105,7 @@
                 </h2>
                 <p class="text-[9px] text-slate-400 mt-1">Customize document appearance</p>
             </div>
-            <!-- Back Button to PO Inquiry -->
-            <a href="{% url 'po_inquiry' %}" class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-2 rounded transition-colors" title="Back to PO Inquiry">
+            <a href="{% url 'order_inquiry' %}" class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-2 rounded transition-colors" title="Back to Inquiry">
                 <i data-lucide="arrow-left" class="w-4 h-4"></i>
             </a>
         </div>
@@ -149,7 +145,7 @@
             <div class="border-t border-slate-800 pt-5 space-y-4">
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Visibility</p>
                 <div class="flex items-center justify-between">
-                    <span class="text-xs font-bold text-rose-400">Blind PO Mode</span>
+                    <span class="text-xs font-bold text-rose-400" title="Hides prices for drivers/warehouse">Blind Manifest Mode</span>
                     <label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="togglePrices" class="sr-only peer" onchange="toggleDocClass('blind-mode', this.checked)"><div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-rose-500 after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all"></div></label>
                 </div>
                 <div class="flex items-center justify-between">
@@ -171,30 +167,30 @@
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Signatories</p>
                 <div>
                     <label class="text-[9px] text-slate-500 uppercase tracking-widest mb-1 block">Prepared By</label>
-                    <input type="text" id="sigPrepInput" value="{{ request.user.get_full_name|default:'Purchasing Officer' }}" oninput="updateSignatures()" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-xs text-white outline-none focus:border-indigo-500">
+                    <input type="text" id="sigPrepInput" value="{{ request.user.get_full_name|default:'Warehouse Admin' }}" oninput="updateSignatures()" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-xs text-white outline-none focus:border-indigo-500">
                 </div>
                 <div>
-                    <label class="text-[9px] text-slate-500 uppercase tracking-widest mb-1 block">Checked By</label>
+                    <label class="text-[9px] text-slate-500 uppercase tracking-widest mb-1 block">Checked / Picked By</label>
                     <input type="text" id="sigCheckInput" placeholder="Leave blank for pen..." oninput="updateSignatures()" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-xs text-white outline-none focus:border-indigo-500">
                 </div>
                 <div>
-                    <label class="text-[9px] text-slate-500 uppercase tracking-widest mb-1 block">Approved By</label>
-                    <input type="text" id="sigApprInput" placeholder="Leave blank for pen..." oninput="updateSignatures()" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-xs text-white outline-none focus:border-indigo-500">
+                    <label class="text-[9px] text-slate-500 uppercase tracking-widest mb-1 block">Dispatched / Loaded By</label>
+                    <input type="text" id="sigDispInput" placeholder="Leave blank for pen..." oninput="updateSignatures()" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-xs text-white outline-none focus:border-indigo-500">
                 </div>
             </div>
 
             <div class="border-t border-slate-800 pt-5">
                 <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Custom Print Notice</label>
-                <input type="text" id="customNotice" placeholder="e.g. URGENT DELIVERY" oninput="updateCustomNotice()" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-xs text-white outline-none focus:border-indigo-500">
+                <input type="text" id="customNotice" placeholder="e.g. URGENT DISPATCH" oninput="updateCustomNotice()" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-xs text-white outline-none focus:border-indigo-500">
             </div>
         </div>
 
         <div class="p-5 bg-slate-950 border-t border-slate-800 space-y-2">
             <button onclick="window.print()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded text-xs font-black uppercase tracking-widest transition-colors flex items-center justify-center gap-2">
-                <i data-lucide="printer" class="w-4 h-4"></i> Print
+                <i data-lucide="printer" class="w-4 h-4"></i> Print Manifest
             </button>
             <button onclick="downloadPDF()" class="w-full bg-slate-800 hover:bg-slate-700 text-white py-3 rounded text-xs font-black uppercase tracking-widest border border-slate-700 transition-colors flex items-center justify-center gap-2">
-                <i data-lucide="download" class="w-4 h-4"></i> PDF
+                <i data-lucide="download" class="w-4 h-4"></i> Download PDF
             </button>
         </div>
     </div>
@@ -226,9 +222,9 @@
                                 </div>
                                 <div class="flex gap-5 items-start">
                                     <div class="text-right">
-                                        <h2 class="text-[28px] font-black theme-text uppercase tracking-tighter leading-none mb-1.5">Purchase Order</h2>
+                                        <h2 class="text-[24px] font-black theme-text uppercase tracking-tighter leading-none mb-1.5">Dispatch Manifest</h2>
                                         <div class="inline-block bg-slate-100 px-3 py-1 rounded-sm border border-slate-200">
-                                            <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">PO Number</p>
+                                            <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Reference Batch No.</p>
                                             <p class="text-sm font-black text-slate-900 leading-none">{{ main_po_no }}</p>
                                         </div>
                                     </div>
@@ -246,7 +242,7 @@
 
                 <!-- BODY -->
                 <tbody>
-                    {% for data in pages_data %}
+                    {% for order_no, data in grouped_orders.items %}
                     <tr id="po-section-{{ forloop.counter }}" class="relative group bg-white">
                         <td>
                             <div class="screen-cut-line"></div>
@@ -261,27 +257,31 @@
                                 </div>
                                 {% endif %}
 
-                                <!-- "TO" CARD -->
+                                <!-- CUSTOMER "DELIVER TO" CARD -->
                                 <div class="flex justify-between items-stretch mb-4">
                                     <div class="w-[60%]">
                                         <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-2">
-                                            <span class="theme-bg text-white px-1.5 rounded-sm">{{ forloop.counter }}</span> Vendor Details
+                                            <span class="theme-bg text-white px-1.5 rounded-sm">{{ forloop.counter }}</span> Deliver To:
                                         </p>
                                         <div class="p-3 bg-slate-50 border border-slate-200 rounded-md">
-                                            <h3 class="font-black text-base uppercase text-slate-900 leading-tight mb-1">{{ data.po.supplier.name|default:"UNKNOWN SUPPLIER" }}</h3>
-                                            <p class="text-[10px] text-slate-600 uppercase"><span class="font-bold">Attn:</span> {{ data.po.supplier.contact_name|default:"Sales Rep" }}</p>
-                                            <p class="text-[10px] text-slate-600 uppercase mt-0.5"><span class="font-bold">Sub-PO:</span> <span class="theme-text font-black">{{ data.po.po_no }}</span></p>
+                                            <h3 class="font-black text-base uppercase text-slate-900 leading-tight mb-1">{{ data.customer }}</h3>
+                                            <p class="text-[10px] text-slate-600 uppercase"><span class="font-bold">Attn:</span> {{ data.contact_person|default:"Recipient" }}</p>
+                                            <p class="text-[10px] text-slate-600 uppercase mt-0.5"><span class="font-bold">Address:</span> <span class="font-bold text-slate-800">{{ data.address|default:"Not specified" }}</span></p>
                                         </div>
                                     </div>
                                     
                                     <div class="w-[35%] text-right bg-slate-50 border border-slate-200 rounded-md p-3 h-full flex flex-col justify-center">
                                         <div class="flex justify-between text-[10px] mb-1.5">
                                             <span class="font-bold text-slate-500 uppercase">Order Date:</span>
-                                            <span class="font-black text-slate-800 uppercase">{{ data.po.order_date|date:"M d, Y" }}</span>
+                                            <span class="font-black text-slate-800 uppercase">{{ data.order_date|date:"M d, Y" }}</span>
+                                        </div>
+                                        <div class="flex justify-between text-[10px] mb-1.5">
+                                            <span class="font-bold text-slate-500 uppercase">Order Ref:</span>
+                                            <span class="font-black theme-text uppercase">{{ order_no }}</span>
                                         </div>
                                         <div class="flex justify-between text-[10px]">
-                                            <span class="font-bold text-slate-500 uppercase">Est. Delivery:</span>
-                                            <span class="font-black text-rose-600 uppercase">{{ data.po.delivery_date|date:"M d, Y"|default:"ASAP" }}</span>
+                                            <span class="font-bold text-slate-500 uppercase">Target Delivery:</span>
+                                            <span class="font-black text-rose-600 uppercase">{{ data.delivery_date|date:"M d, Y"|default:"ASAP" }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -303,10 +303,10 @@
                                         <tr>
                                             <td class="text-center text-slate-400 font-bold">{{ forloop.counter }}</td>
                                             <td class="font-black text-slate-800">{{ item.item_code }}</td>
-                                            <td class="text-[10px] text-slate-600 font-medium">{{ item.description }}</td>
-                                            <td class="text-center font-black text-slate-800">{{ item.qty|floatformat:0 }}</td>
-                                            <td class="text-right font-bold text-slate-600 col-price">{{ data.po.currency|default:"₱" }} {{ item.unit_price|floatformat:2 }}</td>
-                                            <td class="text-right font-black text-slate-900 col-price">{{ data.po.currency|default:"₱" }} {{ item.amount|floatformat:2 }}</td>
+                                            <td class="text-[10px] text-slate-600 font-medium">{{ item.description|default:"-" }}</td>
+                                            <td class="text-center font-black text-slate-800">{{ item.quantity|floatformat:0 }}</td>
+                                            <td class="text-right font-bold text-slate-600 col-price">₱ {{ item.unit_price|floatformat:2 }}</td>
+                                            <td class="text-right font-black text-slate-900 col-price">₱ {{ item.computed_amount|floatformat:2 }}</td>
                                         </tr>
                                         {% empty %}
                                         <tr>
@@ -316,27 +316,12 @@
                                     </tbody>
                                 </table>
 
-                                <!-- TOTALS & REMARKS -->
-                                <div class="flex justify-between items-start mt-4">
-                                    <div class="w-[50%]">
-                                        {% if data.po.remarks %}
-                                        <p class="text-[9px] text-slate-500 italic"><span class="font-black uppercase not-italic text-slate-700">Remarks:</span> {{ data.po.remarks }}</p>
-                                        {% endif %}
-                                    </div>
-                                    
-                                    <!-- FINANCIAL SUMMARY BLOCK -->
+                                <!-- TOTALS -->
+                                <div class="flex justify-end items-start mt-4">
                                     <div class="w-[45%] text-[11px] col-price">
-                                        <div class="flex justify-between py-1 px-2">
-                                            <span class="font-bold text-slate-500 uppercase tracking-widest">Subtotal</span>
-                                            <span class="font-bold text-slate-800">{{ data.po.currency|default:"₱" }} {{ data.subtotal|floatformat:2 }}</span>
-                                        </div>
-                                        <div class="flex justify-between py-1 px-2 border-b border-slate-200">
-                                            <span class="font-bold text-slate-500 uppercase tracking-widest">Tax/Discount</span>
-                                            <span class="font-bold text-slate-800">{{ data.po.currency|default:"₱" }} {{ data.tax_amount|floatformat:2 }}</span>
-                                        </div>
                                         <div class="flex justify-between items-center mt-2 theme-bg-light p-2 rounded-md border theme-border">
-                                            <span class="font-black theme-text uppercase tracking-widest text-[12px]">Grand Total</span>
-                                            <span class="font-black theme-text text-[14px]">{{ data.po.currency|default:"₱" }} {{ data.grand_total|floatformat:2 }}</span>
+                                            <span class="font-black theme-text uppercase tracking-widest text-[12px]">Subtotal Amount</span>
+                                            <span class="font-black theme-text text-[14px]">₱ {{ data.subtotal|floatformat:2 }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -346,25 +331,26 @@
                     {% endfor %}
                 </tbody>
 
-                <!-- 🚀 UPGRADED SIGNATURE FOOTER WITH DYNAMIC ID's -->
+                <!-- SIGNATURE FOOTER -->
                 <tfoot class="print-footer">
                     <tr>
                         <td>
                             <div class="mt-8 pt-6 border-t-[3px] theme-border flex justify-between items-start">
                                 <div class="grid grid-cols-3 gap-8 px-4 w-full pr-8">
+                                    <!-- 🚀 BAGO: DINAMIKONG MGA PANGALAN -->
                                     <div>
                                         <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-6">Prepared By</p>
-                                        <p id="dispPrep" class="text-[11px] font-black uppercase text-slate-800 border-b border-slate-400 pb-1 mb-1 min-h-[20px]">{{ request.user.get_full_name|default:"Purchasing Officer" }}</p>
+                                        <p id="dispPrep" class="text-[11px] font-black uppercase text-slate-800 border-b border-slate-400 pb-1 mb-1 min-h-[20px]">{{ request.user.get_full_name|default:"Warehouse Admin" }}</p>
                                         <p class="text-[8px] font-bold text-slate-500 uppercase">Date: ____________________</p>
                                     </div>
                                     <div>
-                                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-6">Checked By</p>
+                                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-6">Checked / Picked By</p>
                                         <p id="dispCheck" class="text-[11px] font-black uppercase text-slate-800 border-b border-slate-400 pb-1 mb-1 min-h-[20px] text-transparent">.</p>
                                         <p class="text-[8px] font-bold text-slate-500 uppercase">Date: ____________________</p>
                                     </div>
                                     <div>
-                                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-6">Approved By</p>
-                                        <p id="dispAppr" class="text-[11px] font-black uppercase text-slate-800 border-b border-slate-400 pb-1 mb-1 min-h-[20px] text-transparent">.</p>
+                                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-6">Dispatched / Loaded By</p>
+                                        <p id="dispDisp" class="text-[11px] font-black uppercase text-slate-800 border-b border-slate-400 pb-1 mb-1 min-h-[20px] text-transparent">.</p>
                                         <p class="text-[8px] font-bold text-slate-500 uppercase">Date: ____________________</p>
                                     </div>
                                 </div>
@@ -372,9 +358,12 @@
                                 <div id="qr-anchor-bottom-right" class="empty:hidden shrink-0"></div>
                             </div>
                             
-                            <div class="text-center mt-8">
+                            <div class="text-center mt-8 flex justify-between items-center px-4 col-price">
                                 <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
-                                    Asia Integrated Machine Inc. &bull; Official WMS Document &bull; Printed: {% now "M d, Y h:i A" %}
+                                    Asia Integrated Machine Inc. &bull; Official Dispatch Manifest &bull; Printed: {% now "M d, Y h:i A" %}
+                                </p>
+                                <p class="text-[10px] font-black uppercase tracking-widest text-slate-600">
+                                    Overall Grand Total: <span class="text-indigo-700 text-sm ml-1">₱ {{ overall_total|floatformat:2 }}</span>
                                 </p>
                             </div>
                         </td>
@@ -382,15 +371,14 @@
                 </tfoot>
             </table>
 
-            <!-- TERMS AND CONDITIONS PAGE -->
+            <!-- TERMS AND CONDITIONS PAGE FOR DELIVERY -->
             <div class="tc-page page-break-active pt-10">
-                <h3 class="text-sm font-black theme-text uppercase tracking-widest mb-4 border-b-2 theme-border pb-2">Terms & Conditions of Purchase</h3>
+                <h3 class="text-sm font-black theme-text uppercase tracking-widest mb-4 border-b-2 theme-border pb-2">Delivery Terms & Guidelines</h3>
                 <ol class="list-decimal pl-4 space-y-4 text-[10px] text-slate-700 font-medium leading-relaxed pr-8">
-                    <li><strong class="text-slate-900">Delivery Schedule:</strong> All deliveries must be made strictly between 8:00 AM and 4:00 PM, Monday to Friday. Deliveries outside these hours will be rejected unless authorized in writing.</li>
-                    <li><strong class="text-slate-900">Quality Assurance:</strong> Asia Integrated Machine Inc. reserves the right to reject any item that does not meet the specified quality standards. Rejected items must be replaced or refunded within 7 working days at the supplier's expense.</li>
-                    <li><strong class="text-slate-900">Required Documents:</strong> The supplier must provide an original Delivery Receipt (DR) and Sales Invoice (SI) matching the quantities and prices stated in this Purchase Order.</li>
-                    <li><strong class="text-slate-900">Payment Terms:</strong> Processing of payment shall commence only upon the complete delivery of goods and submission of all required correct documents.</li>
-                    <li><strong class="text-slate-900">Penalties:</strong> A penalty of 1% of the total PO value per day of delay shall be imposed for late deliveries without prior approved extension.</li>
+                    <li><strong class="text-slate-900">Verification of Goods:</strong> The receiving party must inspect all delivered items upon arrival. Any discrepancies in quantity or visible damages must be reported immediately to the driver/dispatcher and noted on the official delivery receipt before signing.</li>
+                    <li><strong class="text-slate-900">Signatures & e-POD:</strong> The signature of the receiver on this manifest or the accompanying Delivery Receipt (DR) acknowledges that the items were received in good condition. Once signed, the system will trigger an Electronic Proof of Delivery (e-POD) to the customer's registered email.</li>
+                    <li><strong class="text-slate-900">Refusal of Delivery:</strong> If the customer refuses to accept the delivery without a valid reason (e.g., incorrect item or damaged goods), return freight charges may be billed to the customer's account.</li>
+                    <li><strong class="text-slate-900">Unloading Limitations:</strong> The delivery personnel are responsible for unloading the goods at the designated receiving dock or ground floor area only. Specialized handling or moving items to upper floors requires prior arrangement.</li>
                 </ol>
             </div>
 
@@ -402,21 +390,14 @@
 
         function hexToRgb(hex) {
             var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-            return result ? {
-                r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16)
-            } : null;
+            return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null;
         }
 
         function updateBrandColor() {
             const color = document.getElementById('colorPicker').value;
             const rgb = hexToRgb(color);
-            
             document.documentElement.style.setProperty('--brand-color', color);
-            
-            if(rgb) {
-                document.documentElement.style.setProperty('--brand-light', `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.08)`);
-            }
-            
+            if(rgb) { document.documentElement.style.setProperty('--brand-light', `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.08)`); }
             document.getElementById('colorHex').innerText = color;
         }
 
@@ -462,7 +443,7 @@
 
         function downloadPDF() {
             const element = document.getElementById('po-document');
-            const opt = { margin: 0.2, filename: 'PO_{{ main_po_no }}.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' } };
+            const opt = { margin: 0.2, filename: 'Manifest_{{ main_po_no }}.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' } };
             html2pdf().set(opt).from(element).save();
         }
         
@@ -482,11 +463,11 @@
         function updateSignatures() {
             const prep = document.getElementById('sigPrepInput').value.trim();
             const check = document.getElementById('sigCheckInput').value.trim();
-            const appr = document.getElementById('sigApprInput').value.trim();
+            const disp = document.getElementById('sigDispInput').value.trim();
 
             const dispPrep = document.getElementById('dispPrep');
             const dispCheck = document.getElementById('dispCheck');
-            const dispAppr = document.getElementById('dispAppr');
+            const dispDisp = document.getElementById('dispDisp');
 
             // Update Prepared By
             dispPrep.innerText = prep || '.';
@@ -498,10 +479,10 @@
             if (check) { dispCheck.classList.remove('text-transparent'); } 
             else { dispCheck.classList.add('text-transparent'); }
 
-            // Update Approved By
-            dispAppr.innerText = appr || '.';
-            if (appr) { dispAppr.classList.remove('text-transparent'); } 
-            else { dispAppr.classList.add('text-transparent'); }
+            // Update Dispatched By
+            dispDisp.innerText = disp || '.';
+            if (disp) { dispDisp.classList.remove('text-transparent'); } 
+            else { dispDisp.classList.add('text-transparent'); }
         }
     </script>
 </body>

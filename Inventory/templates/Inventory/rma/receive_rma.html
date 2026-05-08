@@ -1,0 +1,78 @@
+{% extends 'Inventory/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="p-6 max-w-5xl mx-auto">
+    
+    <div class="mb-6 flex justify-between items-center">
+        <div>
+            <a href="{% url 'rma_dashboard' %}" class="text-xs font-bold text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 uppercase tracking-widest flex items-center gap-1 mb-2 transition-colors"><i data-lucide="arrow-left" class="w-3 h-3"></i> Back to Dashboard</a>
+            <h1 class="text-2xl font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight">Receive RMA Ticket</h1>
+        </div>
+        <div class="text-right bg-rose-50 dark:bg-rose-950/40 border border-rose-200 p-3 rounded-sm shadow-sm">
+            <p class="text-[9px] font-black text-rose-600 dark:text-rose-400 uppercase tracking-widest mb-1 flex items-center gap-1 justify-end"><i data-lucide="shield-alert" class="w-3 h-3"></i> Security Notice</p>
+            <p class="text-[10px] font-medium text-rose-800 dark:text-rose-200 leading-tight">Received items will automatically be routed to<br><strong class="font-black">QUARANTINE ZONE</strong> pending Quality Control.</p>
+        </div>
+    </div>
+
+    <form method="POST" class="bg-white dark:bg-slate-900 rounded shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+        {% csrf_token %}
+        
+        <!-- Header Info -->
+        <div class="p-6 bg-slate-800 dark:bg-slate-800 text-white flex justify-between items-start border-b-[4px] border-indigo-500 dark:border-indigo-400">
+            <div>
+                <p class="text-[10px] text-slate-400 dark:text-slate-300 font-bold uppercase tracking-widest mb-1">RMA Reference Number</p>
+                <h2 class="text-3xl font-black text-indigo-400 dark:text-indigo-300 tracking-tighter">{{ rma.rma_no }}</h2>
+            </div>
+            <div class="text-right">
+                <p class="text-[10px] text-slate-400 dark:text-slate-300 font-bold uppercase tracking-widest mb-1">Original Order Ref.</p>
+                <h3 class="text-xl font-bold">{{ rma.reference_no|default:"N/A" }}</h3>
+                <p class="text-xs text-slate-300 dark:text-slate-400 mt-1 uppercase">{{ rma.get_rma_type_display }}</p>
+            </div>
+        </div>
+
+        <!-- Items Table -->
+        <div class="p-6">
+            <h4 class="text-xs font-black uppercase text-slate-700 dark:text-slate-300 tracking-widest mb-4 border-b border-slate-200 dark:border-slate-700 pb-2">Expected Items for Return</h4>
+            
+            <table class="w-full text-left border-collapse mb-6">
+                <thead>
+                    <tr class="bg-slate-100 dark:bg-slate-800 text-[9px] uppercase tracking-widest text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                        <th class="p-3 border-r border-slate-200 dark:border-slate-700">Item Details</th>
+                        <th class="p-3 border-r border-slate-200 dark:border-slate-700 text-center">Condition / Reason</th>
+                        <th class="p-3 border-r border-slate-200 dark:border-slate-700 text-center">Expected Qty</th>
+                        <th class="p-3 text-center bg-indigo-50 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-600">Actual Rcvd Qty</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in rma.rma_items.all %}
+                    <tr class="border-b border-slate-200 dark:border-slate-700">
+                        <td class="p-3 border-r border-slate-200 dark:border-slate-700">
+                            <p class="font-black text-slate-800 dark:text-slate-100 text-sm">{{ item.item_code }}</p>
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{{ item.description }}</p>
+                        </td>
+                        <td class="p-3 border-r border-slate-200 dark:border-slate-700 text-center">
+                            <span class="inline-block bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded text-[9px] font-bold uppercase">{{ item.condition }}</span>
+                            <p class="text-[10px] text-rose-600 dark:text-rose-400 font-medium mt-1 italic">"{{ item.reason }}"</p>
+                        </td>
+                        <td class="p-3 border-r border-slate-200 dark:border-slate-700 text-center font-black text-slate-800 dark:text-slate-100 text-lg">{{ item.qty_returned }}</td>
+                        <td class="p-3 bg-indigo-50/50 dark:bg-indigo-900/50 border border-indigo-100 dark:border-indigo-600">
+                            <!-- Input para sa Rcvd Qty -->
+                            <input type="number" name="qty_received_{{ item.id }}" value="{{ item.qty_returned }}" min="0" max="{{ item.qty_returned }}" class="w-full text-center border border-indigo-300 dark:border-indigo-600 rounded-sm py-2 text-lg font-black text-indigo-900 dark:text-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400">
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="flex justify-end gap-3 mt-8">
+                <a href="{% url 'rma_dashboard' %}" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-6 py-2.5 rounded-sm text-xs font-black uppercase tracking-widest transition-colors">Cancel</a>
+                <button type="submit" class="bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white dark:text-white px-8 py-2.5 rounded-sm text-xs font-black uppercase tracking-widest shadow-sm flex items-center gap-2 transition-colors">
+                    <i data-lucide="check-circle" class="w-4 h-4"></i> Confirm Receipt to Quarantine
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+<script>lucide.createIcons();</script>
+{% endblock %}

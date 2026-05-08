@@ -103,7 +103,9 @@ from .models import (
     TripExpense,
     FleetDriver,
     PasswordResetOTP,
-    NotificationSubscription
+    NotificationSubscription,
+    RMARequest, RMAItem,
+    CrossDockAllocation
 )
 
 @login_required
@@ -2258,17 +2260,15 @@ def order_dispatch_view(request, batch_id):
 
         try:
             with transaction.atomic():
-                # 🚀 BAGO: Check kung ang napiling Courier ay "In-House Fleet" (Vehicle ID)
                 fleet_vehicle = None
                 transport_name = courier
 
-                if courier.isdigit():  # Kung number, ibig sabihin Vehicle ID galing sa database
+                if courier.isdigit():  
                     try:
                         fleet_vehicle = Vehicle.objects.get(id=int(courier))
                         d_name = fleet_vehicle.assigned_driver.name if fleet_vehicle.assigned_driver else "No Driver"
                         transport_name = f"Fleet: {fleet_vehicle.plate_number} ({d_name})"
                         
-                        # I-update ang status ng sasakyan to In Transit
                         fleet_vehicle.status = 'In Transit'
                         fleet_vehicle.save()
                     except Vehicle.DoesNotExist:
@@ -2282,6 +2282,42 @@ def order_dispatch_view(request, batch_id):
                                 'email': item.customer.email,
                                 'customer_name': item.customer.name
                             }
+
+                # ========================================================
+                # 🚀 THE TARGETED CROSS-DOCK DEDUCTION (BASE SA PLAN)
+                # ========================================================
+                order_ids = items.values_list('id', flat=True)
+                crossdock_plans = CrossDockAllocation.objects.filter(so_item_id__in=order_ids, status='Arrived')
+
+                for plan in crossdock_plans:
+                    qty_to_deduct = plan.allocated_qty 
+                    
+                    staging_tags = MaterialTag.objects.filter(
+                        item_code=plan.po_item.item_code,
+                        location__location_code='CROSS-DOCK-STAGING',
+                        total_pcs__gt=0
+                    ).order_by('arrival_date')
+
+                    for tag in staging_tags:
+                        if qty_to_deduct <= 0: break
+                        
+                        deduct_amount = min(tag.total_pcs, qty_to_deduct)
+                        old_qty = tag.total_pcs
+                        
+                        tag.total_pcs -= deduct_amount
+                        tag.save()
+                        
+                        StockLog.objects.create(
+                            material_tag=tag, action_type='OUT', 
+                            old_qty=old_qty, new_qty=tag.total_pcs, change_qty=-deduct_amount,
+                            user=request.user, notes=f"CROSS-DOCK DISPATCH: Shipped to SO {plan.so_item.order_no} via {transport_name}"
+                        )
+                        
+                        qty_to_deduct -= deduct_amount
+
+                    plan.status = 'Dispatched'
+                    plan.save()
+                # ========================================================
 
                 # Update Order Status
                 items.update(
@@ -2302,14 +2338,12 @@ def order_dispatch_view(request, batch_id):
             for order_no, data in orders_to_email.items():
                 if data['email']:
                     try:
-                        # 🚀 BAGO: Gagamitin natin ang EmailMultiAlternatives para basahin yung magandang HTML design!
                         context = {
                             'order_no': order_no,
                             'courier_name': transport_name,
                             'tracking_number': tracking
                         }
                         
-                        # Siguraduhing tama ang folder path ('Inventory/emails/...')
                         html_content = render_to_string('Inventory/emails/shipping_notification_email.html', context)
                         text_content = strip_tags(html_content)
                         
@@ -2336,15 +2370,12 @@ def order_dispatch_view(request, batch_id):
             messages.error(request, f"System Error: {str(e)}")
             return redirect('order_dispatch', batch_id=batch_id)
 
-    # 🚀 BAGO: Logic para sa Fleet / Car Coding Filtering (GET Request)
-    today_name = datetime.datetime.now().strftime("%A") # Hal: 'Monday'
-    
-    # Kukunin lang yung available
+    # Logic para sa Fleet / Car Coding Filtering (GET Request)
+    today_name = datetime.datetime.now().strftime("%A") 
     available_fleet = Vehicle.objects.filter(status='Available').order_by('vehicle_type')
     
     safe_fleet = []
     for v in available_fleet:
-        # Aalisin sa listahan kung coding siya ngayong araw
         if v.coding_day != today_name:
             safe_fleet.append(v)
 
@@ -2362,7 +2393,7 @@ def order_dispatch_view(request, batch_id):
         'batch_id': batch_id,
         'main_po_no': main_po_no,
         'grouped_orders': grouped_orders,
-        'safe_fleet': safe_fleet, # 🚀 IPASA SA UI
+        'safe_fleet': safe_fleet, 
         'today_name': today_name,
     }
     return render(request, 'Inventory/customer_order/order_dispatch.html', context)
@@ -2554,6 +2585,49 @@ def mark_delivered_batch_view(request, main_po_no):
             messages.error(request, "No shipped orders found for this batch.")
             
     return redirect('order_inquiry')
+
+@login_required
+@require_module_access('CUSTOMER_ORDER')
+def print_so_view(request, main_po_no):
+    # Kunin lahat ng orders na kasama sa batch na ito
+    orders = CustomerOrder.objects.filter(order_no__startswith=main_po_no).order_by('order_no', 'id')
+    
+    if not orders.exists():
+        messages.error(request, f"Order {main_po_no} not found.")
+        return redirect('order_inquiry')
+        
+    # I-group by customer order number para malinis ang resibo
+    grouped_orders = {}
+    overall_total = 0.0
+    
+    for item in orders:
+        if item.order_no not in grouped_orders:
+            grouped_orders[item.order_no] = {
+                'customer': item.customer.name if item.customer else 'Walk-in',
+                'contact_person': getattr(item, 'contact_person', ''),
+                'address': getattr(item, 'delivery_address', ''),
+                'order_date': item.order_date,
+                'delivery_date': getattr(item, 'delivery_date', None),
+                'items': [],
+                'subtotal': 0.0
+            }
+        
+        qty = float(item.quantity or 0)
+        price = float(item.unit_price or 0.0)
+        amount = qty * price
+        item.computed_amount = amount
+        
+        grouped_orders[item.order_no]['items'].append(item)
+        grouped_orders[item.order_no]['subtotal'] += amount
+        overall_total += amount
+
+    context = {
+        'main_po_no': main_po_no,
+        'grouped_orders': grouped_orders,
+        'overall_total': overall_total,
+        'print_date': timezone.now()
+    }
+    return render(request, 'Inventory/customer_order/print_so.html', context)
 
 # Purchase Order Views 
 @login_required
@@ -3216,26 +3290,42 @@ def ri_receive_view(request):
         search_query = request.GET.get('search_po').strip()
         
         try:
-            # 🚀 FIX: Tinanggal natin ang startswith. EXACT MATCH na lang sa batch_id o po_no!
-            # Ibig sabihin, kapag nag-type ka ng GPO-0000, eksaktong buong batch ang kukunin niya.
+            # 🚀 FIX 1: Gumamit ng .distinct() para iwas duplicate records sa database
             po_qs = PurchaseOrder.objects.filter(
                 Q(batch_id__iexact=search_query) | 
                 Q(po_no__iexact=search_query)
-            ).prefetch_related('items')
+            ).prefetch_related('items').distinct()
             
             if po_qs.exists():
                 valid_pos = []
                 all_items = []
+                seen_item_ids = set()
+
                 already_received = True
                 not_approved = True
+                has_crossdock = False
                 
                 # I-filter ang mga valid na i-receive (Approved o Partial)
                 for po in po_qs:
                     if po.ordering_status in ['Approved', 'Partial']:
                         valid_pos.append(po)
-                        all_items.extend(list(po.items.all()))
                         already_received = False
                         not_approved = False
+
+                        for item in po.items.all():
+                            # 🚀 FIX 2: Dito na lang sasalain at ipapasok ang items para hindi madoble!
+                            if item.id not in seen_item_ids:
+                                seen_item_ids.add(item.id)
+                                
+                                crossdock = CrossDockAllocation.objects.filter(po_item=item, status='Pending').first()
+                                if crossdock:
+                                    item.is_crossdock = True
+                                    item.cd_qty = crossdock.allocated_qty
+                                    item.cd_so = crossdock.so_item.order_no
+                                    has_crossdock = True
+                                    
+                                all_items.append(item)
+
                     elif po.ordering_status == 'Received':
                         not_approved = False # Fully received na siya, hindi rejected
                 
@@ -3246,6 +3336,7 @@ def ri_receive_view(request):
                 else:
                     context['valid_pos'] = valid_pos
                     context['po_items'] = all_items
+                    context['has_crossdock'] = has_crossdock
                     context['searched'] = True
                     context['search_ref'] = search_query
                     context['is_batch'] = len(valid_pos) > 1
@@ -3264,10 +3355,9 @@ def ri_receive_view(request):
 
         try:
             with transaction.atomic():
-                # 🚀 FIX: Exact match din dito sa POST para safe na safe ang data saving
                 po_qs = PurchaseOrder.objects.filter(
                     Q(batch_id__iexact=search_ref) | Q(po_no__iexact=search_ref)
-                )
+                ).distinct()
                 
                 total_items_received_across_batch = 0
 
@@ -3275,7 +3365,7 @@ def ri_receive_view(request):
                     user=request.user,
                     action='RECEIVE',
                     module='Receiving',
-                    description=f"Received {total_items_received_across_batch} items for Ref: {search_ref}.",
+                    description=f"Received items for Ref: {search_ref}.",
                     request=request
                 )
 
@@ -3287,7 +3377,7 @@ def ri_receive_view(request):
                     # I-loop ang items sa loob ng bawat PO
                     for item in po_header.items.all():
                         qty_received_str = request.POST.get(f'qty_received_{item.id}')
-                        inspection_status = request.POST.get(f'inspection_{item.id}') # 🚀 BAGO: Kunin ang dropdown value
+                        inspection_status = request.POST.get(f'inspection_{item.id}') 
                         
                         if qty_received_str:
                             qty_received = int(qty_received_str)
@@ -3296,7 +3386,6 @@ def ri_receive_view(request):
                                 if hasattr(item, 'qty_received'):
                                     item.qty_received = (item.qty_received or 0) + qty_received
                                 
-                                # 🚀 BAGO: I-save ang Inspection Status papunta sa Database
                                 if hasattr(item, 'status') and inspection_status:
                                     item.status = inspection_status
 
@@ -3318,10 +3407,7 @@ def ri_receive_view(request):
                         po_header.save()
 
                 if total_items_received_across_batch > 0:
-                    # Optional: log_system_action(...)
-                    
                     messages.success(request, f"Success! {total_items_received_across_batch} items from '{search_ref}' have been marked as received.")
-                    # 🚀 Redirect sa material tagging gamit ang search_ref (GPO-0000)
                     return redirect(f"{reverse('material_tag')}?po_no={search_ref}") 
                 else:
                     messages.warning(request, "No items were checked for receiving. Please ensure quantity is greater than zero.")
@@ -3575,11 +3661,8 @@ def ri_material_tag_view(request):
                         item_code=item_codes[i],
                         description=descriptions[i], 
                         lot_no=lot_nos[i].upper(), 
-                        
                         revision=revisions[i] if i < len(revisions) else '',
-                        # ⚠️ Pinalitan ko ito pabalik sa 'invoice_no' (Base sa MaterialTag model mo)
                         invoice_no=invoices[i] if i < len(invoices) else '', 
-                        
                         total_pcs=int(float(total_pcs_list[i])), 
                         packing_type=packing_units[i] if i < len(packing_units) else 'PCS',
                         container_count=containers, 
@@ -3597,6 +3680,43 @@ def ri_material_tag_view(request):
                         user=request.user if request.user.is_authenticated else None,
                         notes=f"Initial Registration ({containers} Boxes) via {po_nos[i]}" 
                     )
+
+                    allocation = CrossDockAllocation.objects.filter(
+                        po_item__purchase_order=po_ref,
+                        po_item__item_code=item_codes[i],
+                        status='Pending'
+                    ).first()
+
+                    if allocation:
+                        # A. Gumawa o Kunin ang Staging Area Location
+                        staging_loc, _ = LocationMaster.objects.get_or_create(
+                            location_code='CROSS-DOCK-STAGING',
+                            defaults={'warehouse': 'DISPATCH AREA', 'zone': 'STAGING'}
+                        )
+                        tag.location = staging_loc
+                        tag.remarks = f"CROSS-DOCKED for SO: {allocation.so_item.order_no}"
+                        tag.save()
+
+                        # B. Auto-pick para sa Customer Order (Skip Smart Picking)
+                        # Kukunin lang natin yung kailangan, kung sobra ang dumating, yung kailangan lang ang i-cross-dock
+                        qty_to_crossdock = min(tag.total_pcs, allocation.allocated_qty)
+                        
+                        so_item = allocation.so_item
+                        so_item.picked_qty += qty_to_crossdock
+                        so_item.save()
+
+                        # Check kung kumpleto na ang buong order para maging 'Processing' (Ready to ship)
+                        so_siblings = CustomerOrder.objects.filter(order_no=so_item.order_no)
+                        if all(sib.picked_qty >= sib.quantity for sib in so_siblings):
+                            so_siblings.update(order_status='Processing')
+
+                        # C. Update Allocation Status
+                        allocation.status = 'Arrived'
+                        allocation.save()
+
+                        # D. I-log ang galaw
+                        log_system_action(request.user, 'UPDATE', 'Cross-Docking', f"Successfully Cross-Docked {qty_to_crossdock}pcs of {tag.item_code} to SO {so_item.order_no}.", request)
+
                     new_tag_ids.append(str(tag.id))
 
             if new_tag_ids:
@@ -3719,17 +3839,22 @@ def get_po_for_tag(request):
                 supplier_name = str(po_header.supplier)
                 
             for item in po_header.items.all():
+                crossdock = CrossDockAllocation.objects.filter(po_item=item, status='Pending').first()
+                is_cd = True if crossdock else False
+                cd_qty = crossdock.allocated_qty if crossdock else 0
+
                 data_list.append({
                     'item_code': item.item_code,
                     'description': item.description if item.description else "No Description",
                     'po_no': po_header.po_no,
                     'supplier': supplier_name,
-                    # Kung may qty_received, yun ang gamitin para sa tag. Kung wala, fallback sa ordered qty
                     'qty': getattr(item, 'qty_received', item.qty),  
                     'arrival_date': timezone.now().strftime('%Y-%m-%d'),
                     'revision': "-",
                     'invoice': "-",
-                    'inspection_status': getattr(item, 'status', 'Pending')
+                    'inspection_status': getattr(item, 'status', 'Pending'),
+                    'is_crossdock': is_cd,    
+                    'crossdock_qty': cd_qty
                 })
             
         return JsonResponse({'success': True, 'items': data_list})
@@ -5959,6 +6084,34 @@ def analytics_view(request):
     smart_reorder_list.sort(key=lambda x: x['dos'])
     smart_reorder_list = smart_reorder_list[:5] # Kunin ang top 5 pinaka-urgent
 
+    # 1. Fleet & Logistics
+    try:
+        fleet_in_transit = Vehicle.objects.filter(status='In Transit').count()
+        fleet_available = Vehicle.objects.filter(status='Available').count()
+    except Exception:
+        fleet_in_transit, fleet_available = 0, 0
+
+    # 2. Reverse Logistics (RMA)
+    try:
+        active_rma_count = RMARequest.objects.filter(status__in=['Pending', 'Received', 'Inspected']).count()
+    except Exception:
+        active_rma_count = 0
+
+    # 3. Work-In-Progress (Assembly)
+    try:
+        building_machines_count = MachineAsset.objects.filter(status='Building').count()
+    except Exception:
+        building_machines_count = 0
+
+    # 4. Inbound Expectation (Paparating ngayon)
+    try:
+        incoming_today_count = PurchaseOrder.objects.filter(
+            delivery_date=today, 
+            ordering_status__in=['Approved', 'Shipped', 'In Transit']
+        ).count()
+    except Exception:
+        incoming_today_count = 0
+
     context = {
         'total_skus': total_skus,
         'pending_shipments': pending_shipments,
@@ -5988,6 +6141,11 @@ def analytics_view(request):
         'supp_labels': json.dumps(supp_labels),
         'supp_order_data': json.dumps(supp_order_data),
         'smart_reorder_list': smart_reorder_list,
+        'fleet_in_transit': fleet_in_transit,
+        'fleet_available': fleet_available,
+        'active_rma_count': active_rma_count,
+        'building_machines_count': building_machines_count,
+        'incoming_today_count': incoming_today_count,
     }
     
     return render(request, 'Inventory/analytics_board.html', context)
@@ -6161,45 +6319,133 @@ def location_master_view(request):
 def print_tag_view(request, tag_id):
     # Kukunin yung mismong sticker data na kaka-save lang
     tag = get_object_or_404(MaterialTag, id=tag_id)
-    return render(request, 'Inventory/print_tag.html', {'tag': tag})
+    return render(request, 'Inventory/tools/print_tag.html', {'tag': tag})
 
 # 3. I-UPDATE ANG RECEIVING VIEW MO KANINA
 @login_required
-@require_module_access('SYS_CONFIG')
+@require_module_access('RECEIVING')
 def receive_item_scan_view(request):
+    # Saluhin ang barcode galing sa Global Scanner
+    scanned_barcode = request.GET.get('barcode', '').strip()
+
     if request.method == 'POST':
         item_code = request.POST.get('item_code')
-        loc_code = request.POST.get('location_code')
-        qty = request.POST.get('qty')
+        loc_code = request.POST.get('location_code') # Ito sana ang normal na rack
+        qty = int(request.POST.get('qty', 0))
         lot_no = request.POST.get('lot_no')
 
-        location, _ = LocationMaster.objects.get_or_create(location_code=loc_code)
-        
-        # Pagka-save sa Database...
-        new_tag = MaterialTag.objects.create(
-            item_code=item_code,
-            description="Item Received via Scanner", # Pinalitan ko para madali mong ma-identify
-            total_pcs=qty,
-            lot_no=lot_no,
-            location=location
-        )
+        try:
+            with transaction.atomic():
+                # 🚀 PHASE 3 MAGIC: I-check kung may naghihintay na Cross-Dock para sa item na ito!
+                allocation = CrossDockAllocation.objects.filter(
+                    po_item__item_code=item_code, 
+                    status='Pending'
+                ).first()
 
-        log_system_action(
-            user=request.user, 
-            action='CREATE', 
-            module='Scanner Operations', 
-            description=f"Scanned and received item {item_code} (Lot: {lot_no}) into {loc_code}.", 
-            request=request
-        )
+                if allocation:
+                    allocation.status = 'Arrived'
+                    allocation.save()
 
-        # Redirect papunta sa Print Page gamit ang ID ng bagong tag
-        return redirect('print_tag', tag_id=new_tag.id)
+                    # A. Send Email to Customer
+                    if allocation.so_item.customer.email:
+                        subject = f"📦 Arrival Notice: Your Item is Ready for Dispatch!"
+                        msg = f"Good news {allocation.so_item.customer.name}! Your ordered item ({item_code}) has arrived at our dock and is currently being loaded for delivery (Order: {allocation.so_item.order_no})."
+                        send_mail(subject, msg, settings.DEFAULT_FROM_EMAIL, [allocation.so_item.customer.email])
 
-    # Pansinin: Pinalitan ko rin ang pangalan ng HTML file na tatawagin niya
-    return render(request, 'Inventory/receive_item_scan.html', {
+                    # B. Create Fleet Notification
+                    notify_web_users_for_event(
+                        event_name='NEW_DELIVERY_REQ',
+                        title="🚨 CROSS-DOCK PICKUP READY",
+                        message=f"Item {item_code} arrived at CROSS-DOCK-STAGING. Ready for SO {allocation.so_item.order_no}.",
+                        level='WARNING',
+                        link='/fleet-dashboard/'
+                    )
+
+                    # C. Redirect sa SPECIAL CROSS-DOCK STICKER (Feature 1)
+                    return redirect('print_crossdock_label', alloc_id=allocation.id)
+                    
+                    # 1. Gawa tayo ng special zone para sa Cross-Dock
+                    cross_loc, _ = LocationMaster.objects.get_or_create(
+                        location_code='CROSS-DOCK-STAGING',
+                        defaults={'warehouse': 'DISPATCH', 'zone': 'CROSS-DOCK', 'description': 'Direct to dispatch area'}
+                    )
+                    
+                    # 2. Computin kung ilan ang i-co-cross-dock vs ilan ang itatago
+                    qty_to_crossdock = min(qty, allocation.allocated_qty)
+                    qty_remaining = qty - qty_to_crossdock
+
+                    # 3. Gawa ng Material Tag para sa Cross-Dock (Papunta sa Dispatch)
+                    new_tag = MaterialTag.objects.create(
+                        item_code=item_code,
+                        description=f"Cross-Docked for SO: {allocation.so_item.order_no}",
+                        total_pcs=qty_to_crossdock,
+                        lot_no=lot_no,
+                        location=cross_loc
+                    )
+
+                    # 4. Update natin yung status ng allocation para alam sa Dashboard na ready na
+                    allocation.status = 'Arrived'
+                    allocation.save()
+
+                    log_system_action(
+                        user=request.user, action='UPDATE', module='Cross-Docking', 
+                        description=f"Intercepted {qty_to_crossdock}pcs of {item_code} for direct dispatch to SO {allocation.so_item.order_no}.", 
+                        request=request
+                    )
+
+                    # 5. Kung may natira sa dumating, ituloy ang put-away sa normal rack
+                    if qty_remaining > 0:
+                        normal_loc, _ = LocationMaster.objects.get_or_create(location_code=loc_code)
+                        MaterialTag.objects.create(
+                            item_code=item_code,
+                            description="Excess from Cross-Dock Receipt",
+                            total_pcs=qty_remaining,
+                            lot_no=f"{lot_no}-EXCESS" if lot_no else "",
+                            location=normal_loc
+                        )
+                        # 🚨 Alert message kapag hati
+                        messages.warning(request, f"🚨 CROSS-DOCK ALERT: Move {qty_to_crossdock}pcs directly to Dispatch Staging for Order {allocation.so_item.order_no}. The remaining {qty_remaining}pcs goes to {loc_code}.")
+                    else:
+                        # 🚨 Alert message kapag sakto
+                        messages.warning(request, f"🚨 CROSS-DOCK ALERT: DO NOT PUT AWAY! Move all {qty_to_crossdock}pcs directly to Dispatch Staging for Order {allocation.so_item.order_no}.")
+
+                    # Redirect pa rin sa print label para maidikit sa box
+                    return redirect('print_tag', tag_id=new_tag.id)
+
+                else:
+                    # ==========================================
+                    # NORMAL RECEIVING PROCESS (Kung walang Cross-Dock)
+                    # ==========================================
+                    location, _ = LocationMaster.objects.get_or_create(location_code=loc_code)
+                    
+                    new_tag = MaterialTag.objects.create(
+                        item_code=item_code,
+                        description="Item Received via Scanner",
+                        total_pcs=qty,
+                        lot_no=lot_no,
+                        location=location
+                    )
+
+                    log_system_action(
+                        user=request.user, action='CREATE', module='Scanner Operations', 
+                        description=f"Scanned and received item {item_code} (Lot: {lot_no}) into {loc_code}.", 
+                        request=request
+                    )
+
+                    messages.success(request, f"Success! Received {qty} pcs of {item_code} into {loc_code}.")
+                    return redirect('print_tag', tag_id=new_tag.id)
+
+        except Exception as e:
+            messages.error(request, f"System Error during receiving: {str(e)}")
+            return redirect('receive_item_scan')
+
+    context = {
         'locations': LocationMaster.objects.all(),
-        'items': ItemMaster.objects.all()
-    })
+        'items': Item.objects.all(), 
+        'scanned_barcode': scanned_barcode 
+    }
+    
+    return render(request, 'Inventory/tools/receive_item_scan.html', context)
 
 @login_required(login_url='login')
 def stock_out_item(request, item_id):
@@ -6859,8 +7105,622 @@ def customer_scorecard_view(request):
     return render(request, 'Inventory/tools/customer_scorecard.html', {
         'scorecard': scorecard_data,
     })
-    
 
+@login_required
+def create_rma_view(request):
+    """ View para mag-create ng RMA o Return Ticket """
+    
+    if request.method == 'POST':
+        rma_type = request.POST.get('rma_type') # 'CUSTOMER_RETURN' o 'SUPPLIER_RETURN'
+        reference_no = request.POST.get('reference_no', '').strip()
+        remarks = request.POST.get('remarks', '').strip()
+        
+        # Lists galing sa dynamic table ng form
+        item_codes = request.POST.getlist('item_code[]')
+        descriptions = request.POST.getlist('description[]')
+        qtys = request.POST.getlist('qty_returned[]')
+        reasons = request.POST.getlist('reason[]')
+        conditions = request.POST.getlist('condition[]')
+
+        try:
+            with transaction.atomic():
+                # 1. Generate unique RMA Number (RMA-20260506-001)
+                today_str = timezone.now().strftime('%Y%m%d')
+                prefix = f"RMA-{today_str}-"
+                last_rma = RMARequest.objects.filter(rma_no__startswith=prefix).order_by('-rma_no').first()
+                new_seq = str(int(last_rma.rma_no.split('-')[-1]) + 1).zfill(3) if last_rma else "001"
+                new_rma_no = f"{prefix}{new_seq}"
+
+                # 2. Setup Headers base sa Type
+                customer_obj = None
+                supplier_obj = None
+                
+                # Dynamic linking: Hanapin ang customer o supplier base sa reference order
+                if rma_type == 'CUSTOMER_RETURN':
+                    so = CustomerOrder.objects.filter(order_no=reference_no).first()
+                    if so: customer_obj = so.customer
+                elif rma_type == 'SUPPLIER_RETURN':
+                    po = PurchaseOrder.objects.filter(po_no=reference_no).first()
+                    if po: supplier_obj = po.supplier
+
+                # 3. Create the Header
+                new_rma = RMARequest.objects.create(
+                    rma_no=new_rma_no,
+                    rma_type=rma_type,
+                    reference_no=reference_no,
+                    customer=customer_obj,
+                    supplier=supplier_obj,
+                    status='Pending',
+                    remarks=remarks,
+                    created_by=request.user
+                )
+                unit_prices = request.POST.getlist('unit_price[]')
+
+                # 4. Create the Items
+                items_saved = 0
+                for i in range(len(item_codes)):
+                    qty = int(qtys[i]) if i < len(qtys) and qtys[i] else 0
+                    if qty > 0 and item_codes[i]:
+
+                        price = float(unit_prices[i]) if i < len(unit_prices) and unit_prices[i] else 0.0
+                        total_refund = price * qty
+
+                        RMAItem.objects.create(
+                            rma_request=new_rma,
+                            item_code=item_codes[i],
+                            description=descriptions[i] if i < len(descriptions) else '',
+                            qty_returned=qty,
+                            unit_price=price,             
+                            refund_amount=total_refund,
+                            reason=reasons[i] if i < len(reasons) else 'Unknown',
+                            condition=conditions[i] if i < len(conditions) else 'Defective',
+                            disposition='Pending' # Pending pa QC decision
+                        )
+                        items_saved += 1
+                
+                if items_saved == 0:
+                    raise Exception("No valid items to return. Quantities must be greater than 0.")
+
+                # 5. Audit Log
+                log_system_action(
+                    request.user, 'CREATE', 'Reverse Logistics', 
+                    f"Created {rma_type} Ticket: {new_rma_no} for Order {reference_no}", 
+                    request
+                )
+
+                messages.success(request, f"Success! RMA Ticket {new_rma_no} has been created and is awaiting receiving.")
+                return redirect('rma_dashboard') # Gagawa tayo ng dashboard para dito next!
+
+        except Exception as e:
+            messages.error(request, f"Error creating RMA: {str(e)}")
+            return redirect('create_rma') # Babalik sa form
+
+    # GET Request: Prepare data for dropdowns
+    context = {
+        'customers': Contact.objects.filter(contact_type='Customer', is_active=True).order_by('name'),
+        'suppliers': Supplier.objects.filter(is_active=True).order_by('name'),
+        'items': Item.objects.all().order_by('item_code')
+    }
+    return render(request, 'Inventory/rma/create_rma.html', context)
+
+@login_required
+@require_module_access('RECEIVING') # Pwede mo palitan ng RMA_MODULE kung mayroon ka
+def rma_dashboard_view(request):
+    """ View para makita lahat ng RMA Tickets """
+    search_query = request.GET.get('q', '').strip()
+    status_filter = request.GET.get('status', '').strip()
+    
+    rmas = RMARequest.objects.all().order_by('-created_at')
+    
+    if search_query:
+        rmas = rmas.filter(
+            Q(rma_no__icontains=search_query) | 
+            Q(reference_no__icontains=search_query) |
+            Q(customer__name__icontains=search_query) |
+            Q(supplier__name__icontains=search_query)
+        )
+        
+    if status_filter:
+        rmas = rmas.filter(status=status_filter)
+
+    paginator = Paginator(rmas, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'rmas': page_obj,
+        'search_query': search_query,
+        'status_filter': status_filter
+    }
+    return render(request, 'Inventory/rma/rma_dashboard.html', context)
+
+@login_required
+@require_module_access('RECEIVING')
+def receive_rma_view(request, rma_id):
+    """ View para tanggapin ang RMA item at ilagay sa Quarantine """
+    rma = get_object_or_404(RMARequest, id=rma_id)
+    
+    # Bawal na i-receive ulit kung received o closed na
+    if rma.status in ['Received', 'Inspected', 'Resolved', 'Cancelled']:
+        messages.warning(request, f"RMA {rma.rma_no} is already {rma.status}.")
+        return redirect('rma_dashboard')
+
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                # 1. Siguraduhing may QUARANTINE ZONE tayo sa system
+                quarantine_loc, _ = LocationMaster.objects.get_or_create(
+                    location_code='QUARANTINE',
+                    defaults={
+                        'warehouse': 'MAIN WAREHOUSE',
+                        'zone': 'RMA ZONE',
+                        'zone_type': 'Isolation',
+                        'description': 'Storage for returned/defective items pending QC'
+                    }
+                )
+
+                items_received = 0
+                
+                # 2. I-loop ang mga items na binalik
+                for rma_item in rma.rma_items.all():
+                    actual_qty_str = request.POST.get(f'qty_received_{rma_item.id}')
+                    if actual_qty_str:
+                        actual_qty = int(actual_qty_str)
+                        
+                        if actual_qty > 0:
+                            # 3. Gawa ng Material Tag pero NAKA-KULONG SA QUARANTINE!
+                            new_lot_no = f"RMA-{timezone.now().strftime('%y%m%d%H%M')}-{rma_item.id}"
+                            
+                            new_tag = MaterialTag.objects.create(
+                                item_code=rma_item.item_code,
+                                description=rma_item.description,
+                                lot_no=new_lot_no,
+                                total_pcs=actual_qty,
+                                location=quarantine_loc,
+                                inspection_status='Pending', # KAKASAPIT LANG, NEED PA I-QC
+                                remarks=f"Returned via {rma.rma_no}. Reason: {rma_item.reason}"
+                            )
+                            
+                            # 4. I-log ang pagpasok ng inventory (RMA_IN)
+                            StockLog.objects.create(
+                                material_tag=new_tag,
+                                action_type='REG', # Registration ng stock pabalik
+                                old_qty=0,
+                                new_qty=actual_qty,
+                                change_qty=actual_qty,
+                                user=request.user,
+                                notes=f"RMA INBOUND: Received into QUARANTINE for {rma.rma_no}"
+                            )
+
+                            # 5. I-link ang tag pabalik sa RMA Item para mabilis ma-track ng QC
+                            rma_item.material_tag = new_tag
+                            rma_item.save()
+                            items_received += 1
+
+                if items_received > 0:
+                    rma.status = 'Received' # Handa na para i-QC
+                    rma.save()
+                    
+                    log_system_action(
+                        request.user, 'UPDATE', 'Reverse Logistics', 
+                        f"Received {items_received} items for {rma.rma_no} into QUARANTINE.", 
+                        request
+                    )
+                    
+                    messages.success(request, f"Success! Items for {rma.rma_no} safely received into Quarantine Zone.")
+                    return redirect('rma_dashboard')
+                else:
+                    messages.error(request, "Please input a valid received quantity greater than 0.")
+                    
+        except Exception as e:
+            messages.error(request, f"System Error: {str(e)}")
+
+    return render(request, 'Inventory/rma/receive_rma.html', {'rma': rma})
+
+@login_required
+@require_module_access('RECEIVING') # Pwede ring 'QC_INSPECTION' kung mayroon ka
+def rma_disposition_view(request, rma_id):
+    rma = get_object_or_404(RMARequest, id=rma_id)
+
+    # Bawal na i-QC kung closed na
+    if rma.status == 'Resolved':
+        messages.warning(request, f"RMA {rma.rma_no} is already resolved and closed.")
+        return redirect('rma_dashboard')
+
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                items_processed = 0
+                all_resolved = True
+
+                for rma_item in rma.rma_items.all():
+                    # 1. Kukunin natin parehas ang Physical at Financial decisions galing sa HTML form
+                    disposition = request.POST.get(f'disposition_{rma_item.id}')
+                    financial_res = request.POST.get(f'financial_resolution_{rma_item.id}') # 🚀 BAGO: Hinugot ang pera/replacement decision
+                    remarks = request.POST.get(f'remarks_{rma_item.id}')
+                    
+                    if disposition and disposition != 'Pending':
+                        tag = rma_item.material_tag
+                        
+                        if not tag:
+                            continue # Skip kung walang naka-link na tag
+
+                        old_qty = tag.total_pcs
+
+                        # 🟢 DECISION 1: RESTOCK (Ibabalik sa benta)
+                        if disposition == 'Restock':
+                            loc_code = request.POST.get(f'restock_loc_{rma_item.id}')
+                            new_loc = LocationMaster.objects.filter(location_code=loc_code).first() if loc_code else None
+                            
+                            tag.location = new_loc
+                            tag.inspection_status = 'Passed'
+                            tag.save()
+
+                            StockLog.objects.create(
+                                material_tag=tag, action_type='MOVE',
+                                old_qty=old_qty, new_qty=old_qty, change_qty=0,
+                                user=request.user, notes=f"RMA RESTOCK: Moved from QUARANTINE to {new_loc.location_code if new_loc else 'UNASSIGNED'}. Notes: {remarks}"
+                            )
+
+                        # 🔴 DECISION 2: SCRAP (Itatapon/Basag)
+                        elif disposition == 'Scrap':
+                            tag.total_pcs = 0
+                            tag.inspection_status = 'Failed'
+                            tag.save()
+
+                            StockLog.objects.create(
+                                material_tag=tag, action_type='OUT',
+                                old_qty=old_qty, new_qty=0, change_qty=-old_qty,
+                                user=request.user, notes=f"RMA SCRAP: Disposed {old_qty}pcs. Reason: {remarks}"
+                            )
+
+                        # 🟠 DECISION 3: RTV (Ipadadala pabalik sa Supplier)
+                        elif disposition == 'RTV':
+                            rtv_loc, _ = LocationMaster.objects.get_or_create(
+                                location_code='RTV-STAGING', 
+                                defaults={'warehouse': 'OUTBOUND', 'zone': 'RTV', 'description': 'Return to Vendor Staging'}
+                            )
+                            tag.location = rtv_loc
+                            tag.inspection_status = 'Failed'
+                            tag.save()
+
+                            StockLog.objects.create(
+                                material_tag=tag, action_type='MOVE',
+                                old_qty=old_qty, new_qty=old_qty, change_qty=0,
+                                user=request.user, notes=f"RMA RTV: Staged for Supplier Return. Notes: {remarks}"
+                            )
+
+                        # 🚀🚀🚀 FEATURE 3: THE AUTO-REPLACEMENT SYNERGY 🚀🚀🚀
+                        if financial_res and financial_res != 'Pending':
+                            rma_item.financial_resolution = financial_res
+                            
+                            # Kapag pinili ng QA na palitan ang item ng customer:
+                            if financial_res == 'Replace':
+                                
+                                # Hahanap ang system ng pinakamalapit na paparating na PO galing Supplier
+                                incoming_po = PurchaseOrderItem.objects.filter(
+                                    item_code=rma_item.item_code, 
+                                    purchase_order__ordering_status__in=['Approved', 'Shipped', 'In Transit']
+                                ).first()
+
+                                if incoming_po:
+                                    # Gagawa agad ng Cross-Dock bridge!
+                                    CrossDockAllocation.objects.create(
+                                        po_item=incoming_po,
+                                        so_item=None, # Walang SO dahil papunta ito sa RMA Replacement
+                                        rma_source=rma_item, # Naka-link sa RMA para trackable
+                                        allocated_qty=rma_item.qty_returned,
+                                        status='Pending',
+                                        remarks=f"RMA REPLACEMENT for Ticket {rma.rma_no}"
+                                    )
+                                    messages.info(request, f"Replacement scheduled for {rma_item.item_code}! It will be automatically intercepted from PO {incoming_po.purchase_order.po_no} once it arrives.")
+                                else:
+                                    # Kung walang paparating, aalertuhin ang QA
+                                    messages.warning(request, f"No incoming PO found for {rma_item.item_code}. Please manually coordinate with the Purchasing Department to buy a replacement.")
+
+                        # Update ang item status sa RMA Ticket (PHYSICAL)
+                        rma_item.disposition = disposition
+                        rma_item.save()
+                        items_processed += 1
+                        
+                    # Kung may isa mang naiwang 'Pending' (kahit sa Physical o Finance), hindi pa resolved ang buong ticket
+                    if rma_item.disposition == 'Pending' or rma_item.financial_resolution == 'Pending':
+                        all_resolved = False
+
+                if items_processed > 0:
+                    rma.status = 'Resolved' if all_resolved else 'Inspected'
+                    rma.save()
+
+                    log_system_action(
+                        request.user, 'UPDATE', 'Reverse Logistics', 
+                        f"Processed QC Disposition for {rma.rma_no}. ({items_processed} items evaluated).", 
+                        request
+                    )
+                    
+                    messages.success(request, f"Success! Applied QC Disposition for {items_processed} items in {rma.rma_no}.")
+                    return redirect('rma_dashboard')
+                else:
+                    messages.warning(request, "No disposition changes were made.")
+
+        except Exception as e:
+            messages.error(request, f"System Error: {str(e)}")
+
+    # GET Request: Prepare locations for the Restock dropdown
+    locations = LocationMaster.objects.all().order_by('warehouse', 'zone', 'location_code')
+    
+    return render(request, 'Inventory/rma/rma_disposition.html', {
+        'rma': rma, 
+        'locations': locations
+    })
+
+@login_required
+@require_module_access('RECEIVING')
+def print_rma_gate_pass_view(request, rma_id):
+    """ View para sa pag-print ng RMA Gate Pass para sa Guard """
+    rma = get_object_or_404(RMARequest, id=rma_id)
+    return render(request, 'Inventory/rma/rma_gate_pass_print.html', {'rma': rma, 'now': timezone.now()})
+
+@login_required
+def api_fetch_order_details(request):
+    """ AJAX Endpoint para sa Auto-Fetch ng Items """
+    rma_type = request.GET.get('type')
+    ref_no = request.GET.get('ref', '').strip()
+    
+    if not ref_no or not rma_type:
+        return JsonResponse({'success': False, 'error': 'Missing parameters'})
+
+    items_data = []
+    try:
+        if rma_type == 'CUSTOMER_RETURN':
+            # 🚀 FIX: Pinalawak natin ang search! 
+            # Gagamit na tayo ng icontains para kahit putol or mali ang case, makikita niya.
+            # Isinama na rin natin ang cust_po_no sa hahanapin ng system!
+            orders = CustomerOrder.objects.filter(
+                Q(order_no__icontains=ref_no) | 
+                Q(batch_id__icontains=ref_no) |
+                Q(cust_po_no__icontains=ref_no)
+            )
+            
+            for o in orders:
+                items_data.append({
+                    'item_code': o.item_code,
+                    'description': o.description or 'No Description',
+                    'qty_bought': o.quantity,
+                    'unit_price': float(o.unit_price or 0.00)
+                })
+                
+        elif rma_type == 'SUPPLIER_RETURN':
+            # 🚀 FIX: Same logic para sa Supplier Returns (RTV)
+            pos = PurchaseOrder.objects.filter(
+                Q(po_no__icontains=ref_no) | 
+                Q(batch_id__icontains=ref_no)
+            )
+            for po in pos:
+                for line in po.items.all():
+                    items_data.append({
+                        'item_code': line.item_code,
+                        'description': line.description or 'No Description',
+                        'qty_bought': line.qty,
+                        'unit_price': float(line.unit_price or 0.00)
+                    })
+
+        if items_data:
+            return JsonResponse({'success': True, 'items': items_data})
+        else:
+            # Uppercase error format para consistent sa red box UI mo
+            return JsonResponse({'success': False, 'error': f'REFERENCE NUMBER "{ref_no}" NOT FOUND OR HAS NO ITEMS.'})
+            
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@login_required
+@require_module_access('INV_PROCESSING') # O gawa ka ng CROSS_DOCK na access
+def cross_dock_planning_view(request):
+    # 1. Kung may isusubmit na pag-match:
+    if request.method == 'POST':
+        po_item_id = request.POST.get('po_item_id')
+        so_item_id = request.POST.get('so_item_id')
+        cross_qty = request.POST.get('allocated_qty')
+        
+        try:
+            with transaction.atomic():
+                po_line = PurchaseOrderItem.objects.get(id=po_item_id)
+                so_line = CustomerOrder.objects.get(id=so_item_id)
+                qty = int(cross_qty)
+
+                # Validation: Parehas ba sila ng Item Code?
+                if po_line.item_code != so_line.item_code:
+                    messages.error(request, "Error: Item Codes do not match for cross-docking!")
+                    return redirect('cross_dock_planning')
+                
+                # Validation: Sapat ba ang dami ng paparating?
+                if qty <= 0 or qty > po_line.qty:
+                    messages.error(request, f"Error: Invalid quantity. Incoming PO only has {po_line.qty} pcs.")
+                    return redirect('cross_dock_planning')
+
+                # Create the Bridge!
+                CrossDockAllocation.objects.create(
+                    po_item=po_line,
+                    so_item=so_line,
+                    allocated_qty=qty,
+                    status='Pending',
+                    created_by=request.user,
+                    remarks=f"Auto-dispatch to {so_line.customer.name}"
+                )
+
+                log_system_action(
+                    request.user, 'CREATE', 'Cross-Docking', 
+                    f"Allocated {qty}pcs of {po_line.item_code} from PO {po_line.purchase_order.po_no} directly to SO {so_line.order_no}", 
+                    request
+                )
+
+                messages.success(request, f"Success! {qty}pcs of {po_line.item_code} is now scheduled for Cross-Docking to {so_line.order_no}.")
+                
+        except Exception as e:
+            messages.error(request, f"System Error: {str(e)}")
+            
+        return redirect('cross_dock_planning')
+
+    # 2. GET Request (Pag-load ng pahina)
+    
+    # A. Kunin ang mga Paparating na PO Items (Na hindi pa received)
+    incoming_po_items = PurchaseOrderItem.objects.filter(
+        purchase_order__ordering_status__in=['Approved', 'Shipped', 'In Transit']
+    ).select_related('purchase_order', 'purchase_order__supplier')
+
+    # B. Kunin ang mga Naghihintay na Customer Orders
+    pending_so_items = CustomerOrder.objects.filter(
+        order_status='Pending'
+    ).select_related('customer')
+
+    # C. Kunin ang mga nagawa nang Cross-Dock Plans
+    active_allocations = CrossDockAllocation.objects.all().order_by('-created_at')
+
+    context = {
+        'incoming_pos': incoming_po_items,
+        'pending_sos': pending_so_items,
+        'allocations': active_allocations
+    }
+    
+    return render(request, 'Inventory/processing/cross_dock_planning.html', context)
+
+@login_required
+def print_crossdock_label_view(request, alloc_id):
+    alloc = get_object_or_404(CrossDockAllocation, id=alloc_id)
+    return render(request, 'Inventory/processing/crossdock_label_print.html', {'alloc': alloc})
+
+@login_required
+@require_module_access('CUSTOMER_ORDER')
+def so_smart_picking_view(request):
+    # ==========================================
+    # 1. KUNG NAG-SUBMIT NA NG PICKING (POST)
+    # ==========================================
+    if request.method == "POST":
+        order_no = request.POST.get('order_no')
+        
+        try:
+            with transaction.atomic():
+                so_items = CustomerOrder.objects.filter(order_no=order_no, order_status='Pending')
+                all_items_completed = True
+                items_picked_count = 0
+
+                for so_item in so_items:
+                    # Kukunin yung tinype ng user na quantity sa form
+                    pick_qty_str = request.POST.get(f'pick_qty_{so_item.id}')
+                    
+                    if pick_qty_str:
+                        qty_to_pick = int(pick_qty_str)
+                        
+                        if qty_to_pick > 0:
+                            remaining_needed = so_item.quantity - so_item.picked_qty
+                            if qty_to_pick > remaining_needed:
+                                raise Exception(f"Cannot pick more than ordered for {so_item.item_code}.")
+
+                            # 🚀 FIFO LOGIC: Hanapin ang pinakalumang stock
+                            available_tags = MaterialTag.objects.filter(
+                                item_code=so_item.item_code, 
+                                total_pcs__gt=0
+                            ).order_by('arrival_date', 'id')
+
+                            qty_needed = qty_to_pick
+                            
+                            for tag in available_tags:
+                                if qty_needed <= 0: break
+                                    
+                                qty_to_take = min(qty_needed, tag.total_pcs)
+                                
+                                # Ibawas sa Tag/Box
+                                tag.total_pcs -= qty_to_take
+                                tag.save()
+                                
+                                # I-record sa Stock Log
+                                StockLog.objects.create(
+                                    material_tag=tag,
+                                    action_type='OUT',
+                                    old_qty=tag.total_pcs + qty_to_take,
+                                    new_qty=tag.total_pcs,
+                                    change_qty=-qty_to_take,
+                                    user=request.user,
+                                    notes=f"SO PICKING: Issued for Order {order_no}"
+                                )
+                                
+                                qty_needed -= qty_to_take
+
+                            if qty_needed > 0:
+                                raise Exception(f"Insufficient physical stock for {so_item.item_code}. Missing {qty_needed} pcs.")
+
+                            # I-update ang SO Item
+                            so_item.picked_qty += qty_to_pick
+                            so_item.save()
+                            items_picked_count += 1
+
+                    # Check kung kumpleto na 'tong line item na 'to
+                    if so_item.picked_qty < so_item.quantity:
+                        all_items_completed = False
+
+                if items_picked_count > 0:
+                    # Update buong Order Status
+                    so_items.update(order_status='Processing' if all_items_completed else 'Pending')
+                    
+                    log_system_action(request.user, 'UPDATE', 'Order Picking', f"Processed SO Picking for {order_no}.", request)
+                    messages.success(request, f"Success! Picking recorded for {order_no}. Inventory deducted via FIFO.")
+                else:
+                    messages.warning(request, "No items were picked.")
+
+        except Exception as e:
+            messages.error(request, f"Error processing picking: {str(e)}")
+            
+        return redirect('so_smart_picking')
+
+    # ==========================================
+    # 2. GET: LOAD PENDING ORDERS & SUGGESTIONS
+    # ==========================================
+    search_order = request.GET.get('order_no', '').strip()
+    
+    # Kukunin lang yung mga Pending SOs para sa Dropdown
+    pending_orders = CustomerOrder.objects.filter(order_status='Pending').values('order_no', 'customer__name').distinct()
+    
+    context = {'pending_orders': pending_orders, 'search_order': search_order}
+
+    # Kapag may piniling Order
+    if search_order:
+        so_items = CustomerOrder.objects.filter(order_no=search_order, order_status='Pending')
+        
+        pick_list = []
+        for item in so_items:
+            needed = item.quantity - item.picked_qty
+            
+            # 🚀 SMART SUGGESTION ENGINE
+            # Hahanapin ng system kung saan kukunin para i-guide ang kargador
+            suggestions = []
+            if needed > 0:
+                tags = MaterialTag.objects.filter(item_code=item.item_code, total_pcs__gt=0).order_by('arrival_date')
+                temp_need = needed
+                for t in tags:
+                    if temp_need <= 0: break
+                    take = min(temp_need, t.total_pcs)
+                    loc_name = t.location.location_code if t.location else 'UNASSIGNED'
+                    suggestions.append(f"Take {take} from {loc_name} (Lot: {t.lot_no})")
+                    temp_need -= take
+                
+                if temp_need > 0:
+                    suggestions.append(f"⚠️ SHORTAGE: Missing {temp_need} pcs in warehouse!")
+
+            pick_list.append({
+                'so_item': item,
+                'needed': needed,
+                'suggestions': suggestions
+            })
+            
+        context['pick_list'] = pick_list
+        if so_items.exists():
+            context['customer_name'] = so_items.first().customer.name if so_items.first().customer else 'Walk-in'
+
+    return render(request, 'Inventory/customer_order/so_smart_picking.html', context)
+
+@login_required
+def user_manual_view(request):
+    return render(request, 'Inventory/system/user_manual.html')
 
 # Email views
 

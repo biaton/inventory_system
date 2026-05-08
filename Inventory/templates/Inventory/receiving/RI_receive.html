@@ -37,6 +37,18 @@
         {% endif %}
     </div>
 
+    {% if has_crossdock %}
+    <div class="bg-rose-50 dark:bg-rose-900/30 border border-rose-400 dark:border-rose-700 p-4 rounded-sm shadow-md mb-4 flex items-start gap-4 animate-in slide-in-from-top-4">
+        <div class="bg-rose-600 text-white p-2 rounded-full animate-pulse">
+            <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+        </div>
+        <div>
+            <h2 class="text-sm font-black text-rose-800 dark:text-rose-400 uppercase tracking-widest">Cross-Dock Interception Alert</h2>
+            <p class="text-[11px] font-bold text-rose-700 dark:text-rose-300 mt-0.5">This delivery contains items that are urgently needed for dispatch. Please segregate the highlighted items below and DO NOT put them away in normal storage racks.</p>
+        </div>
+    </div>
+    {% endif %}
+
     <form method="POST" action="">
         {% csrf_token %}
         
@@ -83,7 +95,7 @@
                         
                         {% if searched and po_items %}
                             {% for item in po_items %}
-                            <tr class="hover:bg-emerald-50 dark:hover:bg-emerald-900 transition-colors item-row">
+                            <tr class="hover:bg-emerald-50 dark:hover:bg-emerald-900 transition-colors item-row {% if item.is_crossdock %}bg-rose-50 dark:bg-rose-900/20{% endif %}">
                                 <td class="py-2 px-3 border-r border-slate-300 dark:border-slate-700 text-center align-middle">
                                     <input type="checkbox" checked class="w-4 h-4 rounded border-slate-400 dark:border-slate-600 text-teal-600 focus:ring-teal-500 cursor-pointer row-checkbox">
                                 </td>
@@ -93,10 +105,21 @@
                                         {% if is_batch %}
                                             <span class="bg-slate-800 dark:bg-slate-950 text-white dark:text-slate-200 px-1.5 py-0.5 text-[8px] font-black uppercase rounded">{{ item.purchase_order.supplier.name|default:item.purchase_order.po_no }}</span>
                                         {% endif %}
+
+                                        {% if item.is_crossdock %}
+                                            <span class="bg-rose-600 text-white px-2 py-0.5 text-[8px] font-black uppercase tracking-widest rounded-full shadow-sm animate-pulse flex items-center gap-1">
+                                                <i data-lucide="arrow-right-left" class="w-3 h-3"></i> Cross-Dock: {{ item.cd_qty }} pcs
+                                            </span>
+                                        {% endif %}
                                     </div>
                                     <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 truncate max-w-[400px]">{{ item.description }}</p>
+                                    
                                     {% if is_batch %}
                                         <p class="text-[8px] font-bold text-slate-400 dark:text-slate-500 mt-0.5 uppercase">Sub-PO: {{ item.purchase_order.po_no }}</p>
+                                    {% endif %}
+                                    
+                                    {% if item.is_crossdock %}
+                                        <p class="text-[9px] font-black text-rose-600 dark:text-rose-400 mt-1 uppercase">Direct dispatch to SO: {{ item.cd_so }}</p>
                                     {% endif %}
                                 </td>
                                 <td class="py-2 px-4 border-r border-slate-300 dark:border-slate-700 bg-teal-50 dark:bg-teal-900 text-center">
@@ -192,14 +215,14 @@
         rows.forEach(row => {
             const checkbox = row.querySelector('.row-checkbox');
             const qtyInput = row.querySelector('input[type="number"]');
-            const statusSelect = row.querySelector('.status-select'); // 🚀 BAGO
+            const statusSelect = row.querySelector('.status-select'); 
             
             if (!checkbox.checked) {
                 qtyInput.disabled = true; 
-                if (statusSelect) statusSelect.disabled = true; // 🚀 BAGO
+                if (statusSelect) statusSelect.disabled = true; 
             } else {
                 qtyInput.disabled = false;
-                if (statusSelect) statusSelect.disabled = false; // 🚀 BAGO
+                if (statusSelect) statusSelect.disabled = false; 
                 checkedCount++;
             }
         });

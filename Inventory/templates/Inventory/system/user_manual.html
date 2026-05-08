@@ -1,0 +1,1751 @@
+{% extends "Inventory/base.html" %}
+{% load static %}
+
+{% block title %}User Manual | AIM WMS{% endblock %}
+
+{% block content %}
+<style>
+    html { scroll-behavior: smooth; }
+    .scroll-mt-24 { scroll-margin-top: 6rem; }
+    
+    .manual-link.active {
+        background-color: rgba(13, 148, 136, 0.1); /* teal-900/10 */
+        border-left-color: #0f766e; /* teal-700 */
+        color: #0f766e;
+        font-weight: 900;
+    }
+    html.dark .manual-link.active {
+        background-color: rgba(45, 212, 191, 0.1);
+        border-left-color: #2dd4bf; /* teal-400 */
+        color: #2dd4bf;
+    }
+</style>
+
+<div class="max-w-[100%] mx-auto mt-4 text-slate-800 dark:text-slate-200 transition-colors duration-300">
+
+    <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm p-5 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center border-t-4 border-t-teal-700 dark:border-t-teal-500 transition-colors duration-300 gap-4">
+        <div>
+            <h1 class="text-2xl md:text-3xl font-black tracking-tighter uppercase text-teal-900 dark:text-teal-400 flex items-center gap-3">
+                <i data-lucide="book-open" class="w-7 h-7 text-teal-700 dark:text-teal-500"></i>
+                WMS <span class="text-slate-700 dark:text-slate-300">Operations Manual</span>
+            </h1>
+            <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] mt-1">Asia Integrated Machine Inc. | Complete Enterprise Guide</p>
+        </div>
+    </div>
+
+    <div class="flex flex-col md:flex-row gap-6 items-start">
+        
+        <div class="w-full md:w-64 shrink-0 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm p-4 sticky top-[72px] transition-colors duration-300 hidden md:block rounded-sm">
+            <h3 class="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4 px-2 border-b border-slate-200 dark:border-slate-800 pb-2">Table of Contents</h3>
+            
+            <nav class="flex flex-col gap-1" id="manual-nav">
+                <a href="#ui-basics" class="manual-link px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-l-2 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">1. UI & Navigation</a>
+                <a href="#procurement" class="manual-link px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-l-2 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">2. Procurement (PO)</a>
+                <a href="#inbound" class="manual-link px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-l-2 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">3. Inbound Logistics</a>
+                <a href="#receiving" class="manual-link px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-l-2 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">4. Receiving & Storage</a>
+                <a href="#outbound" class="manual-link px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-l-2 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">5. Outbound (Sales)</a>
+                <a href="#inv-request" class="manual-link px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-l-2 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">6. Inventory Request</a>
+                <a href="#inv-processing" class="manual-link px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-l-2 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">7. Inventory Processing</a>
+                <a href="#inv-inquiry" class="manual-link px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-l-2 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">8. Inquiry & Reports</a>
+                <a href="#asset-wip" class="manual-link px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-l-2 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">9. Asset & WIP Assembly</a>
+                <a href="#user-control" class="manual-link px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-l-2 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">10. User Access Control</a>
+                <a href="#item-master" class="manual-link px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-l-2 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">11. Item Master</a>
+                <a href="#customer-master" class="manual-link px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-l-2 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">12. Customer Master</a>
+                <a href="#supplier-master" class="manual-link px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-l-2 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">13. Supplier Master</a>
+                <a href="#location-master" class="manual-link px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-l-2 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">14. Location Master</a>
+                <a href="#notification-routing" class="manual-link px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-l-2 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">15. Notification Routing</a>
+                <a href="#access-control" class="manual-link px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-l-2 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">16. Access Control (ACL)</a>
+                <a href="#audit-logs" class="manual-link px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-l-2 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">17. System Audit Logs</a>
+                <a href="#analytics-board" class="manual-link px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-l-2 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">18. Analytics Board</a>
+                <a href="#label-designer" class="manual-link px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-l-2 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">19. Barcode Generator</a>
+                <a href="#cycle-count" class="manual-link px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-l-2 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">20. Cycle Counting</a>
+                <a href="#fleet-management" class="manual-link px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-l-2 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">21. Fleet Management</a>
+                <a href="#rma-logistics" class="manual-link px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-l-2 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">22. Reverse Logistics (RMA)</a>
+                <a href="#system-audit" class="manual-link px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-l-2 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">23. System Audit</a>
+                <a href="#global-scan" class="manual-link px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-l-2 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">24. Global Scan</a>
+            </nav>
+        </div>
+
+        <div class="flex-1 w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm p-6 md:p-10 space-y-12 transition-colors duration-300 rounded-sm">
+            
+           <section id="ui-basics" class="scroll-mt-24">
+                <div class="border-b-2 border-slate-300 dark:border-slate-700 pb-3 mb-5 flex items-center gap-3">
+                    <div class="bg-indigo-100 dark:bg-indigo-900/50 p-2 rounded-sm text-indigo-700 dark:text-indigo-400">
+                        <i data-lucide="layout-grid" class="w-5 h-5"></i>
+                    </div>
+                    <h2 class="text-xl font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight">1. Interface & Navigation</h2>
+                </div>
+                
+                <p class="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+                    The AIM WMS utilizes a <b>Hybrid Command Center</b> interface. It is designed for 24/7 operations with a focus on data density, real-time alerts, and adaptive themes.
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm shadow-sm relative overflow-hidden">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i data-lucide="mouse-pointer-2" class="w-4 h-4 text-sky-500"></i>
+                            <h4 class="text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300">Draggable Smart Capsule</h4>
+                        </div>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 leading-relaxed">
+                            The primary navigation tool floating on the screen. It can be moved ("Dragged") anywhere. 
+                        </p>
+                        <div class="mt-3 flex gap-2">
+                            <span class="bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 px-2 py-1 rounded-sm text-[8px] font-black uppercase">Sky Mode (Day)</span>
+                            <span class="bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 px-2 py-1 rounded-sm text-[8px] font-black uppercase">Space Mode (Night)</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm shadow-sm">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i data-lucide="layout-list" class="w-4 h-4 text-amber-500"></i>
+                            <h4 class="text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300">Quick-Action Floating Menu</h4>
+                        </div>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-2">
+                            One click away for critical tools:
+                        </p>
+                        <div class="flex flex-wrap gap-1 text-[8px] font-black uppercase">
+                            <span class="border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 rounded-sm">Global Scan</span>
+                            <span class="border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 rounded-sm">System Audit</span>
+                            <span class="border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 rounded-sm">Label Designer</span>
+                            <span class="border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 rounded-sm">Fleet Status</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 dark:bg-slate-950 p-5 rounded-sm border border-slate-200 dark:border-slate-800 mb-6">
+                    <h4 class="text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                        <i data-lucide="layout-panel-left" class="w-4 h-4 text-indigo-500"></i> Command Center Dashboard
+                    </h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="space-y-1">
+                            <span class="text-[9px] font-black text-sky-600 uppercase">Inventory Value</span>
+                            <p class="text-[10px] font-bold text-slate-500 leading-snug">Live monitoring of the total value (PHP) of all stocks in the warehouse.</p>
+                        </div>
+                        <div class="space-y-1">
+                            <span class="text-[9px] font-black text-rose-600 uppercase">Action Alerts</span>
+                            <p class="text-[10px] font-bold text-slate-500 leading-snug">Automated list of "Low Stock" and "Expiring" items requiring attention.</p>
+                        </div>
+                        <div class="space-y-1">
+                            <span class="text-[9px] font-black text-teal-600 uppercase">Inbound Feed</span>
+                            <p class="text-[10px] font-bold text-slate-500 leading-snug">Quick view of incoming shipments from Suppliers.</p>
+                        </div>
+                        <div class="space-y-1">
+                            <span class="text-[9px] font-black text-indigo-600 uppercase">Release Feed</span>
+                            <p class="text-[10px] font-bold text-slate-500 leading-snug">Tracking of Customer Orders queued for dispatch.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="p-4 bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 rounded-sm shadow-sm">
+                        <h4 class="text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+                            <i data-lucide="navigation-2" class="w-3.5 h-3.5 text-blue-500"></i> Global Top Bar
+                        </h4>
+                        <ul class="space-y-2 text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                            <li class="flex items-center gap-2"><i data-lucide="calendar-range" class="w-3 h-3"></i> Calendar: Delivery schedules.</li>
+                            <li class="flex items-center gap-2"><i data-lucide="bell" class="w-3 h-3"></i> Notifications: Real-time system updates.</li>
+                            <li class="flex items-center gap-2"><i data-lucide="clock" class="w-3 h-3"></i> Live Clock: Synced to Philippine Standard Time (UTC+08).</li>
+                        </ul>
+                    </div>
+
+                    <div class="p-4 bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 rounded-sm shadow-sm border-l-4 border-l-emerald-500">
+                        <h4 class="text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+                            <i data-lucide="info" class="w-3.5 h-3.5 text-emerald-500"></i> System Feedback
+                        </h4>
+                        <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 leading-relaxed">
+                            Every successful or failed operation generates a "Toast Message" in the upper-right corner. These are color-coded:
+                        </p>
+                        <div class="mt-2 flex gap-1.5 flex-wrap">
+                            <span class="text-[8px] font-black bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-sm uppercase">Success</span>
+                            <span class="text-[8px] font-black bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded-sm uppercase">Error</span>
+                            <span class="text-[8px] font-black bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-sm uppercase">Warning</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="procurement" class="scroll-mt-24">
+                <div class="border-b-2 border-slate-300 dark:border-slate-700 pb-3 mb-5 flex items-center gap-3">
+                    <div class="bg-teal-100 dark:bg-teal-900/50 p-2 rounded-sm text-teal-700 dark:text-teal-400">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                    </div>
+                    <h2 class="text-xl font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight">2. Procurement (Purchase Orders)</h2>
+                </div>
+                
+                <p class="text-[11px] font-bold text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+                    The Procurement module supports <strong>Multi-Supplier Batching</strong>. This means you can create a single Main P.O. containing multiple orders from different suppliers simultaneously, and approve them as one entire batch.
+                </p>
+
+                <div class="space-y-6">
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-teal-700 dark:text-teal-400 mb-3 flex items-center gap-2">
+                            <i data-lucide="shopping-cart" class="w-4 h-4 text-teal-500"></i> A. Purchase Order Entry (Drafting)
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-slate-50 dark:bg-slate-900/50 p-3 border-l-2 border-teal-500 rounded-r-sm">
+                                <span class="text-[10px] font-black uppercase text-slate-700 dark:text-slate-300 block mb-1">1. Global P.O. Settings</span>
+                                <p class="text-[10px] font-bold text-slate-500">Set the Main PO No. (click <span class="bg-teal-700 text-white px-1 py-0.5 rounded text-[8px]">GEN</span> to auto-generate), Global Delivery Date, and Transport. These settings will apply to the entire batch.</p>
+                            </div>
+                            <div class="bg-slate-50 dark:bg-slate-900/50 p-3 border-l-2 border-indigo-500 rounded-r-sm">
+                                <span class="text-[10px] font-black uppercase text-slate-700 dark:text-slate-300 block mb-1">2. Dynamic Supplier Blocks</span>
+                                <p class="text-[10px] font-bold text-slate-500">Add a supplier block for each vendor. The Contact Person will automatically load upon selecting a supplier. Set the Tax Term (e.g., VAT Inclusive) and Discount (%).</p>
+                            </div>
+                        </div>
+                        <div class="mt-3 bg-slate-50 dark:bg-slate-900/50 p-3 border-l-2 border-sky-500 rounded-r-sm">
+                            <span class="text-[10px] font-black uppercase text-slate-700 dark:text-slate-300 block mb-1">3. Item Encoding & Auto-Compute</span>
+                            <p class="text-[10px] font-bold text-slate-500">Upon typing the Item Code, the system will automatically fill in the Description and Unit Price from the Masterlist. The system will handle the computation for Subtotal, Tax, and Grand Total.</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-indigo-700 dark:text-indigo-400 mb-2 flex items-center gap-2">
+                            <i data-lucide="shield-alert" class="w-4 h-4 text-indigo-500"></i> B. Supplier PO Draft Review
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-2">
+                            Before saving to the database, it will pass through a Confirmation Page. Here, you can review the comprehensive summary of all suppliers in the batch. Click <strong>Confirm & Push</strong> to send it to the approval queue.
+                        </p>
+                    </div>
+
+                    <div class="bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800 p-4 rounded-sm border-l-4 border-l-indigo-600">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-indigo-800 dark:text-indigo-400 mb-2 flex items-center gap-2">
+                            <i data-lucide="inbox" class="w-4 h-4"></i> C. Authorization Queue (Approval)
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-3">
+                            Managers/admins will use the <strong>P.O. Approval Module</strong>.
+                        </p>
+                        <ul class="list-disc list-inside text-[10px] font-bold text-slate-600 dark:text-slate-400 space-y-1.5 ml-2">
+                            <li>Click the <i data-lucide="eye" class="w-3 h-3 inline text-slate-500"></i> icon to review the entire batch content before making a decision.</li>
+                            <li>Upon clicking <span class="bg-indigo-600 text-white px-1.5 py-0.5 rounded text-[8px] uppercase"><i data-lucide="check-circle" class="w-2.5 h-2.5 inline"></i> Approve</span>, the system will send an <strong>Email Notification</strong> back to the user who created the PO to inform them it has been approved.</li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-2">
+                            <i data-lucide="search" class="w-4 h-4 text-slate-500"></i> D. P.O. Inquiry & Printing
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-3">
+                            Use the Advanced Search (Date range, PO No., Supplier) to find previous orders. If the status is Approved, you can click the <i data-lucide="printer" class="w-3 h-3 inline text-slate-500"></i> icon to print the <strong>Official Purchase Order Document</strong>.
+                        </p>
+                    </div>
+
+                    <div class="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 p-4 rounded-sm border-l-4 border-l-amber-500">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-amber-800 dark:text-amber-400 mb-2 flex items-center gap-2">
+                            <i data-lucide="edit-3" class="w-4 h-4"></i> E. P.O. Correction Module
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-3">
+                            If there are errors in price or quantity after creating the PO, use the Correction Module.
+                        </p>
+                        <ul class="list-disc list-inside text-[10px] font-bold text-slate-600 dark:text-slate-400 space-y-1.5 ml-2">
+                            <li>Find the order using the <strong>Main PO No.</strong> or <strong>Batch Reference</strong>.</li>
+                            <li>A <strong>Reason for Correction</strong> must be provided as part of the security audit trail.</li>
+                            <li>Edit the New Qty and New Price in the dynamic grid.</li>
+                            <li><strong>System Rule:</strong> Saving corrections will automatically revert the PO status back to <span class="text-amber-600 font-black">PENDING APPROVAL</span> and recalculate all Taxes and Discounts.</li>
+                        </ul>
+                    </div>
+
+                </div>
+            </section>
+
+            <section id="inbound" class="scroll-mt-24">
+                <div class="border-b-2 border-slate-300 dark:border-slate-700 pb-3 mb-5 flex items-center gap-3">
+                    <div class="bg-cyan-100 dark:bg-cyan-900/50 p-2 rounded-sm text-cyan-700 dark:text-cyan-400">
+                        <i data-lucide="truck" class="w-5 h-5"></i>
+                    </div>
+                    <h2 class="text-xl font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight">3. Inbound Logistics</h2>
+                </div>
+
+                <p class="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+                    The Inbound Logistics module manages incoming deliveries from suppliers. This includes importing delivery schedules, visual calendar tracking, and physical dock arrival verification before items are moved into the warehouse.
+                </p>
+
+                <div class="space-y-6">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/50 p-4 rounded-sm border-l-4 border-l-emerald-500">
+                            <h4 class="text-[10px] font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-400 mb-2 flex items-center gap-2">
+                                <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i> A. Mass Schedule Import
+                            </h4>
+                            <p class="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                                For bulk deliveries, use the <strong>Import Delivery</strong> tool. You can download the system template and upload it back as a <strong>.CSV</strong> or <strong>.XLSX</strong> file to instantly register the entire delivery schedule into the system.
+                            </p>
+                        </div>
+                        <div class="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/50 p-4 rounded-sm border-l-4 border-l-blue-500">
+                            <h4 class="text-[10px] font-black uppercase tracking-widest text-blue-700 dark:text-blue-400 mb-2 flex items-center gap-2">
+                                <i data-lucide="calendar-days" class="w-3.5 h-3.5"></i> B. Logistics Scheduler
+                            </h4>
+                            <p class="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                                A visual map of all expected deliveries (Calendar View). On-time deliveries are colored <strong class="text-blue-600 dark:text-blue-400">Blue</strong>, while late shipments are highlighted in <strong class="text-rose-600 dark:text-rose-400">Red</strong>. Clicking an event will open the shipment manifest.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-amber-700 dark:text-amber-500 mb-3 flex items-center gap-2">
+                            <i data-lucide="navigation" class="w-4 h-4"></i> C. Advance Shipping Notice (ASN)
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-3">
+                            Once the supplier has handed the items to the courier, use this module to confirm the stock is in transit. Enter the <strong>Freight / Courier Partner</strong>, <strong>Master Tracking No.</strong>, and Updated ETA. This will automatically change the P.O. status to <span class="bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-800 px-1.5 py-0.5 rounded text-[8px] uppercase tracking-widest">In Transit</span>.
+                        </p>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-teal-700 dark:text-teal-400 mb-3 flex items-center gap-2">
+                            <i data-lucide="shield-check" class="w-4 h-4"></i> D. Gate / Dock Arrival Verification
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-3">
+                            When the truck physically arrives at the warehouse gate, the guard or logistics receiver must verify the following before allowing entry:
+                        </p>
+                        <ul class="list-disc list-inside text-[11px] font-bold text-slate-600 dark:text-slate-400 space-y-2 ml-2">
+                            <li><strong>Arrival Time & Remarks:</strong> Log the arrival time and vehicle details.</li>
+                            <li><strong>Actual Pcs & Box Count:</strong> Verify and encode the number of arriving boxes/cartons (Handling Units).</li>
+                            <li><strong>Visual Condition:</strong> Record if the box is secure (<span class="text-emerald-600 dark:text-emerald-400">Good / Sealed</span>) or damaged (<span class="text-amber-600 dark:text-amber-400">Damaged Box</span>, <span class="text-rose-600 dark:text-rose-400">Wet Carton</span>, <span class="text-rose-600 dark:text-rose-400">Open Seal</span>).</li>
+                        </ul>
+                        <div class="mt-4 p-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 text-[10px] text-slate-500 dark:text-slate-400 italic rounded-sm">
+                            <i data-lucide="info" class="w-3 h-3 inline"></i> <strong>Next Step:</strong> Upon clicking <span class="font-black uppercase">Approve & Send to Receiving</span>, the shipment will move to the Receiving Module to be opened, undergo QC (Quality Control), and receive a Material Tag barcode.
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <section id="receiving" class="scroll-mt-24">
+                <div class="border-b-2 border-slate-300 dark:border-slate-700 pb-3 mb-5 flex items-center gap-3">
+                    <div class="bg-emerald-100 dark:bg-emerald-900/50 p-2 rounded-sm text-emerald-700 dark:text-emerald-400">
+                        <i data-lucide="clipboard-check" class="w-5 h-5"></i>
+                    </div>
+                    <h2 class="text-xl font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight">4. Receiving & Storage Operations</h2>
+                </div>
+
+                <p class="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+                    This module covers the entire lifecycle of inventory from its arrival at the warehouse (Receiving and Material Tagging) to its dispatch to another department or customer (Order Picking and Delivery Requests).
+                </p>
+
+                <div class="space-y-6">
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-500 mb-3 flex items-center gap-2">
+                            <i data-lucide="check-square" class="w-4 h-4"></i> Phase 1: PO Receiving & QC
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-3">
+                            After the items arrive, they must be confirmed in the system using the <strong>Receive via PO</strong> module.
+                        </p>
+                        <ol class="list-decimal list-inside text-[11px] font-bold text-slate-600 dark:text-slate-400 space-y-1.5 ml-2">
+                            <li>Scan or type the <strong>Main PO</strong> or <strong>Sub-PO Barcode</strong> and click Load.</li>
+                            <li>Review the list. You can input how many items were actually received.</li>
+                            <li>Set the QC Inspection Status (Pending, Passed, or Quarantine).</li>
+                            <li>Click <span class="bg-teal-700 text-white px-1.5 py-0.5 rounded text-[8px] uppercase">Confirm Receipt & Generate Tags</span>. This will automatically update the PO status and redirect you to the Material Tag Generator.</li>
+                        </ol>
+                        
+                        <div class="mt-4 bg-rose-50 dark:bg-rose-900/20 border-l-2 border-rose-500 p-2 text-[10px] text-rose-700 dark:text-rose-400 font-bold">
+                            <i data-lucide="alert-triangle" class="w-3 h-3 inline"></i> <strong>Cross-Dock Interception:</strong> If the scanned PO has a waiting Customer Order, the system will show a flashing alert. This item will be routed directly to the Dispatch Area and will not be stored in a rack.
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-teal-700 dark:text-teal-400 mb-3 flex items-center gap-2">
+                            <i data-lucide="tags" class="w-4 h-4"></i> Phase 2: Material Tag Generator & Printing
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-3">
+                            Every box entering the warehouse needs its own "Birth Certificate" or <strong>Material Tag (Lot Number)</strong>.
+                        </p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-sm border border-slate-200 dark:border-slate-700">
+                                <span class="text-[9px] font-black uppercase tracking-widest text-teal-600 block mb-1">Auto-Generation</span>
+                                <p class="text-[10px] font-bold text-slate-500">Click the <strong>Auto-Generate</strong> button to create a random and unique Lot Number (e.g., L-2605-1234).</p>
+                            </div>
+                            <div class="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-sm border border-slate-200 dark:border-slate-700">
+                                <span class="text-[9px] font-black uppercase tracking-widest text-indigo-600 block mb-1">Container & Packing Calculation</span>
+                                <p class="text-[10px] font-bold text-slate-500">If 100 PCS are in 5 boxes, set the <em>Container Count = 5</em>. The system will print 5 separate tags to be attached to each box.</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 bg-teal-50 dark:bg-teal-900/20 p-3 rounded-sm border border-teal-200 dark:border-teal-800">
+                            <span class="text-[9px] font-black uppercase tracking-widest text-teal-800 dark:text-teal-400 flex items-center gap-1.5 mb-1"><i data-lucide="printer" class="w-3 h-3"></i> Label Print View</span>
+                            <p class="text-[10px] font-bold text-slate-600 dark:text-slate-400">Clicking "Generate & Print Tags" will produce a print-ready layout (100x150mm format) complete with a high-quality <strong>CODE39 Barcode</strong> and physical inspection grid. Simply click the floating "Start Printing" button in the upper-right of the screen.</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-sky-700 dark:text-sky-500 mb-3 flex items-center gap-2">
+                            <i data-lucide="package-check" class="w-4 h-4"></i> Phase 3: Storage & Put-Away
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-2">
+                            After being tagged, items must be mapped to a physical warehouse rack.
+                        </p>
+                        <ol class="list-decimal list-inside text-[11px] font-bold text-slate-600 dark:text-slate-400 space-y-1.5 ml-2">
+                            <li>Scan the <strong>Location Barcode</strong> (e.g., RACK-A1) on the wall or shelf.</li>
+                            <li>Scan the <strong>Material Tag / Lot No.</strong> of the box.</li>
+                            <li>Click <strong>Register Storage</strong> to lock the item in that location.</li>
+                        </ol>
+                    </div>
+
+                    <hr class="border-slate-200 dark:border-slate-800 my-2">
+
+                    <div class="bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-900/50 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-indigo-800 dark:text-indigo-400 mb-3 flex items-center gap-2">
+                            <i data-lucide="clipboard-list" class="w-4 h-4"></i> Phase 4: Delivery Request & Movement Slip
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-3">
+                            This is used to create a <strong>Movement Slip</strong> when inventory needs to be transferred from the warehouse to production or a client. You can use the <strong>Search Material</strong> modal or <strong>Bulk Excel Import</strong> for rapid data entry.
+                        </p>
+
+                        <div class="mt-4 bg-white dark:bg-slate-900 p-4 rounded-sm shadow-sm border border-slate-200 dark:border-slate-700">
+                            <h5 class="text-[10px] font-black uppercase tracking-widest text-slate-800 dark:text-slate-200 flex items-center gap-1.5 mb-3 border-b border-slate-200 dark:border-slate-800 pb-2">
+                                <i data-lucide="settings-2" class="w-3.5 h-3.5 text-indigo-500"></i> Interactive Print Setup (Movement Slip)
+                            </h5>
+                            <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-3">
+                                Before finalizing the document for print, the system provides a live <strong>Print Settings Sidebar</strong> that won't appear on the printed page. Here you can customize the form's appearance:
+                            </p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div class="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-sm">
+                                    <span class="text-[9px] font-black uppercase text-indigo-600 dark:text-indigo-400 block mb-1">1. Theme Color & QR Sizing</span>
+                                    <p class="text-[10px] font-bold text-slate-500">You can change the color of borders/headers using the color picker. You can also enlarge or hide the Header QR code.</p>
+                                </div>
+                                <div class="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-sm">
+                                    <span class="text-[9px] font-black uppercase text-amber-600 dark:text-amber-500 block mb-1">2. Visibility Toggles</span>
+                                    <p class="text-[10px] font-bold text-slate-500">You can toggle the visibility of <strong>Item Barcodes (CODE128)</strong> and the <strong>Signatures Area</strong> to save space.</p>
+                                </div>
+                                <div class="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-sm md:col-span-2">
+                                    <span class="text-[9px] font-black uppercase text-rose-600 dark:text-rose-400 block mb-1">3. Custom Instructions</span>
+                                    <p class="text-[10px] font-bold text-slate-500">You can type a warning (e.g., "URGENT TRANSFER") that will appear at the top of the form prior to printing, ensuring immediate attention from the guard or receiver.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 p-4 rounded-sm border-l-4 border-l-amber-500">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-amber-800 dark:text-amber-500 mb-3 flex items-center gap-2">
+                            <i data-lucide="hand" class="w-4 h-4"></i> Phase 5: Order Picking (FIFO Enforcement)
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-3">
+                            This is where actual warehouse stock is deducted based on the created Delivery Request.
+                        </p>
+                        <ol class="list-decimal list-inside text-[11px] font-bold text-slate-600 dark:text-slate-400 space-y-1.5 ml-2 mb-3">
+                            <li>Scan the <strong>Request No.</strong> to load the Picking List.</li>
+                            <li>The system will indicate if there is sufficient stock or a shortage (<span class="text-rose-600">Shortage!</span>).</li>
+                            <li>Click <strong>Auto Allocation</strong> to automatically assign the maximum permissible amount from the rack, strictly enforcing the <strong>FIFO (First-In, First-Out)</strong> rule.</li>
+                            <li>Click <span class="bg-teal-700 text-white px-1.5 py-0.5 rounded text-[8px] uppercase">Register</span> to deduct inventory and fulfill the request.</li>
+                        </ol>
+                    </div>
+
+                </div>
+            </section>
+
+            <section id="outbound" class="scroll-mt-24">
+                <div class="border-b-2 border-slate-300 dark:border-slate-700 pb-3 mb-5 flex items-center gap-3">
+                    <div class="bg-blue-100 dark:bg-blue-900/50 p-2 rounded-sm text-blue-700 dark:text-blue-400">
+                        <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+                    </div>
+                    <h2 class="text-xl font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight">5. Outbound (Customer Orders)</h2>
+                </div>
+
+                <p class="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+                    This module drives the complete fulfillment cycle—from receiving the client order and retrieving warehouse stock (Smart Picking), through to the actual delivery (Logistics Dispatch).
+                </p>
+
+                <div class="space-y-6">
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-blue-700 dark:text-blue-500 mb-3 flex items-center gap-2">
+                            <i data-lucide="file-plus" class="w-4 h-4"></i> Phase 1: Order Creation (Manual & Excel)
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-3">
+                            You can create a Customer Order in two ways:
+                        </p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-sm border border-slate-200 dark:border-slate-700">
+                                <span class="text-[9px] font-black uppercase tracking-widest text-teal-600 block mb-1">Manual Input</span>
+                                <p class="text-[10px] font-bold text-slate-500">Type each order individually. This supports creating a "Global Batch" where multiple customer orders are scheduled for delivery on the same day.</p>
+                            </div>
+                            <div class="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-sm border border-slate-200 dark:border-slate-700">
+                                <span class="text-[9px] font-black uppercase tracking-widest text-emerald-600 block mb-1">Bulk Excel Upload</span>
+                                <p class="text-[10px] font-bold text-slate-500">Upload the Sales Order .csv/.xlsx template from Accounting. The system will map Item Codes, Qty, and Prices automatically before saving to the database.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 p-4 rounded-sm border-l-4 border-l-amber-500">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-amber-800 dark:text-amber-500 mb-2 flex items-center gap-2">
+                            <i data-lucide="edit-3" class="w-4 h-4"></i> Phase 2: P.O. Correction Module
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-600 dark:text-slate-400 leading-relaxed mb-1">
+                            Before dispatch, a batch can be edited if there are changes in price or quantity. Search for the batch using the <strong>Correction Module</strong> and enter a <strong>Reason for Correction</strong>. 
+                        </p>
+                        <p class="text-[9px] font-bold italic text-slate-500 dark:text-slate-400">
+                            * Warning: This resets the orders' status back to PENDING to protect the audit trail.
+                        </p>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-indigo-700 dark:text-indigo-400 mb-3 flex items-center gap-2">
+                            <i data-lucide="hand" class="w-4 h-4"></i> Phase 3: Smart Order Picking (FIFO)
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-3">
+                            After confirming the order, it's sent to the warehouse floor to retrieve items. Staff will use the <strong>Smart Order Picking</strong> screen.
+                        </p>
+                        <ul class="list-disc list-inside text-[11px] font-bold text-slate-600 dark:text-slate-400 space-y-2 ml-2">
+                            <li><strong>AI Suggestion:</strong> The system identifies the exact rack/bin to pull items from, enforcing <strong>FIFO (First-In, First-Out)</strong>.</li>
+                            <li><strong>Auto-Fill Qty:</strong> Click once to populate the maximum required quantity.</li>
+                            <li>Confirming the pick automatically deducts physical stock and upgrades the order status to <span class="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded text-[8px] uppercase font-black">Processing</span>.</li>
+                        </ul>
+                    </div>
+
+                    <hr class="border-slate-200 dark:border-slate-800 my-2">
+
+                    <div class="bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-900/50 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-indigo-800 dark:text-indigo-400 mb-3 flex items-center gap-2">
+                            <i data-lucide="truck" class="w-4 h-4"></i> Phase 4: Logistics Dispatch
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-3">
+                            After orders are packed, the Dispatcher goes to <strong>Order Inquiry</strong> and clicks the <strong>Dispatch</strong> button to release the cargo.
+                        </p>
+                        <div class="space-y-2 text-[11px] font-bold text-slate-600 dark:text-slate-400 ml-2">
+                            <p><i data-lucide="scan-barcode" class="w-3 h-3 inline text-slate-500 mr-1"></i> <strong>Load Verification:</strong> Scan the Main PO No. with the Poka-Yoke scanner to unlock the Dispatch Button. This prevents releasing the wrong order.</p>
+                            <p><i data-lucide="navigation" class="w-3 h-3 inline text-slate-500 mr-1"></i> <strong>Fleet Assign:</strong> Choose from External Couriers (LBC, J&T) or the company's <strong>In-House Fleet</strong>. (Note: Vehicles subject to Number Coding on that day are hidden).</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm border-l-4 border-l-sky-500">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-slate-800 dark:text-slate-200 mb-2 flex items-center gap-2">
+                            <i data-lucide="printer" class="w-4 h-4 text-sky-500"></i> Phase 5: Print Dispatch Manifest
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-3">
+                            The system will print a document for the driver and guard detailing the items for transit.
+                        </p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div class="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-sm">
+                                <span class="text-[9px] font-black uppercase text-indigo-600 dark:text-indigo-400 block mb-1">Blind Manifest Mode</span>
+                                <p class="text-[10px] font-bold text-slate-500">Toggle this in Print Settings to hide prices (Unit Price and Amount) on the printed copy as a security measure.</p>
+                            </div>
+                            <div class="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-sm">
+                                <span class="text-[9px] font-black uppercase text-amber-600 dark:text-amber-500 block mb-1">Page Breaking / Scissor Tool</span>
+                                <p class="text-[10px] font-bold text-slate-500">Click the Scissor icon <i data-lucide="scissors" class="w-3 h-3 inline"></i> next to the table to break the printout if orders are being sent in different trucks.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/50 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-emerald-800 dark:text-emerald-400 mb-2 flex items-center gap-2">
+                            <i data-lucide="clipboard-signature" class="w-4 h-4"></i> Phase 6: Electronic Proof of Delivery (e-POD)
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                            When the driver returns, click <strong>Mark Delivered</strong>. Enter the receiver's name and date. The system sends a confirmation email to the client. If the in-house fleet was used, it automatically requests <strong>Fuel Cost and Toll Fees</strong> to record expenses in Logistics Analytics.
+                        </p>
+                    </div>
+
+                </div>
+            </section>
+
+            <section id="inv-request" class="scroll-mt-24">
+                <div class="border-b-2 border-slate-300 dark:border-slate-700 pb-3 mb-5 flex items-center gap-3">
+                    <div class="bg-orange-100 dark:bg-orange-900/50 p-2 rounded-sm text-orange-700 dark:text-orange-400">
+                        <i data-lucide="package-plus" class="w-5 h-5"></i>
+                    </div>
+                    <h2 class="text-xl font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight">6. Inventory Request (Internal)</h2>
+                </div>
+
+                <p class="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed mb-4">
+                    This module handles all internal material requisitions, such as raw materials for Assembly Lines, maintenance tools, or packaging supplies.
+                </p>
+
+                <div class="space-y-6">
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-orange-700 dark:text-orange-500 mb-2 flex items-center gap-2">
+                            <i data-lucide="file-plus-2" class="w-4 h-4"></i> A. Creating a New Request
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-3">
+                            Go to <strong>Inventory Request > New Request</strong>. Fill in the Department, Required Date, and Purpose. Add item rows by searching the Item Code, input the quantity needed, and click <span class="bg-orange-600 text-white px-1.5 py-0.5 rounded text-[8px] uppercase">Submit Request</span>.
+                        </p>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-indigo-700 dark:text-indigo-400 mb-2 flex items-center gap-2">
+                            <i data-lucide="scan" class="w-4 h-4"></i> B. Warehouse Fulfillment (Picking)
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-3">
+                            Warehouse staff will fulfill the request using the <strong>Fulfillment Scanner Workspace</strong>.
+                        </p>
+                        <ol class="list-decimal list-inside text-[11px] font-bold text-slate-500 dark:text-slate-400 space-y-1.5 ml-2">
+                            <li>Go to <strong>My Requests</strong> and click the <i data-lucide="package-check" class="w-3 h-3 inline text-indigo-500"></i> action button to open the Workspace.</li>
+                            <li>The system displays a Required Items Checklist.</li>
+                            <li>Scan the physical box/tag <strong>(Source Tag ID)</strong> and input the quantity being issued.</li>
+                            <li>Click <span class="bg-orange-600 text-white px-1.5 py-0.5 rounded text-[8px] uppercase">Issue Part Now</span> to automatically deduct the stock using FIFO logic.</li>
+                        </ol>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm border-l-4 border-l-amber-500">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-amber-700 dark:text-amber-500 mb-2 flex items-center gap-2">
+                            <i data-lucide="undo-2" class="w-4 h-4"></i> C. Material Return Slip (RTS)
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                            If a department has excess materials or was issued the wrong item, use the <strong>Return Slip</strong> module. Input the Original Request No. (e.g., REQ-2026...), select the item and the exact Lot Number, and submit. This adds the physical stock back into the system inventory.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="inv-processing" class="scroll-mt-24">
+                <div class="border-b-2 border-slate-300 dark:border-slate-700 pb-3 mb-5 flex items-center gap-3">
+                    <div class="bg-teal-100 dark:bg-teal-900/50 p-2 rounded-sm text-teal-700 dark:text-teal-400">
+                        <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+                    </div>
+                    <h2 class="text-xl font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight">7. Inventory Processing & Control</h2>
+                </div>
+
+                <p class="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+                    This module is the core control center for physical warehouse movements, stock corrections, and advanced routing like Cross-Docking.
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 rounded-sm shadow-sm overflow-hidden">
+                        <div class="bg-teal-700 text-white px-3 py-2">
+                            <h4 class="text-[10px] font-black uppercase tracking-widest flex items-center gap-2"><i data-lucide="arrow-right-left" class="w-3.5 h-3.5"></i> Location Transfer</h4>
+                        </div>
+                        <div class="p-4 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                            <p class="mb-2">Used for moving stocks from one rack/bin to another.</p>
+                            <ol class="list-decimal list-inside space-y-1">
+                                <li>Scan the <strong>Target Lot Number</strong> (Material Tag).</li>
+                                <li>The system locks the item and displays its current location.</li>
+                                <li>Scan or type the <strong>New Destination Rack</strong>.</li>
+                                <li>Click Confirm Transfer.</li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 rounded-sm shadow-sm overflow-hidden">
+                        <div class="bg-rose-700 text-white px-3 py-2">
+                            <h4 class="text-[10px] font-black uppercase tracking-widest flex items-center gap-2"><i data-lucide="package-minus" class="w-3.5 h-3.5"></i> Stock Out Terminal</h4>
+                        </div>
+                        <div class="p-4 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                            <p class="mb-2">Used for manual or ad-hoc deduction of inventory.</p>
+                            <ol class="list-decimal list-inside space-y-1">
+                                <li>Scan the <strong>Lot Number</strong> of the item to be issued.</li>
+                                <li>Enter the <strong>Quantity to Deduct</strong>.</li>
+                                <li>Add a <strong>Remark/Reference</strong> (e.g. For sample, testing).</li>
+                                <li>Confirm Stock Out.</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-rose-50 dark:bg-rose-900/20 border-l-4 border-rose-500 p-4 mb-6 rounded-r-sm">
+                    <h4 class="text-xs font-black uppercase tracking-widest text-rose-800 dark:text-rose-400 mb-2 flex items-center gap-2">
+                        <i data-lucide="settings-2" class="w-4 h-4"></i> Master Correction (Override)
+                    </h4>
+                    <p class="text-[11px] font-semibold text-rose-700 dark:text-rose-300 mb-2">
+                        Used to fix data entry errors or physical count discrepancies. <strong>Warning: This permanently overwrites master database records.</strong>
+                    </p>
+                    <p class="text-[11px] font-bold text-slate-600 dark:text-slate-400">Scan the Lot Number to load the system data. You can then forcefully change the exact Quantity and Location. A valid Justification/Reason must be selected to log the audit trail.</p>
+                </div>
+
+                <div class="bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-800/50 p-5 rounded-sm">
+                    <h4 class="text-xs font-black uppercase tracking-widest text-indigo-800 dark:text-indigo-400 mb-2 flex items-center gap-2">
+                        <i data-lucide="split" class="w-4 h-4"></i> Cross-Docking Planner
+                    </h4>
+                    <p class="text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-3">
+                        Matches an incoming Supplier PO directly to a waiting Customer Order (SO). This tells the Receiving Guard to bypass the storage racks and bring the items straight to the Dispatch Area.
+                    </p>
+                    <ul class="list-disc list-inside text-[11px] font-bold text-slate-500 dark:text-slate-500 space-y-1 ml-2">
+                        <li>Select an <strong>Incoming Stock (PO)</strong> from the left table.</li>
+                        <li>Select a <strong>Waiting Order (SO)</strong> from the right table.</li>
+                        <li>Input the <strong>Cross-Dock Quantity</strong> to allocate.</li>
+                        <li>Click <span class="bg-indigo-600 text-white px-1.5 py-0.5 rounded text-[8px] uppercase">Create Link</span>. The guard will see a red blinker when they scan this PO.</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="inv-inquiry" class="scroll-mt-24">
+                <div class="border-b-2 border-slate-300 dark:border-slate-700 pb-3 mb-5 flex items-center gap-3">
+                    <div class="bg-indigo-100 dark:bg-indigo-900/50 p-2 rounded-sm text-indigo-700 dark:text-indigo-400">
+                        <i data-lucide="search" class="w-5 h-5"></i>
+                    </div>
+                    <h2 class="text-xl font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight">8. Inquiry & Reports</h2>
+                </div>
+
+                <p class="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+                    A comprehensive suite for tracking stock levels, monitoring system health, and viewing detailed audit trails.
+                </p>
+
+                <div class="space-y-6">
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-teal-700 dark:text-teal-500 mb-2 flex items-center gap-2">
+                            <i data-lucide="layout-grid" class="w-4 h-4"></i> A. Inventory Overview (Global Summary)
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-3">
+                            Located at <strong>Inventory Inquiry > Item Lookup</strong>. This groups identical items together, showing the combined stock across all lots.
+                        </p>
+                        <div class="bg-slate-50 dark:bg-slate-900 p-3 border-l-2 border-teal-500 text-[11px] text-slate-600 dark:text-slate-400">
+                            <strong>AI Forecasting (Days of Supply):</strong> The system calculates the Average Daily Consumption (ADC) based on the last 30 days of stock outs. It uses this to predict how many days your current stock will last.
+                            <ul class="mt-2 space-y-1">
+                                <li><span class="text-emerald-600 font-black">GREEN</span> = Healthy (> 15 Days)</li>
+                                <li><span class="text-amber-600 font-black">YELLOW</span> = Low Stock Alert</li>
+                                <li><span class="text-rose-600 font-black">RED</span> = Out of Stock or Critical</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-indigo-700 dark:text-indigo-400 mb-2 flex items-center gap-2">
+                            <i data-lucide="database" class="w-4 h-4"></i> B. Stock Masterlist & Inline Editing
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-3">
+                            Displays every single box or lot inside the warehouse. You can search by Rack, Lot No, or Company.
+                        </p>
+                        <p class="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 px-2 py-1 rounded inline-block">
+                            <i data-lucide="pencil" class="w-3 h-3 inline mr-1"></i> Quick Edit Feature
+                        </p>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mt-2">
+                            Directly click on the cells for <strong>Lot No, Revision, Invoice No, Expiry Date, and Unit Price</strong> inside the table to update them instantly without leaving the page.
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="border border-slate-200 dark:border-slate-700 p-4 bg-slate-50 dark:bg-slate-900/50">
+                            <h4 class="text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5"><i data-lucide="activity" class="w-3 h-3 text-blue-500"></i> Stock Movement Ledger (Bin Card)</h4>
+                            <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Clicking "Stock I/O" on any item opens its individual Bin Card. It records exactly who moved the item, when, and how many were deducted or added.</p>
+                        </div>
+                        <div class="border border-slate-200 dark:border-slate-700 p-4 bg-slate-50 dark:bg-slate-900/50">
+                            <h4 class="text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5"><i data-lucide="history" class="w-3 h-3 text-amber-500"></i> Global Audit Trail</h4>
+                            <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Located at <strong>System Modules > Audit Trail</strong>. Shows a master view of every transaction (REG, OUT, MOVE, ADJ) across the entire warehouse.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="asset-wip" class="scroll-mt-24">
+                <div class="border-b-2 border-slate-300 dark:border-slate-700 pb-3 mb-5 flex items-center gap-3">
+                    <div class="bg-indigo-100 dark:bg-indigo-900/50 p-2 rounded-sm text-indigo-700 dark:text-indigo-400">
+                        <i data-lucide="cpu" class="w-5 h-5"></i>
+                    </div>
+                    <h2 class="text-xl font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight">9. Asset & WIP Assembly</h2>
+                </div>
+
+                <p class="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+                    The Assembly module is used for Work-In-Progress (WIP) tracking. It allows production staff to construct machines or equipment by consuming raw materials (tags) from the warehouse.
+                </p>
+
+                <div class="space-y-6">
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-indigo-700 dark:text-indigo-500 mb-2 flex items-center gap-2">
+                            <i data-lucide="plus-square" class="w-4 h-4"></i> A. Registering a New Asset
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-3">
+                            From the <strong>Assembly Dashboard</strong>, click the <span class="bg-indigo-600 text-white px-1.5 py-0.5 rounded text-[8px] uppercase tracking-widest">New</span> button. Enter the Asset Code (e.g., MAC-001) and the Model Name. The new machine will appear in the registry with a <strong>Building</strong> status.
+                        </p>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm border-l-4 border-l-indigo-500">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-slate-800 dark:text-slate-200 mb-2 flex items-center gap-2">
+                            <i data-lucide="folder-open" class="w-4 h-4 text-indigo-500"></i> B. The WIP Workspace (Part Execution)
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-3">
+                            Clicking the folder icon opens the Machine Workspace. Here you can execute actions to build or modify the asset:
+                        </p>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                            <div class="bg-indigo-50 dark:bg-indigo-900/20 p-3 rounded-sm">
+                                <span class="text-[9px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-1 block">Action: Assemble (IN)</span>
+                                <p class="text-[10px] font-bold text-slate-600 dark:text-slate-400">Scan a material tag and input the quantity. The system will deduct this from the warehouse and lock it into the machine's BOM (Bill of Materials).</p>
+                            </div>
+                            <div class="bg-indigo-50 dark:bg-indigo-900/20 p-3 rounded-sm">
+                                <span class="text-[9px] font-black uppercase tracking-widest text-rose-600 dark:text-rose-400 mb-1 block">Action: Dismantle (OUT)</span>
+                                <p class="text-[10px] font-bold text-slate-600 dark:text-slate-400">Removes a part from the machine and returns it to physical inventory. This sets the machine status to <strong>Partial</strong>.</p>
+                            </div>
+                        </div>
+
+                        <p class="text-[11px] font-bold text-slate-500 dark:text-slate-400 mt-4">
+                            <i data-lucide="printer" class="w-3 h-3 inline text-slate-400"></i> <em>Every time a part is assembled, the system generates a Thermal Barcode Label for physical tagging of the machine component.</em>
+                        </p>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-500 mb-2 flex items-center gap-2">
+                            <i data-lucide="check-circle" class="w-4 h-4"></i> C. Finalizing the Build
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                            Once all parts are installed, click the <span class="bg-emerald-600 text-white px-1.5 py-0.5 rounded text-[8px] uppercase tracking-widest">Finish Build</span> button at the top right of the workspace. This locks the asset, changes its status to <strong>Available</strong>, and triggers an email alert to management.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="user-control" class="scroll-mt-24">
+                <div class="border-b-2 border-slate-300 dark:border-slate-700 pb-3 mb-5 flex items-center gap-3">
+                    <div class="bg-purple-100 dark:bg-purple-900/50 p-2 rounded-sm text-purple-700 dark:text-purple-400">
+                        <i data-lucide="users" class="w-5 h-5"></i>
+                    </div>
+                    <h2 class="text-xl font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight">10. User Access Control</h2>
+                </div>
+
+                <p class="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+                    Administrators use this module to manage employee accounts and assign Role-Based Access Control (RBAC).
+                </p>
+
+                <div class="space-y-6">
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-teal-700 dark:text-teal-500 mb-2 flex items-center gap-2">
+                            <i data-lucide="user-plus" class="w-4 h-4"></i> Registering a New Employee
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-3">
+                            Click <span class="bg-teal-700 text-white px-1.5 py-0.5 rounded text-[8px] uppercase">Register New User</span>. Enter their Name, valid Email Address, and assign a System Role (e.g., Warehouse Staff, Purchasing). 
+                        </p>
+                        <div class="bg-slate-50 dark:bg-slate-900 p-3 border-l-2 border-teal-500 text-[11px] text-slate-600 dark:text-slate-400">
+                            <strong>Security Protocol:</strong> You do not set their password manually. The system generates a random 10-character alphanumeric password and automatically emails it to the user's inbox alongside their login link.
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                            <h4 class="text-[10px] font-black uppercase tracking-widest text-amber-700 dark:text-amber-500 mb-2 flex items-center gap-2">
+                                <i data-lucide="user-cog" class="w-3 h-3"></i> Modifying Access
+                            </h4>
+                            <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                                Click the <i data-lucide="edit-3" class="w-3 h-3 inline text-amber-500 mx-0.5"></i> icon to open a user's profile. You can change their Department, Contact Number, or promote them to a new Role. You can also manually overwrite their password here if they get locked out.
+                            </p>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                            <h4 class="text-[10px] font-black uppercase tracking-widest text-rose-700 dark:text-rose-500 mb-2 flex items-center gap-2">
+                                <i data-lucide="user-x" class="w-3 h-3"></i> Suspending Accounts
+                            </h4>
+                            <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                                If an employee resigns, click the <i data-lucide="user-x" class="w-3 h-3 inline text-rose-500 mx-0.5"></i> toggle button. This changes their status to <strong>Suspended</strong> and immediately revokes their login access without deleting their historical audit trails.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="item-master" class="scroll-mt-24">
+                <div class="border-b-2 border-slate-300 dark:border-slate-700 pb-3 mb-5 flex items-center gap-3">
+                    <div class="bg-slate-200 dark:bg-slate-800 p-2 rounded-sm text-slate-700 dark:text-slate-300">
+                        <i data-lucide="box" class="w-5 h-5"></i>
+                    </div>
+                    <h2 class="text-xl font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight">11. Item Master</h2>
+                </div>
+
+                <p class="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+                    This module is used to define and maintain the Core Master Data that drives the entire Warehouse Management System.
+                </p>
+
+                <div class="space-y-6">
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-teal-700 dark:text-teal-500 mb-2 flex items-center gap-2">
+                            <i data-lucide="database" class="w-4 h-4"></i> A. Item Masterlist Management
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-3">
+                            The Item Masterlist stores all physical items recognized by the system. If an item is not registered here, it cannot be received, transferred, or sold.
+                        </p>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                            <div class="bg-slate-50 dark:bg-slate-900/50 p-3 border border-slate-200 dark:border-slate-700">
+                                <span class="text-[9px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-400 block mb-1">Single Item Registration</span>
+                                <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Click <span class="bg-teal-700 text-white px-1.5 py-0.5 rounded text-[8px] uppercase">Register New Item</span>. Define the SKU, Description, UOM, Category, and Minimum Stock Level.</p>
+                            </div>
+                            <div class="bg-indigo-50 dark:bg-indigo-900/20 p-3 border border-indigo-200 dark:border-indigo-800">
+                                <span class="text-[9px] font-black uppercase tracking-widest text-indigo-700 dark:text-indigo-400 block mb-1">Bulk Excel Import</span>
+                                <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Click <span class="bg-indigo-600 text-white px-1.5 py-0.5 rounded text-[8px] uppercase">Import Excel</span>. Download the system template, fill it with your items, and re-upload. The system automatically creates new items or updates existing ones.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm border-l-4 border-l-emerald-500">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-500 mb-2 flex items-center gap-2">
+                            <i data-lucide="package-plus" class="w-4 h-4"></i> B. Initial Opening Balance
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                            When registering an item for the very first time, the form includes an <strong class="text-emerald-600 dark:text-emerald-400">Opening Stock Qty</strong> field. Filling this out automatically creates a system-generated Material Tag (Lot No: OB-YYMMDD) to establish your starting physical inventory without needing a Purchase Order.
+                        </p>
+                    </div>
+
+                </div>
+            </section>
+
+            <section id="customer-master" class="scroll-mt-24">
+                <div class="border-b-2 border-slate-300 dark:border-slate-700 pb-3 mb-5 flex items-center gap-3">
+                    <div class="bg-teal-100 dark:bg-teal-900/50 p-2 rounded-sm text-teal-700 dark:text-teal-400">
+                        <i data-lucide="users" class="w-5 h-5"></i>
+                    </div>
+                    <h2 class="text-xl font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight">12. Customer Master Data</h2>
+                </div>
+
+                <p class="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+                    Manage the directory of registered clients, their delivery addresses, and logistics routing information.
+                </p>
+
+                <div class="space-y-6">
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-teal-700 dark:text-teal-500 mb-2 flex items-center gap-2">
+                            <i data-lucide="user-plus" class="w-4 h-4"></i> A. Registering a Client
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-3">
+                            Click <span class="bg-teal-700 text-white px-1.5 py-0.5 rounded text-[8px] uppercase">Add Customer</span>. The required fields include the Company Name, Contact Person, and full Delivery Address.
+                        </p>
+                        <div class="bg-slate-50 dark:bg-slate-900 p-3 border-l-2 border-teal-500 text-[11px] text-slate-600 dark:text-slate-400">
+                            <strong>Client Code:</strong> You can assign a unique alphanumeric code to the client (e.g. CLI-001). This can be used later for barcode scanning and faster data entry when creating Sales Orders.
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-indigo-700 dark:text-indigo-400 mb-2 flex items-center gap-2">
+                            <i data-lucide="truck" class="w-4 h-4"></i> B. Logistics Routing
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-2">
+                            To ensure faster Outbound operations, you can pre-configure the client's routing logic:
+                        </p>
+                        <ul class="list-disc list-inside text-[11px] font-bold text-slate-500 dark:text-slate-400 space-y-1.5 ml-2">
+                            <li><strong>Route Code / Zone:</strong> Define the client's geographical area (e.g., METRO MANILA, NORTH LUZON). This groups shipments together.</li>
+                            <li><strong>Preferred Transport:</strong> Set the default delivery method (Standard, Cargo Truck, Van, Motorcycle, or Client Pick-up).</li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm border-l-4 border-l-rose-500">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-rose-700 dark:text-rose-500 mb-2 flex items-center gap-2">
+                            <i data-lucide="alert-triangle" class="w-4 h-4"></i> C. Managing Existing Clients
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-3">
+                            You can modify a client's details by clicking the <i data-lucide="edit-3" class="w-3 h-3 inline text-slate-500"></i> icon. To prevent them from making new orders, untick the <strong>Set as Active Client</strong> checkbox.
+                        </p>
+                        <p class="text-[11px] font-bold text-rose-600 dark:text-rose-400 italic">
+                            Warning: Deleting a client <i data-lucide="trash-2" class="w-3 h-3 inline text-rose-500"></i> is a permanent action and may affect historical sales data. Only delete a client if they were added by mistake.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="supplier-master" class="scroll-mt-24">
+                <div class="border-b-2 border-slate-300 dark:border-slate-700 pb-3 mb-5 flex items-center gap-3">
+                    <div class="bg-amber-100 dark:bg-amber-900/50 p-2 rounded-sm text-amber-700 dark:text-amber-400">
+                        <i data-lucide="building-2" class="w-5 h-5"></i>
+                    </div>
+                    <h2 class="text-xl font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight">13. Supplier Master Data</h2>
+                </div>
+
+                <p class="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+                    Maintain the directory of all registered vendors and suppliers. This is crucial for creating Purchase Orders and managing inbound delivery expectations.
+                </p>
+
+                <div class="space-y-6">
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-amber-700 dark:text-amber-500 mb-2 flex items-center gap-2">
+                            <i data-lucide="building" class="w-4 h-4"></i> A. Registering a Supplier
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-3">
+                            Click <span class="bg-teal-700 text-white px-1.5 py-0.5 rounded text-[8px] uppercase">Register Supplier</span>. Ensure that the <strong>Vendor Code</strong> is unique, as this serves as the primary identifier in the system.
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                            <h4 class="text-[10px] font-black uppercase tracking-widest text-indigo-700 dark:text-indigo-400 mb-2 flex items-center gap-2">
+                                <i data-lucide="clock" class="w-3 h-3"></i> Logistics Status
+                            </h4>
+                            <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                                Set the <strong>Average Lead Time</strong> (in days) during registration. The system uses this to estimate delivery dates and predict delayed shipments in the Logistics Calendar.
+                            </p>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                            <h4 class="text-[10px] font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-500 mb-2 flex items-center gap-2">
+                                <i data-lucide="toggle-right" class="w-3 h-3"></i> Active Status
+                            </h4>
+                            <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                                If a supplier is no longer partnered with your company, untick the "Active Vendor" checkbox to prevent new Purchase Orders from being issued to them.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="bg-rose-50 dark:bg-rose-900/20 border-l-4 border-rose-500 p-3 rounded-r-sm">
+                        <p class="text-[10px] font-black text-rose-800 dark:text-rose-400 uppercase tracking-widest mb-1"><i data-lucide="alert-circle" class="w-3 h-3 inline mr-1"></i> Managing Records</p>
+                        <p class="text-[11px] font-bold text-rose-700 dark:text-rose-500">To edit details, click the <i data-lucide="edit-3" class="w-3 h-3 inline"></i> icon. It is highly recommended to DEACTIVATE a supplier rather than deleting them <i data-lucide="trash-2" class="w-3 h-3 inline"></i>, as deleting will affect historical PO logs.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="location-master" class="scroll-mt-24">
+                <div class="border-b-2 border-slate-300 dark:border-slate-700 pb-3 mb-5 flex items-center gap-3">
+                    <div class="bg-emerald-100 dark:bg-emerald-900/50 p-2 rounded-sm text-emerald-700 dark:text-emerald-400">
+                        <i data-lucide="map" class="w-5 h-5"></i>
+                    </div>
+                    <h2 class="text-xl font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight">14. Location Master (Warehouse Layout)</h2>
+                </div>
+
+                <p class="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+                    The Location Master defines the physical layout of your warehouses. This is where you configure zones, racks, and bins to optimize inventory placement.
+                </p>
+
+                <div class="space-y-6">
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-500 mb-2 flex items-center gap-2">
+                            <i data-lucide="plus-square" class="w-4 h-4"></i> A. Registering Storage Slots
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-3">
+                            Click <span class="bg-teal-700 text-white px-1.5 py-0.5 rounded text-[8px] uppercase">Add New Slot</span> to define a new location. You must input the following critical details:
+                        </p>
+                        <ul class="list-disc list-inside text-[11px] font-bold text-slate-500 dark:text-slate-400 space-y-1.5 ml-2">
+                            <li><strong>Rack / Bin Code:</strong> The unique alphanumeric barcode (e.g., RACK-A12).</li>
+                            <li><strong>Warehouse & Zone:</strong> The building and specific area (e.g., MAIN WAREHOUSE, ZONE A).</li>
+                            <li><strong>Max Capacity:</strong> The total number of items (in PCS) that can physically fit in this location.</li>
+                        </ul>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                            <h4 class="text-[10px] font-black uppercase tracking-widest text-teal-700 dark:text-teal-400 mb-2 flex items-center gap-2">
+                                <i data-lucide="bar-chart-3" class="w-3 h-3"></i> B. Capacity Monitoring
+                            </h4>
+                            <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-2">
+                                The system automatically tracks the live utilization of each rack based on the assigned Max Capacity.
+                            </p>
+                            <ul class="space-y-1 mt-2">
+                                <li><span class="text-[9px] font-black text-emerald-600 bg-emerald-100 px-1 rounded uppercase">Green</span> <span class="text-[10px] text-slate-500 font-bold">= Available Space</span></li>
+                                <li><span class="text-[9px] font-black text-amber-600 bg-amber-100 px-1 rounded uppercase">Yellow</span> <span class="text-[10px] text-slate-500 font-bold">= Almost Full (>80%)</span></li>
+                                <li><span class="text-[9px] font-black text-rose-600 bg-rose-100 px-1 rounded uppercase">Red</span> <span class="text-[10px] text-slate-500 font-bold">= Rack is Full (100%)</span></li>
+                            </ul>
+                        </div>
+                        <div class="bg-rose-50 dark:bg-rose-900/20 border-l-4 border-rose-500 p-4 rounded-r-sm">
+                            <h4 class="text-[10px] font-black uppercase tracking-widest text-rose-800 dark:text-rose-400 mb-2 flex items-center gap-2">
+                                <i data-lucide="alert-triangle" class="w-3 h-3"></i> C. Managing Locations
+                            </h4>
+                            <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                                You can safely edit the descriptions or capacity of a rack at any time. However, <strong>you cannot delete a location <i data-lucide="trash-2" class="w-3 h-3 inline text-rose-500"></i> if there are still physical items stored inside it.</strong> You must transfer all stocks out of the rack before deletion is allowed.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="notification-routing" class="scroll-mt-24">
+                <div class="border-b-2 border-slate-300 dark:border-slate-700 pb-3 mb-5 flex items-center gap-3">
+                    <div class="bg-teal-100 dark:bg-teal-900/50 p-2 rounded-sm text-teal-700 dark:text-teal-400">
+                        <i data-lucide="mail-warning" class="w-5 h-5"></i>
+                    </div>
+                    <h2 class="text-xl font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight">15. Notification Routing</h2>
+                </div>
+
+                <p class="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+                    This module allows administrators to fine-tune who receives what alerts. Instead of spamming everyone, you can individually assign system events (like PO Approvals or Low Stock warnings) to specific users via Email or In-App Web Alerts.
+                </p>
+
+                <div class="space-y-6">
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-teal-700 dark:text-teal-500 mb-2 flex items-center gap-2">
+                            <i data-lucide="settings-2" class="w-4 h-4"></i> A. Modifying User Alerts
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-3">
+                            In the Notification Routing masterlist, search for a specific employee and click <span class="bg-slate-800 text-white px-1.5 py-0.5 rounded text-[8px] uppercase tracking-widest">Manage Alerts</span>. This will open the Configuration Matrix.
+                        </p>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-indigo-700 dark:text-indigo-400 mb-2 flex items-center gap-2">
+                            <i data-lucide="layout-list" class="w-4 h-4"></i> B. The Configuration Matrix
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-3">
+                            The modal displays a list of all system events. For each event, you can tick the checkboxes to route notifications to the user via:
+                        </p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                            <div class="bg-sky-50 dark:bg-sky-900/20 p-3 border border-sky-200 dark:border-sky-800">
+                                <span class="text-[9px] font-black uppercase tracking-widest text-sky-600 dark:text-sky-400 block mb-1 flex items-center gap-1"><i data-lucide="mail" class="w-3 h-3"></i> Email Alerts</span>
+                                <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Sends a direct message to their registered email address. Best for critical approvals or external notifications.</p>
+                            </div>
+                            <div class="bg-amber-50 dark:bg-amber-900/20 p-3 border border-amber-200 dark:border-amber-800">
+                                <span class="text-[9px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-400 block mb-1 flex items-center gap-1"><i data-lucide="bell" class="w-3 h-3"></i> Web App Alerts</span>
+                                <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Triggers the red notification bell <i data-lucide="bell-ring" class="w-3 h-3 inline text-amber-500"></i> inside the WMS dashboard while they are logged in.</p>
+                            </div>
+                        </div>
+                        <p class="text-[10px] font-bold text-slate-500 dark:text-slate-500 mt-3 italic">
+                            * Remember to click <strong>Apply Matrix</strong> to save the new routing rules.
+                        </p>
+                    </div>
+
+                </div>
+            </section>
+
+            <section id="access-control" class="scroll-mt-24">
+                <div class="border-b-2 border-slate-300 dark:border-slate-700 pb-3 mb-5 flex items-center gap-3">
+                    <div class="bg-indigo-100 dark:bg-indigo-900/50 p-2 rounded-sm text-indigo-700 dark:text-indigo-400">
+                        <i data-lucide="shield-check" class="w-5 h-5"></i>
+                    </div>
+                    <h2 class="text-xl font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight">16. Role-Based Access Control (ACL)</h2>
+                </div>
+
+                <p class="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+                    Administrators use this module to precisely define which parts of the system an employee can see and interact with. This prevents unauthorized personnel from accessing sensitive data or functions.
+                </p>
+
+                <div class="space-y-6">
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-indigo-700 dark:text-indigo-500 mb-2 flex items-center gap-2">
+                            <i data-lucide="settings-2" class="w-4 h-4"></i> A. Modifying Module Permissions
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-3">
+                            In the ACL masterlist, click the <i data-lucide="settings-2" class="w-3.5 h-3.5 inline text-indigo-500 mx-0.5"></i> settings icon next to a user. This opens the Configuration Modal where you can tick or untick specific modules.
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-rose-50 dark:bg-rose-900/10 border border-rose-200 dark:border-rose-900/50 p-4 rounded-sm">
+                            <h4 class="text-[10px] font-black uppercase tracking-widest text-rose-700 dark:text-rose-400 mb-2 flex items-center gap-2">
+                                <i data-lucide="zap" class="w-3.5 h-3.5 text-rose-600"></i> Super Admin Status
+                            </h4>
+                            <p class="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                                When <strong>Super Admin Access</strong> is granted, the user receives unrestricted permission to ALL current and future modules. All modular checkboxes will be locked and enabled by default.
+                            </p>
+                        </div>
+                        
+                        <div class="bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-900/50 p-4 rounded-sm">
+                            <h4 class="text-[10px] font-black uppercase tracking-widest text-indigo-700 dark:text-indigo-400 mb-2 flex items-center gap-2">
+                                <i data-lucide="list-checks" class="w-3.5 h-3.5 text-indigo-600"></i> Modular Granularity
+                            </h4>
+                            <p class="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                                For regular staff, you can pick specific modules (e.g., <strong>Receiving</strong> and <strong>Inquiry</strong> only). They will only see these options in their main navigation menu; all other parts of the system will be invisible to them.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 dark:bg-slate-900 p-3 border-l-2 border-teal-500 text-[11px] text-slate-600 dark:text-slate-400">
+                        <strong>Security Note:</strong> Once permissions are updated, the target user will receive an instant <strong>In-App Notification</strong> <i data-lucide="bell" class="w-3 h-3 inline text-amber-500"></i> informing them of the change. Changes take effect immediately upon their next page refresh.
+                    </div>
+                </div>
+            </section>
+
+            <section id="audit-logs" class="scroll-mt-24">
+                <div class="border-b-2 border-slate-300 dark:border-slate-700 pb-3 mb-5 flex items-center gap-3">
+                    <div class="bg-slate-100 dark:bg-slate-800 p-2 rounded-sm text-slate-700 dark:text-slate-300">
+                        <i data-lucide="shield-alert" class="w-5 h-5"></i>
+                    </div>
+                    <h2 class="text-xl font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight">17. System Audit Logs (Security Tracking)</h2>
+                </div>
+
+                <p class="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+                    The System Audit Log is a read-only historical record of every critical action performed within the WMS. It ensures complete transparency and accountability for all registered users.
+                </p>
+
+                <div class="space-y-6">
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-2">
+                            <i data-lucide="filter" class="w-4 h-4 text-teal-600"></i> A. Security Filtering & Search
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-3">
+                            Located at <strong>System Modules > Audit Logs</strong>. Use the filter bar to isolate specific events:
+                        </p>
+                        <ul class="list-disc list-inside text-[11px] font-bold text-slate-500 dark:text-slate-500 space-y-1.5 ml-2">
+                            <li><strong>Action Filter:</strong> View only specific triggers like <strong>CREATE, UPDATE, DELETE</strong>, or <strong>LOGIN</strong>.</li>
+                            <li><strong>Quick Search:</strong> Search by <strong>Username</strong> to track an employee's daily activity, or by <strong>Module</strong> (e.g., "Purchase Order") to see its history.</li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm border-l-4 border-l-indigo-500">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-indigo-700 dark:text-indigo-400 mb-2 flex items-center gap-2">
+                            <i data-lucide="info" class="w-4 h-4"></i> B. Understanding the Activity Log
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-3">
+                            Each log entry provides four critical pieces of data:
+                        </p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-sm border border-slate-200 dark:border-slate-700">
+                                <span class="text-[9px] font-black uppercase text-indigo-600 block mb-1">1. Timestamp & User</span>
+                                <p class="text-[10px] font-bold text-slate-600">The exact date and time (down to the second) and the account name responsible for the action.</p>
+                            </div>
+                            <div class="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-sm border border-slate-200 dark:border-slate-700">
+                                <span class="text-[9px] font-black uppercase text-teal-600 block mb-1">2. Action & Module</span>
+                                <p class="text-[10px] font-bold text-slate-600">Categorizes the event (e.g., UPDATE) and identifies which part of the ERP was affected.</p>
+                            </div>
+                            <div class="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-sm border border-slate-200 dark:border-slate-700">
+                                <span class="text-[9px] font-black uppercase text-amber-600 block mb-1">3. Activity Description</span>
+                                <p class="text-[10px] font-bold text-slate-600">A detailed narrative of what exactly was changed (e.g., "Updated unit price for item RM-101").</p>
+                            </div>
+                            <div class="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-sm border border-slate-200 dark:border-slate-700">
+                                <span class="text-[9px] font-black uppercase text-rose-600 block mb-1">4. IP Address Tracking</span>
+                                <p class="text-[10px] font-bold text-slate-600">Logs the unique network address of the device used. This is critical for detecting unauthorized remote access.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-rose-50 dark:bg-rose-900/10 p-3 border-l-2 border-rose-500 text-[11px] text-rose-700 dark:text-rose-300">
+                        <strong>Security Protocol:</strong> Audit logs cannot be edited or deleted by any user, including Super Admins. This ensures a "Single Version of Truth" for company audits and investigations.
+                    </div>
+                </div>
+            </section>
+
+            <section id="analytics-board" class="scroll-mt-24">
+                <div class="border-b-2 border-slate-300 dark:border-slate-700 pb-3 mb-5 flex items-center gap-3">
+                    <div class="bg-indigo-600 p-2 rounded-sm text-white">
+                        <i data-lucide="bar-chart-big" class="w-5 h-5"></i>
+                    </div>
+                    <h2 class="text-xl font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight">18. Analytics Board (Command Center)</h2>
+                </div>
+
+                <p class="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+                    The Analytics Board provides real-time warehouse intelligence. It combines inventory movement data with financial valuations and predictive forecasting to guide management decisions.
+                </p>
+
+                <div class="space-y-6">
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+                            <i data-lucide="info" class="w-4 h-4 text-indigo-500"></i> A. Real-Time KPI Cards
+                        </h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-sm">
+                                <span class="text-[9px] font-black uppercase text-emerald-600 block mb-1">Total Inventory Value</span>
+                                <p class="text-[10px] font-bold text-slate-600">Calculates the current monetary worth of all items in stock based on their Unit Price in the Item Master.</p>
+                            </div>
+                            <div class="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-sm">
+                                <span class="text-[9px] font-black uppercase text-rose-600 block mb-1">Critical Stocks</span>
+                                <p class="text-[10px] font-bold text-slate-600">Counts unique SKUs that have fallen below their safety threshold, requiring immediate re-order.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800 p-4 rounded-sm border-l-4 border-l-indigo-600">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-indigo-800 dark:text-indigo-400 mb-2 flex items-center gap-2">
+                            <i data-lucide="bot" class="w-4 h-4"></i> B. Smart Purchasing Advisor (AI Forecast)
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-3">
+                            This panel uses historical usage data to predict inventory depletion.
+                        </p>
+                        <div class="flex flex-col gap-2">
+                            <div class="flex items-start gap-3"><span class="bg-indigo-200 dark:bg-indigo-800 px-2 py-1 text-[8px] font-black rounded-sm w-12 text-center shrink-0">ADC</span> <p class="text-[10px] font-bold dark:text-slate-300"><strong>Average Daily Consumption:</strong> How many pieces are typically used/sold per day based on the last 30 days.</p></div>
+                            <div class="flex items-start gap-3"><span class="bg-indigo-200 dark:bg-indigo-800 px-2 py-1 text-[8px] font-black rounded-sm w-12 text-center shrink-0">DOS</span> <p class="text-[10px] font-bold dark:text-slate-300"><strong>Days of Supply:</strong> The estimated number of days until the stock hits zero.</p></div>
+                        </div>
+                        <p class="text-[10px] font-bold text-indigo-600 dark:text-indigo-500 mt-3 italic">
+                            * The system automatically suggests a <strong>PO Quantity</strong> to replenish stock for another 30 days.
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="border border-slate-200 dark:border-slate-700 p-4 bg-white dark:bg-slate-800/30">
+                            <h4 class="text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-1.5"><i data-lucide="trending-up" class="w-3 h-3 text-sky-500"></i> Inventory Flow Trend</h4>
+                            <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Visualizes Inbound (Received) vs. Outbound (Issued) quantities over the last 7 days to monitor warehouse activity levels.</p>
+                        </div>
+                        <div class="border border-slate-200 dark:border-slate-700 p-4 bg-white dark:bg-slate-800/30">
+                            <h4 class="text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-1.5"><i data-lucide="warehouse" class="w-3 h-3 text-teal-500"></i> Capacity Utilization</h4>
+                            <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Tracks how much physical space is used vs. available across all registered warehouses and zones.</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 dark:bg-slate-900/50 p-4 border border-slate-200 dark:border-slate-800">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 mb-2">Relationship Intelligence</h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <span class="text-[9px] font-black uppercase text-violet-600 block">Top Suppliers</span>
+                                <p class="text-[10px] font-semibold text-slate-500">Identifies vendors with the highest order volume, used for Supplier Relationship Management (SRM).</p>
+                            </div>
+                            <div>
+                                <span class="text-[9px] font-black uppercase text-yellow-600 block">VIP Clients</span>
+                                <p class="text-[10px] font-semibold text-slate-500">Identifies customers generating the highest revenue (LTV) for Customer Relationship Management (CRM).</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="label-designer" class="scroll-mt-24">
+                <div class="border-b-2 border-slate-300 dark:border-slate-700 pb-3 mb-5 flex items-center gap-3">
+                    <div class="bg-sky-100 dark:bg-sky-900/50 p-2 rounded-sm text-sky-700 dark:text-sky-400">
+                        <i data-lucide="printer" class="w-5 h-5"></i>
+                    </div>
+                    <h2 class="text-xl font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight">19. Barcode Generator</h2>
+                </div>
+
+                <p class="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+                    The Barcode Generator is a fully customizable tool used to create various barcodes required for warehouse operations, including Item Barcodes, Bin Barcodes, and Shipping Labels.
+                </p>
+
+                <div class="space-y-6">
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+                            <i data-lucide="info" class="w-4 h-4 text-sky-500"></i> A. Design & Customization Workflow
+                        </h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-[11px] border-collapse">
+                                <thead class="bg-slate-50 dark:bg-slate-950 text-slate-500 uppercase font-black text-[9px]">
+                                    <tr class="border-b border-slate-200 dark:border-slate-800">
+                                        <th class="p-3 border-r border-slate-200 dark:border-slate-800 w-32">Action</th>
+                                        <th class="p-3">Instruction / Result</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-semibold">
+                                    <tr>
+                                        <td class="p-3 border-r border-slate-200 dark:border-slate-800 text-sky-600">Template Selection</td>
+                                        <td class="p-3">Choose the <strong>Paper Size</strong> (e.g., 4" x 3") under Template Settings. The canvas will automatically resize (100px = 1 inch).</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-3 border-r border-slate-200 dark:border-slate-800 text-sky-600">Load Content</td>
+                                        <td class="p-3">Use the <strong>Load Product Data</strong> dropdown to auto-fill SKU info, or manually type in the <strong>Content Data</strong> section.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-3 border-r border-slate-200 dark:border-slate-800 text-sky-600">Styling Elements</td>
+                                        <td class="p-3">Click any element (Text, Barcode, Image) on the canvas. Use the <strong>Element Styling</strong> tab to change fonts, color, rotation, or lock the item in place.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-3 border-r border-slate-200 dark:border-slate-800 text-sky-600">Advanced Positioning</td>
+                                        <td class="p-3">Use your <strong>Arrow Keys</strong> for pixel-perfect nudging. Hold <strong>Shift + Arrow Keys</strong> to move by 10px (Snap to Grid).</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800 p-4 rounded-sm">
+                            <h4 class="text-[10px] font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-400 mb-2 flex items-center gap-2">
+                                <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i> B. Bulk CSV Import
+                            </h4>
+                            <p class="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                                To print hundreds of unique labels at once, upload a <strong>CSV file</strong> containing columns for Title, Barcode, and Company. The system will iterate through every row and generate a multi-page print job instantly.
+                            </p>
+                        </div>
+                        <div class="bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-800 p-4 rounded-sm">
+                            <h4 class="text-[10px] font-black uppercase tracking-widest text-indigo-700 dark:text-indigo-400 mb-2 flex items-center gap-2">
+                                <i data-lucide="layers" class="w-3.5 h-3.5"></i> C. Smart Batch Sequencing
+                            </h4>
+                            <p class="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                                Enable <strong>Batch Printing</strong> to automatically add sequential numbering (e.g., 1/5, 2/5) to your labels. This is ideal for pallet tracking and receiving multi-box shipments.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-[10px] font-black uppercase tracking-widest text-slate-800 dark:text-slate-200 mb-2 flex items-center gap-2">
+                            <i data-lucide="printer" class="w-3.5 h-3.5 text-sky-500"></i> D. Printing Protocol
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-3">
+                            When you click <strong>Print</strong>, a Job Configuration window appears.
+                        </p>
+                        <ul class="list-disc list-inside text-[10px] font-bold text-slate-500 dark:text-slate-400 space-y-1 ml-2">
+                            <li>Review the <strong>Target Printer</strong> (Optimized for BLP-410).</li>
+                            <li>The system uses an <strong>Invisible Iframe I/O</strong> to bypass standard browser margins for edge-to-pixel printing accuracy.</li>
+                            <li>Ensure your thermal printer is set to the correct dimensions before hitting "Send to Printer".</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section id="cycle-count" class="scroll-mt-24">
+                <div class="border-b-2 border-slate-300 dark:border-slate-700 pb-3 mb-5 flex items-center gap-3">
+                    <div class="bg-indigo-100 dark:bg-indigo-900/50 p-2 rounded-sm text-indigo-700 dark:text-indigo-400">
+                        <i data-lucide="clipboard-list" class="w-5 h-5"></i>
+                    </div>
+                    <h2 class="text-xl font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight">20. Cycle Counting (Inventory Reconciliation)</h2>
+                </div>
+
+                <p class="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+                    Cycle Counting is an internal auditing procedure where a small subset of inventory in a specific location is counted on a specific day. This ensures continuous inventory accuracy without doing a full warehouse shutdown.
+                </p>
+
+                <div class="space-y-6">
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+                            <i data-lucide="scan" class="w-4 h-4 text-indigo-600"></i> A. Execution Workflow
+                        </h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-[11px] border-collapse">
+                                <thead class="bg-slate-50 dark:bg-slate-950 text-slate-500 uppercase font-black text-[9px]">
+                                    <tr class="border-b border-slate-200 dark:border-slate-800">
+                                        <th class="p-3 border-r border-slate-200 dark:border-slate-800 w-32">Step</th>
+                                        <th class="p-3">Action / Result</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-semibold text-slate-700 dark:text-slate-300">
+                                    <tr>
+                                        <td class="p-3 border-r border-slate-200 dark:border-slate-800">Select Location</td>
+                                        <td class="p-3">Choose the <strong>Active Location (Rack/Bin)</strong> where you are physically performing the count.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-3 border-r border-slate-200 dark:border-slate-800">Scan SKU</td>
+                                        <td class="p-3">Scan the Item barcode. The system performs an <strong>AJAX Lookup</strong> to retrieve the "System Quantity" (what the computer thinks you have).</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-3 border-r border-slate-200 dark:border-slate-800">Input Actual</td>
+                                        <td class="p-3">Type the actual number of pieces you found in the bin and press [Enter].</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-3 border-r border-slate-200 dark:border-slate-800">Review Variance</td>
+                                        <td class="p-3">The <strong>Audit Grid</strong> will automatically calculate the variance (<span class="text-rose-600 font-black">SHORT</span> or <span class="text-amber-600 font-black">OVER</span>).</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 p-4 rounded-sm">
+                            <h4 class="text-[10px] font-black uppercase tracking-widest text-amber-700 dark:text-amber-400 mb-2 flex items-center gap-2">
+                                <i data-lucide="git-branch" class="w-3.5 h-3.5"></i> Variance Detection
+                            </h4>
+                            <p class="text-[11px] font-semibold text-slate-600 dark:text-slate-400 leading-relaxed">
+                                If the actual count is different from the system count, the system flags it in the audit grid. Clicking <strong>Post Audit</strong> will automatically create a <span class="text-amber-600 font-black">CORR</span> (Correction) log to adjust the inventory level to match your physical count.
+                            </p>
+                        </div>
+                        
+                        <div class="bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-800 p-4 rounded-sm">
+                            <h4 class="text-[10px] font-black uppercase tracking-widest text-indigo-700 dark:text-indigo-400 mb-2 flex items-center gap-2">
+                                <i data-lucide="ghost" class="w-3.5 h-3.5"></i> Ghost Stock Auto-Entry
+                            </h4>
+                            <p class="text-[11px] font-semibold text-slate-600 dark:text-slate-400 leading-relaxed">
+                                If you scan an item in a bin where the system says it should not exist (System Qty = 0), the WMS will automatically register it as a **New Discovery**. A new Material Tag will be generated (Pre-fixed with AUDIT-) to bring that stock into the system.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-[10px] font-black uppercase tracking-widest text-slate-800 dark:text-slate-200 mb-2 flex items-center gap-2">
+                            <i data-lucide="save" class="w-3.5 h-3.5 text-indigo-500"></i> Finalizing the Audit
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-2">
+                            Once you have scanned all items in the bin, click <strong>Post Audit</strong>. This will:
+                        </p>
+                        <ul class="list-disc list-inside text-[10px] font-bold text-slate-500 dark:text-slate-400 space-y-1 ml-2">
+                            <li>Update physical quantities in the <strong>Material Tags</strong> table.</li>
+                            <li>Write entries into the <strong>Stock Movement History</strong> for audit tracking.</li>
+                            <li>Generate a <strong>System Audit Log</strong> entry under the 'Cycle Count' module.</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section id="fleet-management" class="scroll-mt-24">
+                <div class="border-b-2 border-slate-300 dark:border-slate-700 pb-3 mb-5 flex items-center gap-3">
+                    <div class="bg-zinc-100 dark:bg-zinc-800 p-2 rounded-sm text-zinc-700 dark:text-zinc-300">
+                        <i data-lucide="car-front" class="w-5 h-5"></i>
+                    </div>
+                    <h2 class="text-xl font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight">21. Fleet Management & Logistics Control</h2>
+                </div>
+
+                <p class="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+                    This module tracks the physical assets used for delivery, the assigned crew, and the operational expenses of each dispatch trip.
+                </p>
+
+                <div class="space-y-6">
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-zinc-700 dark:text-zinc-300 mb-3 flex items-center gap-2">
+                            <i data-lucide="plus-circle" class="w-4 h-4 text-emerald-500"></i> A. Fleet Registration & Compliance
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-3">
+                            Register company vehicles by defining the <strong>Plate Number</strong>, <strong>Vehicle Type</strong>, and <strong>Maximum Capacity (KG)</strong>. 
+                        </p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                            <div class="bg-rose-50 dark:bg-rose-900/20 p-3 border-l-2 border-rose-500">
+                                <span class="text-[9px] font-black uppercase text-rose-600 block mb-1">Coding Logic</span>
+                                <p class="text-[10px] font-bold text-slate-600">Assign the <strong>Coding Day</strong>. The system will automatically hide vehicles from the dispatch list on their restricted days to prevent violations.</p>
+                            </div>
+                            <div class="bg-amber-50 dark:bg-amber-900/20 p-3 border-l-2 border-amber-500">
+                                <span class="text-[9px] font-black uppercase text-amber-600 block mb-1">Maintenance (PMS/LTO)</span>
+                                <p class="text-[10px] font-bold text-slate-600">Input <strong>LTO Expiry</strong> and <strong>Next PMS</strong> dates. The system flags vehicles in red if they are overdue for registration or maintenance.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-indigo-700 dark:text-indigo-400 mb-2 flex items-center gap-2">
+                            <i data-lucide="users" class="w-4 h-4 text-indigo-500"></i> B. Crew Assignment
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-3">
+                            Click <strong>Edit Crew</strong> on the masterlist to assign a registered <strong>Driver</strong> and an <strong>Assistant (Pahinante)</strong> to a specific vehicle. A driver must be registered in the Driver Masterlist first.
+                        </p>
+                    </div>
+
+                    <div class="bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800 p-4 rounded-sm border-l-4 border-l-sky-500">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-sky-700 dark:text-sky-400 mb-2 flex items-center gap-2">
+                            <i data-lucide="navigation" class="w-4 h-4"></i> C. Live Trip Monitor (Google Maps)
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-3">
+                            When a vehicle is <strong>In Transit</strong>, click the <span class="text-sky-600 font-black">Trip Info</span> button to open the Command Center view:
+                        </p>
+                        <ul class="list-disc list-inside text-[10px] font-bold text-slate-500 dark:text-slate-400 space-y-1 ml-2">
+                            <li>View the <strong>Real-time Map Location</strong> of the delivery address.</li>
+                            <li>See the <strong>Manifest</strong> (Items on Board) for that specific trip.</li>
+                            <li>Access <strong>Get Route Directions</strong> to assist the driver via navigation apps.</li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-rose-700 dark:text-rose-400 mb-2 flex items-center gap-2">
+                            <i data-lucide="receipt" class="w-4 h-4"></i> D. Logistics Expense Logging
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                            Upon returning from a trip, the dispatcher must log <strong>Fuel Costs</strong> and <strong>Toll Fees</strong>. These expenses are permanently linked to the <strong>Main PO Batch</strong> to provide management with a detailed Cost-Per-Delivery analysis in the Analytics module.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="rma-logistics" class="scroll-mt-24">
+                <div class="border-b-2 border-slate-300 dark:border-slate-700 pb-3 mb-5 flex items-center gap-3">
+                    <div class="bg-indigo-100 dark:bg-indigo-900/50 p-2 rounded-sm text-indigo-700 dark:text-indigo-400">
+                        <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+                    </div>
+                    <h2 class="text-xl font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight">22. Reverse Logistics (RMA)</h2>
+                </div>
+
+                <p class="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+                    The Return Merchandise Authorization (RMA) module handles items coming back to the warehouse (Inbound Customer Returns) or being sent back to suppliers (Outbound Vendor Returns).
+                </p>
+
+                <div class="space-y-8">
+                    <div>
+                        <h4 class="text-xs font-black uppercase tracking-widest text-indigo-700 dark:text-indigo-400 mb-3 flex items-center gap-2">
+                            <i data-lucide="file-plus" class="w-4 h-4"></i> Phase 1: RMA Ticket Creation
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-3">
+                            Go to <strong>RMA Dashboard > Create Ticket</strong>. Select the <strong>Return Type</strong> (Customer or Supplier) and enter the <strong>Reference Order No</strong>.
+                        </p>
+                        <div class="bg-indigo-50 dark:bg-indigo-950/30 p-3 border-l-2 border-indigo-500 text-[10px] text-slate-600 dark:text-slate-400 italic">
+                            <strong>Pro-Tip:</strong> Clicking the search icon after entering the Reference No. will auto-fetch all items bought in that order, allowing you to simply check the items being returned.
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm border-l-4 border-l-rose-500">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-rose-700 dark:text-rose-400 mb-2 flex items-center gap-2">
+                            <i data-lucide="shield-alert" class="w-4 h-4 text-rose-500"></i> Phase 2: Quarantine Receipt
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-3">
+                            When the items physically arrive at the warehouse, the Receiver must click <strong>Receive</strong> on the RMA Dashboard.
+                        </p>
+                        <ul class="list-disc list-inside text-[10px] font-bold text-slate-500 dark:text-slate-400 space-y-1 ml-2">
+                            <li>Verify the physical quantity against the expected quantity.</li>
+                            <li>The system automatically creates a new Material Tag (pre-fixed with <strong>RMA-</strong>).</li>
+                            <li>All items are initially routed to the <strong>QUARANTINE ZONE</strong> to prevent them from being accidentally sold before inspection.</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 class="text-xs font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-400 mb-3 flex items-center gap-2">
+                            <i data-lucide="microscope" class="w-4 h-4"></i> Phase 3: QC Disposition & Resolution
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-4">
+                            Quality Control (QC) staff must evaluate each item and apply two types of decisions:
+                        </p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-sm">
+                                <span class="text-[9px] font-black uppercase text-slate-400 block mb-1">Physical Disposition</span>
+                                <ul class="text-[10px] font-bold text-slate-600 dark:text-slate-300 space-y-1">
+                                    <li><span class="text-emerald-600">Restock:</span> Move item back to a saleable rack.</li>
+                                    <li><span class="text-rose-600">Scrap:</span> Dispose of damaged inventory (Qty = 0).</li>
+                                    <li><span class="text-amber-600">RTV:</span> Stage for return to the supplier.</li>
+                                </ul>
+                            </div>
+                            <div class="p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-sm">
+                                <span class="text-[9px] font-black uppercase text-slate-400 block mb-1">Financial Resolution</span>
+                                <ul class="text-[10px] font-bold text-slate-600 dark:text-slate-300 space-y-1">
+                                    <li><strong>Refund:</strong> Mark for accounting credit.</li>
+                                    <li><strong>Replace:</strong> Triggers the <strong>Auto-Replacement Logic</strong>.</li>
+                                    <li><strong>Write-Off:</strong> Mark as total loss.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-sky-50 dark:bg-sky-900/10 border border-sky-200 dark:border-sky-800 p-5 rounded-sm border-t-4 border-t-sky-500">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-sky-800 dark:text-sky-400 mb-2 flex items-center gap-2">
+                            <i data-lucide="zap" class="w-4 h-4"></i> Smart Auto-Replacement Synergy
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-600 dark:text-slate-400 leading-relaxed">
+                            When <strong>"Replace"</strong> is selected as a resolution, the WMS AI automatically searches for the nearest incoming Supplier PO for that SKU. It creates an instant <strong>Cross-Dock Link</strong> so that the replacement item is intercepted at the dock and sent straight to the customer, bypassing regular storage to save time.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="system-audit" class="scroll-mt-24">
+                <div class="border-b-2 border-slate-300 dark:border-slate-700 pb-3 mb-5 flex items-center gap-3">
+                    <div class="bg-rose-100 dark:bg-rose-900/50 p-2 rounded-sm text-rose-700 dark:text-rose-400">
+                        <i data-lucide="bell-ring" class="w-5 h-5"></i>
+                    </div>
+                    <h2 class="text-xl font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight">23. System Health Audit (Automated Batch Engine)</h2>
+                </div>
+
+                <p class="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+                    The System Audit engine is a centralized diagnostic tool that scans the entire WMS for critical status updates and automatically notifies the respective departments.
+                </p>
+
+                <div class="space-y-6">
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-rose-700 dark:text-rose-400 mb-3 flex items-center gap-2">
+                            <i data-lucide="zap" class="w-4 h-4"></i> A. Manual Trigger Procedure
+                        </h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-[11px] border-collapse">
+                                <thead class="bg-slate-50 dark:bg-slate-950 text-slate-500 uppercase font-black text-[9px]">
+                                    <tr class="border-b border-slate-200 dark:border-slate-800">
+                                        <th class="p-3 border-r border-slate-200 dark:border-slate-800 w-32">Location</th>
+                                        <th class="p-3 border-r border-slate-200 dark:border-slate-800 w-32">Action</th>
+                                        <th class="p-3">Expected Result</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-semibold text-slate-700 dark:text-slate-300">
+                                    <tr>
+                                        <td class="p-3 border-r border-slate-200 dark:border-slate-800">Floating Menu</td>
+                                        <td class="p-3 border-r border-slate-200 dark:border-slate-800">Click the <strong>System Audit</strong> button (Bell Icon <i data-lucide="bell-ring" class="w-3 h-3 inline"></i>).</td>
+                                        <td class="p-3">The WMS Batch Engine starts scanning 7 specific data points across the database.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-3 border-r border-slate-200 dark:border-slate-800">Success Message</td>
+                                        <td class="p-3 border-r border-slate-200 dark:border-slate-800">Wait for the Green Toast notification.</td>
+                                        <td class="p-3">Dozens of automated emails are dispatched to target departments (Purchasing, Logistics, QA).</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-indigo-800 dark:text-indigo-400 mb-4 flex items-center gap-2">
+                            <i data-lucide="search-check" class="w-4 h-4"></i> B. The "Big 7" Health Checks
+                        </h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div class="bg-white dark:bg-slate-900 p-2.5 border border-slate-200 dark:border-slate-700 rounded-sm">
+                                <span class="text-[8px] font-black text-rose-500 uppercase block mb-1">1. Expiry Monitor</span>
+                                <p class="text-[10px] text-slate-500">Scans materials near expiration dates.</p>
+                            </div>
+                            <div class="bg-white dark:bg-slate-900 p-2.5 border border-slate-200 dark:border-slate-700 rounded-sm">
+                                <span class="text-[8px] font-black text-amber-600 uppercase block mb-1">2. Low Stock Scan</span>
+                                <p class="text-[10px] text-slate-500">Flags SKUs below safety thresholds.</p>
+                            </div>
+                            <div class="bg-white dark:bg-slate-900 p-2.5 border border-slate-200 dark:border-slate-700 rounded-sm">
+                                <span class="text-[8px] font-black text-blue-600 uppercase block mb-1">3. Logistics Tracker</span>
+                                <p class="text-[10px] text-slate-500">Checks for overdue supplier shipments.</p>
+                            </div>
+                            <div class="bg-white dark:bg-slate-900 p-2.5 border border-slate-200 dark:border-slate-700 rounded-sm">
+                                <span class="text-[8px] font-black text-indigo-600 uppercase block mb-1">4. QC Backlog</span>
+                                <p class="text-[10px] text-slate-500">Reminds QA team of pending inspections.</p>
+                            </div>
+                            <div class="bg-white dark:bg-slate-900 p-2.5 border border-slate-200 dark:border-slate-700 rounded-sm">
+                                <span class="text-[8px] font-black text-teal-600 uppercase block mb-1">5. Aging Requests</span>
+                                <p class="text-[10px] text-slate-500">Detects unfulfilled internal requisitions.</p>
+                            </div>
+                            <div class="bg-white dark:bg-slate-900 p-2.5 border border-slate-200 dark:border-slate-700 rounded-sm">
+                                <span class="text-[8px] font-black text-emerald-600 uppercase block mb-1">6. PO Queue</span>
+                                <p class="text-[10px] text-slate-500">Alerts managers of pending PO approvals.</p>
+                            </div>
+                            <div class="bg-white dark:bg-slate-900 p-2.5 border border-slate-200 dark:border-slate-700 rounded-sm">
+                                <span class="text-[8px] font-black text-slate-400 uppercase block mb-1">7. Dead Stock</span>
+                                <p class="text-[10px] text-slate-500">Identifies slow-moving or idle inventory.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 dark:bg-slate-800 border-l-4 border-slate-700 p-4 rounded-r-sm">
+                        <h4 class="text-[10px] font-black uppercase tracking-widest text-slate-800 dark:text-slate-100 mb-2 flex items-center gap-2">
+                            <i data-lucide="mail" class="w-3.5 h-3.5 text-sky-500"></i> C. Administrative Daily Digest
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                            Upon completion of the audit, a <strong>Daily System Digest</strong> email is automatically sent to the System Administrator. This report contains a summary of all findings (Counts of pending QC, Aging requests, etc.) to ensure management is always in the loop without checking individual dashboards.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="global-scan" class="scroll-mt-24">
+                <div class="border-b-2 border-slate-300 dark:border-slate-700 pb-3 mb-5 flex items-center gap-3">
+                    <div class="bg-sky-100 dark:bg-sky-900/50 p-2 rounded-sm text-sky-700 dark:text-sky-400">
+                        <i data-lucide="scan-barcode" class="w-5 h-5"></i>
+                    </div>
+                    <h2 class="text-xl font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight">24. Global Scan & Direct Receiving</h2>
+                </div>
+
+                <p class="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+                    The Global Scanner is a fast-action tool accessible from anywhere in the system. It allows warehouse staff to rapidly lookup items or instantly receive/put-away inventory without navigating through multiple menus.
+                </p>
+
+                <div class="space-y-6">
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-sky-700 dark:text-sky-400 mb-3 flex items-center gap-2">
+                            <i data-lucide="smartphone" class="w-4 h-4"></i> A. The Universal Scanner
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-3">
+                            Click the <strong>Scan Item</strong> icon from the floating Capsule Menu. This opens the Item Lookup Scanner overlay.
+                        </p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="bg-slate-50 dark:bg-slate-900/50 p-3 border-l-2 border-sky-500 text-[10px] text-slate-600 dark:text-slate-400">
+                                <strong>Hardware Scanner:</strong> Simply point your USB/Bluetooth barcode gun and scan. The system automatically reads the input and processes it instantly.
+                            </div>
+                            <div class="bg-slate-50 dark:bg-slate-900/50 p-3 border-l-2 border-emerald-500 text-[10px] text-slate-600 dark:text-slate-400">
+                                <strong>Web Camera Support:</strong> In forms requiring barcodes, clicking the camera icon <i data-lucide="camera" class="w-3 h-3 inline"></i> will open your laptop or tablet's webcam to scan QR codes and barcodes directly.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-500 mb-2 flex items-center gap-2">
+                            <i data-lucide="download-cloud" class="w-4 h-4"></i> B. Direct Put-Away
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-2">
+                            When receiving items on the fly (Direct Receipt), use the <strong>Receiving & Put-Away</strong> scanner module:
+                        </p>
+                        <ol class="list-decimal list-inside text-[11px] font-bold text-slate-500 dark:text-slate-400 space-y-1.5 ml-2">
+                            <li>Scan the <strong>Target Location</strong> barcode (the physical rack or bin).</li>
+                            <li>Scan the <strong>Item SKU</strong>.</li>
+                            <li>Input the quantity and press Register. The system instantly updates live stock levels.</li>
+                        </ol>
+                    </div>
+
+                    <div class="bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 p-5 rounded-sm border-l-4 border-l-indigo-600 shadow-sm relative overflow-hidden">
+                        <div class="absolute right-0 top-0 opacity-10 dark:opacity-20 transform translate-x-4 -translate-y-4">
+                            <i data-lucide="zap" class="w-32 h-32 text-indigo-500"></i>
+                        </div>
+                        <h4 class="text-xs font-black uppercase tracking-widest text-indigo-800 dark:text-indigo-400 mb-3 flex items-center gap-2 relative z-10">
+                            <i data-lucide="git-merge" class="w-4 h-4"></i> C. Cross-Dock Auto-Interception (AI Logic)
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-700 dark:text-slate-300 leading-relaxed mb-4 relative z-10">
+                            This is the system's most powerful routing feature. When you scan an item for Put-Away, the WMS AI checks in the background if there is a pending, urgent Customer Order waiting for that specific item.
+                        </p>
+                        
+                        <div class="space-y-2 relative z-10">
+                            <div class="flex items-start gap-2">
+                                <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-500 shrink-0 mt-0.5"></i>
+                                <p class="text-[10px] font-bold text-slate-600 dark:text-slate-400"><strong>Interception:</strong> If a match is found, the system blocks normal Put-Away and triggers a red <strong>CROSS-DOCK ALERT</strong> on your screen.</p>
+                            </div>
+                            <div class="flex items-start gap-2">
+                                <i data-lucide="mail" class="w-4 h-4 text-sky-500 shrink-0 mt-0.5"></i>
+                                <p class="text-[10px] font-bold text-slate-600 dark:text-slate-400"><strong>Customer & Fleet Notification:</strong> It automatically sends an "Arrival Notice" email to the customer and triggers an In-App web alert to your Fleet Logistics team for immediate pickup.</p>
+                            </div>
+                            <div class="flex items-start gap-2">
+                                <i data-lucide="split-square-horizontal" class="w-4 h-4 text-amber-500 shrink-0 mt-0.5"></i>
+                                <p class="text-[10px] font-bold text-slate-600 dark:text-slate-400"><strong>Stock Splitting:</strong> If the received quantity is larger than the waiting order, the AI automatically splits the batch—allocating the exact amount to the Dispatch Staging Area and routing the excess back to your scanned rack.</p>
+                            </div>
+                            <div class="flex items-start gap-2">
+                                <i data-lucide="printer" class="w-4 h-4 text-emerald-500 shrink-0 mt-0.5"></i>
+                                <p class="text-[10px] font-bold text-slate-600 dark:text-slate-400"><strong>Special Print:</strong> Instead of a standard bin tag, the system redirects to print a special <strong>Cross-Dock Label</strong> to stick on the box.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <div class="pt-8 text-center border-t border-slate-200 dark:border-slate-800">
+                <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest hover:text-teal-600 dark:hover:text-teal-400 transition-colors">
+                    <i data-lucide="arrow-up" class="w-4 h-4 mx-auto mb-1"></i> Back to Top
+                </button>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        
+        // Spy Scroll Logic for Active Links
+        const sections = document.querySelectorAll("section");
+        const navLinks = document.querySelectorAll(".manual-link");
+
+        window.addEventListener("scroll", () => {
+            let current = "";
+            sections.forEach((section) => {
+                const sectionTop = section.offsetTop;
+                if (pageYOffset >= sectionTop - 150) {
+                    current = section.getAttribute("id");
+                }
+            });
+
+            navLinks.forEach((link) => {
+                link.classList.remove("active");
+                if (link.getAttribute("href").includes(current)) {
+                    link.classList.add("active");
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
