@@ -1064,13 +1064,14 @@ def register_user_view(request):
 @require_module_access('SYS_CONFIG')
 def item_master_view(request):
     # ==========================================
-    # 1. POST: ADD / EDIT / DELETE / IMPORT
+    # 1. POST: ADD / EDIT / TOGGLE / IMPORT
     # ==========================================
     if request.method == 'POST':
         action = request.POST.get('action')
 
         if action == 'add':
             item_code = request.POST.get('item_code', '').strip().upper()
+            upc_barcode = request.POST.get('upc_barcode', '').strip()
             description = request.POST.get('description', '').strip()
             category = request.POST.get('category', 'RAW').strip()
             uom = request.POST.get('uom', 'PCS').strip().upper()
@@ -1078,15 +1079,26 @@ def item_master_view(request):
             min_stock = int(request.POST.get('min_stock', 0) or 0)
             default_zone = request.POST.get('default_zone', '').strip().upper()
             initial_stock = int(request.POST.get('initial_stock', 0) or 0)
+            
+            # 🚀 BAGONG FIELDS
+            weight_kg = request.POST.get('weight_kg', 0.000)
+            cbm_volume = request.POST.get('cbm_volume', 0.000)
 
             if Item.objects.filter(item_code=item_code).exists():
                 messages.error(request, f"Error: Item Code '{item_code}' already exists!")
             else:
                 with transaction.atomic():
                     Item.objects.create(
-                        item_code=item_code, description=description,
-                        category=category, uom=uom, unit_price=unit_price,
-                        min_stock=min_stock, default_zone=default_zone
+                        item_code=item_code, 
+                        upc_barcode=upc_barcode,
+                        description=description,
+                        category=category, 
+                        uom=uom, 
+                        unit_price=unit_price,
+                        min_stock=min_stock, 
+                        default_zone=default_zone,
+                        weight_kg=weight_kg,
+                        cbm_volume=cbm_volume
                     )
                     
                     if initial_stock > 0:
@@ -1113,14 +1125,12 @@ def item_master_view(request):
                             notes="Initial System Data Entry"
                         )
 
-                        log_system_action(
-                            request.user, 'CREATE', 'Item Master', 
-                            f"Added new item: {item_code} with {initial_stock} opening balance", 
-                            request
-                        )
-                    
-                # log_system_action(request.user, 'CREATE', 'Item Master', f"Registered item: {item_code}", request)
-                messages.success(request, f"Success! Item '{item_code}' has been registered.")
+                    log_system_action(
+                        request.user, 'CREATE', 'Item Master', 
+                        f"Added new item: {item_code} with {initial_stock} opening balance", 
+                        request
+                    )
+                    messages.success(request, f"Success! Item '{item_code}' has been registered.")
 
         elif action == 'edit':
             item_id = request.POST.get('item_id')
@@ -1131,12 +1141,15 @@ def item_master_view(request):
                     messages.error(request, f"Error: Item Code '{item_code}' is already in use.")
                 else:
                     item.item_code = item_code
+                    item.upc_barcode = request.POST.get('upc_barcode', '').strip()
                     item.description = request.POST.get('description', '').strip()
                     item.category = request.POST.get('category', 'RAW').strip()
                     item.uom = request.POST.get('uom', 'PCS').strip().upper()
                     item.unit_price = request.POST.get('unit_price', 0.00)
                     item.min_stock = int(request.POST.get('min_stock', 0) or 0)
                     item.default_zone = request.POST.get('default_zone', '').strip().upper()
+                    item.weight_kg = request.POST.get('weight_kg', 0.000)
+                    item.cbm_volume = request.POST.get('cbm_volume', 0.000)
                     item.save()
 
                     log_system_action(
@@ -1149,24 +1162,26 @@ def item_master_view(request):
             except Exception as e:
                 messages.error(request, f"Error updating item: {str(e)}")
 
-        elif action == 'delete':
+        # 🚀 BAGO: SOFT DELETE (ARCHIVE)
+        elif action == 'toggle_status':
             item_id = request.POST.get('item_id')
             try:
                 item = Item.objects.get(id=item_id)
-                code = item.item_code
-                item.delete()
+                item.is_active = not item.is_active # Baligtarin ang status
+                item.save()
 
+                status_word = "Activated" if item.is_active else "Archived"
                 log_system_action(
-                    request.user, 'DELETE', 'Item Master', 
-                    f"Permanently removed item: {code} from the system", 
+                    request.user, 'UPDATE', 'Item Master', 
+                    f"{status_word} item: {item.item_code}", 
                     request
                 )
                 
-                messages.success(request, f"Successfully removed {code} from the system.")
+                messages.success(request, f"Successfully {status_word.lower()} {item.item_code}.")
             except Exception as e:
-                messages.error(request, f"Error deleting item: {str(e)}")
+                messages.error(request, f"Error updating status: {str(e)}")
                 
-        # 🚀 BAGO: IMPORT EXCEL LOGIC
+        # IMPORT EXCEL LOGIC
         elif action == 'import_excel':
             excel_file = request.FILES.get('excel_file')
             if not excel_file:
@@ -1174,14 +1189,11 @@ def item_master_view(request):
                 return redirect('item_master')
 
             try:
-                # Basahin ang excel kahit may konting dumi (Pandas handles this well)
                 df = pd.read_excel(excel_file)
-                
-                # Strip spaces sa column headers para hindi mag-error kung may whitespace
                 df.columns = df.columns.str.strip()
                 
-                # Required columns checking
-                required_cols = ['Item Code', 'Description', 'Category', 'UOM', 'Unit Price', 'Min Stock', 'Zone']
+                # 🚀 BAGO: Dinagdagan ang columns na hinahanap
+                required_cols = ['Item Code', 'UPC Barcode', 'Description', 'Category', 'UOM', 'Unit Price', 'Min Stock', 'Zone', 'Weight (KG)', 'CBM Volume']
                 if not all(col in df.columns for col in required_cols):
                     messages.error(request, f"Invalid Excel Format! Please download and use the provided template.")
                     return redirect('item_master')
@@ -1191,50 +1203,41 @@ def item_master_view(request):
                 
                 with transaction.atomic():
                     for index, row in df.iterrows():
-                        # Skip blank Item Codes
-                        if pd.isna(row['Item Code']):
-                            continue
+                        if pd.isna(row['Item Code']): continue
                             
                         i_code = str(row['Item Code']).strip().upper()
+                        i_upc = str(row['UPC Barcode']).strip() if pd.notna(row['UPC Barcode']) else ""
                         i_desc = str(row['Description']).strip() if pd.notna(row['Description']) else "NO DESCRIPTION"
                         i_cat = str(row['Category']).strip().upper() if pd.notna(row['Category']) else "RAW"
                         i_uom = str(row['UOM']).strip().upper() if pd.notna(row['UOM']) else "PCS"
                         
-                        try:
-                            i_price = float(row['Unit Price']) if pd.notna(row['Unit Price']) else 0.00
-                        except ValueError:
-                            i_price = 0.00
-                            
-                        try:
-                            i_min = int(row['Min Stock']) if pd.notna(row['Min Stock']) else 0
-                        except ValueError:
-                            i_min = 0
-                            
+                        i_price = float(row['Unit Price']) if pd.notna(row['Unit Price']) else 0.00
+                        i_min = int(row['Min Stock']) if pd.notna(row['Min Stock']) else 0
                         i_zone = str(row['Zone']).strip().upper() if pd.notna(row['Zone']) else ""
+                        
+                        i_weight = float(row['Weight (KG)']) if pd.notna(row['Weight (KG)']) else 0.000
+                        i_cbm = float(row['CBM Volume']) if pd.notna(row['CBM Volume']) else 0.000
 
-                        # Gamitin natin ang update_or_create para mag-overwrite kung may existing, at mag-create kung wala
                         obj, created = Item.objects.update_or_create(
                             item_code=i_code,
                             defaults={
+                                'upc_barcode': i_upc,
                                 'description': i_desc,
                                 'category': i_cat,
                                 'uom': i_uom,
                                 'unit_price': i_price,
                                 'min_stock': i_min,
-                                'default_zone': i_zone
+                                'default_zone': i_zone,
+                                'weight_kg': i_weight,
+                                'cbm_volume': i_cbm,
+                                'is_active': True # Laging active pagka-import
                             }
                         )
                         
-                        if created:
-                            success_count += 1
-                        else:
-                            updated_count += 1
+                        if created: success_count += 1
+                        else: updated_count += 1
 
-                        log_system_action(
-                            request.user, 'IMPORT', 'Item Master', 
-                            f"Excel Bulk Import: {success_count} new items, {updated_count} updated.", 
-                            request
-                        )
+                    log_system_action(request.user, 'IMPORT', 'Item Master', f"Excel Bulk Import: {success_count} new, {updated_count} updated.", request)
 
                 messages.success(request, f"Import Success! Registered {success_count} new items, Updated {updated_count} existing items.")
             except Exception as e:
@@ -1245,12 +1248,9 @@ def item_master_view(request):
     # ==========================================
     # 2. GET: LOAD PAGE AND SEARCH / EXPORT TEMPLATE
     # ==========================================
-    
-    # 🚀 BAGO: DOWNLOAD TEMPLATE LOGIC
     if request.GET.get('download_template') == 'true':
-        df = pd.DataFrame(columns=['Item Code', 'Description', 'Category', 'UOM', 'Unit Price', 'Min Stock', 'Zone'])
-        # Add sample row
-        df.loc[0] = ['SAMPLE-001', 'Sample 10MM Bolt', 'RAW', 'PCS', 15.50, 100, 'RACK-A']
+        df = pd.DataFrame(columns=['Item Code', 'UPC Barcode', 'Description', 'Category', 'UOM', 'Unit Price', 'Min Stock', 'Zone', 'Weight (KG)', 'CBM Volume'])
+        df.loc[0] = ['RAW-001', '480123456789', '10MM Steel Bolt', 'RAW', 'PCS', 15.50, 100, 'RACK-A', 0.050, 0.001]
         
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         response['Content-Disposition'] = 'attachment; filename="WMS_ItemMaster_Template.xlsx"'
@@ -1259,11 +1259,13 @@ def item_master_view(request):
         return response
 
     search_query = request.GET.get('q', '')
-    items = Item.objects.all().order_by('-created_at')
+    # Default order by is_active (active on top) then created_at
+    items = Item.objects.all().order_by('-is_active', '-created_at')
 
     if search_query:
         items = items.filter(
             Q(item_code__icontains=search_query) |
+            Q(upc_barcode__icontains=search_query) |
             Q(description__icontains=search_query) |
             Q(category__icontains=search_query)
         )
@@ -7721,6 +7723,179 @@ def so_smart_picking_view(request):
 @login_required
 def user_manual_view(request):
     return render(request, 'Inventory/system/user_manual.html')
+
+#tools and utilities views
+@login_required
+def lot_traceability_view(request):
+    search_query = request.GET.get('lot_no', '').strip().upper()
+    
+    context = {'search_lot': search_query, 'searched': False}
+
+    if search_query:
+        context['searched'] = True
+        
+        # 1. UNA: Subukang hanapin bilang EXACT Lot Number
+        tag = MaterialTag.objects.filter(lot_no=search_query).first()
+        
+        if tag:
+            context['tag'] = tag
+            
+            # Origin Data
+            if tag.po_reference:
+                context['origin_po'] = tag.po_reference
+                context['supplier'] = tag.po_reference.supplier
+                context['main_po_no'] = tag.po_reference.batch_id if tag.po_reference.batch_id else tag.po_reference.po_no
+            
+            # Movement History
+            logs = StockLog.objects.filter(material_tag=tag).select_related('user').order_by('timestamp')
+            context['logs'] = logs
+            
+            # Machine Usages (Kung gagamitin)
+            if hasattr(tag, 'machine_usages'):
+                context['machine_usages'] = tag.machine_usages.all().select_related('machine')
+
+        else:
+            # 2. PANGALAWA: Kung hindi siya Lot Number, baka Item Code siya!
+            lots = MaterialTag.objects.filter(item_code=search_query).order_by('-arrival_date', '-id')
+            
+            if lots.exists():
+                context['multiple_lots'] = lots
+                context['item_info'] = Item.objects.filter(item_code=search_query).first()
+            else:
+                messages.error(request, f"Record '{search_query}' not found as a Lot Number or Item Code.")
+
+    return render(request, 'Inventory/tools/lot_traceability.html', context)
+
+@login_required
+def uom_calculator_view(request):
+    """
+    Dedicated tool para mag-compute ng Packaging at UOM conversions.
+    """
+    # Kukunin natin ang mga items para sa dropdown search
+    items = Item.objects.all().order_by('item_code')
+    
+    context = {
+        'items': items,
+    }
+    return render(request, 'Inventory/tools/uom_calculator.html', context)
+
+@login_required
+def cbm_calculator_view(request):
+    # Kukunin natin ang mga sasakyan para sa dropdown
+    vehicles = Vehicle.objects.filter(status='Available')
+    
+    # Kukunin natin ang mga items para sa auto-fill
+    items = Item.objects.filter(is_active=True).order_by('item_code')
+    
+    context = {
+        'vehicles': vehicles,
+        'items': items,
+    }
+    return render(request, 'Inventory/tools/cbm_calculator.html', context)
+
+@login_required
+def api_get_order_cargo(request):
+    try:
+        order_no = request.GET.get('order_no', '').strip().upper()
+        
+        if not order_no:
+            return JsonResponse({'success': False, 'error': 'No Order Number provided.'})
+
+        # Hanapin ang order (Hindi isasama ang Cancelled o Delivered)
+        orders = CustomerOrder.objects.filter(
+            order_no__startswith=order_no
+        ).exclude(order_status__in=['Cancelled', 'Delivered'])
+
+        if not orders.exists():
+            return JsonResponse({'success': False, 'error': f'Order {order_no} not found, or it is already delivered/cancelled.'})
+
+        data = []
+        for order in orders:
+            # Hanapin ang item sa Masterlist para makuha ang weight at cbm
+            item_master = Item.objects.filter(item_code=order.item_code).first()
+            
+            # Safe checking kung may weight/cbm sa Item model
+            weight = 0.00
+            cbm = 0.000
+            
+            if item_master:
+                if hasattr(item_master, 'weight_kg') and item_master.weight_kg:
+                    weight = float(item_master.weight_kg)
+                if hasattr(item_master, 'cbm_volume') and item_master.cbm_volume:
+                    cbm = float(item_master.cbm_volume)
+            
+            data.append({
+                'item_code': order.item_code,
+                'description': order.description or (item_master.description if item_master else 'No Description'),
+                'qty': order.quantity,
+                'weight_per_unit': weight,
+                'cbm_per_unit': cbm
+            })
+
+        return JsonResponse({'success': True, 'items': data})
+
+    except Exception as e:
+        # Ito ang sasalo sa error para malaman natin kung ano talaga ang problema!
+        print(f"API ERROR: {str(e)}")
+        return JsonResponse({'success': False, 'error': f"Server Error: {str(e)}"})
+
+@login_required
+def smart_slotting_view(request):
+    # 1. Kunin ang Velocity (Transactions in last 30 days)
+    last_month = timezone.now() - timedelta(days=30)
+    velocity_data = StockLog.objects.filter(
+        action_type='OUT', 
+        timestamp__gte=last_month
+    ).values('material_tag__item_code').annotate(
+        total_hits=Count('id')
+    ).order_by('-total_hits')
+
+    # 2. ABC Classification Logic
+    total_items = velocity_data.count()
+    recommendations = []
+    
+    for index, data in enumerate(velocity_data):
+        item_code = data['material_tag__item_code']
+        hits = data['total_hits']
+        
+        # Determine Rank
+        rank = 'C'
+        if index < total_items * 0.2: rank = 'A'
+        elif index < total_items * 0.5: rank = 'B'
+        
+        # 3. Check Current Location
+        current_tags = MaterialTag.objects.filter(item_code=item_code, total_pcs__gt=0)
+        for tag in current_tags:
+            if tag.location:
+                zone = tag.location.zone
+                # Assumption: Zone A & B are FRONT, others are BACK
+                is_front = zone in ['ZONE A', 'ZONE B', 'A', 'B']
+                
+                # Recommendation Logic
+                move_needed = False
+                msg = ""
+                
+                if rank == 'A' and not is_front:
+                    move_needed = True
+                    msg = "Fast-mover is too far back. Move to Front Zones for faster picking."
+                elif rank == 'C' and is_front:
+                    move_needed = True
+                    msg = "Slow-mover is wasting prime space. Move to Back/Top racks."
+                
+                if move_needed:
+                    recommendations.append({
+                        'item_code': item_code,
+                        'rank': rank,
+                        'current_zone': zone,
+                        'current_loc': tag.location.location_code,
+                        'reason': msg,
+                        'hits': hits
+                    })
+
+    return render(request, 'Inventory/tools/smart_slotting.html', {
+        'recommendations': recommendations,
+        'total_analyzed': total_items
+    })
 
 # Email views
 

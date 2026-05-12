@@ -1,0 +1,419 @@
+{% extends "Inventory/base.html" %}
+{% load static %}
+
+{% block title %}CBM & Load Calculator | AIM WMS{% endblock %}
+
+{% block content %}
+<div class="max-w-[100%] mx-auto pb-20 mt-4 text-slate-800 dark:text-slate-200 transition-colors duration-300">
+
+    <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm p-5 mb-6 flex justify-between items-center border-t-4 border-t-blue-600 dark:border-t-blue-500 transition-colors">
+        <div>
+            <h1 class="text-2xl font-black text-blue-900 dark:text-blue-400 uppercase tracking-tight flex items-center gap-3">
+                <i data-lucide="cuboid" class="w-7 h-7 text-blue-600 dark:text-blue-500"></i> CBM & Fleet Load Calculator
+            </h1>
+            <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">Optimize truck space and prevent vehicle overloading</p>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="clearAll()" class="bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 px-4 py-2 border border-rose-200 dark:border-rose-800 text-[10px] font-black uppercase tracking-widest hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors rounded-sm shadow-sm flex items-center gap-2">
+                <i data-lucide="trash-2" class="w-3 h-3"></i> Clear Cargo
+            </button>
+            <a href="{% url 'dashboard' %}" class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-4 py-2 border border-slate-300 dark:border-slate-600 text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors rounded-sm shadow-sm flex items-center gap-2">
+                <i data-lucide="arrow-left" class="w-3 h-3"></i> Back
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <div class="lg:col-span-7 flex flex-col gap-6">
+            
+            <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-5 shadow-sm rounded-sm transition-colors">
+                <h3 class="text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 mb-4 border-b border-slate-200 dark:border-slate-800 pb-2 flex items-center gap-2">
+                    <i data-lucide="truck" class="w-4 h-4 text-blue-500"></i> 1. Select Transport Vehicle
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="space-y-1 md:col-span-2">
+                        <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-1">Company Fleet (Presets)</label>
+                        <select id="vehicle_select" onchange="loadVehicleData()" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-600 p-2.5 text-xs font-black uppercase outline-none focus:border-blue-500 text-slate-800 dark:text-slate-200 transition-colors shadow-inner">
+                            <option value="">-- Manual Entry --</option>
+                            {% for v in vehicles %}
+                                <option value="{{ v.capacity_kg }}" data-type="{{ v.vehicle_type }}">{{ v.plate_number }} - {{ v.vehicle_type }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-1">Max Weight (KG)</label>
+                        <input type="number" id="max_weight" value="2000" oninput="updateVisualizer()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 p-2.5 text-xs font-black text-right text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors">
+                    </div>
+                    <div class="space-y-1 md:col-span-3 border-t border-slate-200 dark:border-slate-800 pt-3 mt-1 flex items-center gap-3">
+                        <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest whitespace-nowrap">Max Volume Capacity (CBM)</label>
+                        <input type="number" id="max_cbm" value="12.5" step="0.01" oninput="updateVisualizer()" class="w-32 bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-300 dark:border-blue-700 p-2 text-sm font-black text-center text-blue-800 dark:text-blue-300 outline-none focus:border-blue-500 transition-colors">
+                        <span class="text-[9px] italic text-slate-400">Standard: Van = 5 CBM, Small Truck = 15 CBM</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-5 shadow-sm rounded-sm transition-colors flex-1">
+                <h3 class="text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 mb-4 border-b border-slate-200 dark:border-slate-800 pb-2 flex items-center gap-2">
+                    <i data-lucide="package-plus" class="w-4 h-4 text-emerald-500"></i> 2. Build Cargo Manifest
+                </h3>
+                
+                <div class="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50 p-4 mb-6 rounded-sm shadow-inner transition-colors">
+                    <div class="flex items-end gap-3 w-full">
+                        <div class="flex-1 space-y-1">
+                            <label class="text-[9px] font-black text-indigo-700 dark:text-indigo-400 uppercase tracking-widest block flex items-center gap-1">
+                                <i data-lucide="zap" class="w-3 h-3"></i> Auto-Load via Order Number
+                            </label>
+                            <div class="relative">
+                                <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-indigo-400"></i>
+                                <input type="text" id="auto_order_no" placeholder="Enter Main P.O. / SO No..." onkeydown="if(event.key === 'Enter'){ fetchOrderCargo(); event.preventDefault(); }" class="w-full pl-9 pr-3 py-2.5 border-2 border-indigo-300 dark:border-indigo-700 bg-white dark:bg-slate-950 text-xs font-black uppercase text-indigo-900 dark:text-indigo-300 focus:outline-none focus:border-indigo-500 shadow-sm transition-colors placeholder:text-indigo-300 dark:placeholder:text-indigo-700">
+                            </div>
+                        </div>
+                        <button type="button" onclick="fetchOrderCargo()" class="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-600 text-white px-6 py-2.5 h-[42px] rounded-sm text-[10px] font-black uppercase tracking-widest shadow-md flex items-center gap-2 transition-transform active:scale-95 shrink-0">
+                            <i data-lucide="download-cloud" class="w-4 h-4"></i> Fetch Order
+                        </button>
+                    </div>
+                </div>
+
+                <div class="relative flex items-center py-2 mb-4">
+                    <div class="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
+                    <span class="flex-shrink-0 mx-4 text-slate-400 text-[10px] font-black uppercase tracking-widest">Or Add Manually</span>
+                    <div class="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                    <div class="md:col-span-2 space-y-1">
+                        <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-1">Item Code (From DB)</label>
+                        <input list="item_list" id="item_code" onchange="autoFillItem()" placeholder="Search Item..." class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-600 p-2.5 text-xs font-black uppercase outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-200 shadow-inner">
+                        <datalist id="item_list">
+                            {% for item in items %}
+                                <option value="{{ item.item_code }}">{{ item.description }}</option>
+                            {% endfor %}
+                        </datalist>
+                    </div>
+                    <div class="md:col-span-2 space-y-1">
+                        <label class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-1">Custom Description</label>
+                        <input type="text" id="item_desc" placeholder="e.g., Wooden Pallet" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 p-2.5 text-xs font-bold text-slate-800 dark:text-slate-200 outline-none focus:border-emerald-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-3 bg-slate-50 dark:bg-slate-950/50 p-4 border border-slate-200 dark:border-slate-800 mb-4">
+                    <div class="space-y-1">
+                        <label class="text-[8px] font-black text-slate-500 uppercase tracking-widest block text-center">Length (cm)</label>
+                        <input type="number" id="dim_l" value="0" min="0" oninput="computeRowCBM()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 p-2 text-xs font-black text-center text-slate-800 dark:text-slate-200 outline-none focus:border-emerald-500">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[8px] font-black text-slate-500 uppercase tracking-widest block text-center">Width (cm)</label>
+                        <input type="number" id="dim_w" value="0" min="0" oninput="computeRowCBM()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 p-2 text-xs font-black text-center text-slate-800 dark:text-slate-200 outline-none focus:border-emerald-500">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[8px] font-black text-slate-500 uppercase tracking-widest block text-center">Height (cm)</label>
+                        <input type="number" id="dim_h" value="0" min="0" oninput="computeRowCBM()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 p-2 text-xs font-black text-center text-slate-800 dark:text-slate-200 outline-none focus:border-emerald-500">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[8px] font-black text-indigo-500 uppercase tracking-widest block text-center">Vol (CBM)</label>
+                        <input type="number" id="row_cbm" value="0.000" step="0.001" class="w-full bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-300 dark:border-indigo-700 p-2 text-xs font-black text-center text-indigo-800 dark:text-indigo-400 outline-none focus:border-indigo-500">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[8px] font-black text-amber-600 uppercase tracking-widest block text-center">Weight (KG)</label>
+                        <input type="number" id="row_kg" value="0.000" step="0.001" class="w-full bg-amber-50 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 p-2 text-xs font-black text-center text-amber-800 dark:text-amber-400 outline-none focus:border-amber-500">
+                    </div>
+                </div>
+
+                <div class="flex items-end gap-4">
+                    <div class="space-y-1 flex-1">
+                        <label class="text-[10px] font-black text-emerald-600 dark:text-emerald-500 uppercase tracking-widest block">Cargo Quantity (Pieces/Boxes)</label>
+                        <input type="number" id="item_qty" value="1" min="1" class="w-full bg-white dark:bg-slate-900 border-2 border-emerald-400 dark:border-emerald-600 p-2.5 text-lg font-black text-center text-slate-800 dark:text-slate-200 outline-none focus:border-emerald-500 shadow-inner">
+                    </div>
+                    <button onclick="addCargoItem()" class="bg-emerald-600 hover:bg-emerald-500 dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white px-8 py-3 rounded-sm text-[10px] font-black uppercase tracking-widest shadow-md flex items-center gap-2 h-[46px] transition-transform active:scale-95 border border-emerald-800">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Add to Load
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-5 flex flex-col gap-6">
+            
+            <div class="bg-slate-900 dark:bg-slate-950 shadow-xl border border-slate-800 p-6 rounded-sm relative overflow-hidden transition-colors">
+                <i data-lucide="box" class="absolute -right-6 -bottom-6 w-48 h-48 text-white/5 pointer-events-none transform -rotate-12"></i>
+                
+                <h3 class="text-[10px] font-black uppercase tracking-widest text-slate-300 border-b border-slate-700 pb-2 mb-5 flex items-center gap-2 relative z-10">
+                    <i data-lucide="activity" class="w-4 h-4 text-emerald-400"></i> Live Load Capacity
+                </h3>
+
+                <div class="mb-6 relative z-10">
+                    <div class="flex justify-between items-end mb-2">
+                        <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">Total Weight (KG)</span>
+                        <span class="text-sm font-black text-white"><span id="display_total_kg">0.00</span> / <span id="display_max_kg" class="text-slate-500">2000</span></span>
+                    </div>
+                    <div class="w-full bg-slate-800 h-4 rounded-full overflow-hidden shadow-inner border border-slate-700">
+                        <div id="bar_weight" class="bg-amber-500 h-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    <p id="lbl_weight_pct" class="text-right text-[9px] font-bold text-amber-400 mt-1">0% Loaded</p>
+                </div>
+
+                <div class="relative z-10">
+                    <div class="flex justify-between items-end mb-2">
+                        <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">Total Volume (CBM)</span>
+                        <span class="text-sm font-black text-white"><span id="display_total_cbm">0.00</span> / <span id="display_max_cbm" class="text-slate-500">12.5</span></span>
+                    </div>
+                    <div class="w-full bg-slate-800 h-4 rounded-full overflow-hidden shadow-inner border border-slate-700">
+                        <div id="bar_cbm" class="bg-blue-500 h-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    <p id="lbl_cbm_pct" class="text-right text-[9px] font-bold text-blue-400 mt-1">0% Filled</p>
+                </div>
+
+                <div id="overload_warning" class="hidden mt-5 bg-rose-500/20 border border-rose-500/50 text-rose-400 p-3 rounded-sm text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 relative z-10 animate-pulse">
+                    <i data-lucide="alert-triangle" class="w-4 h-4"></i> OVER CAPACITY WARNING!
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm rounded-sm flex-1 flex flex-col transition-colors overflow-hidden">
+                <div class="bg-slate-100 dark:bg-slate-800/80 px-4 py-2 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center transition-colors">
+                    <span class="text-[10px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest"><i data-lucide="list" class="w-3 h-3 inline mr-1"></i> Cargo Manifest</span>
+                    <span id="cargo_count" class="bg-slate-800 dark:bg-slate-950 border border-slate-700 text-white px-2 py-0.5 rounded text-[9px] font-black shadow-inner">0 Items</span>
+                </div>
+                <div class="overflow-y-auto flex-1 max-h-[300px]">
+                    <table class="w-full text-left border-collapse" style="font-size: 10px;">
+                        <thead class="bg-slate-50 dark:bg-slate-950/50 text-slate-500 dark:text-slate-400 uppercase tracking-widest font-black sticky top-0 border-b border-slate-200 dark:border-slate-800 transition-colors">
+                            <tr>
+                                <th class="py-2 px-3 border-r border-slate-200 dark:border-slate-800 w-8 text-center">Qty</th>
+                                <th class="py-2 px-3 border-r border-slate-200 dark:border-slate-800">Code / Desc</th>
+                                <th class="py-2 px-3 border-r border-slate-200 dark:border-slate-800 text-right w-16 text-amber-600 dark:text-amber-500">T.Wt</th>
+                                <th class="py-2 px-3 border-r border-slate-200 dark:border-slate-800 text-right w-16 text-blue-600 dark:text-blue-500">T.Vol</th>
+                                <th class="py-2 px-2 text-center w-8">X</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cargo_table_body" class="divide-y divide-slate-100 dark:divide-slate-800 font-bold transition-colors">
+                            <tr id="empty_manifest">
+                                <td colspan="5" class="py-12 text-center text-slate-400 dark:text-slate-500 italic font-bold">
+                                    <i data-lucide="box" class="w-8 h-8 mx-auto mb-2 opacity-30"></i>
+                                    No cargo added yet.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script type="application/json" id="items-data">
+    {
+        {% for item in items %}
+        "{{ item.item_code|escapejs }}": {
+            "desc": "{{ item.description|default:''|escapejs }}",
+            "weight": {{ item.weight_kg|default:0 }},
+            "cbm": {{ item.cbm_volume|default:0 }}
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    }
+</script>
+
+<script>
+    let dbItems = {};
+    let currentTotalKG = 0;
+    let currentTotalCBM = 0;
+
+    document.addEventListener("DOMContentLoaded", function() {
+        lucide.createIcons();
+        try {
+            dbItems = JSON.parse(document.getElementById('items-data').textContent);
+        } catch(e) { console.error(e); }
+        updateVisualizer();
+    });
+
+    // 🚀 BAGO: AUTO-LOAD API INTEGRATION
+    async function fetchOrderCargo() {
+        const orderNo = document.getElementById('auto_order_no').value.trim().toUpperCase();
+        if(!orderNo) return alert("Please enter an Order No.");
+
+        const btn = document.querySelector('button[onclick="fetchOrderCargo()"]');
+        const origText = btn.innerHTML;
+        btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Loading...`;
+        btn.disabled = true;
+
+        try {
+            const response = await fetch(`/api/get-order-cargo/?order_no=${orderNo}`);
+            const data = await response.json();
+
+            if(data.success) {
+                data.items.forEach(item => {
+                    const totalCbm = parseFloat(item.cbm_per_unit || 0) * parseInt(item.qty);
+                    const totalKg = parseFloat(item.weight_per_unit || 0) * parseInt(item.qty);
+                    
+                    appendCargoRow(item.item_code, item.description, item.qty, totalCbm, totalKg);
+                });
+                
+                document.getElementById('auto_order_no').value = '';
+                recalculateManifest();
+            } else {
+                alert(`Error: ${data.error}`);
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Server connection error.");
+        } finally {
+            btn.innerHTML = origText;
+            btn.disabled = false;
+            lucide.createIcons();
+        }
+    }
+
+    function loadVehicleData() {
+        const select = document.getElementById('vehicle_select');
+        const weightInput = document.getElementById('max_weight');
+        const cbmInput = document.getElementById('max_cbm');
+        
+        if (select.value) {
+            weightInput.value = select.value;
+            const type = select.options[select.selectedIndex].getAttribute('data-type');
+            
+            if(type.toUpperCase().includes('TRUCK')) cbmInput.value = 15.0;
+            else if(type.toUpperCase().includes('VAN')) cbmInput.value = 5.0;
+            else cbmInput.value = 2.0; 
+        }
+        updateVisualizer();
+    }
+
+    function autoFillItem() {
+        const code = document.getElementById('item_code').value.toUpperCase().trim();
+        if (dbItems[code]) {
+            document.getElementById('item_desc').value = dbItems[code].desc;
+            document.getElementById('row_kg').value = dbItems[code].weight;
+            document.getElementById('row_cbm').value = dbItems[code].cbm;
+            document.getElementById('dim_l').value = 0;
+            document.getElementById('dim_w').value = 0;
+            document.getElementById('dim_h').value = 0;
+        }
+    }
+
+    function computeRowCBM() {
+        const l = parseFloat(document.getElementById('dim_l').value) || 0;
+        const w = parseFloat(document.getElementById('dim_w').value) || 0;
+        const h = parseFloat(document.getElementById('dim_h').value) || 0;
+        
+        if (l > 0 && w > 0 && h > 0) {
+            const cbm = (l * w * h) / 1000000;
+            document.getElementById('row_cbm').value = cbm.toFixed(4);
+        }
+    }
+
+    function addCargoItem() {
+        const code = document.getElementById('item_code').value.toUpperCase().trim() || 'MANUAL';
+        const desc = document.getElementById('item_desc').value.trim() || 'Custom Cargo';
+        const qty = parseInt(document.getElementById('item_qty').value) || 1;
+        
+        const unitCbm = parseFloat(document.getElementById('row_cbm').value) || 0;
+        const unitKg = parseFloat(document.getElementById('row_kg').value) || 0;
+
+        if (unitCbm === 0 && unitKg === 0) {
+            alert("Please input Weight or Volume to compute load.");
+            return;
+        }
+
+        const totalCbm = unitCbm * qty;
+        const totalKg = unitKg * qty;
+
+        appendCargoRow(code, desc, qty, totalCbm, totalKg);
+        
+        document.getElementById('item_code').value = '';
+        document.getElementById('item_desc').value = '';
+        document.getElementById('row_cbm').value = '0.000';
+        document.getElementById('row_kg').value = '0.000';
+        document.getElementById('dim_l').value = '0';
+        document.getElementById('dim_w').value = '0';
+        document.getElementById('dim_h').value = '0';
+        document.getElementById('item_qty').value = '1';
+
+        recalculateManifest();
+    }
+
+    function appendCargoRow(code, desc, qty, totalCbm, totalKg) {
+        const tbody = document.getElementById('cargo_table_body');
+        const emptyState = document.getElementById('empty_manifest');
+        if (emptyState) emptyState.remove();
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors item-row";
+        tr.innerHTML = `
+            <td class="py-2 px-3 border-r border-slate-200 dark:border-slate-800 text-center font-black bg-slate-50 dark:bg-slate-900/50">${qty}</td>
+            <td class="py-2 px-3 border-r border-slate-200 dark:border-slate-800">
+                <span class="block text-slate-800 dark:text-slate-200 uppercase">${code}</span>
+                <span class="block text-[8px] text-slate-500 font-normal truncate max-w-[150px]">${desc}</span>
+            </td>
+            <td class="py-2 px-3 border-r border-slate-200 dark:border-slate-800 text-right text-amber-700 dark:text-amber-400 font-mono item-kg" data-val="${totalKg}">${totalKg.toFixed(2)}</td>
+            <td class="py-2 px-3 border-r border-slate-200 dark:border-slate-800 text-right text-blue-700 dark:text-blue-400 font-mono item-cbm" data-val="${totalCbm}">${totalCbm.toFixed(3)}</td>
+            <td class="py-2 px-2 text-center">
+                <button type="button" onclick="removeCargo(this)" class="text-rose-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 p-1 rounded transition-colors"><i data-lucide="x" class="w-3 h-3"></i></button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+        lucide.createIcons();
+    }
+
+    function removeCargo(btn) {
+        btn.closest('tr').remove();
+        recalculateManifest();
+    }
+
+    function clearAll() {
+        if(confirm("Clear all items in the manifest?")) {
+            const tbody = document.getElementById('cargo_table_body');
+            tbody.innerHTML = '<tr id="empty_manifest"><td colspan="5" class="py-12 text-center text-slate-400 dark:text-slate-500 italic font-bold"><i data-lucide="box" class="w-8 h-8 mx-auto mb-2 opacity-30"></i>No cargo added yet.</td></tr>';
+            recalculateManifest();
+        }
+    }
+
+    function recalculateManifest() {
+        currentTotalKG = 0;
+        currentTotalCBM = 0;
+        let count = 0;
+
+        document.querySelectorAll('.item-kg').forEach(td => currentTotalKG += parseFloat(td.getAttribute('data-val')));
+        document.querySelectorAll('.item-cbm').forEach(td => currentTotalCBM += parseFloat(td.getAttribute('data-val')));
+        document.querySelectorAll('#cargo_table_body tr').forEach(tr => { if(tr.id !== 'empty_manifest') count++; });
+
+        document.getElementById('cargo_count').innerText = `${count} Items`;
+        updateVisualizer();
+    }
+
+    function updateVisualizer() {
+        const maxKg = parseFloat(document.getElementById('max_weight').value) || 1;
+        const maxCbm = parseFloat(document.getElementById('max_cbm').value) || 1;
+
+        document.getElementById('display_max_kg').innerText = maxKg.toLocaleString();
+        document.getElementById('display_max_cbm').innerText = maxCbm.toLocaleString();
+
+        document.getElementById('display_total_kg').innerText = currentTotalKG.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('display_total_cbm').innerText = currentTotalCBM.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+        let pctKg = (currentTotalKG / maxKg) * 100;
+        let pctCbm = (currentTotalCBM / maxCbm) * 100;
+
+        if(pctKg > 100) pctKg = 100;
+        if(pctCbm > 100) pctCbm = 100;
+
+        const barKg = document.getElementById('bar_weight');
+        const barCbm = document.getElementById('bar_cbm');
+        const warn = document.getElementById('overload_warning');
+
+        barKg.style.width = `${pctKg}%`;
+        barCbm.style.width = `${pctCbm}%`;
+
+        document.getElementById('lbl_weight_pct').innerText = `${pctKg.toFixed(1)}% Loaded`;
+        document.getElementById('lbl_cbm_pct').innerText = `${pctCbm.toFixed(1)}% Filled`;
+
+        barKg.className = `h-full transition-all duration-500 ${pctKg >= 100 ? 'bg-rose-500' : (pctKg > 85 ? 'bg-orange-500' : 'bg-amber-500')}`;
+        barCbm.className = `h-full transition-all duration-500 ${pctCbm >= 100 ? 'bg-rose-500' : (pctCbm > 85 ? 'bg-indigo-500' : 'bg-blue-500')}`;
+
+        if (pctKg >= 100 || pctCbm >= 100) {
+            warn.classList.remove('hidden');
+        } else {
+            warn.classList.add('hidden');
+        }
+    }
+</script>
+{% endblock %}

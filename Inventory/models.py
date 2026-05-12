@@ -39,23 +39,30 @@ class Item(models.Model):
     ]
 
     item_code = models.CharField(max_length=100, unique=True)
+    upc_barcode = models.CharField(max_length=100, blank=True, null=True, help_text="Supplier Barcode (Optional)")
     description = models.TextField(blank=True, null=True)
-    uom = models.CharField(max_length=10, choices=UOM_CHOICES, default='PCS')
-    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, default='RAW')
-    min_stock = models.IntegerField(default=0, help_text="Minimum level for low stock alerts")
-    unit_price = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
-
+    
     brand = models.CharField(max_length=100, blank=True, null=True)
-    category = models.CharField(max_length=100, blank=True, null=True)
+    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, default='RAW')
+    uom = models.CharField(max_length=10, choices=UOM_CHOICES, default='PCS')
     
-    # 🚀 BAGO PARA SA WMS:
+    # Financials & Thresholds
+    unit_price = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    min_stock = models.IntegerField(default=0, help_text="Minimum level for low stock alerts")
+    
+    # 🚀 Logistics Metrics (Para sa Fleet Load Calculator)
+    weight_kg = models.DecimalField(max_digits=10, decimal_places=3, default=0.000, help_text="Weight per unit in KG")
+    
+    # 🚀 Storage & WMS Routing
     default_zone = models.CharField(max_length=100, blank=True, null=True, help_text="Primary storage location")
-    updated_at = models.DateTimeField(auto_now=True)
     
+    # Status & Timestamps
+    is_active = models.BooleanField(default=True, help_text="Uncheck instead of deleting")
+    updated_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.item_code
+        return f"[{self.item_code}] {self.description}"
 
 class Contact(models.Model):
     TYPES = (('Customer', 'Customer'), ('Supplier', 'Supplier'))

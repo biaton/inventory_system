@@ -188,6 +188,11 @@ urlpatterns = [
     path('tools/scan/', views.receive_item_scan_view, name='receive_item_scan'), 
     path('tools/print/<int:tag_id>/', views.print_tag_view, name='print_tag'),
     path('order-picking/', views.so_smart_picking_view, name='so_smart_picking'),
+    path('tools/traceability/', views.lot_traceability_view, name='lot_traceability'),
+    path('tools/uom-calculator/', views.uom_calculator_view, name='uom_calculator'),
+    path('tools/cbm-calculator/', views.cbm_calculator_view, name='cbm_calculator'),
+    path('api/get-order-cargo/', views.api_get_order_cargo, name='api_get_order_cargo'),
+    path('tools/smart-slotting/', views.smart_slotting_view, name='smart_slotting'),
 
     # user manual
     path('user-manual/', views.user_manual_view, name='user_manual'),

@@ -5,8 +5,12 @@
 
 {% block content %}
 <style>
-    html { scroll-behavior: smooth; }
-    .scroll-mt-24 { scroll-margin-top: 6rem; }
+    html { 
+        scroll-behavior: smooth; 
+    }
+    .scroll-mt-24 { 
+        scroll-margin-top: 6rem; 
+    }
     
     .manual-link.active {
         background-color: rgba(13, 148, 136, 0.1); /* teal-900/10 */
@@ -18,6 +22,22 @@
         background-color: rgba(45, 212, 191, 0.1);
         border-left-color: #2dd4bf; /* teal-400 */
         color: #2dd4bf;
+    }
+    .nav-scrollbar::-webkit-scrollbar { 
+        width: 4px; 
+    }
+    .nav-scrollbar::-webkit-scrollbar-track { 
+        background: transparent; 
+    }
+    .nav-scrollbar::-webkit-scrollbar-thumb { 
+        background: #cbd5e1; 
+        border-radius: 10px; 
+    }
+    html.dark .nav-scrollbar::-webkit-scrollbar-thumb { 
+        background: #475569; 
+    }
+    .nav-scrollbar::-webkit-scrollbar-thumb:hover { 
+        background: #0f766e; 
     }
 </style>
 
@@ -35,10 +55,17 @@
 
     <div class="flex flex-col md:flex-row gap-6 items-start">
         
-        <div class="w-full md:w-64 shrink-0 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm p-4 sticky top-[72px] transition-colors duration-300 hidden md:block rounded-sm">
-            <h3 class="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4 px-2 border-b border-slate-200 dark:border-slate-800 pb-2">Table of Contents</h3>
+        <div class="w-full md:w-64 shrink-0 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm p-4 sticky top-[72px] transition-colors duration-300 hidden md:flex flex-col rounded-sm" style="max-height: calc(100vh - 100px);">
             
-            <nav class="flex flex-col gap-1" id="manual-nav">
+            <h3 class="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 px-2 border-b border-slate-200 dark:border-slate-800 pb-2 shrink-0">Table of Contents</h3>
+            
+            <div class="relative mb-3 shrink-0 px-1">
+                <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 dark:text-slate-500"></i>
+                <input type="text" id="navSearch" onkeyup="filterNav()" placeholder="SEARCH TOPIC..." 
+                       class="w-full pl-8 pr-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-[10px] font-bold text-slate-800 dark:text-slate-200 uppercase tracking-widest focus:border-teal-500 dark:focus:border-teal-500 outline-none transition-colors rounded-sm shadow-inner placeholder-slate-400 dark:placeholder-slate-600">
+            </div>
+            
+            <nav class="flex flex-col gap-1 overflow-y-auto nav-scrollbar pr-2 flex-1" id="manual-nav">
                 <a href="#ui-basics" class="manual-link px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-l-2 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">1. UI & Navigation</a>
                 <a href="#procurement" class="manual-link px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-l-2 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">2. Procurement (PO)</a>
                 <a href="#inbound" class="manual-link px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-l-2 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">3. Inbound Logistics</a>
@@ -63,6 +90,9 @@
                 <a href="#rma-logistics" class="manual-link px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-l-2 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">22. Reverse Logistics (RMA)</a>
                 <a href="#system-audit" class="manual-link px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-l-2 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">23. System Audit</a>
                 <a href="#global-scan" class="manual-link px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-l-2 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">24. Global Scan</a>
+                <a href="#lot-traceability" class="manual-link px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-l-2 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">25. Lot Traceability</a>
+                <a href="#uom-calculator" class="manual-link px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-l-2 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">26. UOM & Packaging Calc</a>
+                <a href="#cbm-calculator" class="manual-link px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-l-2 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">27. CBM & Load Calculator</a>
             </nav>
         </div>
 
@@ -1712,6 +1742,193 @@
                 </div>
             </section>
 
+            <section id="lot-traceability" class="scroll-mt-24">
+                <div class="border-b-2 border-slate-300 dark:border-slate-700 pb-3 mb-5 flex items-center gap-3">
+                    <div class="bg-indigo-100 dark:bg-indigo-900/50 p-2 rounded-sm text-indigo-700 dark:text-indigo-400">
+                        <i data-lucide="git-merge" class="w-5 h-5"></i>
+                    </div>
+                    <h2 class="text-xl font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight">25. Lot Traceability Explorer</h2>
+                </div>
+
+                <p class="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+                    The Traceability Explorer is an advanced auditing tool that acts as a search engine for your inventory's genealogy. It tracks the complete lifecycle of a physical box or batch from the moment it enters the warehouse until it is dispatched or consumed.
+                </p>
+
+                <div class="space-y-6">
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-indigo-700 dark:text-indigo-400 mb-3 flex items-center gap-2">
+                            <i data-lucide="search" class="w-4 h-4"></i> A. Smart Lookup System
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-3">
+                            The search bar is equipped with dual-lookup capabilities. You can search using two methods:
+                        </p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-slate-50 dark:bg-slate-900/50 p-3 border-l-2 border-indigo-500 text-[10px] text-slate-600 dark:text-slate-400">
+                                <strong class="block mb-1 text-slate-700 dark:text-slate-300">Exact Lot Number:</strong> Enter a specific Material Tag ID (e.g., L-2605-1234) to instantly pull up its detailed tracking page.
+                            </div>
+                            <div class="bg-slate-50 dark:bg-slate-900/50 p-3 border-l-2 border-sky-500 text-[10px] text-slate-600 dark:text-slate-400">
+                                <strong class="block mb-1 text-slate-700 dark:text-slate-300">Item Code Search:</strong> Enter a general SKU. The system will display a table of all available, past, and present lots associated with that item so you can choose which one to investigate.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm border-t-4 border-t-emerald-500">
+                            <h4 class="text-[10px] font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-400 mb-2 flex items-center gap-2">
+                                <i data-lucide="info" class="w-3.5 h-3.5"></i> B. Current Status & Origin
+                            </h4>
+                            <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-3">
+                                Once a lot is selected, the left panel displays its immediate profile:
+                            </p>
+                            <ul class="list-disc list-inside text-[10px] font-bold text-slate-500 dark:text-slate-400 space-y-1.5 ml-2">
+                                <li><strong>Remaining Stock & QC:</strong> See exactly how many pieces are left in this specific box and its inspection status.</li>
+                                <li><strong>Last Known Location:</strong> The exact physical rack or zone where this box is currently stored.</li>
+                                <li><strong>Origin Source:</strong> Identifies the exact Supplier and Main Purchase Order (Batch ID) from which this item was acquired.</li>
+                            </ul>
+                        </div>
+
+                        <div class="bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800 p-4 rounded-sm border-t-4 border-t-indigo-500">
+                            <h4 class="text-[10px] font-black uppercase tracking-widest text-indigo-700 dark:text-indigo-400 mb-2 flex items-center gap-2">
+                                <i data-lucide="activity" class="w-3.5 h-3.5"></i> C. The Lifecycle Timeline
+                            </h4>
+                            <p class="text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-3">
+                                The right panel displays a chronological, uneditable history of all transactions involving this lot:
+                            </p>
+                            <ul class="space-y-2 text-[10px] font-bold text-slate-600 dark:text-slate-400">
+                                <li><i data-lucide="download" class="w-3 h-3 inline text-emerald-500 mr-1"></i> <strong class="text-emerald-700 dark:text-emerald-400 uppercase">Registration (REG):</strong> When the item was first received and tagged.</li>
+                                <li><i data-lucide="arrow-right-left" class="w-3 h-3 inline text-blue-500 mr-1"></i> <strong class="text-blue-700 dark:text-blue-400 uppercase">Movement (MOVE):</strong> Transfers from one rack to another.</li>
+                                <li><i data-lucide="upload" class="w-3 h-3 inline text-amber-500 mr-1"></i> <strong class="text-amber-700 dark:text-amber-400 uppercase">Deduction (OUT):</strong> Every time stock was picked for an order or request.</li>
+                            </ul>
+                            <p class="text-[9px] mt-3 italic text-indigo-500">Note: Each timeline entry includes the exact timestamp, the user responsible, and the running balance of the stock.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="uom-calculator" class="scroll-mt-24">
+                <div class="border-b-2 border-slate-300 dark:border-slate-700 pb-3 mb-5 flex items-center gap-3">
+                    <div class="bg-emerald-100 dark:bg-emerald-900/50 p-2 rounded-sm text-emerald-700 dark:text-emerald-400">
+                        <i data-lucide="calculator" class="w-5 h-5"></i>
+                    </div>
+                    <h2 class="text-xl font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight">26. UOM & Packaging Calculator</h2>
+                </div>
+
+                <p class="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+                    This standalone utility tool is designed for warehouse checkers and dispatchers to quickly convert large quantities of loose items into their corresponding commercial packaging units (Pallets and Boxes).
+                </p>
+
+                <div class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                            <h4 class="text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+                                <i data-lucide="input" class="w-3.5 h-3.5 text-emerald-500"></i> A. Input Parameters
+                            </h4>
+                            <ul class="space-y-2 text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                                <li class="flex items-start gap-2">
+                                    <span class="text-emerald-600">•</span>
+                                    <span><strong>Item Lookup:</strong> Optional search to pull standard packaging data from the Item Master.</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <span class="text-emerald-600">•</span>
+                                    <span><strong>Total Pieces:</strong> Enter the grand total count of loose items to be packed.</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <span class="text-emerald-600">•</span>
+                                    <span><strong>Custom Multipliers:</strong> Manually adjust how many PCS fit in a BOX, and how many BOXES fit on a PALLET.</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="bg-slate-800 dark:bg-slate-950 p-4 rounded-sm border border-slate-700">
+                            <h4 class="text-[10px] font-black uppercase tracking-widest text-emerald-400 mb-3 flex items-center gap-2">
+                                <i data-lucide="layers" class="w-3.5 h-3.5"></i> B. Result Breakdown
+                            </h4>
+                            <div class="space-y-2">
+                                <div class="flex justify-between items-center border-b border-slate-700 pb-1">
+                                    <span class="text-[9px] font-black text-slate-400 uppercase">Pallets</span>
+                                    <span class="text-[10px] font-bold text-white">Full pallet loads</span>
+                                </div>
+                                <div class="flex justify-between items-center border-b border-slate-700 pb-1">
+                                    <span class="text-[9px] font-black text-emerald-500 uppercase">Excess Boxes</span>
+                                    <span class="text-[10px] font-bold text-white">Remaining full boxes</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-[9px] font-black text-rose-400 uppercase">Loose PCS</span>
+                                    <span class="text-[10px] font-bold text-white">Items below one box count</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-4 bg-emerald-50 dark:bg-emerald-950/20 border-l-4 border-l-emerald-500 rounded-r-sm shadow-sm">
+                        <h4 class="text-[10px] font-black uppercase tracking-widest text-emerald-800 dark:text-emerald-400 mb-2 flex items-center gap-2">
+                            <i data-lucide="printer" class="w-4 h-4"></i> Calculation Export
+                        </h4>
+                        <p class="text-[11px] font-semibold text-slate-600 dark:text-slate-400 leading-relaxed">
+                            Users can click the <strong>"Print Breakdown"</strong> button to generate a clean, document-ready printout. This is useful for attaching a "Packing Computation Slip" to a shipment manifest or using it as a guide for physical loading.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="cbm-calculator" class="scroll-mt-24">
+                <div class="border-b-2 border-slate-300 dark:border-slate-700 pb-3 mb-5 flex items-center gap-3">
+                    <div class="bg-blue-100 dark:bg-blue-900/50 p-2 rounded-sm text-blue-700 dark:text-blue-400">
+                        <i data-lucide="cuboid" class="w-5 h-5"></i>
+                    </div>
+                    <h2 class="text-xl font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight">27. CBM & Fleet Load Calculator</h2>
+                </div>
+
+                <p class="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+                    The CBM Calculator is a logistics optimization tool used to simulate truck loading. It ensures that outgoing shipments do not exceed the vehicle's weight capacity (KG) and volume capacity (Cubic Meters).
+                </p>
+
+                <div class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                            <h4 class="text-[10px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400 mb-2">1. Vehicle Selection</h4>
+                            <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 leading-relaxed">
+                                Select a vehicle from the <strong>Company Fleet</strong> presets to auto-load its maximum KG and CBM capacity. You may also manually override these values for third-party couriers.
+                            </p>
+                        </div>
+                        <div class="bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800 p-4 rounded-sm border-l-4 border-l-indigo-500">
+                            <h4 class="text-[10px] font-black uppercase tracking-widest text-indigo-700 dark:text-indigo-400 mb-2 flex items-center gap-2">
+                                <i data-lucide="zap" class="w-3.5 h-3.5"></i> 2. Auto-Load Order (API)
+                            </h4>
+                            <p class="text-[10px] font-bold text-slate-600 dark:text-slate-400 leading-relaxed">
+                                Instead of manual entry, type the <strong>Order Number / Main P.O.</strong> and click <strong>"Fetch Order"</strong>. The system will automatically retrieve all items in that order and compute their total weight and volume based on the Item Master data.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 text-white p-5 rounded-sm shadow-xl relative overflow-hidden">
+                        <i data-lucide="activity" class="absolute right-4 top-4 w-12 h-12 text-white/5"></i>
+                        <h4 class="text-xs font-black uppercase tracking-widest text-emerald-400 mb-4">Live Load Visualizer</h4>
+                        <div class="space-y-4">
+                            <div class="flex items-start gap-3">
+                                <div class="w-2 h-2 rounded-full bg-amber-500 mt-1"></div>
+                                <p class="text-[10px] font-bold text-slate-300"><strong>Weight Progress:</strong> Monitors the total KG. Turns <span class="text-rose-400">RED</span> if the payload exceeds the vehicle's suspension limit.</p>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <div class="w-2 h-2 rounded-full bg-blue-500 mt-1"></div>
+                                <p class="text-[10px] font-bold text-slate-300"><strong>Volume Progress (CBM):</strong> Monitors the total space occupied. Turns <span class="text-rose-400">RED</span> if the items will not physically fit inside the truck body.</p>
+                            </div>
+                        </div>
+                        <div class="mt-4 p-2 bg-rose-500/20 border border-rose-500/40 rounded-sm text-center">
+                            <p class="text-[9px] font-black uppercase tracking-widest text-rose-300">Over-Capacity Warning: An animated alert triggers when 100% load is reached.</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 p-4 rounded-sm">
+                        <h4 class="text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 mb-2">Manual Dimension Calculator</h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 leading-relaxed">
+                            For non-standard items, enter the <strong>Length, Width, and Height (in cm)</strong>. The system uses the formula: <br/>
+                            <code class="bg-slate-100 dark:bg-slate-900 px-2 py-1 rounded text-indigo-500 font-black">(L × W × H) / 1,000,000 = CBM</code>
+                        </p>
+                    </div>
+                </div>
+            </section>
+
             <div class="pt-8 text-center border-t border-slate-200 dark:border-slate-800">
                 <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest hover:text-teal-600 dark:hover:text-teal-400 transition-colors">
                     <i data-lucide="arrow-up" class="w-4 h-4 mx-auto mb-1"></i> Back to Top
@@ -1747,5 +1964,19 @@
             });
         });
     });
+
+    function filterNav() {
+        const input = document.getElementById('navSearch').value.toLowerCase();
+        const links = document.querySelectorAll('#manual-nav .manual-link');
+        
+        links.forEach(link => {
+            const text = link.innerText.toLowerCase();
+            if (text.includes(input)) {
+                link.style.display = ""; // Ipakita
+            } else {
+                link.style.display = "none"; // Itago
+            }
+        });
+    }
 </script>
 {% endblock %}

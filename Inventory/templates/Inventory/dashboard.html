@@ -107,7 +107,7 @@
         </div>
 
         <div class="p-3">
-            <div class="grid grid-cols-2 gap-2">
+            <div class="grid grid-cols-3 gap-2">
                 
                 <a href="javascript:void(0)" onclick="openScanModal()" class="flex flex-col items-center justify-center p-3 rounded-md bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-sky-50 dark:hover:bg-sky-900/30 hover:border-sky-300 dark:hover:border-sky-700 transition-colors group">
                     <i data-lucide="scan-barcode" class="w-5 h-5 text-slate-500 dark:text-slate-400 group-hover:text-sky-600 dark:group-hover:text-sky-400 mb-1.5 transition-colors"></i>
@@ -160,6 +160,26 @@
                 <a href="{% url 'rma_dashboard' %}" class="flex flex-col items-center justify-center p-3 rounded-md bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-rose-50 dark:hover:bg-rose-900/30 hover:border-rose-300 dark:hover:border-rose-700 transition-colors group">
                     <i data-lucide="folder-sync" class="w-5 h-5 text-slate-500 dark:text-slate-400 group-hover:text-rose-600 dark:group-hover:text-rose-400 mb-1.5 transition-colors"></i>
                     <span class="text-[8px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest text-center leading-tight">RMA<br/>Dashboard</span>
+                </a>
+
+                <a href="{% url 'lot_traceability' %}" class="flex flex-col items-center justify-center p-3 rounded-md bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors group">
+                    <i data-lucide="git-merge" class="w-5 h-5 text-slate-500 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 mb-1.5 transition-colors"></i>
+                    <span class="text-[8px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest text-center leading-tight">Lot <br/>Tracer</span>
+                </a>
+
+                <a href="{% url 'uom_calculator' %}" class="flex flex-col items-center justify-center p-3 rounded-md bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors group">
+                    <i data-lucide="calculator" class="w-5 h-5 text-slate-500 dark:text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 mb-1.5 transition-colors"></i>
+                    <span class="text-[8px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest text-center leading-tight">UOM<br/>Calc</span>
+                </a>
+
+                <a href="{% url 'cbm_calculator' %}" class="flex flex-col items-center justify-center p-3 rounded-md bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 dark:hover:border-blue-700 transition-colors group">
+                    <i data-lucide="cuboid" class="w-5 h-5 text-slate-500 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 mb-1.5 transition-colors"></i>
+                    <span class="text-[8px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest text-center leading-tight">CBM / Load<br/>Calculator</span>
+                </a>
+
+                <a href="{% url 'smart_slotting' %}" class="flex flex-col items-center justify-center p-3 rounded-md bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:border-amber-300 dark:hover:border-amber-700 transition-colors group">
+                    <i data-lucide="bot" class="w-5 h-5 text-slate-500 dark:text-slate-400 group-hover:text-amber-600 dark:group-hover:text-amber-400 mb-1.5 transition-colors"></i>
+                    <span class="text-[8px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest text-center leading-tight">Smart Slotting<br/>Advisor</span>
                 </a>
 
             </div>
@@ -250,6 +270,13 @@
 
             <div class="relative z-10 mt-5 md:mt-0 text-left md:text-right border-l-2 md:border-l-0 border-slate-700 pl-4 md:pl-0">
                 <div class="flex items-center justify-end gap-3 md:gap-5"> 
+
+                    <div class="relative">
+                        <a href="{% url 'user_manual' %}" class="text-slate-300 hover:text-sky-400 transition-colors relative focus:outline-none mt-1 flex items-center justify-center" title="User Manual">
+                            <i data-lucide="book-open" class="w-5 h-5"></i>
+                        </a>
+                    </div>
+
                     <div class="relative">
                         <a href="{% url 'view_profile' %}" class="text-slate-300 hover:text-sky-400 transition-colors relative focus:outline-none mt-1 flex items-center justify-center" title="User Profile">
                             <i data-lucide="square-user-round" class="w-5 h-5"></i>
@@ -670,6 +697,38 @@
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         if (typeof lucide !== 'undefined') lucide.createIcons();
+
+    function updateClock() {
+        const now = new Date();
+        
+        // 1. I-format ang Time (12-hour format with AM/PM)
+        let hours = now.getHours();
+        let minutes = now.getMinutes();
+        let seconds = now.getSeconds();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        
+        hours = hours % 12;
+        hours = hours ? hours : 12; // Ang 0 hour ay gagawing 12
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        seconds = seconds < 10 ? '0' + seconds : seconds;
+        
+        const timeString = hours + ':' + minutes + ':' + seconds + ' ' + ampm;
+        
+        // 2. I-format ang Date (e.g. "May 8, 2026")
+        const dateOptions = { month: 'long', day: 'numeric', year: 'numeric' };
+        const dateString = now.toLocaleDateString('en-US', dateOptions);
+
+        // 3. I-update ang HTML elements
+        const clockElement = document.getElementById('live-clock');
+        const dateElement = document.getElementById('live-date');
+        
+        if (clockElement) clockElement.innerText = timeString;
+        if (dateElement) dateElement.innerText = dateString;
+    }
+
+    // Patakbuhin agad ang clock, tapos i-update every 1 second (1000ms)
+    updateClock();
+    setInterval(updateClock, 1000);
 
         // 🚀 BAGO: LOCAL STORAGE POSITION MEMORY
         const fab = document.getElementById('draggable-capsule');

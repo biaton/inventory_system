@@ -417,11 +417,11 @@
             console.error("Failed to fetch location stock:", error);
         }
     }
-    </script>
-    <script type="text/template" id="locations-data">
+</script>
+<script type="text/template" id="locations-data">
         {{ locations_json|safe }}
-    </script>
-    <script>
+</script>
+<script>
     let allLocations = [];
     try {
         allLocations = JSON.parse(document.getElementById('locations-data').textContent);

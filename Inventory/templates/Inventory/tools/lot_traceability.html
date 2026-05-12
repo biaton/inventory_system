@@ -1,0 +1,234 @@
+{% extends "Inventory/base.html" %}
+{% load static %}
+
+{% block title %}Lot Traceability Explorer | AIM WMS{% endblock %}
+
+{% block content %}
+<div class="max-w-[100%] mx-auto pb-20 mt-4 text-slate-800 dark:text-slate-200 transition-colors duration-300">
+
+    <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm p-4 mb-4 flex justify-between items-center border-t-4 border-t-indigo-600 dark:border-t-indigo-500 transition-colors">
+        <div>
+            <h1 class="text-xl font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight flex items-center gap-2">
+                <i data-lucide="git-merge" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i> Traceability Explorer
+            </h1>
+            <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-0.5">Physical Inventory Genealogy & Lifecycle</p>
+        </div>
+        <a href="{% url 'dashboard' %}" class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-4 py-1.5 border border-slate-300 dark:border-slate-600 text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors rounded-sm shadow-sm flex items-center gap-2">
+            <i data-lucide="arrow-left" class="w-3 h-3"></i> Back
+        </a>
+    </div>
+
+    <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-5 mb-6 shadow-sm transition-colors flex justify-center">
+        <form method="GET" class="w-full max-w-2xl relative flex">
+            <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
+            <input type="text" name="lot_no" value="{{ search_lot }}" placeholder="SCAN LOT NUMBER OR ENTER ITEM CODE..." required autofocus
+                   class="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border-2 border-slate-300 dark:border-slate-600 focus:border-indigo-500 dark:focus:border-indigo-500 outline-none text-sm font-black text-slate-800 dark:text-slate-100 uppercase tracking-widest shadow-inner transition-colors rounded-l-sm">
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 font-black text-[11px] uppercase tracking-widest transition-colors shadow-md rounded-r-sm">
+                Trace
+            </button>
+        </form>
+    </div>
+
+    {% if searched and not tag and not multiple_lots %}
+        <div class="bg-white dark:bg-slate-900 border border-rose-300 dark:border-rose-800 p-12 text-center shadow-sm rounded-sm">
+            <i data-lucide="scan-line" class="w-12 h-12 text-rose-300 dark:text-rose-700 mx-auto mb-3"></i>
+            <h3 class="text-sm font-black text-rose-600 dark:text-rose-500 uppercase tracking-widest">Record Not Found</h3>
+            <p class="text-xs font-bold text-slate-500 mt-1">Make sure you typed the exact Lot Number or a valid Item Code.</p>
+        </div>
+
+    {% elif multiple_lots %}
+        <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm rounded-sm overflow-hidden transition-colors">
+            <div class="bg-slate-800 dark:bg-slate-950 px-5 py-3 border-b border-slate-700 flex justify-between items-center transition-colors">
+                <div>
+                    <h3 class="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
+                        <i data-lucide="layers" class="w-4 h-4 text-indigo-400"></i> Available Lots for Item: <span class="text-indigo-300">{{ search_lot }}</span>
+                    </h3>
+                    <p class="text-[10px] text-slate-400 uppercase mt-0.5">{{ item_info.description|default:"-" }}</p>
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse" style="font-size: 11px;">
+                    <thead class="bg-slate-100 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 uppercase tracking-widest font-black text-[9px] transition-colors">
+                        <tr>
+                            <th class="py-3 px-4 border-b border-slate-300 dark:border-slate-700 w-48">Lot Number</th>
+                            <th class="py-3 px-4 border-b border-slate-300 dark:border-slate-700 text-center">Arrival Date</th>
+                            <th class="py-3 px-4 border-b border-slate-300 dark:border-slate-700 text-center text-emerald-600 dark:text-emerald-400">Current Stock</th>
+                            <th class="py-3 px-4 border-b border-slate-300 dark:border-slate-700">QC Status</th>
+                            <th class="py-3 px-4 border-b border-slate-300 dark:border-slate-700">Location</th>
+                            <th class="py-3 px-4 border-b border-slate-300 dark:border-slate-700 text-center w-24">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 dark:divide-slate-800 font-bold transition-colors">
+                        {% for l in multiple_lots %}
+                        <tr class="hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors">
+                            <td class="py-2.5 px-4 text-indigo-700 dark:text-indigo-400 font-black uppercase"><i data-lucide="barcode" class="w-3 h-3 inline mr-1 text-slate-400"></i>{{ l.lot_no }}</td>
+                            <td class="py-2.5 px-4 text-center text-slate-600 dark:text-slate-400">{{ l.arrival_date|date:"Y-m-d" }}</td>
+                            <td class="py-2.5 px-4 text-center text-sm font-black {% if l.total_pcs <= 0 %}text-rose-600 dark:text-rose-400{% else %}text-emerald-700 dark:text-emerald-400{% endif %}">{{ l.total_pcs }}</td>
+                            <td class="py-2.5 px-4">
+                                <span class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded text-[9px] font-black uppercase">{{ l.inspection_status }}</span>
+                            </td>
+                            <td class="py-2.5 px-4 text-slate-600 dark:text-slate-400 text-[10px]">{{ l.location.location_code|default:"UNASSIGNED" }}</td>
+                            <td class="py-2.5 px-4 text-center">
+                                <a href="?lot_no={{ l.lot_no }}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-sm text-[9px] font-black uppercase tracking-widest shadow-sm transition-colors inline-block">
+                                    Trace
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    {% elif tag %}
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <div class="lg:col-span-4 space-y-4">
+                <div class="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50 p-5 rounded-sm shadow-sm transition-colors">
+                    <p class="text-[9px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-widest mb-1">Target Lot No.</p>
+                    <h2 class="text-2xl font-black text-indigo-900 dark:text-indigo-300 uppercase tracking-tight flex items-center gap-2">
+                        <i data-lucide="barcode" class="w-6 h-6"></i> {{ tag.lot_no }}
+                    </h2>
+                </div>
+
+                <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm rounded-sm overflow-hidden transition-colors">
+                    <div class="bg-slate-800 dark:bg-slate-950 px-4 py-2 border-b border-slate-700">
+                        <h3 class="text-[10px] font-black text-white uppercase tracking-widest"><i data-lucide="info" class="w-3 h-3 inline mr-1"></i> Current Status</h3>
+                    </div>
+                    <div class="p-4 space-y-4 bg-slate-50 dark:bg-slate-950/50">
+                        <div>
+                            <span class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Item Detail</span>
+                            <span class="font-black text-slate-800 dark:text-slate-200 text-sm uppercase block">{{ tag.item_code }}</span>
+                            <span class="text-[10px] font-bold text-slate-500 mt-0.5 block">{{ tag.description }}</span>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4 border-t border-slate-200 dark:border-slate-800 pt-3">
+                            <div>
+                                <span class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Remaining Stock</span>
+                                <span class="font-black text-lg {% if tag.total_pcs <= 0 %}text-rose-600{% else %}text-emerald-600{% endif %}">{{ tag.total_pcs }} <span class="text-[10px]">{{ tag.packing_type }}</span></span>
+                            </div>
+                            <div>
+                                <span class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">QC Status</span>
+                                <span class="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded text-[10px] font-black uppercase">{{ tag.inspection_status }}</span>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-slate-200 dark:border-slate-800 pt-3">
+                            <span class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Last Known Location</span>
+                            <span class="font-black text-sky-700 dark:text-sky-400 text-sm flex items-center gap-1.5"><i data-lucide="map-pin" class="w-4 h-4"></i> {{ tag.location.location_code|default:"UNASSIGNED / DISPATCHED" }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {% if origin_po %}
+                <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm rounded-sm overflow-hidden transition-colors">
+                    <div class="bg-emerald-50 dark:bg-emerald-950/30 px-4 py-2 border-b border-emerald-200 dark:border-emerald-900/50">
+                        <h3 class="text-[10px] font-black text-emerald-800 dark:text-emerald-400 uppercase tracking-widest"><i data-lucide="truck-return" class="w-3 h-3 inline mr-1"></i> Origin Source</h3>
+                    </div>
+                    <div class="p-4 space-y-3 text-xs font-bold text-slate-600 dark:text-slate-400">
+                        <p class="flex justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
+                            <span class="text-slate-400 dark:text-slate-500 uppercase text-[9px]">Supplier:</span> 
+                            <span class="text-slate-800 dark:text-slate-200 uppercase font-black text-right">{{ supplier.name|default:"UNKNOWN" }}</span>
+                        </p>
+                        <p class="flex justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
+                            <span class="text-slate-400 dark:text-slate-500 uppercase text-[9px] mt-0.5">Main PO No.:</span> 
+                            <span class="text-emerald-700 dark:text-emerald-400 font-black text-sm">{{ main_po_no }}</span>
+                        </p>
+                        <p class="flex justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
+                            <span class="text-slate-400 dark:text-slate-500 uppercase text-[9px]">Sub-PO (Ref):</span> 
+                            <span class="text-slate-700 dark:text-slate-300 font-bold">{{ origin_po.po_no }}</span>
+                        </p>
+                        <p class="flex justify-between pt-1">
+                            <span class="text-slate-400 dark:text-slate-500 uppercase text-[9px]">Received Date:</span> 
+                            <span>{{ tag.arrival_date|date:"M d, Y" }}</span>
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="lg:col-span-8">
+                <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-sm rounded-sm overflow-hidden h-full flex flex-col transition-colors">
+                    <div class="bg-slate-100 dark:bg-slate-950 px-5 py-4 border-b border-slate-300 dark:border-slate-800 flex justify-between items-center">
+                        <h3 class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest flex items-center gap-2">
+                            <i data-lucide="activity" class="w-4 h-4 text-indigo-500"></i> Lifecycle Timeline
+                        </h3>
+                    </div>
+                    
+                    <div class="p-6 md:p-8 flex-1 bg-slate-50/50 dark:bg-slate-900/50 overflow-y-auto">
+                        <div class="relative border-l-2 border-slate-300 dark:border-slate-700 ml-3 space-y-6">
+                            
+                            {% for log in logs %}
+                            <div class="relative pl-8 group">
+                                <div class="absolute -left-[17px] top-1 w-8 h-8 rounded-full flex items-center justify-center ring-4 ring-slate-50 dark:ring-slate-900 shadow-sm
+                                    {% if log.action_type == 'REG' %} bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400
+                                    {% elif log.action_type == 'OUT' %} bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-400
+                                    {% elif log.action_type == 'MOVE' %} bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400
+                                    {% elif log.action_type == 'QC' %} bg-purple-100 text-purple-600 dark:bg-purple-900/50 dark:text-purple-400
+                                    {% else %} bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-400 {% endif %}">
+                                    
+                                    {% if log.action_type == 'REG' %}<i data-lucide="download" class="w-4 h-4"></i>
+                                    {% elif log.action_type == 'OUT' %}<i data-lucide="upload" class="w-4 h-4"></i>
+                                    {% elif log.action_type == 'MOVE' %}<i data-lucide="arrow-right-left" class="w-4 h-4"></i>
+                                    {% elif log.action_type == 'QC' %}<i data-lucide="microscope" class="w-4 h-4"></i>
+                                    {% else %}<i data-lucide="edit" class="w-4 h-4"></i>{% endif %}
+                                </div>
+                                
+                                <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-sm shadow-sm hover:shadow-md transition-shadow relative">
+                                    <span class="absolute top-4 right-4 text-[9px] font-black uppercase tracking-widest text-slate-400"><i data-lucide="clock" class="w-3 h-3 inline pb-0.5"></i> {{ log.timestamp|date:"M d, Y - h:i A" }}</span>
+                                    
+                                    <h4 class="text-xs font-black uppercase tracking-widest mb-2
+                                        {% if log.action_type == 'REG' %} text-emerald-700 dark:text-emerald-400
+                                        {% elif log.action_type == 'OUT' %} text-amber-700 dark:text-amber-400
+                                        {% elif log.action_type == 'MOVE' %} text-blue-700 dark:text-blue-400
+                                        {% elif log.action_type == 'QC' %} text-purple-700 dark:text-purple-400
+                                        {% else %} text-slate-700 dark:text-slate-300 {% endif %}">
+                                        {{ log.get_action_type_display|default:log.action_type }}
+                                    </h4>
+                                    
+                                    <p class="text-[11px] font-bold text-slate-600 dark:text-slate-300 leading-relaxed mb-3">
+                                        {{ log.notes }}
+                                    </p>
+
+                                    <div class="flex flex-wrap items-center gap-4 bg-slate-50 dark:bg-slate-900/50 p-2 border border-slate-100 dark:border-slate-800 rounded-sm">
+                                        <div class="text-[9px] font-bold uppercase tracking-widest text-slate-500">
+                                            User: <span class="text-slate-800 dark:text-slate-200 font-black">{{ log.user.username|default:"SYSTEM" }}</span>
+                                        </div>
+                                        <div class="hidden sm:block w-px h-3 bg-slate-300 dark:bg-slate-700"></div>
+                                        <div class="text-[9px] font-bold uppercase tracking-widest text-slate-500 flex gap-2">
+                                            Qty Change: 
+                                            {% if log.change_qty > 0 %}
+                                                <span class="text-emerald-600 dark:text-emerald-400 font-black">+{{ log.change_qty }}</span>
+                                            {% elif log.change_qty < 0 %}
+                                                <span class="text-rose-600 dark:text-rose-400 font-black">{{ log.change_qty }}</span>
+                                            {% else %}
+                                                <span class="text-slate-400 font-black">0</span>
+                                            {% endif %}
+                                            <span class="text-slate-400">(&rarr; {{ log.new_qty }} left)</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="pl-8 text-slate-400 text-xs italic font-bold">No movement history found.</div>
+                            {% endfor %}
+                            
+                            <div class="relative pl-8">
+                                <div class="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-slate-300 dark:bg-slate-700 ring-4 ring-slate-50 dark:ring-slate-900"></div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    });
+</script>
+{% endblock %}
